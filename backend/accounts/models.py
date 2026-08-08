@@ -8,6 +8,17 @@ class User(AbstractBaseUser, PermissionsMixin):
         STAFF = "STAFF", 'Staff'
         FACULTY = "FACULTY", 'Faculty'
 
+    class FacultyType(models.TextChoices):
+        FULL_TIME = "FULL_TIME", 'Full-Time Faculty'
+        PART_TIME = "PART_TIME", 'Part-Time Faculty'
+        N_A = "N/A", 'N/A' # Default for Staff/Admins
+
+    class InvitationStatus(models.TextChoices):
+        ACTIVATED = "ACTIVATED", 'Activated'
+        SENT = "SENT", 'Invitation Sent'
+        PENDING = "PENDING", 'Pending'
+
+    # Core Fields
     email = models.EmailField(
         unique=True, 
         error_messages={
@@ -15,15 +26,36 @@ class User(AbstractBaseUser, PermissionsMixin):
         }
     )
 
+    title = models.CharField(
+        max_length=50,
+        blank=True,
+        null=True,
+        help_text="e.g., Asst. Prof., Dr."
+    )
+
     first_name = models.CharField(max_length=255)
     middle_name = models.CharField(max_length=255, blank=True)
     last_name = models.CharField(max_length=255)
 
-    role = models.CharField(max_length=10, choices=Role.choices, default=Role.FACULTY)
+    faculty_type = models.CharField(
+        max_length=100,
+        choices=FacultyType.choices,
+        default=FacultyType.N_A
+    )
 
-    is_active = models.BooleanField(default=True)
+    invitation_status = models.CharField(
+        max_length=20,
+        choices=InvitationStatus.choices,
+        default=InvitationStatus.PENDING
+    )
+
+    # Permission Fields
+    role = models.CharField(max_length=10, choices=Role.choices, default=Role.FACULTY)
     is_staff = models.BooleanField(default=False)
     is_superuser = models.BooleanField(default=False)
+
+    # Tracking Fields
+    is_active = models.BooleanField(default=True)
     date_joined = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     last_login = models.DateTimeField(blank=True, null=True)
@@ -53,11 +85,8 @@ class User(AbstractBaseUser, PermissionsMixin):
         parts = [self.first_name, self.middle_name, self.last_name]
         return " ".join(p for p in parts if p)
 
-    def get_short_name(self):
-        return self.email.split('@')[0]
-
     def __str__(self):
-        return self.get_short_name()
+        return self.get_full_name()
 
     @property
     def is_admin(self):
