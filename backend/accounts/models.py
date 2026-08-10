@@ -8,6 +8,10 @@ class User(AbstractBaseUser, PermissionsMixin):
         STAFF = "STAFF", 'Staff'
         FACULTY = "FACULTY", 'Faculty'
 
+    class FacultyType(models.TextChoices):
+        FULL_TIME = "FULL_TIME", 'Full-Time Faculty'
+        PART_TIME = "PART_TIME", 'Part-Time Faculty'
+
     email = models.EmailField(
         unique=True, 
         error_messages={
@@ -20,6 +24,13 @@ class User(AbstractBaseUser, PermissionsMixin):
     last_name = models.CharField(max_length=255)
 
     role = models.CharField(max_length=10, choices=Role.choices, default=Role.FACULTY)
+
+    faculty_type = models.CharField(
+        max_length=20, 
+        choices=FacultyType.choices,
+        null=True,
+        blank=True,
+    )
 
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)

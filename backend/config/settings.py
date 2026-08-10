@@ -26,6 +26,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'accounts',
+    'admin_staff_portal',
+    'faculty_portal',
 ]
 
 MIDDLEWARE = [
@@ -107,3 +109,6 @@ USE_TZ = True
 STATIC_URL = 'static/'
 
 AUTH_USER_MODEL = 'accounts.User'
+
+DEFAULT_FROM_EMAIL = 'iSubmit Portal <noreply@admin.com>'
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
