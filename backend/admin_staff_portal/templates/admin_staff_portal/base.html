@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %} iSubmit - {{ request.user.get_role_display }} Portal {% endblock %}</title>
+</head>
+
+<body>
+
+    <!-- Header / Topbar -->
+    <header>
+        <div>
+            <strong>iSubmit Portal</strong> |
+            Logged in as: {{ request.user.get_full_name }} ({{ request.user.get_role_display }})
+        </div>
+        <div>
+            <!-- Global Search Placeholder -->
+            <form action="#" method="GET" style="display:inline;">
+                <input type="text" name="global_search" placeholder="Search requirements, documents, or submissions...">
+            </form>
+            <a href="{% url 'accounts:logout' %}">Logout</a>
+        </div>
+    </header>
+
+    <hr>
+
+    <!-- Main Container: Sidebar + Content -->
+    <div style="display: flex;">
+
+        <!-- Sidebar Navigation -->
+        <nav id="sidebar">
+            <h3>iSubmit</h3>
+            <p><small>PUP Santa Rosa Campus</small></p>
+
+            <p><strong>Main Menu</strong></p>
+            <ul>
+                <li><a href="{% url 'admin_staff_portal:dashboard' %}">Dashboard</a></li>
+                <li><a href="#">Documents</a></li>
+                <li><a href="#">Submissions</a></li>
+
+                <!-- User Management Dropdown -->
+                <li>
+                    <details open>
+                        <summary><strong>User Management</strong></summary>
+                        <ul>
+                            {% if request.user.is_admin %}
+                            <li>
+                                <a href="{% url 'admin_staff_portal:user_list' %}?role=STAFF">Staff Management</a>
+                            </li>
+                            {% endif %}
+
+                            {% if request.user.is_admin or request.user.is_staff_role %}
+                            <li>
+                                <a href="{% url 'admin_staff_portal:user_list' %}?role=FACULTY">Faculty Management</a>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </details>
+                </li>
+            </ul>
+
+            <p><strong>General</strong></p>
+            <ul>
+                <li><a href="#">Settings</a></li>
+                <li><a href="#">Profile</a></li>
+                <li><a href="{% url 'accounts:logout' %}">Logout</a></li>
+            </ul>
+        </nav>
+
+        <hr>
+
+        <main id="main-content">
+            {% block content %}
+            {% endblock %}
+        </main>
+
+    </div>
+
+</body>
+
+</html>
