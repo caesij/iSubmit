@@ -50,7 +50,6 @@
     <thead>
         <tr>
             <th>Name</th>
-            <th>Role</th>
             {% if current_role == 'FACULTY' %}
             <th>Faculty Type</th>
             {% endif %}
@@ -64,7 +63,6 @@
         {% for managed_user in users %}
         <tr>
             <td>{{ managed_user.get_full_name }}</td>
-            <td>{{ managed_user.get_role_display }}</td>
             {% if current_role == 'FACULTY' %}
             <td>{{ managed_user.get_faculty_type_display|default:"-" }}</td>
             {% endif %}
