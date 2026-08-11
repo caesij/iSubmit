@@ -1,0 +1,75 @@
+{% extends 'admin_staff_portal/base.html' %}
+
+{% block title %}{% if object %}Edit Staff{% else %}Add Staff{% endif %} - iSubmit{% endblock %}
+
+{% block content %}
+<h2>{% if object %}Edit Staff Account{% else %}Add New Staff Account{% endif %}</h2>
+<a href="{% url 'admin_staff_portal:user_list' %}?role=STAFF">← Back to User List</a>
+
+<br><br>
+
+<form method="POST">
+    {% csrf_token %}
+    {% if not object %}
+    <input type="hidden" name="role" value="STAFF">
+    {% endif %}
+
+    {% if form.errors %}
+    <div>
+        <p><strong>Errors:</strong></p>
+        <ul>
+            {% for field, errors in form.errors.items %}
+            <li>{{ field }}: {{ errors|join:", " }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+
+    <div>
+        <label for="id_first_name">First Name:</label><br>
+        {{ form.first_name }}
+    </div>
+    <br>
+
+    <div>
+        <label for="id_middle_name">Middle Name:</label><br>
+        {{ form.middle_name }}
+    </div>
+    <br>
+
+    <div>
+        <label for="id_last_name">Last Name:</label><br>
+        {{ form.last_name }}
+    </div>
+    <br>
+
+    <div>
+        <label for="id_employee_ID">Employee ID:</label><br>
+        {{ form.employee_ID }}
+    </div>
+    <br>
+
+    <div>
+        <label for="id_contact_no">Contact Number:</label><br>
+        {{ form.contact_no }}
+    </div>
+    <br>
+
+    <div>
+        <label for="id_email">Institutional Email:</label><br>
+        {{ form.email }}
+    </div>
+    <br>
+
+
+    <div>
+        <label for="id_is_active">Active Account Status:</label>
+        {{ form.is_active }}
+    </div>
+    <br>
+
+    <button type="submit">
+        {% if object %}Update Account{% else %}Save Account{% endif %}
+    </button>
+</form>
+{% endblock %}

@@ -108,6 +108,8 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
+LOGIN_URL = 'accounts:login'
+
 AUTH_USER_MODEL = 'accounts.User'
 
 DEFAULT_FROM_EMAIL = 'iSubmit Portal <noreply@admin.com>'

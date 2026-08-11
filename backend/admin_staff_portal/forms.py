@@ -2,22 +2,75 @@ from django import forms
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 from accounts.models import User
+import re
 
-class UserManagementForm(forms.ModelForm):
-
+class BaseUserManagementForm(forms.ModelForm):
     class Meta:
         model = User
-        fields = ['email', 'first_name', 'middle_name', 'last_name', 'faculty_type', 'is_active']
+        fields = [
+            'first_name',
+            'middle_name',
+            'last_name',
+            'employee_ID',
+            'contact_no',
+            'email',
+            'is_active']
 
     def __init__(self, *args, **kwargs):
         self.request_user = kwargs.pop('request_user', None)
-        self.assigned_role = kwargs.pop('initial_role', None) or User.Role.FACULTY
         super().__init__(*args, **kwargs)
 
-        target_role = self.instance.role if self.instance.pk else self.assigned_role
-        if target_role != User.Role.FACULTY:
-            self.fields['faculty_type'].widget = forms.HiddenInput()
-            self.fields['faculty_type'].required = False
+    # Data Cleaning
+    def clean_first_name(self):
+        first_name = self.cleaned_data.get('first_name', '').strip()
+        return first_name.upper() if first_name else ''
+
+    def clean_middle_name(self):
+        middle_name = self.cleaned_data.get('middle_name', '').strip()
+        return middle_name.upper() if middle_name else ''
+
+    def clean_last_name(self):
+        last_name = self.cleaned_data.get('last_name', '').strip()
+        return last_name.upper() if last_name else ''
+
+    # Employee ID Cleaning
+    def clean_employee_ID(self):
+        employee_id = self.cleaned_data.get('employee_ID', '').strip()
+
+        if not employee_id:
+            raise ValidationError("Employee ID is required.")
+
+        query = User.objects.filter(employee_ID__iexact=employee_id)
+        if self.instance.pk:
+            query = query.exclude(pk=self.instance.pk)
+
+        if query.exists():
+            raise ValidationError("A user with this employee ID already exists.")
+
+        return employee_id
+
+    # Contact Number Cleaner & Formatter
+    def clean_contact_no(self):
+        contact_no = self.cleaned_data.get('contact_no', '').strip()
+
+        digits_only = re.sub(r'\D', '', contact_no)
+
+        if digits_only.startswith('639') and len(digits_only) == 12:
+            digits_only = '0' + digits_only[2:]
+
+        if not re.match(r'^09\d{9}$', digits_only):
+            raise ValidationError("Enter a valid 11-digit mobile number starting with '09' (e.g., 09123456789).")
+
+        formatted_contact_no = f"{digits_only[:4]}-{digits_only[4:7]}-{digits_only[7:]}"
+
+        query = User.objects.filter(contact_no=formatted_contact_no)
+        if self.instance.pk:
+            query = query.exclude(pk=self.instance.pk)
+
+        if query.exists():
+            raise ValidationError("A user with this contact number already exists.")
+
+        return formatted_contact_no
 
     # Validate Email
     def clean_email(self):
@@ -34,42 +87,29 @@ class UserManagementForm(forms.ModelForm):
             query = query.exclude(pk=self.instance.pk)
             
         if query.exists():
-            raise ValidationError("An account with this email address already exists.")
+            raise ValidationError("A user with this email address already exists.")
 
         return email
 
-    # Data Cleaning
-    def clean_first_name(self):
-        first_name = self.cleaned_data.get('first_name', '').strip()
-        return first_name.upper() if first_name else ''
-
-    def clean_middle_name(self):
-        middle_name = self.cleaned_data.get('middle_name', '').strip()
-        return middle_name.upper() if middle_name else ''
-
-    def clean_last_name(self):
-        last_name = self.cleaned_data.get('last_name', '').strip()
-        return last_name.upper() if last_name else ''
-
-    def clean(self):
-        cleaned_data = super().clean()
-        faculty_type = cleaned_data.get('faculty_type')
-        target_role = self.instance.role if self.instance.pk else self.assigned_role
-
-        if target_role == User.Role.FACULTY and not faculty_type:
-            self.add_error('faculty_type', 'Faculty type is required for faculty accounts.')
-
-        return cleaned_data
-
     def save(self, commit=True):
         user = super().save(commit=False)
-
-        if not user.pk:
+        if user._state.adding:
             user.role = self.assigned_role
-
-        if user.role != User.Role.FACULTY:
-            user.faculty_type = None
-
         if commit:
             user.save()
         return user
+
+class StaffManagementForm(BaseUserManagementForm):
+    assigned_role = User.Role.STAFF
+
+class FacultyManagementForm(BaseUserManagementForm):
+    assigned_role = User.Role.FACULTY
+
+    class Meta(BaseUserManagementForm.Meta):
+        fields = BaseUserManagementForm.Meta.fields + ['faculty_type']
+
+    def clean_faculty_type(self):
+        faculty_type = self.cleaned_data.get('faculty_type')
+        if not faculty_type:
+            raise ValidationError('Faculty type is required for faculty accounts.')
+        return faculty_type
