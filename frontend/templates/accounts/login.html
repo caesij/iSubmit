@@ -1,15 +1,18 @@
 {% extends 'accounts/auth_base.html' %}
+{% load static %}
 
 {% block title %}iSubmit - Login{% endblock %}
 
 {% block content %}
+<div class="auth-emblem-wrap">
+    <img src="{% static 'images/logo.svg' %}" alt="emblem" class="auth-emblem">
+</div>
 <h2 id="portal-title">Administrator Portal Access</h2>
-<p>Sign in using your authorized campus account.</p>
+<p class="auth-subtitle">Sign in using your authorized campus account.</p>
 
-<!-- Tab Controls -->
-<div>
-    <button type="button" onclick="switchTab('FACULTY')">Faculty</button>
-    <button type="button" onclick="switchTab('ADMIN')">Admin / Staff</button>
+<div class="role-switch">
+    <button type="button" id="faculty_button" class="role-button" onclick="switchTab('FACULTY')">Faculty</button>
+    <button type="button" id="admin_button" class="role-button active" onclick="switchTab('ADMIN')">Admin / Staff</button>
 </div>
 
 <!-- Error Messages Only -->
@@ -30,19 +33,24 @@
 
     <input type="hidden" name="login_type" id="login_type_input" value="ADMIN">
 
-    <div>
+    <div class="form-group">
         <label id="email-label" for="username">Admin Webmail</label>
-        <input type="email" id="username" name="username" placeholder="Enter your email" required>
+        <div class="input-with-icon">
+            <img src="{% static 'images/email.svg' %}" alt="" class="input-icon">
+            <input type="email" id="username" name="username" placeholder="Enter your admin webmail" required>
+        </div>
     </div>
 
-    <div>
+    <div class="form-group">
         <label for="password">Password</label>
-        <input type="password" id="password" name="password" placeholder="Enter your password" required>
-        <button type="button" onclick="togglePassword()">Show/Hide</button>
-    </div>
-
-    <div>
-        <a href="#">Forgot password?</a>
+        <div class="input-with-icon password-row">
+            <img src="{% static 'images/password.svg' %}" alt="" class="input-icon">
+            <input type="password" id="password" name="password" placeholder="Enter your password" required>
+            <button id="password_toggle_button" type="button" onclick="togglePassword()" class="password-toggle" aria-label="Show password" title="Show password">
+                <img src="{% static 'images/eye.svg' %}" alt="" class="eye-icon">
+            </button>
+            <a href="#" class="forgot-password">Forgot password?</a>
+        </div>
     </div>
 
     <button type="submit">Sign In</button>
@@ -60,20 +68,43 @@
 
         loginTypeInput.value = role;
 
+        const facultyButton = document.getElementById('faculty_button');
+        const adminButton = document.getElementById('admin_button');
+
+        const leftTagline = document.querySelector('.auth-left .tagline');
+        const leftLead = document.querySelector('.auth-left .lead');
+        const emailInput = document.getElementById('username');
+
         if (role === 'FACULTY') {
             title.innerText = 'Faculty Portal Access';
             emailLabel.innerText = 'Faculty Webmail';
+            emailInput.placeholder = 'Enter your faculty webmail';
             disclaimer.innerText = 'For authorized faculty personnel only.';
+            leftTagline.innerText = 'Submit and Track Faculty Documents with Ease';
+            leftLead.innerText = 'iSubmit enables faculty personnel to digitally submit, organize, and monitor required documents through a secure and centralized platform.';
+            facultyButton.classList.add('active');
+            adminButton.classList.remove('active');
         } else {
             title.innerText = 'Administrator Portal Access';
             emailLabel.innerText = 'Admin Webmail';
+            emailInput.placeholder = 'Enter your admin webmail';
             disclaimer.innerText = 'For authorized campus administrators only.';
+            leftTagline.innerText = 'Manage Faculty Document Workflows Efficiently';
+            leftLead.innerText = 'iSubmit helps campus administrators oversee document submissions, monitor compliance, and generate institutional insights through intelligent document processing.';
+            facultyButton.classList.remove('active');
+            adminButton.classList.add('active');
         }
     }
 
     function togglePassword() {
         const input = document.getElementById('password');
-        input.type = input.type === 'password' ? 'text' : 'password';
+        const button = document.getElementById('password_toggle_button');
+        const isPassword = input.type === 'password';
+
+        input.type = isPassword ? 'text' : 'password';
+        button.classList.toggle('visible', isPassword);
+        button.setAttribute('aria-label', isPassword ? 'Hide password' : 'Show password');
+        button.setAttribute('title', isPassword ? 'Hide password' : 'Show password');
     }
 </script>
 {% endblock %}

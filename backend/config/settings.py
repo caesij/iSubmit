@@ -106,7 +106,16 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
-STATIC_URL = 'static/'
+# Serve static files from the URL root — include leading and trailing slash
+STATIC_URL = '/static/'
+
+# Include the frontend/static directory so runserver/staticfiles can find assets
+STATICFILES_DIRS = [
+    BASE_DIR.parent / 'frontend' / 'static',
+]
+
+# STATIC_ROOT is used by collectstatic in production
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 LOGIN_URL = 'accounts:login'
 
