@@ -11,8 +11,8 @@
 <p class="auth-subtitle">Sign in using your authorized campus account.</p>
 
 <div class="role-switch">
-    <button type="button" id="faculty_button" class="role-button" onclick="switchTab('FACULTY')">Faculty</button>
-    <button type="button" id="admin_button" class="role-button active" onclick="switchTab('ADMIN')">Admin / Staff</button>
+    <button type="button" id="faculty_button" class="role-button active" onclick="switchTab('FACULTY')">Faculty</button>
+    <button type="button" id="admin_button" class="role-button" onclick="switchTab('ADMIN')">Admin / Staff</button>
 </div>
 
 <!-- Error Messages Only -->
@@ -31,10 +31,10 @@
 <form method="POST" action="{% url 'accounts:login' %}">
     {% csrf_token %}
 
-    <input type="hidden" name="login_type" id="login_type_input" value="ADMIN">
+    <input type="hidden" name="login_type" id="login_type_input" value="{{ login_type|default:'FACULTY' }}">
 
     <div class="form-group">
-        <label id="email-label" for="username">Admin Webmail</label>
+        <label id="email-label" for="username">Faculty Webmail</label>
         <div class="input-with-icon">
             <img src="{% static 'images/email.svg' %}" alt="" class="input-icon">
             <input type="email" id="username" name="username" placeholder="Enter your admin webmail" required>
@@ -49,7 +49,7 @@
             <button id="password_toggle_button" type="button" onclick="togglePassword()" class="password-toggle" aria-label="Show password" title="Show password">
                 <img src="{% static 'images/eye.svg' %}" alt="" class="eye-icon">
             </button>
-            <a href="#" class="forgot-password">Forgot password?</a>
+            <a href="{% url 'accounts:reset_password' %}" class="forgot-password">Forgot password?</a>
         </div>
     </div>
 
@@ -106,5 +106,10 @@
         button.setAttribute('aria-label', isPassword ? 'Hide password' : 'Show password');
         button.setAttribute('title', isPassword ? 'Hide password' : 'Show password');
     }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const initialRole = document.getElementById('login_type_input').value;
+        switchTab(initialRole === 'ADMIN' ? 'ADMIN' : 'FACULTY');
+    });
 </script>
 {% endblock %}

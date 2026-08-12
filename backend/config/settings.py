@@ -25,6 +25,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'axes',
     'accounts',
     'admin_staff_portal',
     'faculty_portal',
@@ -38,6 +39,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'axes.middleware.AxesMiddleware'
 ]
 
 ROOT_URLCONF = 'config.urls'
@@ -117,9 +119,28 @@ STATICFILES_DIRS = [
 # STATIC_ROOT is used by collectstatic in production
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
+AUTHENTICATION_BACKENDS = [
+    'axes.backends.AxesStandaloneBackend',
+    'django.contrib.auth.backends.ModelBackend',
+]
+
+# Axes Config
+AXES_FAILURE_LIMIT = 5
+AXES_LOCK_OUT_AT_FAILURE = True
+AXES_COOLOFF_TIME = None
+AXES_LOCKOUT_PARAMETERS = ['username', 'ip_address']
+AXES_USERNAME_FORM_FIELD = 'username'
+AXES_RESET_ON_SUCCESS = True
+AXES_IP_WHITELIST = ['127.0.0.1']  # only while developing locally
+
 LOGIN_URL = 'accounts:login'
 
 AUTH_USER_MODEL = 'accounts.User'
 
-DEFAULT_FROM_EMAIL = 'iSubmit Portal <noreply@admin.com>'
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = os.environ.get('EMAIL_USER')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_PASS')
+DEFAULT_FROM_EMAIL = os.environ.get('EMAIL_USER')
