@@ -1,8 +1,10 @@
 /* Minimal auth page styles to recreate the two-column layout */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+
 html, body {
   height: 100%;
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+  font-family: 'Poppins', sans-serif;
   color: #222;
 }
 
@@ -120,17 +122,16 @@ html, body {
 }
 
 .role-button {
-  flex: 1 1 auto;
-  min-width: 180px;
+  min-width: 215px;
   padding: 10px 20px;
   border-radius: 5px;
   border: none;
-  background: transparent;
+  background-color: #fff;
   color: #6b0f0f;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
+  transition: all 0.2s ease;
 }
 
 .role-button.active {
@@ -140,7 +141,8 @@ html, body {
 }
 
 .role-button:not(.active):hover {
-  color: #A60700;
+  background-color: #F2DAD9 !important;
+  color: #6b0f0f;
 }
 
 .form-group {
