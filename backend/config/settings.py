@@ -128,8 +128,9 @@ AUTHENTICATION_BACKENDS = [
 AXES_FAILURE_LIMIT = 5
 AXES_LOCK_OUT_AT_FAILURE = True
 AXES_COOLOFF_TIME = None
-AXES_LOCKOUT_PARAMETERS = 'accounts.utils.get_lockout_parameters'
+AXES_LOCKOUT_PARAMETERS = 'accounts.axes_handlers.get_lockout_parameters'
 AXES_USERNAME_FORM_FIELD = 'username'
+AXES_LOCKOUT_CALLABLE = 'accounts.axes_handlers.lockout_response'
 AXES_RESET_ON_SUCCESS = True
 
 LOGIN_URL = 'accounts:login'

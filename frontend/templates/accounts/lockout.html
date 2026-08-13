@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Account Locked</title>
+</head>
+
+<body>
+    <main>
+        <h1>Account Locked</h1>
+        <p>
+            Too many failed login attempts. Your account has been temporarily locked.
+        </p>
+
+        <p>Please contact an administrator to unlock your account.</p>
+
+
+        <a href="{% url 'accounts:login' %}">Back to login</a>
+    </main>
+</body>
+
+</html>
