@@ -25,6 +25,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'axes',
     'accounts',
     'admin_staff_portal',
     'faculty_portal',
@@ -38,6 +39,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'axes.middleware.AxesMiddleware'
 ]
 
 ROOT_URLCONF = 'config.urls'
@@ -45,7 +47,7 @@ ROOT_URLCONF = 'config.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR.parent / 'frontend' / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -106,9 +108,39 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
-STATIC_URL = 'static/'
+# Serve static files from the URL root — include leading and trailing slash
+STATIC_URL = '/static/'
+
+# Include the frontend/static directory so runserver/staticfiles can find assets
+STATICFILES_DIRS = [
+    BASE_DIR.parent / 'frontend' / 'static',
+]
+
+# STATIC_ROOT is used by collectstatic in production
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+AUTHENTICATION_BACKENDS = [
+    'axes.backends.AxesStandaloneBackend',
+    'django.contrib.auth.backends.ModelBackend',
+]
+
+# Axes Config
+AXES_FAILURE_LIMIT = 5
+AXES_LOCK_OUT_AT_FAILURE = True
+AXES_COOLOFF_TIME = None
+AXES_LOCKOUT_PARAMETERS = 'accounts.axes_handlers.get_lockout_parameters'
+AXES_USERNAME_FORM_FIELD = 'username'
+AXES_LOCKOUT_CALLABLE = 'accounts.axes_handlers.lockout_response'
+AXES_RESET_ON_SUCCESS = True
+
+LOGIN_URL = 'accounts:login'
 
 AUTH_USER_MODEL = 'accounts.User'
 
-DEFAULT_FROM_EMAIL = 'iSubmit Portal <noreply@admin.com>'
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = os.environ.get('EMAIL_USER')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_PASS')
+DEFAULT_FROM_EMAIL = os.environ.get('EMAIL_USER')

@@ -1,0 +1,38 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}iSubmit{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'css/auth.css' %}">
+</head>
+
+<body>
+
+    <div class="auth-page">
+        <aside class="auth-left">
+            <div class="auth-left-inner">
+                <div class="auth-header">
+                    <img src="{% static 'images/logo.svg' %}" alt="iSubmit logo" class="auth-logo">
+                    <span class="brand">iSubmit</span>
+                </div>
+                <div class="auth-copy">
+                    <h1 class="tagline">Manage Faculty Document Workflows Efficiently</h1>
+                    <p class="lead">iSubmit helps campus administrators oversee document submissions, monitor compliance, and generate institutional insights through intelligent document processing.</p>
+                </div>
+                <footer class="auth-footer">Copyright © 2026<br>Polytechnic University of the Philippines - Santa Rosa Campus<br>All Rights Reserved.</footer>
+            </div>
+        </aside>
+
+        <main class="auth-right">
+            <div class="auth-right-inner">
+                {% block content %}{% endblock %}
+            </div>
+        </main>
+    </div>
+
+</body>
+
+</html>

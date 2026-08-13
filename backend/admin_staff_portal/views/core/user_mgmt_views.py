@@ -3,13 +3,14 @@ from django.views.generic import ListView, CreateView, UpdateView, View
 from django.shortcuts import get_object_or_404, redirect
 from django.db.models import Q
 from accounts.models import User
-from admin_staff_portal.forms import UserManagementForm
-from admin_staff_portal.mixins import AdminOrStaffRequiredMixin, RoleContextMixin
+from admin_staff_portal.forms import StaffManagementForm, FacultyManagementForm
+from admin_staff_portal.mixins import AdminOrStaffRequiredMixin, RoleContextMixin, RoleFormMixin
 import secrets
 import string
 from django.core.mail import send_mail
 from django.conf import settings
 from django.contrib import messages
+from axes.utils import reset as axes_reset
 
 class UserListView(AdminOrStaffRequiredMixin, RoleContextMixin, ListView):
     model = User
@@ -47,24 +48,17 @@ class UserListView(AdminOrStaffRequiredMixin, RoleContextMixin, ListView):
     # Context Passing for Pages
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['page_title'] = "Faculty Management" if self.target_role == User.Role.FACULTY else "Staff Management"
-        context['current_role'] = self.target_role
-        context['form'] = UserManagementForm(
-            request_user=self.request.user,
-            initial_role=self.target_role
-        )
+        form_class = FacultyManagementForm if self.target_role == User.Role.FACULTY else StaffManagementForm
+        context['form'] = form_class(request_user=self.request.user)
         return context
 
 
-class UserCreateView(AdminOrStaffRequiredMixin, RoleContextMixin, CreateView):
+class UserCreateView(AdminOrStaffRequiredMixin, RoleContextMixin, RoleFormMixin, CreateView):
     model = User
-    form_class = UserManagementForm
-    template_name = 'admin_staff_portal/core/user_mgmt/user_form.html'
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         kwargs['request_user'] = self.request.user
-        kwargs['initial_role'] = self.target_role
         return kwargs
 
     def get_success_url(self):
@@ -75,19 +69,18 @@ class UserCreateView(AdminOrStaffRequiredMixin, RoleContextMixin, CreateView):
         user = form.save(commit=False)
 
         alphabet = string.ascii_letters + string.digits + "!@#$%^&*"
-        temp_password = ''.join(secrets.choice(alphabet) for _ in range(12))
+        generated_password = ''.join(secrets.choice(alphabet) for _ in range(12))
 
-        user.set_password(temp_password)
+        user.set_password(generated_password)
         user.save()
 
         # Email Notification (Account Credentials)
-        subject = "Welcome to iSubmit - Your Account Credentials"
+        subject = 'Welcome to iSubmit - Your Account Credentials'
         message = (
-            f"Hello {user.get_full_name()},\n\n"
-            f"An account has been created for you on the iSubmit portal.\n\n"
-            f"Email: {user.email}\n"
-            f"Temporary Password: {temp_password}\n\n"
-            f"Please log in and change your password immediately."
+            f'Hello {user.get_full_name()},\n\n'
+            f'An account has been created for you on the iSubmit portal.\n\n'
+            f'Email: {user.email}\n'
+            f'Password: {generated_password}\n\n'
         )
 
         try:
@@ -98,16 +91,14 @@ class UserCreateView(AdminOrStaffRequiredMixin, RoleContextMixin, CreateView):
                 recipient_list=[user.email],
                 fail_silently=False,
             )
-            messages.success(self.request, f"Account created for {user.email}. Password email sent successfully.")
-        except Exception as e:
-            messages.warning(self.request, f"Account created for {user.email}, but failed to send email: {str(e)}")
+            messages.success(self.request, f'Account created for {user.email}. Password email sent successfully.')
+        except Exception:
+            messages.warning(self.request, f'Account created for {user.email}, but failed to send email.')
 
         return redirect(self.get_success_url())
 
-class UserUpdateView(AdminOrStaffRequiredMixin, UpdateView):
+class UserUpdateView(AdminOrStaffRequiredMixin, RoleContextMixin, RoleFormMixin, UpdateView):
     model = User
-    form_class = UserManagementForm
-    template_name = 'admin_staff_portal/core/user_mgmt/user_form.html'
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -116,42 +107,40 @@ class UserUpdateView(AdminOrStaffRequiredMixin, UpdateView):
 
     def dispatch(self, request, *args, **kwargs):
         target_user = self.get_object()
-        user = request.user
 
-        if user.is_staff_role and target_user.role != User.Role.FACULTY:
+        if not self.can_manage_target(target_user):
             messages.error(request, "You do not have permission to edit this account.")
             return redirect('admin_staff_portal:user_list')
 
-        if user.is_admin and target_user.role not in [User.Role.STAFF, User.Role.FACULTY]:
-            messages.error(request, "You do not have permission to edit this account.")
-            return redirect('admin_staff_portal:user_list')
+        self.target_role = target_user.role
+        
         return super().dispatch(request, *args, **kwargs)
 
     def get_success_url(self):
         url = reverse('admin_staff_portal:user_list')
-
-        if self.object.role == User.Role.FACULTY:
-            return f"{url}?role=FACULTY"
-        
-        return f"{url}?role=STAFF"
+        return f'{url}?role={self.object.role}'
 
 class UserToggleAccStatusView(AdminOrStaffRequiredMixin, View):
     def post(self, request, pk):
         target_user = get_object_or_404(User, pk=pk)
-        user = request.user
+        redirect_url = f"{reverse('admin_staff_portal:user_list')}?role={target_user.role}"
 
-        # Authorization
-        if user.is_staff_role and target_user.role != User.Role.FACULTY:
-            return redirect('admin_staff_portal:user_list')
+        if request.user.pk == target_user.pk:
+            messages.error(request, 'You cannot deactivate your own account.')
+            return redirect(redirect_url)
 
-        if user.is_admin and target_user.role not in [User.Role.STAFF, User.Role.FACULTY]:
-            return redirect('admin_staff_portal:user_list')
+        if not self.can_manage_target(target_user):
+            messages.error(request, 'You do not have permission to edit this account status.')
+            return redirect(redirect_url)
 
         target_user.is_active = not target_user.is_active
+
+        if target_user.is_active:
+            target_user.is_locked_out = False
+            axes_reset(username=target_user.email)
         target_user.save()
 
-        redirect_url = reverse('admin_staff_portal:user_list')
+        status_label = 'activated' if target_user.is_active else 'deactivated'
+        messages.success(request, f'The account has been {status_label}.')
 
-        if target_user.role == User.Role.FACULTY:
-            return redirect(f"{redirect_url}?role=FACULTY")
-        return redirect(f"{redirect_url}?role=STAFF")
+        return redirect(redirect_url)

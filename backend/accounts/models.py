@@ -1,8 +1,15 @@
+import uuid
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from .managers import UserManager, FacultyManager, StaffManager
 
 class User(AbstractBaseUser, PermissionsMixin):
+    # Primary Key as UUID
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False
+    )
     class Role(models.TextChoices):
         ADMIN = "ADMIN", 'Admin'
         STAFF = "STAFF", 'Staff'
@@ -12,16 +19,32 @@ class User(AbstractBaseUser, PermissionsMixin):
         FULL_TIME = "FULL_TIME", 'Full-Time Faculty'
         PART_TIME = "PART_TIME", 'Part-Time Faculty'
 
+    first_name = models.CharField(max_length=255)
+    middle_name = models.CharField(max_length=255, blank=True)
+    last_name = models.CharField(max_length=255)
+
+    employee_ID = models.CharField(
+        max_length=50,
+        unique=True,
+        error_messages={
+            'unique': 'A user with this employee ID already exists.'
+        },
+    )
+
+    contact_no = models.CharField(
+        max_length=20,
+        unique=True,
+        error_messages={
+            'unique': 'A user with this contact number already exists.'
+        },
+    )
+
     email = models.EmailField(
         unique=True, 
         error_messages={
             'unique': 'A user with this email already exists.'
-        }
+        },
     )
-
-    first_name = models.CharField(max_length=255)
-    middle_name = models.CharField(max_length=255, blank=True)
-    last_name = models.CharField(max_length=255)
 
     role = models.CharField(max_length=10, choices=Role.choices, default=Role.FACULTY)
 
@@ -33,6 +56,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     )
 
     is_active = models.BooleanField(default=True)
+    is_locked_out = models.BooleanField(default=False)
     is_staff = models.BooleanField(default=False)
     is_superuser = models.BooleanField(default=False)
     date_joined = models.DateTimeField(auto_now_add=True)
@@ -42,7 +66,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     objects = UserManager()
 
     USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ['first_name', 'middle_name', 'last_name']
+    REQUIRED_FIELDS = ['first_name', 'middle_name', 'last_name', 'employee_ID']
 
     def save(self, *args, **kwargs):
         # Admin

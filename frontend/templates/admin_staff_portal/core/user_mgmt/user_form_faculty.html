@@ -1,15 +1,18 @@
 {% extends 'admin_staff_portal/base.html' %}
 
-{% block title %}{% if object %}Edit User{% else %}Add User{% endif %} - iSubmit{% endblock %}
+{% block title %}{% if object %}Edit Faculty{% else %}Add Faculty{% endif %} - iSubmit{% endblock %}
 
 {% block content %}
-<h2>{% if object %}Edit User Account{% else %}Add New User Account{% endif %}</h2>
-<a href="{% url 'admin_staff_portal:user_list' %}">← Back to User List</a>
+<h2>{% if object %}Edit Faculty Account{% else %}Add New Faculty Account{% endif %}</h2>
+<a href="{% url 'admin_staff_portal:user_list' %}?role=FACULTY">← Back to User List</a>
 
 <br><br>
 
 <form method="POST">
     {% csrf_token %}
+    {% if not object %}
+    <input type="hidden" name="role" value="FACULTY">
+    {% endif %}
 
     {% if form.errors %}
     <div>
@@ -21,12 +24,6 @@
         </ul>
     </div>
     {% endif %}
-
-    <div>
-        <label for="id_email">Institutional Email:</label><br>
-        {{ form.email }}
-    </div>
-    <br>
 
     <div>
         <label for="id_first_name">First Name:</label><br>
@@ -46,15 +43,30 @@
     </div>
     <br>
 
-    {% if form.faculty_type.is_hidden %}
-    {{ form.faculty_type }}
-    {% else %}
+    <div>
+        <label for="id_employee_ID">Employee ID:</label><br>
+        {{ form.employee_ID }}
+    </div>
+    <br>
+
+    <div>
+        <label for="id_contact_no">Contact Number:</label><br>
+        {{ form.contact_no }}
+    </div>
+    <br>
+
+    <div>
+        <label for="id_email">Institutional Email:</label><br>
+        {{ form.email }}
+    </div>
+    <br>
+
+
     <div>
         <label for="id_faculty_type">Faculty Type:</label><br>
         {{ form.faculty_type }}
     </div>
     <br>
-    {% endif %}
 
     <div>
         <label for="id_is_active">Active Account Status:</label>
