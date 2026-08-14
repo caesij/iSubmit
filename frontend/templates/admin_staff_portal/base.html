@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 
@@ -5,79 +6,123 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %} iSubmit - {{ request.user.get_role_display }} Portal {% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'css/admin_staff_portal.css' %}">
 </head>
 
 <body>
+    <div class="admin-shell">
+        <aside class="sidebar">
+            <div class="brand-box">
+                <div class="brand-mark">
+                    <img src="{% static 'images/logo.svg' %}" alt="iSubmit logo" class="brand-symbol">
+                </div>
+                <div>
+                    <div class="brand-name">iSubmit</div>
+                    <div class="brand-sub">Polytechnic University of the Philippines<br>Santa Rosa Campus</div>
+                </div>
+            </div>
 
-    <!-- Header / Topbar -->
-    <header>
-        <div>
-            <strong>iSubmit Portal</strong> |
-            Logged in as: {{ request.user.get_full_name }} ({{ request.user.get_role_display }})
-        </div>
-        <div>
-            <!-- Global Search Placeholder -->
-            <form action="#" method="GET" style="display:inline;">
-                <input type="text" name="global_search" placeholder="Search requirements, documents, or submissions...">
-            </form>
-            <a href="{% url 'accounts:logout' %}">Logout</a>
-        </div>
-    </header>
-
-    <hr>
-
-    <!-- Main Container: Sidebar + Content -->
-    <div style="display: flex;">
-
-        <!-- Sidebar Navigation -->
-        <nav id="sidebar">
-            <h3>iSubmit</h3>
-            <p><small>PUP Santa Rosa Campus</small></p>
-
-            <p><strong>Main Menu</strong></p>
-            <ul>
-                <li><a href="{% url 'admin_staff_portal:dashboard' %}">Dashboard</a></li>
-                <li><a href="#">Documents</a></li>
-                <li><a href="#">Submissions</a></li>
-
-                <!-- User Management Dropdown -->
-                <li>
-                    <details open>
-                        <summary><strong>User Management</strong></summary>
-                        <ul>
+            <nav class="sidebar-nav" aria-label="Main navigation">
+                <div class="nav-section-title">Main</div>
+                <ul class="nav-list">
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.path == '/admin-staff/dashboard/' %}active{% endif %}" href="{% url 'admin_staff_portal:dashboard' %}">
+                            <span class="icon"><img src="{% static 'images/dashboard.svg' %}" alt="Dashboard icon"></span>
+                            <span>Dashboard</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">
+                            <span class="icon"><img src="{% static 'images/documents.svg' %}" alt="Documents icon"></span>
+                            <span>Documents</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">
+                            <span class="icon"><img src="{% static 'images/submissions.svg' %}" alt="Submissions icon"></span>
+                            <span>Submissions</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if 'users' in request.path %}active{% endif %}" href="{% url 'admin_staff_portal:user_list' %}?role=STAFF">
+                            <span class="icon"><img src="{% static 'images/usermanagement.svg' %}" alt="User management icon"></span>
+                            <span>User Management</span>
+                        </a>
+                        <ul class="subnav-list">
                             {% if request.user.is_admin %}
-                            <li>
-                                <a href="{% url 'admin_staff_portal:user_list' %}?role=STAFF">Staff Management</a>
+                            <li class="subnav-item">
+                                <a class="subnav-link {% if request.GET.role == 'STAFF' %}active{% endif %}" href="{% url 'admin_staff_portal:user_list' %}?role=STAFF">Staff Management</a>
                             </li>
                             {% endif %}
-
                             {% if request.user.is_admin or request.user.is_staff_role %}
-                            <li>
-                                <a href="{% url 'admin_staff_portal:user_list' %}?role=FACULTY">Faculty Management</a>
+                            <li class="subnav-item">
+                                <a class="subnav-link {% if request.GET.role == 'FACULTY' %}active{% endif %}" href="{% url 'admin_staff_portal:user_list' %}?role=FACULTY">Faculty Management</a>
                             </li>
                             {% endif %}
                         </ul>
-                    </details>
-                </li>
-            </ul>
+                    </li>
+                </ul>
 
-            <p><strong>General</strong></p>
-            <ul>
-                <li><a href="#">Settings</a></li>
-                <li><a href="#">Profile</a></li>
-                <li><a href="{% url 'accounts:logout' %}">Logout</a></li>
-            </ul>
-        </nav>
+                <div class="sidebar-divider"></div>
 
-        <hr>
+                <div class="nav-section-title">General</div>
+                <ul class="nav-list">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">
+                            <span class="icon"><img src="{% static 'images/settings.svg' %}" alt="Settings icon"></span>
+                            <span>Settings</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">
+                            <span class="icon"><img src="{% static 'images/profile.svg' %}" alt="Profile icon"></span>
+                            <span>Profile</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'accounts:logout' %}">
+                            <span class="icon"><img src="{% static 'images/logout.svg' %}" alt="Logout icon"></span>
+                            <span>Logout</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </aside>
 
-        <main id="main-content">
-            {% block content %}
-            {% endblock %}
+        <main class="main-area">
+            <header class="topbar">
+                <div>
+                    <h1 class="topbar-title">{% block heading %}{{ page_title|default:'User Management' }}{% endblock %}</h1>
+                    <div class="topbar-subtitle">Manage and access all approved documents across the system.</div>
+                </div>
+
+                <div class="topbar-controls">
+                    <form class="global-search" action="{% url 'admin_staff_portal:user_list' %}" method="GET">
+                        <span class="icon">🔍</span>
+                        <input type="text" name="q" value="{{ request.GET.q|default:'' }}" placeholder="Search requirements, documents, or submissions...">
+                    </form>
+
+                    <div class="notification-wrap" aria-label="Notifications">
+                        <img src="{% static 'images/Icon - Notifications.svg' %}" alt="Notifications" class="icon">
+                        <span class="notification-dot"></span>
+                    </div>
+
+                    <div class="user-badge">
+                        <div class="user-badge-avatar">
+                            <img src="{% static 'images/profile.svg' %}" alt="User profile" class="user-badge-img">
+                        </div>
+                        <div>
+                            <div class="user-badge-name">{{ request.user.get_full_name|default:request.user.email }}</div>
+                            <span class="user-badge-meta">{{ request.user.get_role_display }}</span>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <div class="content-shell">
+                {% block content %}{% endblock %}
+            </div>
         </main>
-
     </div>
-
 </body>
-
 </html>

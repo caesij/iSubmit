@@ -1,101 +1,92 @@
 {% extends 'admin_staff_portal/base.html' %}
 
-{% block title %} iSubmit - {{ request.user.get_role_display }} Portal {% endblock %}
+{% block title %}{{ page_title }} - iSubmit{% endblock %}
 
 {% block content %}
-<h2>{{ page_title }}</h2>
-
-<!-- Sub-navigation -->
-<div>
-    <a href="{% url 'admin_staff_portal:user_list' %}?role={{ current_role }}"><strong>Users List</strong></a> |
-    <a href="{% url 'admin_staff_portal:user_create' %}?role={{ current_role }}">+ Add User</a>
+<div class="panel-header">
+    <div class="section-tabs">
+        <a href="{% url 'admin_staff_portal:user_list' %}?role={{ current_role }}" class="tab-link active">{{ page_title }}</a>
+        <a href="{% url 'admin_staff_portal:user_create' %}?role={{ current_role }}" class="tab-link">Add {{ page_title|cut:' Management' }}</a>
+    </div>
 </div>
 
-<br>
+<div class="table-toolbar">
+    <form method="GET" class="filters" action="{% url 'admin_staff_portal:user_list' %}">
+        <input type="hidden" name="role" value="{{ current_role }}">
+        <div class="search-field">
+            <span class="icon">🔍</span>
+            <input type="text" name="q" value="{{ request.GET.q|default:'' }}" placeholder="Search by name or email...">
+        </div>
 
-<!-- Search and Filters Form -->
-<form method="GET" action="{% url 'admin_staff_portal:user_list' %}">
-    <input type="hidden" name="role" value="{{ current_role }}">
+        {% if current_role == 'FACULTY' %}
+        <select class="filter-select" name="faculty_type">
+            <option value="">All Faculty Types</option>
+            <option value="FULL_TIME" {% if request.GET.faculty_type == 'FULL_TIME' %}selected{% endif %}>Full-Time Faculty</option>
+            <option value="PART_TIME" {% if request.GET.faculty_type == 'PART_TIME' %}selected{% endif %}>Part-Time Faculty</option>
+        </select>
+        {% endif %}
 
-    <!-- Search Text Box -->
-    <input type="text" name="q" value="{{ request.GET.q }}" placeholder="Search by name or email...">
+        <select class="filter-select" name="status">
+            <option value="">All Statuses</option>
+            <option value="active" {% if request.GET.status == 'active' %}selected{% endif %}>Active</option>
+            <option value="inactive" {% if request.GET.status == 'inactive' %}selected{% endif %}>Inactive</option>
+        </select>
 
-    <!-- Faculty Type Filter -->
-    {% if current_role == 'FACULTY' %}
-    <select name="faculty_type">
-        <option value="">All Faculty Types</option>
-        <option value="FULL_TIME" {% if request.GET.faculty_type == 'FULL_TIME' %}selected{% endif %}>Full-Time Faculty</option>
-        <option value="PART_TIME" {% if request.GET.faculty_type == 'PART_TIME' %}selected{% endif %}>Part-Time Faculty</option>
-    </select>
-    {% endif %}
+        <button class="btn btn-secondary" type="submit">Filter / Search</button>
+        {% if request.GET.q or request.GET.faculty_type or request.GET.status %}
+        <a class="btn btn-ghost" href="{% url 'admin_staff_portal:user_list' %}?role={{ current_role }}">Clear Filters</a>
+        {% endif %}
+    </form>
 
-    <!-- Account Status Filter -->
-    <select name="status">
-        <option value="">All Statuses</option>
-        <option value="active" {% if request.GET.status == 'active' %}selected{% endif %}>Active</option>
-        <option value="inactive" {% if request.GET.status == 'inactive' %}selected{% endif %}>Inactive</option>
-    </select>
+    <a class="action-button" href="{% url 'admin_staff_portal:user_create' %}?role={{ current_role }}">+ Add User</a>
+</div>
 
-    <button type="submit">Filter / Search</button>
-
-    {% if request.GET.q or request.GET.faculty_type or request.GET.status %}
-    <a href="{% url 'admin_staff_portal:user_list' %}?role={{ current_role }}">Clear Filters</a>
-    {% endif %}
-</form>
-
-<br>
-
-<!-- User Data Table -->
-<table border="1" cellpadding="8" cellspacing="0">
-    <thead>
-        <tr>
-            <th>Name</th>
-            {% if current_role == 'FACULTY' %}
-            <th>Faculty Type</th>
-            {% endif %}
-            <th>Email</th>
-            <th>Account Status</th>
-            <th>Last Active</th>
-            <th>Actions</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for managed_user in users %}
-        <tr>
-            <td>{{ managed_user.get_full_name }}</td>
-            {% if current_role == 'FACULTY' %}
-            <td>{{ managed_user.get_faculty_type_display|default:"-" }}</td>
-            {% endif %}
-            <td>{{ managed_user.email }}</td>
-            <td>
-                {% if managed_user.is_active %}
-                Active
-                {% else %}
-                Inactive
+<div class="table-wrap">
+    <table class="data-table" aria-label="{{ page_title }} list">
+        <thead>
+            <tr>
+                <th style="width: 22%;">Name</th>
+                {% if current_role == 'FACULTY' %}
+                <th style="width: 18%;">Faculty Type</th>
                 {% endif %}
-            </td>
-            <td>{{ managed_user.last_login|default:"Never" }}</td>
-            <td>
-                <a href="{% url 'admin_staff_portal:user_edit' managed_user.pk %}">Edit</a>
-
-                <form method="POST" action="{% url 'admin_staff_portal:user_toggle_acc_status' managed_user.pk %}"
-                    style="display:inline;">
-                    {% csrf_token %}
-                    <button type="submit">
-                        {% if managed_user.is_active %}
-                        Deactivate
-                        {% else %}
-                        Activate
-                        {% endif %}
-                    </button>
-                </form>
-            </td>
-        </tr>
-        {% empty %}
-        <tr>
-            <td colspan="{% if current_role == 'FACULTY' %}7{% else %}6{% endif %}">No accounts found.</td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+                {% if current_role == 'STAFF' %}
+                <th style="width: 18%;">Role</th>
+                {% endif %}
+                <th style="width: 22%;">Email</th>
+                <th style="width: 12%;">Account Status</th>
+                <th style="width: 14%;">Last Active</th>
+                <th style="width: 8%; text-align: right;">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for managed_user in users %}
+            <tr>
+                <td>{{ managed_user.get_full_name }}</td>
+                {% if current_role == 'FACULTY' %}
+                <td>{{ managed_user.get_faculty_type_display|default:"-" }}</td>
+                {% endif %}
+                {% if current_role == 'STAFF' %}
+                <td>{{ managed_user.get_role_display }}</td>
+                {% endif %}
+                <td>{{ managed_user.email }}</td>
+                <td>
+                    <span class="account-status {% if managed_user.is_active %}active{% else %}inactive{% endif %}">
+                        {% if managed_user.is_active %}Active{% else %}Inactive{% endif %}
+                    </span>
+                </td>
+                <td class="last-active">{{ managed_user.last_login|date:"F d, Y\<br>h:i A"|safe|default:"Never" }}</td>
+                <td>
+                    <div class="table-actions">
+                        <a href="{% url 'admin_staff_portal:user_edit' managed_user.pk %}" class="action-trigger" aria-label="Edit user">⋮</a>
+                    </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="{% if current_role == 'FACULTY' %}7{% else %}6{% endif %}" class="empty-row">No accounts found.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
 {% endblock %}

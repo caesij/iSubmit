@@ -3,21 +3,23 @@
 {% block title %}{% if object %}Edit Faculty{% else %}Add Faculty{% endif %} - iSubmit{% endblock %}
 
 {% block content %}
-<h2>{% if object %}Edit Faculty Account{% else %}Add New Faculty Account{% endif %}</h2>
-<a href="{% url 'admin_staff_portal:user_list' %}?role=FACULTY">← Back to User List</a>
+<div class="panel-header">
+    <div class="section-tabs">
+        <a href="{% url 'admin_staff_portal:user_list' %}?role=FACULTY" class="tab-link">Faculty</a>
+        <a href="{% url 'admin_staff_portal:user_create' %}?role=FACULTY" class="tab-link active">Add Faculty</a>
+    </div>
+</div>
 
-<br><br>
-
-<form method="POST">
+<form method="POST" class="management-form">
     {% csrf_token %}
     {% if not object %}
     <input type="hidden" name="role" value="FACULTY">
     {% endif %}
 
     {% if form.errors %}
-    <div>
-        <p><strong>Errors:</strong></p>
-        <ul>
+    <div class="form-errors" style="margin-bottom: 16px; padding: 12px 14px; border: 1px solid #efb7b7; background: #fff4f4; color: #8b1d1d; border-radius: 8px;">
+        <strong>Please correct the following:</strong>
+        <ul style="margin: 8px 0 0 18px;">
             {% for field, errors in form.errors.items %}
             <li>{{ field }}: {{ errors|join:", " }}</li>
             {% endfor %}
@@ -25,57 +27,68 @@
     </div>
     {% endif %}
 
-    <div>
-        <label for="id_first_name">First Name:</label><br>
-        {{ form.first_name }}
+    <div class="form-grid" style="grid-template-columns: 1.35fr 1.35fr 1fr;">
+        <div class="form-card" style="grid-column: 1 / -1;">
+            <h3><span class="step-badge">1</span> Basic Information</h3>
+            <div class="form-grid" style="grid-template-columns: repeat(3, minmax(200px, 1fr));">
+                <div class="form-field">
+                    <label for="id_first_name" class="label-required">First Name</label>
+                    {{ form.first_name }}
+                </div>
+                <div class="form-field">
+                    <label for="id_middle_name">Middle Name</label>
+                    {{ form.middle_name }}
+                </div>
+                <div class="form-field">
+                    <label for="id_last_name" class="label-required">Last Name</label>
+                    {{ form.last_name }}
+                </div>
+                <div class="form-field">
+                    <label for="id_employee_ID" class="label-required">Employee ID</label>
+                    {{ form.employee_ID }}
+                </div>
+                <div class="form-field">
+                    <label for="id_contact_no" class="label-required">Contact Number</label>
+                    {{ form.contact_no }}
+                </div>
+                <div class="form-field">
+                    <label for="id_faculty_type" class="label-required">Faculty Type</label>
+                    {{ form.faculty_type }}
+                </div>
+            </div>
+        </div>
+
+        <div class="form-card">
+            <h3><span class="step-badge">2</span> Email and Account Setup</h3>
+            <div class="form-field">
+                <label for="id_email" class="label-required">Institutional Email</label>
+                {{ form.email }}
+                <div class="form-note">Use the user's official institutional email address.</div>
+            </div>
+            <div class="form-field">
+                <label for="id_is_active" class="label-required">Account Status</label>
+                <select name="is_active" id="id_is_active" class="form-select">
+                    <option value="True" {% if form.is_active.value %}selected{% endif %}>Active</option>
+                    <option value="False" {% if not form.is_active.value %}selected{% endif %}>Inactive</option>
+                </select>
+                <div class="form-note">Set the initial status for this account.</div>
+            </div>
+        </div>
+
+        <div class="form-card">
+            <h3><span class="step-badge">3</span> Delivery Settings</h3>
+            <div class="checkbox-stack">
+                <label class="checkbox-item"><input type="checkbox"> <span>Send activation link</span></label>
+                <label class="checkbox-item"><input type="checkbox"> <span>Send temporary credentials</span></label>
+                <label class="checkbox-item"><input type="checkbox"> <span>Require password reset on first login</span></label>
+                <label class="checkbox-item"><input type="checkbox"> <span>Send copy to institutional email</span></label>
+            </div>
+        </div>
     </div>
-    <br>
 
-    <div>
-        <label for="id_middle_name">Middle Name:</label><br>
-        {{ form.middle_name }}
+    <div class="form-actions">
+        <a href="{% url 'admin_staff_portal:user_list' %}?role=FACULTY" class="btn btn-secondary">Cancel</a>
+        <button type="submit" class="btn">{% if object %}Save Draft{% else %}Create User &amp; Send Invitation{% endif %}</button>
     </div>
-    <br>
-
-    <div>
-        <label for="id_last_name">Last Name:</label><br>
-        {{ form.last_name }}
-    </div>
-    <br>
-
-    <div>
-        <label for="id_employee_ID">Employee ID:</label><br>
-        {{ form.employee_ID }}
-    </div>
-    <br>
-
-    <div>
-        <label for="id_contact_no">Contact Number:</label><br>
-        {{ form.contact_no }}
-    </div>
-    <br>
-
-    <div>
-        <label for="id_email">Institutional Email:</label><br>
-        {{ form.email }}
-    </div>
-    <br>
-
-
-    <div>
-        <label for="id_faculty_type">Faculty Type:</label><br>
-        {{ form.faculty_type }}
-    </div>
-    <br>
-
-    <div>
-        <label for="id_is_active">Active Account Status:</label>
-        {{ form.is_active }}
-    </div>
-    <br>
-
-    <button type="submit">
-        {% if object %}Update Account{% else %}Save Account{% endif %}
-    </button>
 </form>
 {% endblock %}
