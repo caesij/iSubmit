@@ -6,19 +6,41 @@ def user_directory_path(instance, filename):
     return f'submissions/user_{instance.faculty.id}/{filename}'
 
 class Requirement(models.Model):
-    requirement_name = models.CharField(max_length=255, unique=True)
-    description = models.TextField(blank=True)
+    
+    class ReqStatus(models.TextChoices):
+        ACTIVE = 'ACTIVE', 'Active'
+        INACTIVE = 'INACTIVE', 'Inactive'
+
+    requirement_title = models.CharField(max_length=255, unique=True)
+    category = models.CharField(max_length=255)
+    
+    assigned_to = models.ForeignKey(
+        settings.AUTH_USER_MODEL.FacultyType, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True,
+    )
+    
+    academic_term = models.CharField(max_length=255)
+    deadline = models.DateTimeField()
+    completion_progress = models.IntegerField(default=0)
+    
+    status = models.CharField(
+        max_length=20,
+        choices=ReqStatus.choices,
+        default=ReqStatus.ACTIVE
+    )
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    deadline = models.DateTimeField()
 
     def __str__(self):
-        return self.name
+        return self.requirement_title
 
 
 class DocumentSubmission(models.Model):
 
-    class Status(models.TextChoices):
+    class DocStatus(models.TextChoices):
         SUBMITTED = 'SUBMITTED', 'Submitted'
         UNDER_REVIEW = 'UNDER_REVIEW', 'Under Review'
         NEEDS_REVISION = 'NEEDS_REVISION', 'Needs Revision'
@@ -43,8 +65,8 @@ class DocumentSubmission(models.Model):
 
     status = models.CharField(
         max_length=30,
-        choices=Status.choices,
-        default=Status.SUBMITTED
+        choices=DocStatus.choices,
+        default=DocStatus.SUBMITTED
     )
 
     initially_submitted_at = models.DateTimeField(auto_now_add=True)
@@ -70,7 +92,7 @@ class DocumentSubmission(models.Model):
     )
 
     def __str__(self):
-        return self.title
+        return self.document_title
 
 
 class DocumentRevision(models.Model):
@@ -106,7 +128,7 @@ class DocumentRevision(models.Model):
 
     def __str__(self):
         return (
-            f'{self.submission.title} - Revision {self.version_number}'
+            f'{self.submission.document_title} - Revision {self.version_number}'
         )
 
 
