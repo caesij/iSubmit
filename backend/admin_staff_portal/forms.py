@@ -20,6 +20,27 @@ class BaseUserManagementForm(forms.ModelForm):
         self.request_user = kwargs.pop('request_user', None)
         super().__init__(*args, **kwargs)
 
+        field_placeholders = {
+            'first_name': 'Enter first name',
+            'middle_name': 'Enter middle name',
+            'last_name': 'Enter last name',
+            'employee_ID': 'Enter employee ID',
+            'contact_no': '09XX XXX XXXX',
+            'email': 'Enter institutional email',
+        }
+
+        for field_name, placeholder in field_placeholders.items():
+            if field_name in self.fields:
+                self.fields[field_name].widget.attrs.update({
+                    'class': 'form-input',
+                    'placeholder': placeholder,
+                })
+
+        if 'is_active' in self.fields:
+            self.fields['is_active'].widget.attrs.update({
+                'class': 'form-select',
+            })
+
     # Data Cleaning
     def clean_first_name(self):
         first_name = self.cleaned_data.get('first_name', '').strip()
@@ -107,6 +128,13 @@ class FacultyManagementForm(BaseUserManagementForm):
 
     class Meta(BaseUserManagementForm.Meta):
         fields = BaseUserManagementForm.Meta.fields + ['faculty_type']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if 'faculty_type' in self.fields:
+            self.fields['faculty_type'].widget.attrs.update({
+                'class': 'form-select',
+            })
 
     def clean_faculty_type(self):
         faculty_type = self.cleaned_data.get('faculty_type')

@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 
@@ -5,60 +6,115 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %} iSubmit - {{ request.user.get_role_display }} Portal {% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'css/faculty_portal.css' %}">
 </head>
 
 <body>
+    <div class="admin-shell">
+        <aside class="sidebar">
+            <div class="brand-box">
+                <div class="brand-mark">
+                    <img src="{% static 'images/logo.svg' %}" alt="iSubmit logo" class="brand-symbol">
+                </div>
+                <div>
+                    <div class="brand-name">iSubmit</div>
+                    <div class="brand-sub">Polytechnic University of the Philippines<br>Santa Rosa Campus</div>
+                </div>
+            </div>
 
-    <!-- Header / Topbar -->
-    <header>
-        <div>
-            <strong>iSubmit Portal</strong> |
-            Logged in as: {{ request.user.get_full_name }} ({{ request.user.get_role_display }})
-        </div>
-        <div>
-            <!-- Global Search Placeholder -->
-            <form action="#" method="GET" style="display:inline;">
-                <input type="text" name="global_search" placeholder="Search requirements, documents, or submissions...">
-            </form>
-            <a href="{% url 'accounts:logout' %}">Logout</a>
-        </div>
-    </header>
+            <nav class="sidebar-nav" aria-label="Main navigation">
+                <div class="nav-section-title">Main</div>
+                <ul class="nav-list">
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}" href="{% url 'faculty_portal:dashboard' %}">
+                            <span class="icon"><img src="{% static 'images/dashboard.svg' %}" alt="Dashboard icon"></span>
+                            <span>Dashboard</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">
+                            <span class="icon"><img src="{% static 'images/documents.svg' %}" alt="Documents icon"></span>
+                            <span>My Documents</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">
+                            <span class="icon"><img src="{% static 'images/submissions.svg' %}" alt="Submissions icon"></span>
+                            <span>Submission Bin</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">
+                            <span class="icon"><img src="{% static 'images/email.svg' %}" alt="My Submissions icon"></span>
+                            <span>My Submissions</span>
+                        </a>
+                    </li>
+                </ul>
 
-    <hr>
+                <div class="sidebar-divider"></div>
 
-    <!-- Main Container: Sidebar + Content -->
-    <div style="display: flex;">
+                <div class="nav-section-title">General</div>
+                <ul class="nav-list">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">
+                            <span class="icon"><img src="{% static 'images/settings.svg' %}" alt="Settings icon"></span>
+                            <span>Settings</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">
+                            <span class="icon"><img src="{% static 'images/profile.svg' %}" alt="Profile icon"></span>
+                            <span>Profile</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'accounts:logout' %}">
+                            <span class="icon"><img src="{% static 'images/logout.svg' %}" alt="Logout icon"></span>
+                            <span>Logout</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </aside>
 
-        <!-- Sidebar Navigation -->
-        <nav id="sidebar">
-            <h3>iSubmit</h3>
-            <p><small>PUP Santa Rosa Campus</small></p>
+        <main class="main-area">
+            <header class="topbar">
+                <div>
+                    <div class="topbar-title-wrap">
+                        <span class="page-icon"><img src="{% static 'images/dashboard.svg' %}" alt="Dashboard icon"></span>
+                        <h1 class="topbar-title">{% block heading %}{{ request.user.get_role_display }} Portal{% endblock %}</h1>
+                    </div>
+                    <div class="topbar-subtitle">Manage and access all approved documents across the system.</div>
+                </div>
 
-            <p><strong>Main Menu</strong></p>
-            <ul>
-                <li><a href="{% url 'faculty_portal:dashboard' %}">Dashboard</a></li>
-                <li><a href="#">My Documents</a></li>
-                <li><a href="#">Submission Bin</a></li>
-                <li><a href="#">My Submissions</a></li>
-            </ul>
+                <div class="topbar-controls">
+                    <form class="global-search" action="#" method="GET">
+                        <span class="icon"><img src="{% static 'images/search.svg' %}" alt="Search icon"></span>
+                        <input type="text" name="global_search" placeholder="Search requirements, documents, or submissions...">
+                    </form>
 
-            <p><strong>General</strong></p>
-            <ul>
-                <li><a href="#">Settings</a></li>
-                <li><a href="#">Profile</a></li>
-                <li><a href="{% url 'accounts:logout' %}">Logout</a></li>
-            </ul>
-        </nav>
+                    <div class="notification-wrap" aria-label="Notifications">
+                        <img src="{% static 'images/Icon - Notifications.svg' %}" alt="Notifications" class="icon">
+                        <span class="notification-dot"></span>
+                    </div>
 
-        <hr>
+                    <div class="user-badge">
+                        <div class="user-badge-avatar">
+                            <img src="{% static 'images/profile.svg' %}" alt="User profile" class="user-badge-img">
+                        </div>
+                        <div>
+                            <div class="user-badge-name">{{ request.user.get_full_name|default:request.user.email }}</div>
+                            <span class="user-badge-meta">{{ request.user.get_role_display }}</span>
+                        </div>
+                    </div>
+                </div>
+            </header>
 
-        <main id="main-content">
-            {% block content %}
-            {% endblock %}
+            <div class="content-shell">
+                {% block content %}{% endblock %}
+            </div>
         </main>
-
     </div>
-
 </body>
 
 </html>

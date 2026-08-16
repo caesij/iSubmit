@@ -26,7 +26,7 @@
                 <div class="nav-section-title">Main</div>
                 <ul class="nav-list">
                     <li class="nav-item">
-                        <a class="nav-link {% if request.path == '/admin-staff/dashboard/' %}active{% endif %}" href="{% url 'admin_staff_portal:dashboard' %}">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}" href="{% url 'admin_staff_portal:dashboard' %}">
                             <span class="icon"><img src="{% static 'images/dashboard.svg' %}" alt="Dashboard icon"></span>
                             <span>Dashboard</span>
                         </a>
@@ -44,7 +44,7 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {% if 'users' in request.path %}active{% endif %}" href="{% url 'admin_staff_portal:user_list' %}?role=STAFF">
+                        <a class="nav-link {% if request.resolver_match.url_name in 'user_list,user_create,user_edit,user_toggle_acc_status' %}active{% endif %}" href="{% url 'admin_staff_portal:user_list' %}?role=STAFF">
                             <span class="icon"><img src="{% static 'images/usermanagement.svg' %}" alt="User management icon"></span>
                             <span>User Management</span>
                         </a>
@@ -92,13 +92,22 @@
         <main class="main-area">
             <header class="topbar">
                 <div>
-                    <h1 class="topbar-title">{% block heading %}{{ page_title|default:'User Management' }}{% endblock %}</h1>
+                    <div class="topbar-title-wrap">
+                        {% if request.resolver_match.url_name == 'dashboard' %}
+                            <span class="page-icon"><img src="{% static 'images/dashboard.svg' %}" alt="Dashboard icon"></span>
+                        {% elif request.resolver_match.url_name in 'user_list,user_create,user_edit,user_toggle_acc_status' %}
+                            <span class="page-icon"><img src="{% static 'images/usermanagement.svg' %}" alt="User management icon"></span>
+                        {% else %}
+                            <span class="page-icon"><img src="{% static 'images/profile.svg' %}" alt="Page icon"></span>
+                        {% endif %}
+                        <h1 class="topbar-title">{% block heading %}{{ page_title|default:'User Management' }}{% endblock %}</h1>
+                    </div>
                     <div class="topbar-subtitle">Manage and access all approved documents across the system.</div>
                 </div>
 
                 <div class="topbar-controls">
                     <form class="global-search" action="{% url 'admin_staff_portal:user_list' %}" method="GET">
-                        <span class="icon">🔍</span>
+                        <span class="icon"><img src="{% static 'images/search.svg' %}" alt="Search icon"></span>
                         <input type="text" name="q" value="{{ request.GET.q|default:'' }}" placeholder="Search requirements, documents, or submissions...">
                     </form>
 
