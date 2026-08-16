@@ -3,11 +3,34 @@ import uuid
 from django.conf import settings
 
 def user_directory_path(instance, filename):
-    return f'submissions/user_{instance.faculty.id}/{filename}'
+    return f'submissions/user_{instance.submission.faculty.id}/{filename}'
 
 class Requirement(models.Model):
-    requirement_name = models.CharField(max_length=255, unique=True)
-    description = models.TextField(blank=True)
+    class ReqStatus(models.TextChoices):
+        ACTIVE = 'ACTIVE', 'Active'
+        INACTIVE = 'INACTIVE', 'Inactive'
+
+    requirement_title = models.CharField(max_length=255, unique=True)
+    category = models.CharField(max_length=255)
+    
+    assigned_to = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True,
+        limit_choices_to={'role': 'FACULTY'},
+    )
+    
+    academic_term = models.CharField(max_length=255)
+    deadline = models.DateTimeField()
+    completion_progress = models.IntegerField(default=0)
+    
+    status = models.CharField(
+        max_length=20,
+        choices=ReqStatus.choices,
+        default=ReqStatus.ACTIVE
+    )
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     deadline = models.DateTimeField()
@@ -17,8 +40,7 @@ class Requirement(models.Model):
 
 
 class DocumentSubmission(models.Model):
-
-    class Status(models.TextChoices):
+    class DocStatus(models.TextChoices):
         SUBMITTED = 'SUBMITTED', 'Submitted'
         UNDER_REVIEW = 'UNDER_REVIEW', 'Under Review'
         NEEDS_REVISION = 'NEEDS_REVISION', 'Needs Revision'
@@ -43,8 +65,8 @@ class DocumentSubmission(models.Model):
 
     status = models.CharField(
         max_length=30,
-        choices=Status.choices,
-        default=Status.SUBMITTED
+        choices=DocStatus.choices,
+        default=DocStatus.SUBMITTED
     )
 
     initially_submitted_at = models.DateTimeField(auto_now_add=True)
@@ -74,7 +96,6 @@ class DocumentSubmission(models.Model):
 
 
 class DocumentRevision(models.Model):
-
     id = models.UUIDField(
         primary_key=True,
         default=uuid.uuid4,
@@ -87,9 +108,7 @@ class DocumentRevision(models.Model):
         related_name='revisions'
     )
 
-    file = models.FileField(
-        upload_to=user_directory_path,
-    )
+    file = models.FileField(upload_to=user_directory_path)
 
     version_number = models.PositiveIntegerField()
 
@@ -111,13 +130,6 @@ class DocumentRevision(models.Model):
 
 
 class DocumentReview(models.Model):
-
-    id = models.UUIDField(
-        primary_key=True,
-        default=uuid.uuid4,
-        editable=False
-    )
-
     revision = models.ForeignKey(
         DocumentRevision,
         on_delete=models.CASCADE,
@@ -128,14 +140,13 @@ class DocumentReview(models.Model):
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
-        related_name='document_reviews'
+        related_name='document_remarks'
     )
 
-    comments = models.TextField()
+    remarks = models.TextField()
 
     reviewed_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return (
-            f'Review for {self.revision.submission.title} - Revision {self.revision.version_number} by {self.reviewed_by.username}'
-        )
+        reviewer = self.reviewed_by.username if self.reviewed_by else 'Unknown'
+        return f'Review for {self.revision.submission.document_title} - Revision {self.revision.version_number} by {reviewer}'
