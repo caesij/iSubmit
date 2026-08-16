@@ -33,10 +33,9 @@ class Requirement(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    deadline = models.DateTimeField()
 
     def __str__(self):
-        return self.name
+        return self.requirement_title
 
 
 class DocumentSubmission(models.Model):
@@ -92,7 +91,7 @@ class DocumentSubmission(models.Model):
     )
 
     def __str__(self):
-        return self.title
+        return self.document_title
 
 
 class DocumentRevision(models.Model):
@@ -125,7 +124,7 @@ class DocumentRevision(models.Model):
 
     def __str__(self):
         return (
-            f'{self.submission.title} - Revision {self.version_number}'
+            f'{self.submission.document_title} - Revision {self.version_number}'
         )
 
 
