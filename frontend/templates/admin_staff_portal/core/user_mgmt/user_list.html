@@ -1,4 +1,5 @@
 {% extends 'admin_staff_portal/base.html' %}
+{% load static %}
 
 {% block title %}{{ page_title }} - iSubmit{% endblock %}
 
@@ -13,32 +14,33 @@
 <div class="table-toolbar">
     <form method="GET" class="filters" action="{% url 'admin_staff_portal:user_list' %}">
         <input type="hidden" name="role" value="{{ current_role }}">
+
         <div class="search-field">
-            <span class="icon">🔍</span>
+            <span class="icon"><img src="{% static 'images/search.svg' %}" alt="Search icon"></span>
             <input type="text" name="q" value="{{ request.GET.q|default:'' }}" placeholder="Search by name or email...">
         </div>
 
-        {% if current_role == 'FACULTY' %}
-        <select class="filter-select" name="faculty_type">
-            <option value="">All Faculty Types</option>
-            <option value="FULL_TIME" {% if request.GET.faculty_type == 'FULL_TIME' %}selected{% endif %}>Full-Time Faculty</option>
-            <option value="PART_TIME" {% if request.GET.faculty_type == 'PART_TIME' %}selected{% endif %}>Part-Time Faculty</option>
-        </select>
-        {% endif %}
+        <div class="status-filter">
+            <span class="status-label">Account Status</span>
+            <select class="filter-select" name="status">
+                <option value="">All Statuses</option>
+                <option value="active" {% if request.GET.status == 'active' %}selected{% endif %}>Active</option>
+                <option value="inactive" {% if request.GET.status == 'inactive' %}selected{% endif %}>Inactive</option>
+            </select>
+        </div>
 
-        <select class="filter-select" name="status">
-            <option value="">All Statuses</option>
-            <option value="active" {% if request.GET.status == 'active' %}selected{% endif %}>Active</option>
-            <option value="inactive" {% if request.GET.status == 'inactive' %}selected{% endif %}>Inactive</option>
-        </select>
-
-        <button class="btn btn-secondary" type="submit">Filter / Search</button>
         {% if request.GET.q or request.GET.faculty_type or request.GET.status %}
-        <a class="btn btn-ghost" href="{% url 'admin_staff_portal:user_list' %}?role={{ current_role }}">Clear Filters</a>
+        <a class="btn btn-ghost clear-button" href="{% url 'admin_staff_portal:user_list' %}?role={{ current_role }}">
+            <span class="clear-icon">⟲</span>
+            <span>Clear Filters</span>
+        </a>
         {% endif %}
-    </form>
 
-    <a class="action-button" href="{% url 'admin_staff_portal:user_create' %}?role={{ current_role }}">+ Add User</a>
+        <a class="action-button" href="{% url 'admin_staff_portal:user_create' %}?role={{ current_role }}">
+            <img src="{% static 'images/add.svg' %}" alt="Add user" class="action-button-icon">
+            <span>Add User</span>
+        </a>
+    </form>
 </div>
 
 <div class="table-wrap">

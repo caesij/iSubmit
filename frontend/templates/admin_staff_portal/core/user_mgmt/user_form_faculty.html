@@ -1,4 +1,5 @@
 {% extends 'admin_staff_portal/base.html' %}
+{% load static %}
 
 {% block title %}{% if object %}Edit Faculty{% else %}Add Faculty{% endif %} - iSubmit{% endblock %}
 
@@ -60,18 +61,20 @@
 
         <div class="form-card">
             <h3><span class="step-badge">2</span> Email and Account Setup</h3>
-            <div class="form-field">
-                <label for="id_email" class="label-required">Institutional Email</label>
-                {{ form.email }}
-                <div class="form-note">Use the user's official institutional email address.</div>
-            </div>
-            <div class="form-field">
-                <label for="id_is_active" class="label-required">Account Status</label>
-                <select name="is_active" id="id_is_active" class="form-select">
-                    <option value="True" {% if form.is_active.value %}selected{% endif %}>Active</option>
-                    <option value="False" {% if not form.is_active.value %}selected{% endif %}>Inactive</option>
-                </select>
-                <div class="form-note">Set the initial status for this account.</div>
+            <div class="email-account-grid">
+                <div class="form-field">
+                    <label for="id_email" class="label-required">Institutional Email</label>
+                    {{ form.email }}
+                    <div class="form-note">Use the user's official institutional email address.</div>
+                </div>
+                <div class="form-field">
+                    <label for="id_is_active" class="label-required">Account Status</label>
+                    <select name="is_active" id="id_is_active" class="form-select">
+                        <option value="True" {% if form.is_active.value %}selected{% endif %}>Active</option>
+                        <option value="False" {% if not form.is_active.value %}selected{% endif %}>Inactive</option>
+                    </select>
+                    <div class="form-note">Set the initial status for this account.</div>
+                </div>
             </div>
         </div>
 
@@ -87,8 +90,17 @@
     </div>
 
     <div class="form-actions">
-        <a href="{% url 'admin_staff_portal:user_list' %}?role=FACULTY" class="btn btn-secondary">Cancel</a>
-        <button type="submit" class="btn">{% if object %}Save Draft{% else %}Create User &amp; Send Invitation{% endif %}</button>
+        <a href="{% url 'admin_staff_portal:user_list' %}?role=FACULTY" class="btn btn-secondary btn-cancel">Cancel</a>
+
+        <button type="submit" class="btn btn-draft">
+            <img src="{% static 'images/savedraft.svg' %}" alt="Save draft" class="action-icon-svg">
+            <span>Save Draft</span>
+        </button>
+
+        <button type="submit" class="btn btn-primary btn-send">
+            <img src="{% static 'images/Send.svg' %}" alt="Send invitation" class="action-icon-svg">
+            <span>Create User &amp; Send Invitation</span>
+        </button>
     </div>
 </form>
 {% endblock %}
