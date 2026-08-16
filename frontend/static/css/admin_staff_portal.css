@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+
 :root {
   --portal-red-900: #7e0c0c;
   --portal-red-800: #8f1010;
@@ -19,7 +21,7 @@
 html, body {
   margin: 0;
   min-height: 100%;
-  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  font-family: 'Poppins', sans-serif;
   background: #0f0f0f;
   color: var(--portal-text);
 }
@@ -55,27 +57,32 @@ select {
 
 .brand-box {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 14px;
-  padding: 22px 18px 18px;
+  justify-content: center;
+  gap: 12px;
+  padding: 26px 18px 18px;
   border-bottom: 1px solid rgba(255,255,255,0.18);
+  text-align: center;
 }
 
 .brand-mark {
-  width: 62px;
-  height: 62px;
-  min-width: 62px;
+  width: 86px;
+  height: 86px;
+  min-width: 86px;
   border-radius: 50%;
-  background: #fff;
+  background: transparent;
   display: grid;
   place-items: center;
-  box-shadow: inset 0 0 0 3px rgba(25, 25, 25, 0.08);
+  box-shadow: none;
+  padding: 0;
 }
 
 .brand-symbol {
-  width: 44px;
-  height: 44px;
+  width: 86px;
+  height: 86px;
   display: block;
+  filter: drop-shadow(0 0 0 rgba(0, 0, 0, 0));
 }
 
 .brand-name {
@@ -83,11 +90,12 @@ select {
   font-weight: 700;
   letter-spacing: 0.02em;
   margin-bottom: 2px;
+  line-height: 1.2;
 }
 
 .brand-sub {
   font-size: 0.69rem;
-  line-height: 1.35;
+  line-height: 1.4;
   color: rgba(255,255,255,0.8);
 }
 
@@ -124,20 +132,25 @@ select {
   padding: 8px 10px 8px 12px;
   color: rgba(255,255,255,0.9);
   text-decoration: none;
-  border-radius: 6px;
-  transition: background 0.2s ease, color 0.2s ease;
+  border-radius: 8px;
+  transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
   font-size: 1.02rem;
 }
 
 .nav-link:hover {
-  background: rgba(255,255,255,0.06);
+  background: rgba(255,255,255,0.05);
 }
 
 .nav-link.active {
-  background: rgba(255,255,255,0.12);
+  background: #f5f5f5;
+  color: #4d0202;
   font-weight: 700;
-  color: #fff;
-  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.08);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.25);
+  padding-left: 14px;
+}
+
+.nav-link.active span:last-child {
+  color: #4d0202;
 }
 
 .nav-link .icon {
@@ -147,6 +160,7 @@ select {
   align-items: center;
   justify-content: center;
   opacity: 0.96;
+  flex-shrink: 0;
 }
 
 .nav-link .icon img,
@@ -160,6 +174,10 @@ select {
 
 .nav-link .icon img {
   filter: brightness(0) invert(1);
+}
+
+.nav-link.active .icon img {
+  filter: brightness(0) saturate(100%) invert(11%) sepia(42%) saturate(1964%) hue-rotate(346deg) brightness(100%) contrast(98%);
 }
 
 .subnav-list {
@@ -177,10 +195,16 @@ select {
   font-size: 0.97rem;
 }
 
-.subnav-link:hover,
-.subnav-link.active {
-  background: rgba(255,255,255,0.08);
+.subnav-link:hover {
+  background: rgba(255,255,255,0.07);
   color: #fff;
+}
+
+.subnav-link.active {
+  background: #f5f5f5;
+  color: #720909;
+  font-weight: 700;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.18);
 }
 
 .sidebar-divider {
