@@ -1,0 +1,353 @@
+{% extends 'faculty_portal/base.html' %}
+{% load static %}
+
+{% block title %}Submission Bin - iSubmit{% endblock %}
+
+{% block content %}
+
+<style>
+.submission-bin-container {
+    padding: 24px 32px;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    color: #1a1a1a;
+}
+
+/* Page Header */
+.page-header { margin-bottom: 20px; }
+.page-title-wrap { display: flex; align-items: center; gap: 12px; }
+.page-icon img { width: 28px; height: 28px; }
+.page-header h1 { font-size: 24px; font-weight: 700; margin: 0; }
+.page-header .subtitle { margin: 2px 0 0; font-size: 13px; color: #6b7280; }
+
+/* Tab Nav */
+.tab-nav {
+    display: flex;
+    gap: 28px;
+    border-bottom: 1px solid #e5e7eb;
+    margin-bottom: 20px;
+}
+.tab-link {
+    padding: 10px 2px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #9ca3af;
+    text-decoration: none;
+    border-bottom: 2px solid transparent;
+}
+.tab-link.active {
+    color: #7f1d1d;
+    border-bottom-color: #7f1d1d;
+}
+
+/* Step Card */
+.step-card {
+    display: flex;
+    align-items: center;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 18px 24px;
+    margin-bottom: 24px;
+}
+.step-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+}
+.step-circle {
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    border-radius: 50%;
+    background: #d1d5db;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 14px;
+}
+.step-item.active .step-circle {
+    background: #7f1d1d;
+}
+.step-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #1a1a1a;
+}
+.step-item:not(.active) .step-title {
+    color: #9ca3af;
+}
+.step-sub {
+    font-size: 11px;
+    color: #9ca3af;
+}
+.step-divider {
+    flex: 0 0 40px;
+    height: 1px;
+    background: #d1d5db;
+    margin: 0 4px;
+}
+
+/* Section Titles */
+.section-title { font-size: 16px; font-weight: 700; margin: 0 0 4px; }
+.section-desc { font-size: 13px; color: #6b7280; margin: 0 0 16px; }
+
+/* Table */
+.table-card {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 20px;
+}
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+.data-table thead tr {
+    background: #fbe4e4;
+}
+.data-table th {
+    text-align: left;
+    padding: 12px 16px;
+    font-weight: 700;
+    color: #374151;
+    font-size: 12px;
+}
+.data-table td {
+    padding: 14px 16px;
+    border-top: 1px solid #f0f0f0;
+    vertical-align: middle;
+    color: #374151;
+}
+.data-table .font-bold { font-weight: 700; color: #1a1a1a; }
+.data-table .text-sub { font-size: 11px; color: #9ca3af; }
+.data-table input[type="checkbox"] {
+    width: 15px;
+    height: 15px;
+    accent-color: #7f1d1d;
+}
+
+/* Status Badges */
+.status-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 700;
+    border: 1px solid transparent;
+}
+.status-attached {
+    background: #fffbe6;
+    color: #b45309;
+    border-color: #fde68a;
+}
+.status-no-file {
+    background: #fff;
+    color: #6b7280;
+    border-color: #e5e7eb;
+}
+
+/* File link */
+.file-link {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    text-decoration: none;
+    color: #1a1a1a;
+}
+.file-icon { font-size: 16px; }
+.file-name { font-weight: 700; font-size: 12px; }
+
+/* Action buttons */
+.action-cell { text-align: left; }
+.btn-outline {
+    display: inline-block;
+    padding: 6px 16px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    background: #fff;
+    color: #1a1a1a;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+}
+.btn-outline-danger {
+    display: inline-block;
+    padding: 6px 16px;
+    border: 1px solid #b91c1c;
+    border-radius: 6px;
+    background: #fff;
+    color: #b91c1c;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+/* Bottom Bar */
+.bottom-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+.info-note {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    border-radius: 8px;
+    padding: 10px 16px;
+    flex: 1;
+}
+.info-icon { color: #3b82f6; font-size: 14px; }
+.info-note p { margin: 0; font-size: 12px; color: #1e3a8a; }
+.btn-continue {
+    background: #7f1d1d;
+    color: #fff;
+    padding: 12px 22px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    text-decoration: none;
+    white-space: nowrap;
+}
+</style>
+
+<div class="submission-bin-container">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="page-title-wrap">
+            <span class="page-icon">
+                <img src="{% static 'images/submission_bin.svg' %}" alt="Submission Bin icon">
+            </span>
+            <div>
+                <h1>Submission Bin</h1>
+                <p class="subtitle">Upload and manage academic documents</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div class="tab-nav">
+        <a href="{% url 'faculty_portal:upload_files' %}" class="tab-link active">Upload Files</a>
+        <a href="#" class="tab-link">Document Analysis</a>
+        <a href="{% url 'faculty_portal:review_confirm' %}" class="tab-link">Review &amp; Confirm</a>
+        <a href="#" class="tab-link">Submission Complete</a>
+    </div>
+
+    <!-- Step Indicator -->
+    <div class="step-card">
+        <div class="step-item active">
+            <span class="step-circle">1</span>
+            <div>
+                <div class="step-title">Upload Files</div>
+                <div class="step-sub">Upload your document</div>
+            </div>
+        </div>
+        <div class="step-divider"></div>
+        <div class="step-item">
+            <span class="step-circle">2</span>
+            <div>
+                <div class="step-title">Document Analysis</div>
+                <div class="step-sub">OCR and NLP checking</div>
+            </div>
+        </div>
+        <div class="step-divider"></div>
+        <div class="step-item">
+            <span class="step-circle">3</span>
+            <div>
+                <div class="step-title">Review &amp; Confirm</div>
+                <div class="step-sub">Review before submission</div>
+            </div>
+        </div>
+        <div class="step-divider"></div>
+        <div class="step-item">
+            <span class="step-circle">4</span>
+            <div>
+                <div class="step-title">Submission Complete</div>
+                <div class="step-sub">Your document has been submitted for review</div>
+            </div>
+        </div>
+    </div>
+
+    <h2 class="section-title">Step 1. Upload Files</h2>
+    <p class="section-desc">Upload your documents. You can upload one or more files.</p>
+
+    <!-- Requirements & Drafts Table -->
+    <div class="table-card">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th><input type="checkbox" aria-label="Select all"></th>
+                    <th>Bin Title</th>
+                    <th>Category</th>
+                    <th>Deadline</th>
+                    <th>Status</th>
+                    <th>File</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in rows %}
+                    <tr>
+                        <td><input type="checkbox" name="selected_requirements" value="{{ row.requirement.id }}"></td>
+                        <td class="font-bold">{{ forloop.counter }}. {{ row.requirement.requirement_title }}</td>
+                        <td>{{ row.requirement.category }}</td>
+                        <td>
+                            <div>{{ row.requirement.deadline|date:"F j, Y" }}</div>
+                            <div class="text-sub">{{ row.requirement.deadline|date:"g:i A" }}</div>
+                        </td>
+                        {% if row.draft and row.draft.draft_file %}
+                            <td><span class="status-badge status-attached">Attached</span></td>
+                            <td>
+                                <a href="{% url 'faculty_portal:view_uploaded_document' row.draft.id %}" class="file-link">
+                                    <span class="file-icon">📄</span>
+                                    <span>
+                                        <div class="file-name">{{ row.draft.draft_file.name }}</div>
+                                    </span>
+                                </a>
+                            </td>
+                            <td class="action-cell">
+                                <form action="{% url 'faculty_portal:replace_document' row.draft.id %}" method="post" enctype="multipart/form-data">
+                                    {% csrf_token %}
+                                    <input type="file" name="draft_file" id="replace-{{ row.draft.id }}" hidden onchange="this.form.submit()">
+                                    <label for="replace-{{ row.draft.id }}" class="btn-outline">Replace</label>
+                                </form>
+                            </td>
+                        {% else %}
+                            <td><span class="status-badge status-no-file">No file yet</span></td>
+                            <td>—</td>
+                            <td class="action-cell">
+                                <form action="{% url 'faculty_portal:attach_document' row.requirement.id %}" method="post" enctype="multipart/form-data">
+                                    {% csrf_token %}
+                                    <input type="file" name="draft_file" id="upload-{{ row.requirement.id }}" hidden onchange="this.form.submit()">
+                                    <label for="upload-{{ row.requirement.id }}" class="btn-outline-danger">&uarr; Upload</label>
+                                </form>
+                            </td>
+                        {% endif %}
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="7" class="text-center py-4">No active requirements assigned.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Note + Continue Bar -->
+    <div class="bottom-bar">
+        <div class="info-note">
+            <span class="info-icon">ⓘ</span>
+            <p>You can upload one or more documents. You may continue even if some bins are empty.</p>
+        </div>
+        <a href="{% url 'faculty_portal:review_confirm'%}" class="btn-continue">Continue to Step 2 &rarr;</a>
+    </div>
+</div>
+
+{% endblock %}

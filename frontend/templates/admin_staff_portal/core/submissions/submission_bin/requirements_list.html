@@ -1,0 +1,144 @@
+{% extends 'admin_staff_portal/base.html' %}
+{% load static %}
+
+{% block title %}Submissions - iSubmit{% endblock %}
+{% block heading %}Submissions{% endblock %}
+{% block subtitle %}Manage and access all approved documents across the system.{% endblock %}
+
+{% block content %}
+<div class="submissions-container">
+    <div class="tab-nav">
+        <a href="{% url 'admin_staff_portal:requirements_list' %}" class="tab-link active">Submission Bin</a>
+        <a href="{% url 'admin_staff_portal:faculty_submissions_list' %}" class="tab-link">Faculty Submission</a>
+    </div>
+
+    <div class="filter-card">
+        <form method="GET" action="{% url 'admin_staff_portal:requirements_list' %}" class="filter-form">
+            <div class="filter-inputs">
+                <div class="search-input-wrap">
+                    <span class="search-icon"><img src="{% static 'images/search.svg' %}" alt="Search"></span>
+                    <input type="text" name="q" value="{{ request.GET.q|default:'' }}" placeholder="Search requirements, documents, or submissions...">
+                </div>
+
+                <div class="select-wrap">
+                    <label>Category</label>
+                    <select name="category" onchange="this.form.submit()">
+                        <option value="">All Category</option>
+                        {% for cat in categories %}
+                            <option value="{{ cat }}" {% if request.GET.category == cat %}selected{% endif %}>{{ cat }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="select-wrap">
+                    <label>Assigned To</label>
+                    <select name="assigned_to" onchange="this.form.submit()">
+                        <option value="">All Faculties</option>
+                        {% for value, label in assigned_to_choices %}
+                            <option value="{{ value }}" {% if request.GET.assigned_to == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="select-wrap">
+                    <label>Academic Term</label>
+                    <select name="academic_term" onchange="this.form.submit()">
+                        <option value="">All Terms</option>
+                        {% for term in academic_terms %}
+                            <option value="{{ term }}" {% if request.GET.academic_term == term %}selected{% endif %}>{{ term }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <a href="{% url 'admin_staff_portal:requirements_list' %}" class="btn-clear">Clear Filters</a>
+            </div>
+        </form>
+
+        <a href="{% url 'admin_staff_portal:add_requirement' %}" class="btn-add-bin">
+            <span class="plus-icon">+</span> Add Bin
+        </a>
+    </div>
+
+    <div class="table-card">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Bin Title</th>
+                    <th>Category</th>
+                    <th>Assigned To</th>
+                    <th>Academic Term</th>
+                    <th>Deadline</th>
+                    <th>Completion Progress</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for req in requirements %}
+                    <tr>
+                        <td class="font-bold">{{ req.requirement_title }}</td>
+                        <td>{{ req.category }}</td>
+                        <td>{{ req.get_assigned_to_display }}</td>
+                        <td>{{ req.academic_term }}</td>
+                        <td>
+                            <div>{{ req.deadline|date:"F d, Y" }}</div>
+                            <div class="text-sub">{{ req.deadline|date:"h:i A" }}</div>
+                        </td>
+                        <td>
+                            <div class="progress-wrap">
+                                <span>{{ req.completion_progress }}%</span>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="status-badge {% if req.status == 'ACTIVE' %}status-active{% else %}status-inactive{% endif %}">
+                                {{ req.get_status_display }}
+                            </span>
+                        </td>
+                        <td class="action-cell">
+                            <div class="dropdown">
+                                <button class="btn-icon" aria-label="Actions">⋮</button>
+                                <div class="dropdown-menu">
+                                    <a href="{% url 'admin_staff_portal:edit_requirement' req.id %}">Edit Bin</a>
+                                    <form action="{% url 'admin_staff_portal:toggle_requirement_status' req.id %}" method="POST">
+                                        {% csrf_token %}
+                                        <button type="submit">
+                                            {% if req.status == 'ACTIVE' %}Deactivate{% else %}Activate{% endif %}
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="8" class="text-center py-4">No requirement bins found.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        {% if is_paginated or page_obj %}
+        <div class="pagination-footer">
+            <span class="pagination-info">
+                Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }} documents
+            </span>
+            <div class="pagination-controls">
+                {% if page_obj.has_previous %}
+                    <a href="?page={{ page_obj.previous_page_number }}" class="page-btn">&lt;</a>
+                {% endif %}
+
+                {% for page_num in page_obj.paginator.page_range %}
+                    <a href="?page={{ page_num }}" class="page-btn {% if page_obj.number == page_num %}active{% endif %}">
+                        {{ page_num }}
+                    </a>
+                {% endfor %}
+
+                {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}" class="page-btn">&gt;</a>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

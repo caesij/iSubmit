@@ -1,0 +1,202 @@
+{% extends 'admin_staff_portal/base.html' %}
+{% load static %}
+
+{% block title %}{{ faculty_member.get_full_name }}'s Submissions - iSubmit{% endblock %}
+{% block heading %}Submissions{% endblock %}
+{% block subtitle %}Manage and access all approved documents across the system.{% endblock %}
+
+{% block content %}
+<style>
+.submissions-container { padding: 0; }
+
+.faculty-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 20px; }
+.faculty-header-left { display: flex; align-items: center; gap: 12px; }
+.faculty-avatar { width: 40px; height: 40px; border-radius: 50%; background: #7f1d1d; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 15px; }
+.faculty-name { font-size: 16px; font-weight: 700; color: #1a1a1a; }
+.faculty-role { font-size: 12px; color: #6b7280; }
+.back-link { font-size: 13px; color: #7f1d1d; text-decoration: none; font-weight: 600; margin-bottom: 16px; display: inline-block; }
+
+.approve-all-wrap { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+.btn-approve-all { padding: 9px 18px; background: #166534; color: #fff; border: none; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; }
+.btn-approve-all:disabled { background: #d1d5db; color: #6b7280; cursor: not-allowed; }
+.approve-all-hint { font-size: 11px; color: #9ca3af; text-align: right; max-width: 220px; }
+
+.filter-card { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 16px; flex-wrap: wrap; }
+.filter-form { display: flex; }
+.filter-inputs { display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; }
+.select-wrap label { display: block; font-size: 11px; color: #6b7280; margin-bottom: 4px; }
+.select-wrap select { padding: 7px 10px; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 13px; min-width: 130px; }
+.btn-clear { font-size: 12px; color: #6b7280; text-decoration: underline; white-space: nowrap; align-self: center; }
+
+.table-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; overflow: hidden; }
+.data-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.data-table thead tr { background: #fbe4e4; }
+.data-table th { text-align: left; padding: 12px 16px; font-weight: 700; color: #374151; font-size: 12px; }
+.data-table td { padding: 14px 16px; border-top: 1px solid #f0f0f0; vertical-align: middle; color: #374151; }
+.data-table .font-bold { font-weight: 700; color: #1a1a1a; }
+.data-table .text-sub { font-size: 11px; color: #9ca3af; }
+
+.pill { display: inline-block; padding: 4px 12px; border-radius: 6px; font-size: 12px; font-weight: 700; }
+.pill-approved { background: #dcfce7; color: #15803d; }
+.pill-pending { background: #fef3c7; color: #b45309; }
+.pill-needs-revision { background: #fee2e2; color: #b91c1c; }
+.pill-under-review { background: #dbeafe; color: #1d4ed8; }
+.pill-pending-approval { background: #ede9fe; color: #6d28d9; }
+
+.action-cell { text-align: left; white-space: nowrap; }
+.btn-icon { border: none; background: none; cursor: pointer; font-size: 16px; color: #6b7280; text-decoration: none; }
+.btn-start-review { padding: 6px 12px; background: #7f1d1d; color: #fff; border: none; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer; }
+.btn-view-doc { padding: 6px 12px; background: #fff; color: #7f1d1d; border: 1px solid #7f1d1d; border-radius: 6px; font-size: 12px; font-weight: 700; text-decoration: none; display: inline-block; }
+
+.pagination-footer { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-top: 1px solid #f0f0f0; font-size: 12px; color: #6b7280; }
+.pagination-controls { display: flex; gap: 6px; }
+.page-btn { width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border: 1px solid #e5e7eb; border-radius: 6px; text-decoration: none; color: #374151; font-size: 12px; }
+.page-btn.active { background: #7f1d1d; color: #fff; border-color: #7f1d1d; }
+</style>
+
+<div class="submissions-container">
+    <a href="{% url 'admin_staff_portal:faculty_submissions_list' %}" class="back-link">&larr; Back to Faculty List</a>
+
+    <div class="faculty-header">
+        <div class="faculty-header-left">
+            <div class="faculty-avatar">{{ faculty_member.first_name|first }}{{ faculty_member.last_name|first }}</div>
+            <div>
+                <div class="faculty-name">{{ faculty_member.get_full_name }}</div>
+                <div class="faculty-role">{{ faculty_member.get_faculty_type_display }}</div>
+            </div>
+        </div>
+
+        {% if request.user.role == 'ADMIN' %}
+        <div class="approve-all-wrap">
+            <form method="post" action="{% url 'admin_staff_portal:approve_all_submissions' faculty_member.id %}">
+                {% csrf_token %}
+                <button type="submit" class="btn-approve-all" {% if not can_approve_all %}disabled{% endif %}>
+                    Approve All{% if pending_approval_count %} ({{ pending_approval_count }}){% endif %}
+                </button>
+            </form>
+            {% if not can_approve_all %}
+                <div class="approve-all-hint">
+                    {% if not_ready_count %}
+                        {{ not_ready_count }} document(s) still need review before you can approve all.
+                    {% else %}
+                        No documents are pending approval yet.
+                    {% endif %}
+                </div>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Filters -->
+    <div class="filter-card">
+        <form method="GET" action="{% url 'admin_staff_portal:faculty_submission_bins_view' faculty_member.id %}" class="filter-form">
+            <div class="filter-inputs">
+                <div class="select-wrap">
+                    <label>Category</label>
+                    <select name="category" onchange="this.form.submit()">
+                        <option value="">All Category</option>
+                        {% for cat in categories %}
+                            <option value="{{ cat }}" {% if request.GET.category == cat %}selected{% endif %}>{{ cat }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="select-wrap">
+                    <label>Status</label>
+                    <select name="status" onchange="this.form.submit()">
+                        <option value="">All Status</option>
+                        {% for value, label in status_choices %}
+                            <option value="{{ value }}" {% if request.GET.status == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <a href="{% url 'admin_staff_portal:faculty_submission_bins_view' faculty_member.id %}" class="btn-clear">Clear Filters</a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Table -->
+    <div class="table-card">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Bin Title</th>
+                    <th>Category</th>
+                    <th>Academic Year</th>
+                    <th>Date Uploaded</th>
+                    <th>Deadline</th>
+                    <th>Status</th>
+                    <th>Reviewed By</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for sub in submissions %}
+                    <tr>
+                        <td class="font-bold">{{ sub.requirement.requirement_title }}</td>
+                        <td>{{ sub.requirement.category }}</td>
+                        <td>{{ sub.requirement.academic_term }}</td>
+                        <td>
+                            <div>{{ sub.initially_submitted_at|date:"F j, Y" }}</div>
+                            <div class="text-sub">{{ sub.initially_submitted_at|date:"g:i A" }}</div>
+                        </td>
+                        <td>
+                            <div>{{ sub.requirement.deadline|date:"F j, Y" }}</div>
+                            <div class="text-sub">{{ sub.requirement.deadline|date:"g:i A" }}</div>
+                        </td>
+                        <td>
+                            <span class="pill
+                                {% if sub.status == 'APPROVED' %}pill-approved
+                                {% elif sub.status == 'NEEDS_REVISION' %}pill-needs-revision
+                                {% elif sub.status == 'UNDER_REVIEW' %}pill-under-review
+                                {% elif sub.status == 'PENDING_APPROVAL' %}pill-pending-approval
+                                {% else %}pill-pending{% endif %}">
+                                {{ sub.get_status_display }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if sub.reviewed_by %}
+                                {{ sub.reviewed_by.get_full_name }}
+                            {% else %}
+                                <span class="text-sub">&mdash;</span>
+                            {% endif %}
+                        </td>
+                        <td class="action-cell">
+                            {% if sub.status == 'SUBMITTED' or sub.status == 'RESUBMITTED' %}
+                                <form method="post" action="{% url 'admin_staff_portal:mark_under_review' sub.id %}">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn-start-review">Start Review</button>
+                                </form>
+                            {% else %}
+                                <a href="{% url 'admin_staff_portal:review_submission' sub.id %}" class="btn-view-doc">View</a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="8" style="text-align: center; padding: 20px;">No submissions from this faculty member yet.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        {% if is_paginated or page_obj %}
+        <div class="pagination-footer">
+            <span>Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }} documents</span>
+            <div class="pagination-controls">
+                {% if page_obj.has_previous %}
+                    <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}" class="page-btn">&lt;</a>
+                {% endif %}
+                {% for page_num in page_obj.paginator.page_range %}
+                    <a href="?page={{ page_num }}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}" class="page-btn {% if page_obj.number == page_num %}active{% endif %}">{{ page_num }}</a>
+                {% endfor %}
+                {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}" class="page-btn">&gt;</a>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,89 +1,115 @@
 import os
+import datetime
 from django import forms
-from submissions.models import Requirement, DocumentSubmission, DocumentRevision, DocumentReview
+from submissions.models import Requirement, DraftUpload, DocumentRevision, DocumentReview
 from django.core.exceptions import ValidationError
 
 ALLOWED_EXTENSIONS = {'.pdf', '.doc', '.docx', '.xlsx'}
 MAX_UPLOAD_SIZE = 10 * 1024 * 1024
 
-class BaseSubmissionForm(forms.ModelForm):
-    def __init__(self, *args, **kwargs):
-        self.request_user = kwargs.pop('request_user', None)
-        super().__init__(*args, **kwargs)
+
+def _academic_year_choices():
+    current_year = datetime.date.today().year
+    return [
+        (f'{y}-{y + 1}', f'{y}-{y + 1}')
+        for y in range(current_year - 1, current_year + 6)
+    ]
 
 class RequirementForm(forms.ModelForm):
+    academic_year = forms.ChoiceField(choices=_academic_year_choices, label="Academic Year")
+    
     class Meta:
         model = Requirement
         fields = [
             'requirement_title', 
             'category', 
             'assigned_to', 
-            'academic_term', 
-            'completion_progress', 
+            'academic_year',
             'status', 
             'deadline'
         ]
         
+        widgets = {
+            'deadline': forms.DateTimeInput(
+                attrs={'type': 'datetime-local'},
+                format='%Y-%m-%dT%H:%M',
+            ),
+        }
+       
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['deadline'].input_formats = ['%Y-%m-%dT%H:%M']
+    
+        if self.instance and self.instance.pk and self.instance.academic_term:
+            parsed = self._parse_academic_term(self.instance.academic_term)
+            if parsed:
+                start_year, end_year = parsed
+                self.fields['academic_year'].initial = f'{start_year}-{end_year}'
+
+    @staticmethod
+    def _parse_academic_term(value):
+        try:
+            years_part = value.replace('A.Y.', '').strip()
+            start_str, end_str = years_part.split('-')
+            return int(start_str.strip()), int(end_str.strip())
+        except (ValueError, AttributeError):
+            return None
+
     def clean_requirement_title(self):
         title = self.cleaned_data.get('requirement_title', '').strip()
         
         if not title:
-            raise ValidationError("Requirement title is required.")
+            raise ValidationError('Requirement title is required.')
         return title
-
-class DocumentSubmissionForm(BaseSubmissionForm):
     
-    class Meta:
-        model = DocumentSubmission
-        fields = ['document_title']
-        
-    document_file = forms.FileField(
-        widget=forms.ClearableFileInput(
-            attrs={'accept': '.pdf,.doc,.docx,.xlsx'}
-        ),
-    )
+    def clean_category(self):
+        category = self.cleaned_data.get('category', '').strip()
+        if not category:
+            raise ValidationError('Category is required.')
+        return category
+    
+    def clean_academic_year(self):
+        academic_year = self.cleaned_data.get('academic_year', '')
+        try:
+            start_str, end_str = academic_year.split('-')
+            start_year, end_year = int(start_str), int(end_str)
+        except (ValueError, AttributeError):
+            raise ValidationError('Invalid academic year selected.')
 
-    def clean_document_file(self):
-        file = self.cleaned_data['document_file']
+        if end_year != start_year + 1:
+            raise ValidationError('Invalid academic year range.')
+
+        return academic_year
+
+    def clean(self):
+        cleaned_data = super().clean()
+        academic_year = cleaned_data.get('academic_year')
+
+        if academic_year:
+            cleaned_data['academic_term'] = f'A.Y. {academic_year}'
+
+        return cleaned_data
+    
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        instance.academic_term = self.cleaned_data['academic_term']
+        if commit:
+            instance.save()
+        return instance
+    
+class DraftUploadForm(forms.ModelForm):
+    class Meta:
+        model = DraftUpload
+        fields = ['draft_file']
+
+    def clean_draft_file(self):
+        file = self.cleaned_data['draft_file']
         ext = os.path.splitext(file.name)[1].lower()
-        
         if ext not in ALLOWED_EXTENSIONS:
             raise ValidationError(f"Unsupported file type: {ext}")
         if file.size > MAX_UPLOAD_SIZE:
             raise ValidationError("File too large. Maximum size is 10MB.")
-        
         return file
-    
-
-    def save(self, commit=True, faculty=None):
-        faculty = faculty or self.request_user
-        
-        if not faculty:
-            raise ValueError(
-                "DocumentSubmissionForm.save() requires a faculty user, either via the 'faculty' argument or 'request_user' at init."
-            )
-        
-        submission = super().save(commit=False)
-        submission.faculty = faculty
-
-        if commit:
-            submission.save()
-            
-            last_version = (
-                submission.revisions.order_by('-version_number')
-                .values_list('version_number', flat=True)
-                .first()
-            )
-            
-            next_version = (last_version or 0) + 1
-
-            DocumentRevision.objects.create(
-                submission=submission,
-                file=self.cleaned_data['document_file'],
-                version_number=next_version,
-            )
-
-        return submission
     
 class DocumentRevisionForm(forms.ModelForm):
     class Meta:
@@ -140,9 +166,6 @@ class DocumentReviewForm(forms.ModelForm):
 
     def clean_remarks(self):
         remarks = self.cleaned_data.get('remarks', '').strip()
-        
-        if not remarks:
-            raise ValidationError("Remarks are required.")
         
         return remarks
 

@@ -1,0 +1,23 @@
+{% extends 'admin_staff_portal/base.html' %}
+
+{% block title %}
+{% if requirement %}Edit {{ requirement.requirement_title }}{% else %}Add Requirement{% endif %} - iSubmit
+{% endblock %}
+
+{% block heading %}{% if requirement %}Edit Requirement Bin{% else %}Add New Requirement Bin{% endif %}{% endblock %}
+{% block subtitle %}{% if requirement %}Update the details for this requirement bin.{% else %}Create a new requirement bin for faculty submissions.{% endif %}{% endblock %}
+
+{% block content %}
+<div class="form-card">
+    <form method="POST" action="{% if requirement %}{% url 'admin_staff_portal:edit_requirement' requirement.id %}{% else %}{% url 'admin_staff_portal:add_requirement' %}{% endif %}">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <div class="form-actions">
+            <button type="submit" class="btn-add-bin">
+                {% if requirement %}Update Requirement{% else %}Save Requirement{% endif %}
+            </button>
+            <a href="{% url 'admin_staff_portal:requirements_list' %}" class="btn-clear">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

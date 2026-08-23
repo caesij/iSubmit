@@ -1,25 +1,31 @@
-# For Future Use (Temporary)
-
 from functools import wraps
-from django.shortcuts import redirect
-from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.core.exceptions import PermissionDenied
 
-# For Faculty Views
-def faculty_required(view_func):
-    @wraps(view_func)
-    def _wrapped_view(request, *args, **kwargs):
-        if request.user.is_authenticated and request.user.is_faculty:
-            return view_func(request, *args, **kwargs)
-        messages.error(request, "Access restricted to Faculty members.")
-        return redirect('accounts:login')
-    return _wrapped_view
 
-# For Admin/Staff Views
-def admin_or_staff_required(view_func):
-    @wraps(view_func)
-    def _wrapped_view(request, *args, **kwargs):
-        if request.user.is_authenticated and (request.user.is_admin or request.user.is_staff_role):
+def role_required(*roles):
+    def decorator(view_func):
+        @wraps(view_func)
+        @login_required
+        def _wrapped(request, *args, **kwargs):
+            user_role = getattr(request.user, 'role', None)
+            
+            if user_role not in roles:
+                raise PermissionDenied('You do not have permission to access this page.')
+                
             return view_func(request, *args, **kwargs)
-        messages.error(request, "Access restricted to Admin and Staff members.")
-        return redirect('accounts:login')
-    return _wrapped_view
+
+        return _wrapped
+
+    return decorator
+
+def admin(view_func):
+    return role_required('ADMIN')(view_func)
+
+
+def staff(view_func):
+    return role_required('STAFF')(view_func)
+
+
+def faculty(view_func):
+    return role_required('FACULTY')(view_func)

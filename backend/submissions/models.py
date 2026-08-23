@@ -2,28 +2,36 @@ from django.db import models
 import uuid
 from django.conf import settings
 
-def user_directory_path(instance, filename):
+def draft_upload_path(instance, filename):
+    return f'drafts/user_{instance.faculty.id}/{filename}'
+
+def submission_upload_path(instance, filename):
+    return f'submissions/user_{instance.faculty.id}/{filename}'
+
+def revision_upload_path(instance, filename):
     return f'submissions/user_{instance.submission.faculty.id}/{filename}'
 
 class Requirement(models.Model):
     class ReqStatus(models.TextChoices):
         ACTIVE = 'ACTIVE', 'Active'
         INACTIVE = 'INACTIVE', 'Inactive'
+    
+    class AssignedFacultyType(models.TextChoices):
+        ALL = 'ALL', 'All Faculty'
+        FULL_TIME = 'FULL_TIME', 'Full-Time Faculty'
+        PART_TIME = 'PART_TIME', 'Part-Time Faculty'
 
     requirement_title = models.CharField(max_length=255, unique=True)
     category = models.CharField(max_length=255)
     
-    assigned_to = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL, 
-        null=True, 
-        blank=True,
-        limit_choices_to={'role': 'FACULTY'},
-    )
-    
     academic_term = models.CharField(max_length=255)
     deadline = models.DateTimeField()
-    completion_progress = models.IntegerField(default=0)
+    
+    assigned_to = models.CharField(
+        max_length=20,
+        choices=AssignedFacultyType.choices,
+        default=AssignedFacultyType.ALL
+    )
     
     status = models.CharField(
         max_length=20,
@@ -34,18 +42,75 @@ class Requirement(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    @property
+    def completion_progress(self):
+        from django.contrib.auth import get_user_model
+        UserModel = get_user_model()
+
+        faculty_qs = UserModel.objects.filter(role=UserModel.Role.FACULTY)
+        if self.assigned_to != self.AssignedFacultyType.ALL:
+            faculty_qs = faculty_qs.filter(faculty_type=self.assigned_to)
+
+        total_faculty = faculty_qs.count()
+        if total_faculty == 0:
+            return 0
+
+        submitted_count = self.submissions.filter(
+            faculty_id__in=faculty_qs.values_list('id', flat=True)
+        ).values('faculty_id').distinct().count()
+
+        return round((submitted_count / total_faculty) * 100)
+    
     def __str__(self):
         return self.requirement_title
+    
+class DraftUpload(models.Model):
+    class DraftStatus(models.TextChoices):
+        NO_FILE = 'NO_FILE', 'No File Yet'
+        ATTACHED = 'ATTACHED', 'Attached'
 
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
+    faculty = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='draft_uploads'
+    )
+
+    requirement = models.ForeignKey(
+        Requirement,
+        on_delete=models.CASCADE,
+        related_name='draft_uploads'
+    )
+
+    draft_file = models.FileField(upload_to=draft_upload_path, blank=True)
+
+    draft_created_at = models.DateTimeField(auto_now_add=True)
+    draft_updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['faculty', 'requirement'],
+                name='unique_faculty_requirement_draft'
+            )
+        ]
+
+    @property
+    def status(self):
+        return self.DraftStatus.ATTACHED if self.draft_file else self.DraftStatus.NO_FILE
+
+    def __str__(self):
+        return f'Draft: {self.requirement.requirement_title} by {self.faculty.username}'
 
 class DocumentSubmission(models.Model):
-    class DocStatus(models.TextChoices):
+    class SubmissionStatus(models.TextChoices):
         SUBMITTED = 'SUBMITTED', 'Submitted'
         UNDER_REVIEW = 'UNDER_REVIEW', 'Under Review'
+        PENDING_APPROVAL = 'PENDING_APPROVAL', 'Reviewed - Pending Approval'
         NEEDS_REVISION = 'NEEDS_REVISION', 'Needs Revision'
         RESUBMITTED = 'RESUBMITTED', 'Resubmitted'
         APPROVED = 'APPROVED', 'Approved'
-        REJECTED = 'REJECTED', 'Rejected'
 
     id = models.UUIDField(
         primary_key=True,
@@ -58,15 +123,22 @@ class DocumentSubmission(models.Model):
         on_delete=models.CASCADE,
         related_name='submissions'
     )
-
-    document_title = models.CharField(max_length=255)
-    requirements = models.ManyToManyField(Requirement, related_name='submissions')
-
+    
+    requirement = models.ForeignKey(
+        Requirement,
+        on_delete=models.CASCADE,
+        related_name='submissions'
+    )
+    
     status = models.CharField(
         max_length=30,
-        choices=DocStatus.choices,
-        default=DocStatus.SUBMITTED
+        choices=SubmissionStatus.choices,
+        default=SubmissionStatus.SUBMITTED
     )
+    
+    document_file = models.FileField(upload_to=submission_upload_path)
+    
+    is_favorite = models.BooleanField(default=False)
 
     initially_submitted_at = models.DateTimeField(auto_now_add=True)
     reviewed_at = models.DateTimeField(null=True, blank=True)
@@ -91,8 +163,7 @@ class DocumentSubmission(models.Model):
     )
 
     def __str__(self):
-        return self.document_title
-
+        return f'Submission: {self.requirement.requirement_title} by {self.faculty.username}'
 
 class DocumentRevision(models.Model):
     id = models.UUIDField(
@@ -107,7 +178,7 @@ class DocumentRevision(models.Model):
         related_name='revisions'
     )
 
-    file = models.FileField(upload_to=user_directory_path)
+    file = models.FileField(upload_to=revision_upload_path)
 
     version_number = models.PositiveIntegerField()
 
@@ -123,10 +194,7 @@ class DocumentRevision(models.Model):
         ordering = ['-version_number']
 
     def __str__(self):
-        return (
-            f'{self.submission.document_title} - Revision {self.version_number}'
-        )
-
+        return f'{self.submission.requirement.requirement_title} - Revision {self.version_number}'
 
 class DocumentReview(models.Model):
     revision = models.ForeignKey(
@@ -142,10 +210,10 @@ class DocumentReview(models.Model):
         related_name='document_remarks'
     )
 
-    remarks = models.TextField()
+    remarks = models.TextField(null=True, blank=True)
 
     reviewed_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         reviewer = self.reviewed_by.username if self.reviewed_by else 'Unknown'
-        return f'Review for {self.revision.submission.document_title} - Revision {self.revision.version_number} by {reviewer}'
+        return f'Review for {self.revision.submission.requirement.requirement_title} - Revision {self.revision.version_number} by {reviewer}'
