@@ -38,7 +38,7 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#">
+                        <a class="nav-link {% if request.resolver_match.url_name in 'requirements_list,add_requirement,edit_requirement' %}active{% endif %}" href="{% url 'admin_staff_portal:requirements_list' %}">
                             <span class="icon"><img src="{% static 'images/submissions.svg' %}" alt="Submissions icon"></span>
                             <span>Submissions</span>
                         </a>
@@ -97,12 +97,14 @@
                             <span class="page-icon"><img src="{% static 'images/dashboard.svg' %}" alt="Dashboard icon"></span>
                         {% elif request.resolver_match.url_name in 'user_list,user_create,user_edit,user_toggle_acc_status' %}
                             <span class="page-icon"><img src="{% static 'images/usermanagement.svg' %}" alt="User management icon"></span>
+                        {% elif request.resolver_match.url_name in 'requirements_list,add_requirement,edit_requirement' %}
+                            <span class="page-icon"><img src="{% static 'images/submissions.svg' %}" alt="Submissions icon"></span>
                         {% else %}
                             <span class="page-icon"><img src="{% static 'images/profile.svg' %}" alt="Page icon"></span>
                         {% endif %}
                         <h1 class="topbar-title">{% block heading %}{{ page_title|default:'User Management' }}{% endblock %}</h1>
                     </div>
-                    <div class="topbar-subtitle">Manage and access all approved documents across the system.</div>
+                    <div class="topbar-subtitle">{% block subtitle %}Manage and access all approved documents across the system.{% endblock %}</div>
                 </div>
 
                 <div class="topbar-controls">

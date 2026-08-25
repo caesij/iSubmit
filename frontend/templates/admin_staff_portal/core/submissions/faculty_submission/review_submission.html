@@ -1,0 +1,352 @@
+{% extends 'admin_staff_portal/base.html' %}
+{% load static %}
+
+{% block title %}Review Submission{% endblock %}
+
+{% block content %}
+<style>
+  .rs-wrap {
+    --maroon: #7a0c0c;
+    --maroon-dark: #5c0909;
+    --gold: #c99a3d;
+    --ink: #211c1c;
+    --muted: #746b68;
+    --line: #e7e0dc;
+    --bg: #f7f4f1;
+    --card: #ffffff;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    color: var(--ink);
+    background: var(--bg);
+    padding: 28px 32px;
+  }
+
+  .rs-crumbs {
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 18px;
+  }
+  .rs-crumbs a { color: var(--muted); text-decoration: none; }
+  .rs-crumbs a:hover { color: var(--maroon); text-decoration: underline; }
+  .rs-crumbs .sep { margin: 0 6px; color: #c9bfba; }
+  .rs-crumbs .current { color: var(--ink); font-weight: 500; }
+
+  .rs-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+  .rs-header h1 {
+    font-size: 24px;
+    font-weight: 700;
+    margin: 0;
+    letter-spacing: -0.01em;
+  }
+  .rs-header .rs-sub {
+    font-size: 13px;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+
+  .rs-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--maroon);
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 8px 14px;
+    text-decoration: none;
+    transition: background .15s ease;
+  }
+  .rs-back:hover { background: #fbeeee; }
+
+  .rs-grid {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 24px;
+    align-items: start;
+  }
+
+  /* Viewer */
+  .rs-viewer {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .rs-viewer-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--line);
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .rs-viewer-toolbar .fname {
+    color: var(--ink);
+    font-weight: 600;
+  }
+  .rs-viewer-body {
+    background: #efeae6;
+    min-height: 520px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .rs-viewer-body embed,
+  .rs-viewer-body iframe {
+    width: 100%;
+    height: 640px;
+    border: none;
+    background: #fff;
+  }
+
+  /* Side panel */
+  .rs-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .rs-card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 18px 18px 20px;
+  }
+  .rs-card h2 {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: var(--muted);
+    margin: 0 0 14px;
+    font-weight: 700;
+  }
+
+  .rs-detail-row {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    font-size: 13.5px;
+    margin-bottom: 12px;
+  }
+  .rs-detail-row:last-child { margin-bottom: 0; }
+  .rs-detail-row .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--gold);
+    margin-top: 6px;
+    flex-shrink: 0;
+  }
+  .rs-detail-row .label { color: var(--muted); display: block; font-size: 11.5px; }
+  .rs-detail-row .value { font-weight: 600; color: var(--ink); }
+
+  .rs-status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 999px;
+    font-size: 12.5px;
+    font-weight: 700;
+  }
+  .rs-status-pill .sw { width: 7px; height: 7px; border-radius: 50%; }
+
+  .st-submitted   { background: #eef2f6; color: #475569; }
+  .st-submitted .sw   { background: #64748b; }
+  .st-under_review{ background: #fef3c7; color: #92400e; }
+  .st-under_review .sw{ background: #b45309; }
+  .st-pending_approval{ background: #ede9fe; color: #5b21b6; }
+  .st-pending_approval .sw{ background: #6d28d9; }
+  .st-needs_revision{ background: #fee2e2; color: #991b1b; }
+  .st-needs_revision .sw{ background: #b91c1c; }
+  .st-resubmitted{ background: #dbeafe; color: #1e40af; }
+  .st-resubmitted .sw{ background: #1d4ed8; }
+  .st-approved{ background: #dcfce7; color: #166534; }
+  .st-approved .sw{ background: #15803d; }
+
+  .rs-status-note {
+    font-size: 12.5px;
+    color: var(--muted);
+    margin-top: 10px;
+    line-height: 1.5;
+  }
+
+  .rs-review-item {
+    font-size: 13px;
+    margin-bottom: 14px;
+  }
+  .rs-review-item:last-child { margin-bottom: 0; }
+  .rs-review-item .who { font-weight: 600; }
+  .rs-review-item .when { color: var(--muted); font-size: 12px; margin-top: 2px; }
+  .rs-review-empty { font-size: 13px; color: var(--muted); }
+
+  .rs-actions form { margin: 0; }
+  .rs-btn {
+    display: block;
+    width: 100%;
+    text-align: center;
+    border: none;
+    border-radius: 8px;
+    padding: 11px 14px;
+    font-size: 13.5px;
+    font-weight: 700;
+    cursor: pointer;
+    margin-bottom: 10px;
+    transition: filter .15s ease;
+  }
+  .rs-btn:last-child { margin-bottom: 0; }
+  .rs-btn:hover { filter: brightness(0.94); }
+
+  .rs-btn-primary { background: var(--maroon); color: #fff; }
+  .rs-btn-approve { background: #166534; color: #fff; }
+  .rs-btn-secondary { background: #fff; color: var(--maroon); border: 1px solid var(--maroon); }
+
+  .rs-waiting-note {
+    font-size: 12.5px;
+    color: var(--muted);
+    background: #f4f1ee;
+    border-radius: 8px;
+    padding: 10px 12px;
+    line-height: 1.5;
+  }
+
+  @media (max-width: 900px) {
+    .rs-grid { grid-template-columns: 1fr; }
+  }
+</style>
+
+<div class="rs-wrap">
+
+  <div class="rs-crumbs">
+    <a href="{% url 'admin_staff_portal:faculty_submissions_list' %}">Faculty Submissions</a>
+    <span class="sep">›</span>
+    <a href="{% url 'admin_staff_portal:faculty_submission_bins_view' submission.faculty.id %}">{{ submission.faculty.get_full_name }}</a>
+    <span class="sep">›</span>
+    <span class="current">{{ submission.requirement.requirement_title }}</span>
+  </div>
+
+  <div class="rs-header">
+    <div>
+      <h1>{{ submission.requirement.requirement_title }}</h1>
+      <div class="rs-sub">Submitted by {{ submission.faculty.get_full_name }}</div>
+    </div>
+    <a href="{% url 'admin_staff_portal:faculty_submission_bins_view' submission.faculty.id %}" class="rs-back">← Back</a>
+  </div>
+
+  <div class="rs-grid">
+
+    <!-- Document viewer -->
+    <div class="rs-viewer">
+      <div class="rs-viewer-toolbar">
+        <span class="fname">{{ submission.document_file.name }}</span>
+        <span>Uploaded {{ submission.initially_submitted_at|date:"M j, Y g:i A" }}</span>
+      </div>
+      <div class="rs-viewer-body">
+        <embed src="{{ submission.document_file.url }}" type="application/pdf" />
+      </div>
+    </div>
+
+    <!-- Side panel -->
+    <div class="rs-panel">
+
+      <div class="rs-card">
+        <h2>Document Details</h2>
+        <div class="rs-detail-row">
+          <span class="dot"></span>
+          <div>
+            <span class="label">File name</span>
+            <span class="value">{{ submission.document_file.name }}</span>
+          </div>
+        </div>
+        <div class="rs-detail-row">
+          <span class="dot"></span>
+          <div>
+            <span class="label">Academic term</span>
+            <span class="value">{{ submission.requirement.academic_term }}</span>
+          </div>
+        </div>
+        <div class="rs-detail-row">
+          <span class="dot"></span>
+          <div>
+            <span class="label">Category</span>
+            <span class="value">{{ submission.requirement.category }}</span>
+          </div>
+        </div>
+        <div class="rs-detail-row">
+          <span class="dot"></span>
+          <div>
+            <span class="label">Deadline</span>
+            <span class="value">{{ submission.requirement.deadline|date:"M j, Y g:i A" }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="rs-card">
+        <h2>Document Status</h2>
+        <span class="rs-status-pill st-{{ submission.status|lower }}">
+          <span class="sw"></span>{{ submission.get_status_display }}
+        </span>
+
+        {% if submission.status == 'PENDING_APPROVAL' %}
+          <div class="rs-status-note">This document has been reviewed and is waiting for admin approval.</div>
+        {% elif submission.status == 'APPROVED' %}
+          <div class="rs-status-note">This document has been reviewed and approved.</div>
+        {% elif submission.status == 'UNDER_REVIEW' %}
+          <div class="rs-status-note">This document is currently being reviewed.</div>
+        {% elif submission.status == 'NEEDS_REVISION' %}
+          <div class="rs-status-note">This document needs revision before it can be approved.</div>
+        {% endif %}
+      </div>
+
+      <div class="rs-card">
+        <h2>Review Information</h2>
+        {% if submission.reviewed_by %}
+          <div class="rs-review-item">
+            <div class="who">Reviewed by {{ submission.reviewed_by.get_full_name }}</div>
+            <div class="when">{{ submission.reviewed_at|date:"M j, Y g:i A" }}</div>
+          </div>
+        {% endif %}
+        {% if submission.approved_by %}
+          <div class="rs-review-item">
+            <div class="who">Approved by {{ submission.approved_by.get_full_name }}</div>
+            <div class="when">{{ submission.approved_at|date:"M j, Y g:i A" }}</div>
+          </div>
+        {% endif %}
+        {% if not submission.reviewed_by and not submission.approved_by %}
+          <div class="rs-review-empty">No review activity yet.</div>
+        {% endif %}
+      </div>
+
+      {% if submission.status != 'APPROVED' and submission.status != 'NEEDS_REVISION' %}
+      <div class="rs-card rs-actions">
+        <h2>Actions</h2>
+
+        {% if submission.status == 'SUBMITTED' or submission.status == 'RESUBMITTED' %}
+          <form method="post" action="{% url 'admin_staff_portal:mark_under_review' submission.id %}">
+            {% csrf_token %}
+            <button type="submit" class="rs-btn rs-btn-primary">Start Review</button>
+          </form>
+        {% endif %}
+
+        {% if submission.status == 'UNDER_REVIEW' %}
+          <form method="post" action="{% url 'admin_staff_portal:mark_reviewed' submission.id %}">
+            {% csrf_token %}
+            <button type="submit" class="rs-btn rs-btn-secondary">Mark as Reviewed</button>
+          </form>
+        {% endif %}
+
+        {% if submission.status == 'PENDING_APPROVAL' %}
+          <div class="rs-waiting-note">This document is pending approval. Approve it from the faculty's submission bin.</div>
+        {% endif %}
+      </div>
+      {% endif %}
+
+    </div>
+  </div>
+</div>
+{% endblock %}

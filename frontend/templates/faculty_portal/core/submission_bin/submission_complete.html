@@ -1,0 +1,220 @@
+{% extends 'faculty_portal/base.html' %}
+{% load static %}
+
+{% block title %}Submission Complete - iSubmit{% endblock %}
+
+{% block content %}
+<style>
+.submission-bin-container { padding: 24px 32px; font-family: 'Segoe UI', Arial, sans-serif; color: #1a1a1a; }
+.page-header { margin-bottom: 20px; }
+.page-title-wrap { display: flex; align-items: center; gap: 12px; }
+.page-icon img { width: 28px; height: 28px; }
+.page-header h1 { font-size: 24px; font-weight: 700; margin: 0; }
+.page-header .subtitle { margin: 2px 0 0; font-size: 13px; color: #6b7280; }
+
+.tab-nav { display: flex; gap: 28px; border-bottom: 1px solid #e5e7eb; margin-bottom: 20px; }
+.tab-link { padding: 10px 2px; font-size: 14px; font-weight: 600; color: #9ca3af; text-decoration: none; border-bottom: 2px solid transparent; }
+.tab-link.active { color: #7f1d1d; border-bottom-color: #7f1d1d; }
+
+.step-card { display: flex; align-items: center; background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 18px 24px; margin-bottom: 20px; }
+.step-item { display: flex; align-items: center; gap: 10px; flex: 1; }
+.step-circle { width: 32px; height: 32px; min-width: 32px; border-radius: 50%; background: #15803d; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; }
+.step-title { font-size: 13px; font-weight: 700; color: #15803d; }
+.step-sub { font-size: 11px; color: #9ca3af; }
+.step-divider { flex: 0 0 40px; height: 1px; background: #15803d; margin: 0 4px; }
+
+.banner { display: flex; align-items: flex-start; gap: 10px; border-radius: 8px; padding: 14px 16px; margin-bottom: 20px; }
+.banner-success { background: #ecfdf5; border: 1px solid #a7f3d0; }
+.banner-success .banner-icon { color: #15803d; }
+.banner-success .banner-title { color: #15803d; font-weight: 700; font-size: 13px; margin: 0; }
+.banner-success .banner-sub { color: #166534; font-size: 12px; margin: 2px 0 0; }
+.banner-info { background: #eff6ff; border: 1px solid #bfdbfe; }
+.banner-info .banner-icon { color: #3b82f6; }
+.banner-info .banner-title { color: #1e3a8a; font-weight: 700; font-size: 13px; margin: 0; }
+.banner-info .banner-sub { color: #1e3a8a; font-size: 12px; margin: 2px 0 0; }
+.banner-close { margin-left: auto; background: none; border: none; cursor: pointer; color: #9ca3af; font-size: 14px; }
+
+.section-title { font-size: 16px; font-weight: 700; margin: 0 0 4px; }
+.section-desc { font-size: 13px; color: #6b7280; margin: 0 0 16px; }
+
+.table-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; overflow: hidden; margin-bottom: 20px; }
+.data-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.data-table thead tr { background: #fbe4e4; }
+.data-table th { text-align: left; padding: 12px 16px; font-weight: 700; color: #374151; font-size: 12px; }
+.data-table td { padding: 14px 16px; border-top: 1px solid #f0f0f0; vertical-align: middle; color: #374151; }
+.data-table input[type="checkbox"] { width: 15px; height: 15px; accent-color: #7f1d1d; }
+.file-cell { display: flex; align-items: center; gap: 8px; }
+.file-icon { font-size: 18px; }
+.file-name { font-weight: 700; font-size: 13px; color: #1a1a1a; }
+.file-size { font-size: 11px; color: #9ca3af; }
+.text-sub { font-size: 11px; color: #9ca3af; }
+
+.pill-review { display: inline-block; padding: 4px 12px; border-radius: 6px; font-size: 12px; font-weight: 700; background: #fff; color: #1d4ed8; border: 1px solid #bfdbfe; }
+.pill-approved { display: inline-block; padding: 4px 12px; border-radius: 6px; font-size: 12px; font-weight: 700; background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
+.pill-revision { display: inline-block; padding: 4px 12px; border-radius: 6px; font-size: 12px; font-weight: 700; background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; }
+.pill-submitted { display: inline-block; padding: 4px 12px; border-radius: 6px; font-size: 12px; font-weight: 700; background: #fef3c7; color: #b45309; border: 1px solid #fde68a; }
+
+.btn-icon { border: none; background: none; cursor: pointer; font-size: 16px; color: #6b7280; }
+
+.next-steps { margin-top: 24px; }
+.next-steps h3 { font-size: 14px; font-weight: 700; margin: 0 0 12px; }
+.next-steps-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.next-card { display: flex; align-items: center; gap: 10px; border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px 14px; text-decoration: none; color: inherit; }
+.next-card-icon { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 15px; flex-shrink: 0; }
+.next-card-icon.orange { background: #fef3c7; color: #b45309; }
+.next-card-icon.blue { background: #dbeafe; color: #1d4ed8; }
+.next-card-icon.green { background: #dcfce7; color: #15803d; }
+.next-card-title { font-size: 13px; font-weight: 700; color: #1a1a1a; margin: 0; }
+.next-card-sub { font-size: 11px; color: #9ca3af; margin: 2px 0 0; }
+.next-card-arrow { margin-left: auto; color: #9ca3af; }
+</style>
+
+<div class="submission-bin-container">
+    <div class="page-header">
+        <div class="page-title-wrap">
+            <span class="page-icon"><img src="{% static 'images/submission_bin.svg' %}" alt="Submission Bin icon"></span>
+            <div>
+                <h1>Submission Bin</h1>
+                <p class="subtitle">Upload and manage academic documents</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="tab-nav">
+        <a href="{% url 'faculty_portal:upload_files' %}" class="tab-link">Upload Files</a>
+        <a href="#" class="tab-link">Document Analysis</a>
+        <a href="{% url 'faculty_portal:review_confirm' %}" class="tab-link">Review &amp; Confirm</a>
+        <a href="{% url 'faculty_portal:submission_complete' %}" class="tab-link active">Submission Complete</a>
+    </div>
+
+    <div class="step-card">
+        <div class="step-item">
+            <span class="step-circle">1</span>
+            <div><div class="step-title">Upload Files</div><div class="step-sub">Upload your document</div></div>
+        </div>
+        <div class="step-divider"></div>
+        <div class="step-item">
+            <span class="step-circle">2</span>
+            <div><div class="step-title">Document Analysis</div><div class="step-sub">OCR and NLP checking</div></div>
+        </div>
+        <div class="step-divider"></div>
+        <div class="step-item">
+            <span class="step-circle">3</span>
+            <div><div class="step-title">Review &amp; Confirm</div><div class="step-sub">Review before submission</div></div>
+        </div>
+        <div class="step-divider"></div>
+        <div class="step-item">
+            <span class="step-circle">4</span>
+            <div><div class="step-title">Submission Complete</div><div class="step-sub">Your document has been submitted for review</div></div>
+        </div>
+    </div>
+
+    <h2 class="section-title">Step 4. Submission Complete</h2>
+    <p class="section-desc">Your document has been submitted and is now waiting for review.</p>
+
+    <div class="banner banner-success">
+        <span class="banner-icon">&#9989;</span>
+        <div>
+            <p class="banner-title">Your document has been submitted!</p>
+            <p class="banner-sub">We will review your submission and notify you once there is an update.</p>
+        </div>
+        <button class="banner-close" type="button" onclick="this.closest('.banner').style.display='none'">&times;</button>
+    </div>
+
+    <div class="table-card">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th><input type="checkbox" aria-label="Select all"></th>
+                    <th>File</th>
+                    <th>Category</th>
+                    <th>Deadline</th>
+                    <th>Date Uploaded</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for doc in submitted_documents %}
+                    <tr>
+                        <td><input type="checkbox" name="selected_documents" value="{{ doc.id }}"></td>
+                        <td>
+                            <div class="file-cell">
+                                <span class="file-icon">&#128196;</span>
+                                <div>
+                                    <div class="file-name">{{ doc.requirement.requirement_title }}</div>
+                                    <div class="file-size">{{ doc.document_file.size|filesizeformat }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>{{ doc.requirement.category }}</td>
+                        <td>
+                            <div>{{ doc.requirement.deadline|date:"F j, Y" }}</div>
+                            <div class="text-sub">{{ doc.requirement.deadline|date:"g:i A" }}</div>
+                        </td>
+                        <td>
+                            <div>{{ doc.initially_submitted_at|date:"F j, Y" }}</div>
+                            <div class="text-sub">{{ doc.initially_submitted_at|date:"g:i A" }}</div>
+                        </td>
+                        <td>
+                            {% if doc.status == 'APPROVED' %}
+                                <span class="pill-approved">Approved</span>
+                            {% elif doc.status == 'NEEDS_REVISION' %}
+                                <span class="pill-revision">Needs Revision</span>
+                            {% elif doc.status == 'UNDER_REVIEW' %}
+                                <span class="pill-review">Under Review</span>
+                            {% else %}
+                                <span class="pill-submitted">Submitted</span>
+                            {% endif %}
+                        </td>
+                        <td><button type="button" class="btn-icon">&#8942;</button></td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="7" class="text-center py-4">No submitted documents to show.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="banner banner-info">
+        <span class="banner-icon">&#8505;</span>
+        <div>
+            <p class="banner-title">What happen next?</p>
+            <p class="banner-sub">Admin Review &bull; Notified once the review is complete &bull; Upload and submit remaining requirements anytime.</p>
+        </div>
+        <button class="banner-close" type="button" onclick="this.closest('.banner').style.display='none'">&times;</button>
+    </div>
+
+    <div class="next-steps">
+        <h3>What can you do next?</h3>
+        <div class="next-steps-grid">
+            <a href="#" class="next-card">
+                <span class="next-card-icon orange">&#128340;</span>
+                <div>
+                    <p class="next-card-title">Track Submission</p>
+                    <p class="next-card-sub">Check the status and updates of your submissions</p>
+                </div>
+                <span class="next-card-arrow">&rsaquo;</span>
+            </a>
+            <a href="{% url 'faculty_portal:upload_files' %}" class="next-card">
+                <span class="next-card-icon blue">&#8593;</span>
+                <div>
+                    <p class="next-card-title">Upload More Documents</p>
+                    <p class="next-card-sub">Continue uploading the rest of your requirements</p>
+                </div>
+                <span class="next-card-arrow">&rsaquo;</span>
+            </a>
+            <a href="{% url 'faculty_portal:dashboard' %}" class="next-card">
+                <span class="next-card-icon green">&#127968;</span>
+                <div>
+                    <p class="next-card-title">Back to Dashboard</p>
+                    <p class="next-card-sub">Go to your dashboard overview</p>
+                </div>
+                <span class="next-card-arrow">&rsaquo;</span>
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

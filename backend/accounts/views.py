@@ -1,8 +1,8 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth import login, logout
 from django.contrib import messages
-from .forms import CustomLoginForm
-from .utils import validate_portal_access
+from accounts.forms import CustomLoginForm
+from accounts.utils import validate_portal_access
 
 def login_view(request):
     if request.user.is_authenticated:

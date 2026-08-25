@@ -1,0 +1,176 @@
+{% extends 'admin_staff_portal/base.html' %}
+{% load static %}
+
+{% block title %}Faculty Submissions - iSubmit{% endblock %}
+{% block heading %}Faculty Submissions{% endblock %}
+{% block subtitle %}Select a faculty member to view their submitted documents.{% endblock %}
+
+{% block content %}
+<style>
+.submissions-container { padding: 0; }
+.search-card { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; margin-bottom: 16px; flex-wrap: wrap; }
+.search-form { display: flex; gap: 8px; }
+.search-input { padding: 8px 12px; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 13px; width: 220px; }
+.btn-search { padding: 8px 16px; background: #7f1d1d; color: #fff; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; }
+
+.filter-form { display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; }
+.select-wrap label { display: block; font-size: 11px; color: #6b7280; margin-bottom: 4px; }
+.select-wrap select { padding: 7px 10px; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 13px; min-width: 140px; }
+.btn-clear { font-size: 12px; color: #6b7280; text-decoration: underline; white-space: nowrap; align-self: center; }
+
+.table-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; overflow: hidden; }
+.data-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.data-table thead tr { background: #fbe4e4; }
+.data-table th { text-align: left; padding: 12px 16px; font-weight: 700; color: #374151; font-size: 12px; }
+.data-table td { padding: 14px 16px; border-top: 1px solid #f0f0f0; vertical-align: middle; color: #374151; }
+.font-bold { font-weight: 700; color: #1a1a1a; }
+.text-sub { font-size: 11px; color: #9ca3af; }
+
+.faculty-cell { display: flex; align-items: center; gap: 10px; }
+.faculty-avatar { width: 32px; height: 32px; border-radius: 50%; background: #7f1d1d; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; }
+.btn-view { color: #7f1d1d; text-decoration: none; font-weight: 600; font-size: 13px; }
+
+.type-pill { display: inline-block; padding: 4px 10px; border-radius: 6px; font-size: 11.5px; font-weight: 700; background: #f3f4f6; color: #374151; }
+
+.progress-cell { display: flex; align-items: center; gap: 8px; }
+.progress-count { font-weight: 700; color: #1a1a1a; white-space: nowrap; }
+.progress-track { width: 70px; height: 6px; background: #f0f0f0; border-radius: 999px; overflow: hidden; }
+.progress-fill { height: 100%; background: #7f1d1d; border-radius: 999px; }
+
+.approval-badge { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 50%; font-size: 13px; font-weight: 700; }
+.approval-yes { background: #dcfce7; color: #15803d; }
+.approval-no { background: #fee2e2; color: #b91c1c; }
+
+.pagination-footer { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-top: 1px solid #f0f0f0; font-size: 12px; color: #6b7280; }
+.pagination-controls { display: flex; gap: 6px; }
+.page-btn { width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border: 1px solid #e5e7eb; border-radius: 6px; text-decoration: none; color: #374151; font-size: 12px; }
+.page-btn.active { background: #7f1d1d; color: #fff; border-color: #7f1d1d; }
+</style>
+
+<div class="submissions-container">
+    <div class="search-card">
+        <form method="GET" action="{% url 'admin_staff_portal:faculty_submissions_list' %}" class="search-form">
+            <input type="text" name="q" value="{{ request.GET.q|default:'' }}" placeholder="Search faculty name..." class="search-input">
+            <button type="submit" class="btn-search">Search</button>
+        </form>
+
+        <form method="GET" action="{% url 'admin_staff_portal:faculty_submissions_list' %}" class="filter-form">
+            {% if request.GET.q %}<input type="hidden" name="q" value="{{ request.GET.q }}">{% endif %}
+            <div class="select-wrap">
+                <label>Faculty Type</label>
+                <select name="faculty_type" onchange="this.form.submit()">
+                    <option value="">All Types</option>
+                    {% for value, label in faculty_type_choices %}
+                        <option value="{{ value }}" {% if request.GET.faculty_type == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="select-wrap">
+                <label>Completion</label>
+                <select name="completion" onchange="this.form.submit()">
+                    <option value="">All</option>
+                    <option value="COMPLETE" {% if request.GET.completion == 'COMPLETE' %}selected{% endif %}>Completed</option>
+                    <option value="INCOMPLETE" {% if request.GET.completion == 'INCOMPLETE' %}selected{% endif %}>Incomplete</option>
+                </select>
+            </div>
+
+            <div class="select-wrap">
+                <label>Approval Status</label>
+                <select name="approval" onchange="this.form.submit()">
+                    <option value="">All</option>
+                    <option value="APPROVED" {% if request.GET.approval == 'APPROVED' %}selected{% endif %}>Approved</option>
+                    <option value="NOT_APPROVED" {% if request.GET.approval == 'NOT_APPROVED' %}selected{% endif %}>Not Approved</option>
+                </select>
+            </div>
+
+            {% if request.GET.faculty_type or request.GET.completion or request.GET.approval or request.GET.q %}
+                <a href="{% url 'admin_staff_portal:faculty_submissions_list' %}" class="btn-clear">Clear Filters</a>
+            {% endif %}
+        </form>
+    </div>
+
+    <div class="table-card">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Faculty Member</th>
+                    <th>Faculty Type</th>
+                    <th>Submissions</th>
+                    <th>Approved</th>
+                    <th>Latest Submission</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for faculty_member in faculty_list %}
+                    <tr>
+                        <td>
+                            <div class="faculty-cell">
+                                <div class="faculty-avatar">{{ faculty_member.first_name|first }}{{ faculty_member.last_name|first }}</div>
+                                <div>
+                                    <div class="font-bold">{{ faculty_member.get_full_name }}</div>
+                                    <div class="text-sub">{{ faculty_member.email }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="type-pill">{{ faculty_member.get_faculty_type_display }}</span>
+                        </td>
+                        <td>
+                            <div class="progress-cell">
+                                <span class="progress-count">{{ faculty_member.submitted_count }} / {{ faculty_member.required_count }}</span>
+                                {% if faculty_member.required_count %}
+                                <div class="progress-track">
+                                    <div class="progress-fill" style="width: {% widthratio faculty_member.submitted_count faculty_member.required_count 100 %}%;"></div>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td>
+                            {% if faculty_member.is_fully_approved %}
+                                <span class="approval-badge approval-yes" title="All documents approved">&#10003;</span>
+                            {% else %}
+                                <span class="approval-badge approval-no" title="Not yet fully approved">&#10005;</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if faculty_member.latest_submission %}
+                                <div>{{ faculty_member.latest_submission|date:"F j, Y" }}</div>
+                                <div class="text-sub">{{ faculty_member.latest_submission|date:"g:i A" }}</div>
+                            {% else %}
+                                <span class="text-sub">No submissions</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{% url 'admin_staff_portal:faculty_submission_bins_view' faculty_member.id %}" class="btn-view">
+                                View Bins &rarr;
+                            </a>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="6" style="text-align: center; padding: 20px;">No faculty members found.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        {% if is_paginated or page_obj %}
+        <div class="pagination-footer">
+            <span>Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }} faculty members</span>
+            <div class="pagination-controls">
+                {% if page_obj.has_previous %}
+                    <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.faculty_type %}&faculty_type={{ request.GET.faculty_type }}{% endif %}{% if request.GET.completion %}&completion={{ request.GET.completion }}{% endif %}{% if request.GET.approval %}&approval={{ request.GET.approval }}{% endif %}" class="page-btn">&lt;</a>
+                {% endif %}
+                {% for page_num in page_obj.paginator.page_range %}
+                    <a href="?page={{ page_num }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.faculty_type %}&faculty_type={{ request.GET.faculty_type }}{% endif %}{% if request.GET.completion %}&completion={{ request.GET.completion }}{% endif %}{% if request.GET.approval %}&approval={{ request.GET.approval }}{% endif %}" class="page-btn {% if page_obj.number == page_num %}active{% endif %}">{{ page_num }}</a>
+                {% endfor %}
+                {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.faculty_type %}&faculty_type={{ request.GET.faculty_type }}{% endif %}{% if request.GET.completion %}&completion={{ request.GET.completion }}{% endif %}{% if request.GET.approval %}&approval={{ request.GET.approval }}{% endif %}" class="page-btn">&gt;</a>
+                {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

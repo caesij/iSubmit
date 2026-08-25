@@ -2,7 +2,7 @@ from django.urls import reverse
 from django.views.generic import ListView, CreateView, UpdateView, View
 from django.shortcuts import get_object_or_404, redirect
 from django.db.models import Q
-from accounts.models import User
+from django.contrib.auth import get_user_model
 from admin_staff_portal.forms import StaffManagementForm, FacultyManagementForm
 from admin_staff_portal.mixins import AdminOrStaffRequiredMixin, RoleContextMixin, RoleFormMixin
 import secrets
@@ -11,6 +11,8 @@ from django.core.mail import send_mail
 from django.conf import settings
 from django.contrib import messages
 from axes.utils import reset as axes_reset
+
+User = get_user_model()
 
 class UserListView(AdminOrStaffRequiredMixin, RoleContextMixin, ListView):
     model = User

@@ -38,13 +38,13 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'upload_files' %}active{% endif %}" href="{% url 'faculty_portal:upload_files' %}">
                             <span class="icon"><img src="{% static 'images/submissions.svg' %}" alt="Submissions icon"></span>
                             <span>Submission Bin</span>
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'recent_submissions' %}active{% endif %}" href="{% url 'faculty_portal:recent_submissions' %}">
                             <span class="icon"><img src="{% static 'images/email.svg' %}" alt="My Submissions icon"></span>
                             <span>My Submissions</span>
                         </a>
