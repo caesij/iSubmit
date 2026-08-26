@@ -688,8 +688,58 @@ select {
 
 /* Submission Bin Specific Styles */
 .submissions-container {
-  max-width: 1400px;
-  margin: 0 auto;
+  width: 100%;
+}
+
+.search-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 16px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.search-card .filter-form {
+  width: 100%;
+  padding: 12px 8px;
+  border: 1px solid var(--submissions-border);
+  border-radius: 8px;
+  background: var(--submissions-surface);
+}
+
+.search-card .faculty-search {
+  flex: 1 1 270px;
+  min-width: 270px;
+}
+
+.search-card .select-wrap {
+  flex: 1 1 135px;
+  min-width: 135px;
+}
+
+.search-form {
+  display: flex;
+  gap: 8px;
+}
+
+.search-input {
+  width: 220px;
+  padding: 8px 12px;
+  border: 1px solid var(--submissions-border);
+  border-radius: 6px;
+  font-size: 13px;
+}
+
+.btn-search {
+  padding: 8px 16px;
+  background: var(--submissions-red-700);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
 }
 
 .tab-nav {
@@ -702,7 +752,7 @@ select {
 .tab-nav .tab-link {
   padding: 12px 0;
   text-decoration: none;
-  color: var(--submissions-muted);
+  color: var(--submissions-text);
   font-weight: 500;
   border-bottom: 3px solid transparent;
   cursor: pointer;
@@ -714,25 +764,34 @@ select {
 }
 
 .tab-nav .tab-link.active {
-  color: var(--submissions-red-600);
+  color: var(--submissions-text);
+  font-weight: 700;
   border-bottom-color: var(--submissions-red-600);
+}
+
+.tab-nav .tab-link.active::after {
+  display: none;
 }
 
 .filter-card {
   background: var(--submissions-surface);
   border: 1px solid var(--submissions-border);
   border-radius: 8px;
-  padding: 20px;
+  padding: 12px 8px 10px;
   margin-bottom: 24px;
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 20px;
   flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 10px;
 }
 
 .filter-form {
-  flex: 1;
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+  flex: 1 1 100%;
   min-width: 0;
 }
 
@@ -781,6 +840,31 @@ select {
   min-width: 140px;
 }
 
+.filter-form .search-icon {
+  position: absolute;
+  left: 10px;
+  bottom: 12px;
+  z-index: 1;
+}
+
+.filter-form .search-icon img {
+  width: 18px;
+  height: 18px;
+}
+
+.filter-form .search-input-wrap {
+  flex: 1 1 270px;
+  min-width: 270px;
+}
+
+.filter-form .search-input-wrap input {
+  padding-left: 28px;
+}
+
+.filter-form .select-wrap {
+  flex: 0 1 150px;
+}
+
 .select-wrap label {
   font-size: 12px;
   font-weight: 500;
@@ -812,10 +896,13 @@ select {
 }
 
 .btn-add-bin {
-  display: inline-flex;
+  display: flex;
   align-items: center;
+  justify-content: center;
+  width: 125px;
+  height: 35px;
   gap: 8px;
-  padding: 10px 18px;
+  padding: 0;
   background: var(--submissions-red-600);
   color: white;
   border: none;
@@ -826,6 +913,13 @@ select {
   text-decoration: none;
   transition: all 0.3s ease;
   white-space: nowrap;
+  margin: 0;
+}
+
+.submission-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 24px;
 }
 
 .btn-add-bin:hover {
@@ -848,6 +942,7 @@ select {
 .table-card .data-table {
   width: 100%;
   border-collapse: collapse;
+  table-layout: fixed;
 }
 
 .table-card .data-table thead {
@@ -861,6 +956,12 @@ select {
   font-weight: 600;
   color: var(--submissions-text);
   font-size: 14px;
+  overflow-wrap: anywhere;
+}
+
+.table-card .data-table th.action-heading,
+.table-card .data-table td.action-cell {
+  text-align: center;
 }
 
 .table-card .data-table td {
@@ -868,6 +969,7 @@ select {
   border-bottom: 1px solid var(--submissions-border);
   color: var(--submissions-text);
   font-size: 14px;
+  overflow-wrap: anywhere;
 }
 
 .table-card .data-table tbody tr:hover {
@@ -887,6 +989,117 @@ select {
   color: var(--submissions-muted);
 }
 
+.faculty-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.faculty-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--submissions-red-700);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.btn-view {
+  color: var(--submissions-red-700);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.type-pill {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 11.5px;
+  font-weight: 700;
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.progress-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.progress-count {
+  font-weight: 700;
+  color: var(--submissions-text);
+  white-space: nowrap;
+}
+
+.progress-track {
+  width: 70px;
+  height: 6px;
+  background: #f0f0f0;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--submissions-red-700);
+  border-radius: 999px;
+}
+
+.approval-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.approval-yes {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.approval-no {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.review-badge,
+.submission-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 96px;
+  padding: 5px 10px;
+  border-radius: 5px;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.review-badge {
+  background: #e4edff;
+  color: #1d5fd1;
+}
+
+.submission-status.status-approved {
+  background: #e3f5e9;
+  color: #168447;
+}
+
+.submission-status.status-pending {
+  background: #fff3df;
+  color: #e18b00;
+}
+
 .progress-wrap {
   display: flex;
   align-items: center;
@@ -897,9 +1110,9 @@ select {
 
 .status-badge {
   display: inline-block;
-  padding: 6px 12px;
-  border-radius: 20px;
-  font-weight: 500;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-weight: 700;
   font-size: 12px;
 }
 
@@ -976,25 +1189,26 @@ select {
 }
 
 .pagination-footer {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
   padding: 16px 20px;
   border-top: 1px solid var(--submissions-border);
   background: #fafafa;
-  flex-wrap: wrap;
   gap: 16px;
 }
 
 .pagination-info {
   font-size: 14px;
   color: var(--submissions-muted);
+  grid-column: 1;
 }
 
 .pagination-controls {
   display: flex;
   align-items: center;
   gap: 8px;
+  grid-column: 2;
 }
 
 .page-btn {
@@ -1012,6 +1226,13 @@ select {
 .page-btn:hover {
   background: var(--submissions-soft);
   border-color: var(--submissions-red-600);
+}
+
+.page-btn-disabled {
+  color: #9a9a9a;
+  border-color: transparent;
+  background: transparent;
+  cursor: default;
 }
 
 .page-btn.active {

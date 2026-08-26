@@ -4,12 +4,13 @@
 {% block title %}Submissions - iSubmit{% endblock %}
 {% block heading %}Submissions{% endblock %}
 {% block subtitle %}Manage and access all approved documents across the system.{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/submissions.css' %}">{% endblock %}
 
 {% block content %}
 <div class="submissions-container">
     <div class="tab-nav">
-        <a href="{% url 'admin_staff_portal:requirements_list' %}" class="tab-link active">Submission Bin</a>
-        <a href="{% url 'admin_staff_portal:faculty_submissions_list' %}" class="tab-link">Faculty Submission</a>
+        <a href="{% url 'admin_staff_portal:requirements_list' %}" class="tab-link {% if request.resolver_match.url_name == 'requirements_list' %}active{% endif %}">Submission Bin</a>
+        <a href="{% url 'admin_staff_portal:faculty_submissions_list' %}" class="tab-link {% if request.resolver_match.url_name == 'faculty_submissions_list' %}active{% endif %}">Faculty Submission</a>
     </div>
 
     <div class="filter-card">
@@ -65,6 +66,9 @@
             {% endif %}
         </form>
 
+    </div>
+
+    <div class="submission-actions">
         <a href="{% url 'admin_staff_portal:add_requirement' %}" class="btn-add-bin">
             <span class="plus-icon">+</span> Add Bin
         </a>
@@ -81,7 +85,7 @@
                     <th>Deadline</th>
                     <th>Completion Progress</th>
                     <th>Status</th>
-                    <th>Action</th>
+                    <th class="action-heading">Action</th>
                 </tr>
             </thead>
             <tbody>
@@ -136,6 +140,8 @@
             <div class="pagination-controls">
                 {% if page_obj.has_previous %}
                     <a href="?page={{ page_obj.previous_page_number }}" class="page-btn">&lt;</a>
+                {% else %}
+                    <span class="page-btn page-btn-disabled" aria-disabled="true">&lt;</span>
                 {% endif %}
 
                 {% for page_num in page_obj.paginator.page_range %}
@@ -146,6 +152,8 @@
 
                 {% if page_obj.has_next %}
                     <a href="?page={{ page_obj.next_page_number }}" class="page-btn">&gt;</a>
+                {% else %}
+                    <span class="page-btn page-btn-disabled" aria-disabled="true">&gt;</span>
                 {% endif %}
             </div>
         </div>

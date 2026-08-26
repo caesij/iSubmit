@@ -81,7 +81,11 @@
             <header class="topbar">
                 <div>
                     <div class="topbar-title-wrap">
-                        <span class="page-icon"><img src="{% static 'images/dashboard.svg' %}" alt="Dashboard icon"></span>
+                        {% if request.resolver_match.url_name == 'upload_files' %}
+                            <span class="page-icon"><img src="{% static 'images/submission_bin.svg' %}" alt="Submission Bin icon"></span>
+                        {% else %}
+                            <span class="page-icon"><img src="{% static 'images/dashboard.svg' %}" alt="Dashboard icon"></span>
+                        {% endif %}
                         <h1 class="topbar-title">{% block heading %}{{ request.user.get_role_display }} Portal{% endblock %}</h1>
                     </div>
                     <div class="topbar-subtitle">Manage and access all approved documents across the system.</div>
