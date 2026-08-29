@@ -1,0 +1,163 @@
+{% extends 'faculty_portal/base.html' %}
+{% load static %}
+
+{% block title %}Pinned Documents - iSubmit{% endblock %}
+
+{% block content %}
+<style>
+.docs-header { margin-bottom: 20px; }
+.docs-header h1 { display: flex; align-items: center; gap: 8px; font-size: 22px; font-weight: 700; margin: 0; }
+.docs-sub { font-size: 13px; color: #6b7280; margin-top: 4px; }
+
+.docs-tabs { display: flex; gap: 28px; border-bottom: 1px solid #e5e7eb; margin-bottom: 20px; }
+.docs-tab { padding: 10px 2px; font-size: 13.5px; font-weight: 600; color: #6b7280; text-decoration: none; border-bottom: 2px solid transparent; }
+.docs-tab.active { color: #7f1d1d; border-bottom-color: #7f1d1d; }
+
+.docs-layout { display: grid; grid-template-columns: 220px 1fr; gap: 20px; align-items: start; }
+
+.filter-panel { background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 16px; }
+.filter-group { margin-bottom: 16px; }
+.filter-group label { display: block; font-size: 12px; font-weight: 600; color: #374151; margin-bottom: 6px; }
+.filter-group select { width: 100%; padding: 8px 10px; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 13px; box-sizing: border-box; }
+.btn-reset { display: block; width: 100%; text-align: center; padding: 9px; border: 1px solid #7f1d1d; color: #7f1d1d; background: #fff; border-radius: 8px; font-size: 13px; font-weight: 700; text-decoration: none; box-sizing: border-box; }
+
+.table-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; overflow: hidden; }
+.data-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.data-table thead tr { background: #fbe4e4; }
+.data-table th { text-align: left; padding: 12px 16px; font-weight: 700; color: #374151; font-size: 12px; }
+.data-table td { padding: 14px 16px; border-top: 1px solid #f0f0f0; vertical-align: middle; color: #374151; }
+.font-bold { font-weight: 700; color: #1a1a1a; }
+.text-sub { font-size: 11px; color: #9ca3af; }
+
+.fname-cell { display: flex; align-items: center; gap: 10px; }
+.fname-link { color: #1a1a1a; text-decoration: none; }
+.fname-link:hover { text-decoration: underline; }
+.star-btn { border: none; background: none; cursor: pointer; font-size: 15px; color: #d1d5db; padding: 0; line-height: 1; }
+.star-btn.pinned { color: #f59e0b; }
+
+.btn-icon { border: none; background: none; cursor: pointer; font-size: 16px; color: #6b7280; }
+
+.pagination-footer { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-top: 1px solid #f0f0f0; font-size: 12px; color: #6b7280; }
+.pagination-controls { display: flex; gap: 6px; }
+.page-btn { width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border: 1px solid #e5e7eb; border-radius: 6px; text-decoration: none; color: #374151; font-size: 12px; }
+.page-btn.active { background: #7f1d1d; color: #fff; border-color: #7f1d1d; }
+</style>
+
+<div class="docs-header">
+    <h1>📄 My Documents</h1>
+    <div class="docs-sub">View and manage all your submitted documents</div>
+</div>
+
+<div class="docs-tabs">
+    <a href="{% url 'faculty_portal:my_documents' %}" class="docs-tab">All Documents</a>
+    <a href="{% url 'faculty_portal:pinned_documents' %}" class="docs-tab active">Pinned</a>
+</div>
+
+<div class="docs-layout">
+    <form method="GET" action="{% url 'faculty_portal:pinned_documents' %}" class="filter-panel">
+        <div class="filter-group">
+            <label>Academic Term</label>
+            <select name="academic_term" onchange="this.form.submit()">
+                <option value="">All Terms</option>
+                {% for term in academic_terms %}
+                    <option value="{{ term }}" {% if selected_academic_term == term %}selected{% endif %}>{{ term }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="filter-group">
+            <label>Document Types</label>
+            <select name="document_type" onchange="this.form.submit()">
+                <option value="">All Types</option>
+                {% for dtype in document_type_choices %}
+                    <option value="{{ dtype }}" {% if selected_document_type == dtype %}selected{% endif %}>{{ dtype }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="filter-group">
+            <label>Sort by</label>
+            <select name="sort_by" onchange="this.form.submit()">
+                <option value="newest" {% if selected_sort_by == 'newest' %}selected{% endif %}>Newest</option>
+                <option value="oldest" {% if selected_sort_by == 'oldest' %}selected{% endif %}>Oldest</option>
+            </select>
+        </div>
+
+        <a href="{% url 'faculty_portal:pinned_documents' %}" class="btn-reset">Reset Filters</a>
+    </form>
+
+    <div class="table-card">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>File Name</th>
+                    <th>Academic Term</th>
+                    <th>Submitted</th>
+                    <th>Approved</th>
+                    <th>File Type</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for sub in submissions %}
+                    <tr>
+                        <td>
+                            <div class="fname-cell">
+                                <form method="post" action="{% url 'faculty_portal:toggle_pin' sub.id %}" style="display:inline;">
+                                    {% csrf_token %}
+                                    <button type="submit" class="star-btn pinned" title="Remove from pinned">★</button>
+                                </form>
+                                <a href="{% url 'faculty_portal:document_file_view_pinned' sub.id %}" class="fname-link font-bold">{{ sub.requirement.requirement_title }}</a>
+                            </div>
+                        </td>
+                        <td>
+                            <div>{{ sub.requirement.get_semester_display }}</div>
+                            <div class="text-sub">SY {{ sub.requirement.academic_term|cut:"A.Y. " }}</div>
+                        </td>
+                        <td>
+                            <div>{{ sub.initially_submitted_at|date:"F j, Y" }}</div>
+                            <div class="text-sub">{{ sub.initially_submitted_at|date:"g:i A" }}</div>
+                        </td>
+                        <td>
+                            {% if sub.approved_at %}
+                                <div>{{ sub.approved_at|date:"F j, Y" }}</div>
+                                <div class="text-sub">{{ sub.approved_at|date:"g:i A" }}</div>
+                            {% else %}
+                                <span class="text-sub">&mdash;</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div>{{ sub.document_file.name|slice:"-3:"|upper }}</div>
+                            <div class="text-sub">{{ sub.document_file.size|filesizeformat }}</div>
+                        </td>
+                        <td>
+                            <a href="{% url 'faculty_portal:document_file_view_pinned' sub.id %}" class="btn-icon" aria-label="View">⋮</a>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="6" style="text-align: center; padding: 20px;">No pinned documents yet.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        {% if is_paginated or page_obj %}
+        <div class="pagination-footer">
+            <span>Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }} documents</span>
+            <div class="pagination-controls">
+                {% if page_obj.has_previous %}
+                    <a href="?page={{ page_obj.previous_page_number }}{% if selected_academic_term %}&academic_term={{ selected_academic_term }}{% endif %}{% if selected_document_type %}&document_type={{ selected_document_type }}{% endif %}{% if selected_sort_by %}&sort_by={{ selected_sort_by }}{% endif %}" class="page-btn">&lt;</a>
+                {% endif %}
+                {% for page_num in page_obj.paginator.page_range %}
+                    <a href="?page={{ page_num }}{% if selected_academic_term %}&academic_term={{ selected_academic_term }}{% endif %}{% if selected_document_type %}&document_type={{ selected_document_type }}{% endif %}{% if selected_sort_by %}&sort_by={{ selected_sort_by }}{% endif %}" class="page-btn {% if page_obj.number == page_num %}active{% endif %}">{{ page_num }}</a>
+                {% endfor %}
+                {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}{% if selected_academic_term %}&academic_term={{ selected_academic_term }}{% endif %}{% if selected_document_type %}&document_type={{ selected_document_type }}{% endif %}{% if selected_sort_by %}&sort_by={{ selected_sort_by }}{% endif %}" class="page-btn">&gt;</a>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -4,7 +4,7 @@ from faculty_portal import views
 app_name = 'faculty_portal'
 
 urlpatterns = [
-    path('dashboard/', views.DashboardView.as_view(), name='dashboard'),
+    path('dashboard/', views.dashboard_view, name='dashboard'),
     
     # Submission Bin URLs
     path('submission_bin/upload_files/', views.upload_files_view, name='upload_files'),
@@ -17,4 +17,12 @@ urlpatterns = [
     # My Submissions URLs
     path('my_submissions/recent_submissions/', views.recent_submissions_list, name='recent_submissions'),
     path('my_submissions/recent_submissions/view/<uuid:document_id>/', views.view_my_submitted_document, name='view_my_submitted_document'),
+    
+    # My Documents URLs
+    path('my_documents/', views.all_documents_view, name='my_documents'),
+    path('my_documents/all_documents/', views.all_documents_view, name='all_documents'),
+    path('my_documents/pinned_documents/', views.pinned_documents_view, name='pinned_documents'),
+    path('my_documents/all_documents/<uuid:document_id>/view/', views.document_file_view, {'source': 'all'}, name='document_file_view_all'),
+    path('my_documents/pinned_documents/<uuid:document_id>/view/', views.document_file_view, {'source': 'pinned'}, name='document_file_view_pinned'),
+    path('my_documents/<uuid:document_id>/toggle-pin/', views.toggle_pin_view, name='toggle_pin')
 ]

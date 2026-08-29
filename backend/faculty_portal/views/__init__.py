@@ -1,4 +1,5 @@
-from faculty_portal.views.core.dashboard_views import DashboardView
+from faculty_portal.views.core.dashboard_views import dashboard_view
+
 from faculty_portal.views.core.submission_bin_views import (
     upload_files_view,
     attach_document_view,
@@ -11,9 +12,15 @@ from faculty_portal.views.core.my_submissions_views import (
     recent_submissions_list,
     view_my_submitted_document
 )
+from faculty_portal.views.core.my_documents_views import (
+    all_documents_view,
+    pinned_documents_view,
+    toggle_pin_view,
+    document_file_view,
+)
 
 __all__ = [
-    'DashboardView',
+    'dashboard_view',
     
     'upload_files_view',
     'attach_document_view',
@@ -24,4 +31,9 @@ __all__ = [
     
     'recent_submissions_list',
     'view_my_submitted_document',
+    
+    'all_documents_view',
+    'pinned_documents_view',
+    'toggle_pin_view',
+    'document_file_view'
 ]

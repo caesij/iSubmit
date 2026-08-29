@@ -25,6 +25,7 @@ class RequirementForm(forms.ModelForm):
             'category', 
             'assigned_to', 
             'academic_year',
+            'semester',
             'status', 
             'deadline'
         ]
@@ -32,8 +33,12 @@ class RequirementForm(forms.ModelForm):
         widgets = {
             'deadline': forms.DateTimeInput(
                 attrs={'type': 'datetime-local'},
-                format='%Y-%m-%dT%H:%M',
-            ),
+                format='%Y-%m-%dT%H:%M'
+            )
+        }
+        
+        error_messages = {
+            'unique_together': 'A requirement with this title already exists for the selected term and semester.'
         }
        
     def __init__(self, *args, **kwargs):

@@ -20,11 +20,23 @@ class Requirement(models.Model):
         ALL = 'ALL', 'All Faculty'
         FULL_TIME = 'FULL_TIME', 'Full-Time Faculty'
         PART_TIME = 'PART_TIME', 'Part-Time Faculty'
+        
+    class Semester(models.TextChoices):
+        FIRST = 'FIRST', 'First Semester'
+        SECOND = 'SECOND', 'Second Semester'
+        SUMMER = 'SUMMER', 'Summer'
 
-    requirement_title = models.CharField(max_length=255, unique=True)
+    requirement_title = models.CharField(max_length=255)
     category = models.CharField(max_length=255)
     
     academic_term = models.CharField(max_length=255)
+    
+    semester = models.CharField(
+        max_length=10,
+        choices=Semester.choices,
+        default=Semester.FIRST
+    )
+    
     deadline = models.DateTimeField()
     
     assigned_to = models.CharField(
@@ -41,6 +53,14 @@ class Requirement(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['requirement_title', 'academic_term', 'semester'],
+                name='unique_requirement_per_term_semester'
+            )
+        ]
 
     @property
     def completion_progress(self):
@@ -138,7 +158,7 @@ class DocumentSubmission(models.Model):
     
     document_file = models.FileField(upload_to=submission_upload_path)
     
-    is_favorite = models.BooleanField(default=False)
+    is_pinned = models.BooleanField(default=False)
 
     initially_submitted_at = models.DateTimeField(auto_now_add=True)
     reviewed_at = models.DateTimeField(null=True, blank=True)

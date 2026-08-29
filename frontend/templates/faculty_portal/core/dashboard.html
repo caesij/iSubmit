@@ -1,5 +1,180 @@
 {% extends 'faculty_portal/base.html' %}
+{% load static %}
+
+{% block title %}Dashboard - iSubmit{% endblock %}
 
 {% block content %}
-<h1>Dashboard</h1>
+<style>
+.dash-header h1 { display: flex; align-items: center; gap: 8px; font-size: 22px; font-weight: 700; margin: 0; }
+.dash-sub { font-size: 13px; color: #6b7280; margin: 4px 0 20px; }
+
+.welcome-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 20px; margin-bottom: 16px; }
+.welcome-label { font-size: 13px; color: #6b7280; font-weight: 600; margin-bottom: 2px; }
+.welcome-name { font-size: 18px; font-weight: 700; color: #1a1a1a; }
+.welcome-type { font-size: 12.5px; color: #7f1d1d; font-weight: 600; margin: 2px 0 12px; }
+
+.chip-row { display: flex; gap: 8px; margin-bottom: 18px; flex-wrap: wrap; }
+.chip { display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border: 1px solid #e5e7eb; border-radius: 999px; font-size: 12px; color: #374151; }
+
+.stat-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 16px; }
+.stat-card { border-radius: 10px; padding: 14px; }
+.stat-card .stat-num { font-size: 20px; font-weight: 700; display: block; }
+.stat-card .stat-label { font-size: 11.5px; font-weight: 600; margin-top: 2px; }
+.stat-total { background: #fef2f2; } .stat-total .stat-num, .stat-total .stat-label { color: #7f1d1d; }
+.stat-approved { background: #f0fdf4; } .stat-approved .stat-num, .stat-approved .stat-label { color: #15803d; }
+.stat-submitted { background: #eff6ff; } .stat-submitted .stat-num, .stat-submitted .stat-label { color: #1d4ed8; }
+.stat-pending { background: #fffbeb; } .stat-pending .stat-num, .stat-pending .stat-label { color: #b45309; }
+.stat-returned { background: #fef2f2; } .stat-returned .stat-num, .stat-returned .stat-label { color: #b91c1c; }
+
+.action-row { display: flex; gap: 10px; }
+.btn-primary { padding: 9px 16px; background: #7f1d1d; color: #fff; border: none; border-radius: 8px; font-size: 13px; font-weight: 700; text-decoration: none; }
+.btn-outline { padding: 9px 16px; background: #fff; color: #7f1d1d; border: 1px solid #7f1d1d; border-radius: 8px; font-size: 13px; font-weight: 700; text-decoration: none; }
+
+.dash-lower { display: grid; grid-template-columns: 1fr 300px; gap: 16px; margin-top: 16px; align-items: start; }
+
+.panel-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 18px; }
+.panel-card h2 { font-size: 15px; font-weight: 700; margin: 0 0 14px; }
+
+.progress-track { display: flex; height: 8px; border-radius: 999px; overflow: hidden; background: #f0f0f0; }
+.progress-seg-approved { background: #22c55e; }
+.progress-seg-submitted { background: #3b82f6; }
+.progress-seg-pending { background: #f59e0b; }
+.progress-seg-returned { background: #ef4444; }
+.progress-legend { display: flex; gap: 16px; margin-top: 10px; font-size: 11.5px; color: #6b7280; }
+.progress-legend .dot { width: 8px; height: 8px; border-radius: 2px; display: inline-block; margin-right: 5px; }
+
+.overview-tabs { display: flex; gap: 20px; border-bottom: 1px solid #e5e7eb; margin-bottom: 12px; }
+.overview-tab { padding: 6px 2px 10px; font-size: 13px; font-weight: 600; color: #6b7280; text-decoration: none; border-bottom: 2px solid transparent; }
+.overview-tab.active { color: #7f1d1d; border-bottom-color: #7f1d1d; }
+.overview-track-link { font-size: 12.5px; color: #7f1d1d; text-decoration: none; font-weight: 600; float: right; }
+
+.overview-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-top: 1px solid #f3f4f6; }
+.overview-row:first-of-type { border-top: none; }
+.overview-file { display: flex; align-items: center; gap: 10px; }
+.overview-icon { width: 30px; height: 30px; border-radius: 6px; background: #fef2f2; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+.overview-name { font-weight: 600; font-size: 13.5px; color: #1a1a1a; }
+.overview-when { font-size: 11.5px; color: #9ca3af; }
+
+.pill { padding: 4px 12px; border-radius: 999px; font-size: 11.5px; font-weight: 700; }
+.pill-approved { background: #dcfce7; color: #15803d; border: 1px solid #86efac; }
+.pill-submitted { background: #dbeafe; color: #1d4ed8; border: 1px solid #93c5fd; }
+.pill-pending { background: #fef3c7; color: #b45309; border: 1px solid #fcd34d; }
+.pill-returned { background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5; }
+
+.deadline-row { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-top: 1px solid #f3f4f6; }
+.deadline-row:first-of-type { border-top: none; }
+.deadline-icon { width: 30px; height: 30px; border-radius: 6px; background: #fef2f2; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
+.deadline-title { font-weight: 600; font-size: 13px; color: #1a1a1a; }
+.deadline-date { font-size: 11.5px; color: #9ca3af; margin-left: auto; }
+</style>
+
+<div class="dash-header">
+    <h1>⊞ Dashboard</h1>
+</div>
+<div class="dash-sub">Overview of system activities and updates</div>
+
+<div class="welcome-card">
+    <div class="welcome-label">Welcome,</div>
+    <div class="welcome-name">{{ request.user.get_full_name }}</div>
+    <div class="welcome-type">{{ request.user.get_faculty_type_display }}</div>
+
+    <div class="chip-row">
+        <span class="chip">🏫 PUP Santa Rosa Campus</span>
+    </div>
+
+    <div class="stat-row">
+        <div class="stat-card stat-total">
+            <span class="stat-num">{{ total_requirements }}</span>
+            <span class="stat-label">Total Requirements</span>
+        </div>
+        <div class="stat-card stat-approved">
+            <span class="stat-num">{{ approved_count }}</span>
+            <span class="stat-label">Approved</span>
+        </div>
+        <div class="stat-card stat-submitted">
+            <span class="stat-num">{{ submitted_count }}</span>
+            <span class="stat-label">Submitted</span>
+        </div>
+        <div class="stat-card stat-pending">
+            <span class="stat-num">{{ pending_count }}</span>
+            <span class="stat-label">Pending</span>
+        </div>
+        <div class="stat-card stat-returned">
+            <span class="stat-num">{{ returned_count }}</span>
+            <span class="stat-label">Returned</span>
+        </div>
+    </div>
+
+    <div class="action-row">
+        <a href="{% url 'faculty_portal:upload_files' %}" class="btn-primary">↑ Upload Documents</a>
+        <a href="{% url 'faculty_portal:all_documents' %}" class="btn-outline">📄 View Documents</a>
+    </div>
+</div>
+
+<div class="dash-lower">
+    <div>
+        <div class="panel-card" style="margin-bottom: 16px;">
+            <h2>Submission Progress</h2>
+            <div class="progress-track">
+                {% if approved_pct %}<div class="progress-seg-approved" style="width: {{ approved_pct }}%;"></div>{% endif %}
+                {% if submitted_pct %}<div class="progress-seg-submitted" style="width: {{ submitted_pct }}%;"></div>{% endif %}
+                {% if pending_pct %}<div class="progress-seg-pending" style="width: {{ pending_pct }}%;"></div>{% endif %}
+                {% if returned_pct %}<div class="progress-seg-returned" style="width: {{ returned_pct }}%;"></div>{% endif %}
+            </div>
+            <div class="progress-legend">
+                <span><span class="dot" style="background:#22c55e;"></span>Approved</span>
+                <span><span class="dot" style="background:#3b82f6;"></span>Submitted</span>
+                <span><span class="dot" style="background:#f59e0b;"></span>Pending</span>
+                <span><span class="dot" style="background:#ef4444;"></span>Returned</span>
+            </div>
+        </div>
+
+        <div class="panel-card">
+            <h2>Submission Overview <a href="{% url 'faculty_portal:all_documents' %}" class="overview-track-link">Track Documents ›</a></h2>
+            <div class="overview-tabs">
+                <a href="?tab=all" class="overview-tab {% if selected_tab == 'all' %}active{% endif %}">All</a>
+                <a href="?tab=approved" class="overview-tab {% if selected_tab == 'approved' %}active{% endif %}">Approved</a>
+                <a href="?tab=submitted" class="overview-tab {% if selected_tab == 'submitted' %}active{% endif %}">Submitted</a>
+                <a href="?tab=pending" class="overview-tab {% if selected_tab == 'pending' %}active{% endif %}">Pending</a>
+            </div>
+
+            {% for sub in overview_submissions %}
+                <div class="overview-row">
+                    <div class="overview-file">
+                        <span class="overview-icon">📄</span>
+                        <div>
+                            <div class="overview-name">{{ sub.requirement.requirement_title }}</div>
+                            <div class="overview-when">{{ sub.initially_submitted_at|date:"M j, Y" }} • {{ sub.initially_submitted_at|date:"g:i A" }}</div>
+                        </div>
+                    </div>
+                    {% if sub.status == 'APPROVED' %}
+                        <span class="pill pill-approved">Approved</span>
+                    {% elif sub.status == 'SUBMITTED' or sub.status == 'RESUBMITTED' %}
+                        <span class="pill pill-submitted">Submitted</span>
+                    {% elif sub.status == 'UNDER_REVIEW' or sub.status == 'PENDING_APPROVAL' %}
+                        <span class="pill pill-pending">Pending Review</span>
+                    {% elif sub.status == 'NEEDS_REVISION' %}
+                        <span class="pill pill-returned">Returned</span>
+                    {% endif %}
+                </div>
+            {% empty %}
+                <div style="text-align:center; padding: 20px; color: #9ca3af; font-size: 13px;">No submissions yet.</div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="panel-card">
+        <h2>Upcoming Deadlines</h2>
+        {% for req in upcoming_deadlines %}
+            <div class="deadline-row">
+                <span class="deadline-icon">📄</span>
+                <div class="deadline-title">{{ req.requirement_title }}</div>
+                <div class="deadline-date">{{ req.deadline|date:"M j, Y" }}</div>
+            </div>
+        {% empty %}
+            <div style="text-align:center; padding: 16px; color: #9ca3af; font-size: 13px;">No upcoming deadlines.</div>
+        {% endfor %}
+        <a href="{% url 'faculty_portal:upload_files' %}" class="btn-primary" style="display:block; text-align:center; margin-top: 14px;">↑ Upload Documents</a>
+    </div>
+</div>
 {% endblock %}

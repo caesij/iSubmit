@@ -33,7 +33,7 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'all_documents' or request.resolver_match.url_name == 'pinned_documents' %}active{% endif %}" href="{% url 'faculty_portal:my_documents' %}">
                             <span class="icon"><img src="{% static 'images/documents.svg' %}" alt="Documents icon"></span>
                             <span>My Documents</span>
                         </a>

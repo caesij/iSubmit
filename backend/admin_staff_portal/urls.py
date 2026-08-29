@@ -25,4 +25,8 @@ urlpatterns = [
     path('faculty-submissions/<uuid:submission_id>/mark-under-review/', views.mark_under_review_view, name='mark_under_review'),
     path('faculty-submissions/<uuid:submission_id>/mark-reviewed/', views.mark_reviewed_view, name='mark_reviewed'),
     path('faculty-submissions/<uuid:faculty_id>/approve-all/', views.approve_all_submissions_view, name='approve_all_submissions'),
+    
+    # Document Repo URLs
+    path('documents/document_repository/', views.document_repo_view, name='document_repo'),
+    path('documents/<uuid:document_id>/view/', views.document_file_view, name='document_file_view'),
 ]

@@ -19,6 +19,11 @@ from .core.submissions_views import (
     approve_all_submissions_view,
 )
 
+from .core.document_repo_views import (
+    document_repo_view,
+    document_file_view
+)
+
 __all__ = [
     'DashboardView',
     'UserListView',
@@ -37,4 +42,7 @@ __all__ = [
     'mark_under_review_view',
     'mark_reviewed_view',
     'approve_all_submissions_view',
+    
+    'document_repo_view',
+    'document_file_view'
 ]
