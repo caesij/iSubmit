@@ -1,0 +1,139 @@
+{% extends 'admin_staff_portal/base.html' %}
+{% load static %}
+
+{% block title %}Documents - iSubmit{% endblock %}
+{% block heading %}Documents{% endblock %}
+{% block subtitle %}Manage and access all approved documents across the system.{% endblock %}
+
+{% block content %}
+<style>
+.docs-container { padding: 0; }
+
+.filter-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 16px; margin-bottom: 16px; }
+.filter-inputs { display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; }
+.select-wrap label { display: block; font-size: 11px; color: #6b7280; margin-bottom: 4px; }
+.select-wrap select { padding: 7px 10px; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 13px; min-width: 140px; }
+.btn-clear { padding: 8px 16px; border: 1px solid #7f1d1d; color: #7f1d1d; background: #fff; border-radius: 8px; font-size: 13px; font-weight: 700; text-decoration: none; white-space: nowrap; }
+
+.table-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; overflow: hidden; }
+.data-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.data-table thead tr { background: #fbe4e4; }
+.data-table th { text-align: left; padding: 12px 16px; font-weight: 700; color: #374151; font-size: 12px; }
+.data-table td { padding: 14px 16px; border-top: 1px solid #f0f0f0; vertical-align: middle; color: #374151; }
+.font-bold { font-weight: 700; color: #1a1a1a; }
+.text-sub { font-size: 11px; color: #9ca3af; }
+.checkbox-cell { width: 36px; }
+
+.fname-link { color: #1a1a1a; text-decoration: none; font-weight: 700; }
+.fname-link:hover { text-decoration: underline; }
+
+.action-cell { position: relative; text-align: left; }
+.btn-icon { border: none; background: none; cursor: pointer; font-size: 16px; color: #6b7280; text-decoration: none; }
+
+.pagination-footer { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-top: 1px solid #f0f0f0; font-size: 12px; color: #6b7280; }
+.pagination-controls { display: flex; gap: 6px; }
+.page-btn { width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border: 1px solid #e5e7eb; border-radius: 6px; text-decoration: none; color: #374151; font-size: 12px; }
+.page-btn.active { background: #7f1d1d; color: #fff; border-color: #7f1d1d; }
+</style>
+
+<div class="docs-container">
+    <div class="filter-card">
+        <form method="GET" action="{% url 'admin_staff_portal:document_repo' %}" class="filter-inputs">
+            <div class="select-wrap">
+                <label>Semester</label>
+                <select name="semester" onchange="this.form.submit()">
+                    <option value="">All Semesters</option>
+                    {% for value, label in semesters %}
+                        <option value="{{ value }}" {% if selected_semester == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="select-wrap">
+                <label>Academic Year</label>
+                <select name="academic_term" onchange="this.form.submit()">
+                    <option value="">All Terms</option>
+                    {% for term in academic_terms %}
+                        <option value="{{ term }}" {% if selected_academic_term == term %}selected{% endif %}>{{ term|cut:"A.Y. " }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="select-wrap">
+                <label>Faculty Type</label>
+                <select name="faculty_type" onchange="this.form.submit()">
+                    <option value="">All Types</option>
+                    {% for value, label in faculty_type_choices %}
+                        <option value="{{ value }}" {% if selected_faculty_type == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <a href="{% url 'admin_staff_portal:document_repo' %}" class="btn-clear">Reset Filters</a>
+        </form>
+    </div>
+
+    <div class="table-card">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th class="checkbox-cell"><input type="checkbox" aria-label="Select all"></th>
+                    <th>File Name</th>
+                    <th>Faculty</th>
+                    <th>Category</th>
+                    <th>Semester</th>
+                    <th>Academic Year</th>
+                    <th>Approval Date</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for sub in submissions %}
+                    <tr>
+                        <td class="checkbox-cell"><input type="checkbox" aria-label="Select document" value="{{ sub.id }}"></td>
+                        <td>
+                            <a href="{% url 'admin_staff_portal:document_file_view' sub.id %}" class="fname-link">{{ sub.requirement.requirement_title }}</a>
+                        </td>
+                        <td>{{ sub.faculty.get_full_name }}</td>
+                        <td>{{ sub.requirement.category }}</td>
+                        <td>{{ sub.requirement.get_semester_display }}</td>
+                        <td>{{ sub.requirement.academic_term|cut:"A.Y. " }}</td>
+                        <td>
+                            {% if sub.approved_at %}
+                                <div>{{ sub.approved_at|date:"F j, Y" }}</div>
+                                <div class="text-sub">{{ sub.approved_at|date:"g:i A" }}</div>
+                            {% else %}
+                                <span class="text-sub">&mdash;</span>
+                            {% endif %}
+                        </td>
+                        <td class="action-cell">
+                            <a href="{% url 'admin_staff_portal:document_file_view' sub.id %}" class="btn-icon" aria-label="View">&#8942;</a>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="8" style="text-align: center; padding: 20px;">No approved documents to show.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        {% if is_paginated or page_obj %}
+        <div class="pagination-footer">
+            <span>Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }} documents</span>
+            <div class="pagination-controls">
+                {% if page_obj.has_previous %}
+                    <a href="?page={{ page_obj.previous_page_number }}{% if selected_semester %}&semester={{ selected_semester }}{% endif %}{% if selected_academic_term %}&academic_term={{ selected_academic_term }}{% endif %}{% if selected_faculty_type %}&faculty_type={{ selected_faculty_type }}{% endif %}" class="page-btn">&lt;</a>
+                {% endif %}
+                {% for page_num in page_obj.paginator.page_range %}
+                    <a href="?page={{ page_num }}{% if selected_semester %}&semester={{ selected_semester }}{% endif %}{% if selected_academic_term %}&academic_term={{ selected_academic_term }}{% endif %}{% if selected_faculty_type %}&faculty_type={{ selected_faculty_type }}{% endif %}" class="page-btn {% if page_obj.number == page_num %}active{% endif %}">{{ page_num }}</a>
+                {% endfor %}
+                {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}{% if selected_semester %}&semester={{ selected_semester }}{% endif %}{% if selected_academic_term %}&academic_term={{ selected_academic_term }}{% endif %}{% if selected_faculty_type %}&faculty_type={{ selected_faculty_type }}{% endif %}" class="page-btn">&gt;</a>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

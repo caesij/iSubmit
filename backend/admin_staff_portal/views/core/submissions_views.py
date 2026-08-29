@@ -220,10 +220,7 @@ def faculty_submission_bins_view(request, faculty_id):
 @require_http_methods(['GET'])
 def review_submission(request, submission_id):
     submission = get_object_or_404(
-        DocumentSubmission.objects.select_related(
-            'requirement', 'faculty'
-        ).prefetch_related(
-            'revisions__reviews'),
+        DocumentSubmission.objects.select_related('requirement', 'faculty').prefetch_related('revisions__reviews'),
         pk=submission_id
     )
     

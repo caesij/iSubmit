@@ -1,0 +1,232 @@
+{% extends 'admin_staff_portal/base.html' %}
+{% load static %}
+
+{% block title %}{{ document.requirement.requirement_title }} - iSubmit{% endblock %}
+
+{% block content %}
+<style>
+  .adf-wrap {
+    --maroon: #7a0c0c;
+    --gold: #c99a3d;
+    --ink: #211c1c;
+    --muted: #746b68;
+    --line: #e7e0dc;
+    --card: #ffffff;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    color: var(--ink);
+  }
+
+  .adf-crumbs { font-size: 13px; color: var(--muted); margin-bottom: 14px; }
+  .adf-crumbs a { color: var(--muted); text-decoration: none; }
+  .adf-crumbs a:hover { color: var(--maroon); text-decoration: underline; }
+  .adf-crumbs .sep { margin: 0 6px; color: #c9bfba; }
+  .adf-crumbs .current { color: var(--ink); font-weight: 500; }
+
+  .adf-back {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 13px; font-weight: 600; color: var(--maroon);
+    background: var(--card); border: 1px solid var(--line);
+    border-radius: 8px; padding: 8px 14px; text-decoration: none;
+    margin-bottom: 18px;
+  }
+  .adf-back:hover { background: #fbeeee; }
+
+  .adf-title-row { margin-bottom: 16px; }
+  .adf-title-row h1 { font-size: 22px; font-weight: 700; margin: 0; }
+
+  .adf-grid { display: grid; grid-template-columns: 1fr 320px; gap: 24px; align-items: start; }
+
+  /* Viewer */
+  .adf-viewer { background: var(--card); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+  .adf-viewer-toolbar {
+    display: flex; align-items: center; justify-content: center; gap: 28px;
+    padding: 12px 16px; border-bottom: 1px solid var(--line);
+    font-size: 12.5px; color: var(--muted);
+  }
+  .adf-viewer-toolbar .tool { display: flex; flex-direction: column; align-items: center; gap: 3px; cursor: default; }
+  .adf-viewer-toolbar .tool-icon { font-size: 14px; }
+
+  .adf-viewer-body { display: flex; background: #efeae6; min-height: 560px; }
+  .adf-thumbrail {
+    width: 90px; flex-shrink: 0; background: #efeae6; padding: 12px 8px;
+    display: flex; flex-direction: column; gap: 10px; align-items: center;
+    border-right: 1px solid var(--line); overflow-y: auto; max-height: 640px;
+  }
+  .adf-thumb img { width: 100%; border: 2px solid transparent; border-radius: 2px; background: #fff; display: block; }
+  .adf-thumb.active img { border-color: var(--maroon); }
+  .adf-thumb .num { text-align: center; font-size: 11px; color: var(--muted); margin-top: 3px; }
+
+  .adf-page-area { flex: 1; display: flex; align-items: flex-start; justify-content: center; padding: 20px; overflow: auto; }
+  .adf-page-area embed { width: 100%; max-width: 560px; height: 640px; border: none; background: #fff; box-shadow: 0 1px 6px rgba(0,0,0,.08); }
+
+  /* Side panel */
+  .adf-panel { display: flex; flex-direction: column; gap: 16px; }
+  .adf-card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 18px 18px 20px; }
+  .adf-card h2 {
+    font-size: 12px; text-transform: uppercase; letter-spacing: .06em;
+    color: var(--muted); margin: 0 0 14px; font-weight: 700;
+  }
+
+  .adf-row { display: flex; gap: 10px; align-items: flex-start; font-size: 13.5px; margin-bottom: 12px; }
+  .adf-row:last-child { margin-bottom: 0; }
+  .adf-row .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--gold); margin-top: 6px; flex-shrink: 0; }
+  .adf-row .label { color: var(--muted); display: block; font-size: 11.5px; }
+  .adf-row .value { font-weight: 600; color: var(--ink); }
+
+  .adf-faculty-head { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+  .adf-avatar {
+    width: 36px; height: 36px; border-radius: 50%; background: var(--maroon); color: #fff;
+    display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; flex-shrink: 0;
+  }
+  .adf-faculty-name { font-weight: 700; font-size: 14px; color: var(--ink); }
+  .adf-faculty-sub { font-size: 11.5px; color: var(--muted); }
+
+  .adf-status-pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 6px 12px; border-radius: 999px; font-size: 12.5px; font-weight: 700;
+    background: #dcfce7; color: #166534;
+  }
+  .adf-status-pill .sw { width: 7px; height: 7px; border-radius: 50%; background: #15803d; }
+  .adf-status-note { font-size: 12.5px; color: var(--muted); margin-top: 10px; line-height: 1.5; }
+
+  .adf-review-item { font-size: 13px; margin-bottom: 14px; }
+  .adf-review-item:last-child { margin-bottom: 0; }
+  .adf-review-item .who { font-weight: 600; }
+  .adf-review-item .when { color: var(--muted); font-size: 12px; margin-top: 2px; }
+
+  @media (max-width: 900px) {
+    .adf-grid { grid-template-columns: 1fr; }
+    .adf-viewer-body { flex-direction: column; }
+    .adf-thumbrail { flex-direction: row; width: 100%; max-height: none; }
+  }
+</style>
+
+<div class="adf-wrap">
+
+  <div class="adf-crumbs">
+    <a href="{% url 'admin_staff_portal:document_repo' %}">Documents</a>
+    <span class="sep">›</span>
+    <span class="current">{{ document.document_file.name }}</span>
+  </div>
+
+  <a href="{% url 'admin_staff_portal:document_repo' %}" class="adf-back">← Back</a>
+
+  <div class="adf-title-row">
+    <h1>{{ document.requirement.requirement_title }}</h1>
+  </div>
+
+  <div class="adf-grid">
+
+    <div class="adf-viewer">
+      <div class="adf-viewer-toolbar">
+        <div class="tool"><span class="tool-icon">−</span> Zoom out</div>
+        <div class="tool"><span class="tool-icon">+</span> Zoom in</div>
+        <div class="tool"><span class="tool-icon">⤢</span> Expand</div>
+      </div>
+      <div class="adf-viewer-body">
+        <div class="adf-thumbrail">
+          <div class="adf-thumb active">
+            <img src="{{ document.document_file.url }}" alt="Page 1">
+            <div class="num">1</div>
+          </div>
+        </div>
+        <div class="adf-page-area">
+          <embed src="{{ document.document_file.url }}" type="application/pdf" />
+        </div>
+      </div>
+    </div>
+
+    <div class="adf-panel">
+
+      <div class="adf-card">
+        <h2>Faculty</h2>
+        <div class="adf-faculty-head">
+          <div class="adf-avatar">{{ document.faculty.first_name|first }}{{ document.faculty.last_name|first }}</div>
+          <div>
+            <div class="adf-faculty-name">{{ document.faculty.get_full_name }}</div>
+            <div class="adf-faculty-sub">{{ document.faculty.get_faculty_type_display }}</div>
+          </div>
+        </div>
+        <div class="adf-row">
+          <span class="dot"></span>
+          <div>
+            <span class="label">Email</span>
+            <span class="value">{{ document.faculty.email }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="adf-card">
+        <h2>Document Details</h2>
+        <div class="adf-row">
+          <span class="dot"></span>
+          <div>
+            <span class="label">File Name</span>
+            <span class="value">{{ document.document_file.name }}</span>
+          </div>
+        </div>
+        <div class="adf-row">
+          <span class="dot"></span>
+          <div>
+            <span class="label">Category</span>
+            <span class="value">{{ document.requirement.category }}</span>
+          </div>
+        </div>
+        <div class="adf-row">
+          <span class="dot"></span>
+          <div>
+            <span class="label">File Size</span>
+            <span class="value">{{ document.document_file.size|filesizeformat }}</span>
+          </div>
+        </div>
+        <div class="adf-row">
+          <span class="dot"></span>
+          <div>
+            <span class="label">Submitted on</span>
+            <span class="value">{{ document.initially_submitted_at|date:"M j, Y g:i A" }}</span>
+          </div>
+        </div>
+        <div class="adf-row">
+          <span class="dot"></span>
+          <div>
+            <span class="label">Academic Year</span>
+            <span class="value">{{ document.requirement.academic_term|cut:"A.Y. " }}</span>
+          </div>
+        </div>
+        <div class="adf-row">
+          <span class="dot"></span>
+          <div>
+            <span class="label">Term / Semester</span>
+            <span class="value">{{ document.requirement.get_semester_display }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="adf-card">
+        <h2>Document Status</h2>
+        <span class="adf-status-pill">
+          <span class="sw"></span>{{ document.get_status_display }}
+        </span>
+        <div class="adf-status-note">This document has been reviewed and approved.</div>
+      </div>
+
+      <div class="adf-card">
+        <h2>Review Information</h2>
+        {% if document.reviewed_by %}
+          <div class="adf-review-item">
+            <div class="who">Reviewed by {{ document.reviewed_by.get_full_name }}</div>
+            <div class="when">{{ document.reviewed_at|date:"M j, Y g:i A" }}</div>
+          </div>
+        {% endif %}
+        {% if document.approved_by %}
+          <div class="adf-review-item">
+            <div class="who">Approved by {{ document.approved_by.get_full_name }}</div>
+            <div class="when">{{ document.approved_at|date:"M j, Y g:i A" }}</div>
+          </div>
+        {% endif %}
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}

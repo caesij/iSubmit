@@ -70,21 +70,6 @@ def view_my_submitted_document(request, document_id):
         pk=document_id,
         faculty=request.user
     )
-    context = {'submitted_document': submitted_document}
-    return render(
-        request,
-        'faculty_portal/core/my_submissions/view_my_submitted_document.html',
-        context
-    )
-    
-@faculty
-@require_http_methods(['GET'])
-def view_my_submitted_document(request, document_id):
-    submitted_document = get_object_or_404(
-        DocumentSubmission,
-        pk=document_id,
-        faculty=request.user
-    )
     
     context = {'submitted_document': submitted_document}
     
