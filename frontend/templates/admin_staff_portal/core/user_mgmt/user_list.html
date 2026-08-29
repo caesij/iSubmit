@@ -51,9 +51,6 @@
                 {% if current_role == 'FACULTY' %}
                 <th style="width: 18%;">Faculty Type</th>
                 {% endif %}
-                {% if current_role == 'STAFF' %}
-                <th style="width: 18%;">Role</th>
-                {% endif %}
                 <th style="width: 22%;">Email</th>
                 <th style="width: 12%;">Account Status</th>
                 <th style="width: 14%;">Last Active</th>
@@ -67,28 +64,117 @@
                 {% if current_role == 'FACULTY' %}
                 <td>{{ managed_user.get_faculty_type_display|default:"-" }}</td>
                 {% endif %}
-                {% if current_role == 'STAFF' %}
-                <td>{{ managed_user.get_role_display }}</td>
-                {% endif %}
                 <td>{{ managed_user.email }}</td>
                 <td>
                     <span class="account-status {% if managed_user.is_active %}active{% else %}inactive{% endif %}">
                         {% if managed_user.is_active %}Active{% else %}Inactive{% endif %}
                     </span>
                 </td>
-                <td class="last-active">{{ managed_user.last_login|date:"F d, Y\<br>h:i A"|safe|default:"Never" }}</td>
+                <td class="last-active">
+                    {% if managed_user.last_login %}
+                    <div>{{ managed_user.last_login|date:"F j, Y" }}</div>
+                    <div class="last-active-time">{{ managed_user.last_login|date:"g:i A" }}</div>
+                    {% else %}
+                    Never
+                    {% endif %}
+                </td>
                 <td>
                     <div class="table-actions">
-                        <a href="{% url 'admin_staff_portal:user_edit' managed_user.pk %}" class="action-trigger" aria-label="Edit user">⋮</a>
+                        <button type="button" class="action-trigger" aria-label="User actions" onclick="toggleActionMenu(event)">⋮</button>
+                        <div class="action-menu" style="display: none;">
+                            <a href="{% url 'admin_staff_portal:user_edit' managed_user.pk %}" class="action-menu-item">Edit</a>
+                            <form method="POST" style="display: inline;" onclick="return confirm('Are you sure you want to deactivate this user?');">
+                                {% csrf_token %}
+                                <input type="hidden" name="user_id" value="{{ managed_user.pk }}">
+                                <button type="submit" name="action" value="deactivate" class="action-menu-item" style="background: none; border: none; color: inherit; cursor: pointer; text-align: left; width: 100%; padding: 8px 12px;">Deactivate</button>
+                            </form>
+                        </div>
                     </div>
                 </td>
             </tr>
             {% empty %}
             <tr>
-                <td colspan="{% if current_role == 'FACULTY' %}7{% else %}6{% endif %}" class="empty-row">No accounts found.</td>
+                <td colspan="{% if current_role == 'FACULTY' %}7{% else %}5{% endif %}" class="empty-row">No accounts found.</td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
 </div>
+
+<style>
+.table-actions {
+    position: relative;
+    overflow: visible;
+}
+
+.action-trigger {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px 8px;
+    font-size: 18px;
+    color: #666;
+}
+
+.action-menu {
+    position: fixed;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    min-width: 120px;
+    z-index: 10;
+}
+
+.action-menu-item {
+    display: block;
+    width: 100%;
+    padding: 8px 12px;
+    text-align: left;
+    color: #333;
+    text-decoration: none;
+    border: none;
+    background: none;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.action-menu-item:hover {
+    background-color: #f5f5f5;
+}
+
+.last-active-time {
+    font-size: 12px;
+    color: #666;
+}
+</style>
+
+<script>
+function toggleActionMenu(event) {
+    event.stopPropagation();
+    const button = event.target;
+    const menu = button.nextElementSibling;
+    const isVisible = menu.style.display !== 'none';
+    
+    // Close all other menus
+    document.querySelectorAll('.action-menu').forEach(m => {
+        m.style.display = 'none';
+    });
+    
+    if (!isVisible) {
+        // Position menu relative to button
+        const rect = button.getBoundingClientRect();
+        menu.style.top = (rect.bottom + 5) + 'px';
+        menu.style.left = (rect.right - 120) + 'px';
+        menu.style.display = 'block';
+    }
+}
+
+// Close menu when clicking outside
+document.addEventListener('click', function() {
+    document.querySelectorAll('.action-menu').forEach(menu => {
+        menu.style.display = 'none';
+    });
+});
+</script>
 {% endblock %}

@@ -112,95 +112,47 @@ def toggle_requirement_status(request, requirement_id):
 @role_required('ADMIN', 'STAFF')
 @require_http_methods(['GET'])
 def faculty_submissions_list(request):
-    active_requirements = Requirement.objects.filter(status=Requirement.ReqStatus.ACTIVE)
-
-    full_time_required_count = active_requirements.filter(
-        Q(assigned_to=Requirement.AssignedFacultyType.ALL) |
-        Q(assigned_to=Requirement.AssignedFacultyType.FULL_TIME)
-    ).count()
-    part_time_required_count = active_requirements.filter(
-        Q(assigned_to=Requirement.AssignedFacultyType.ALL) |
-        Q(assigned_to=Requirement.AssignedFacultyType.PART_TIME)
-    ).count()
-
-    faculty_list = (
-        User.objects.filter(
-            role=User.Role.FACULTY,
-        ).annotate(
-            latest_submission=Max('submissions__initially_submitted_at'),
-            required_count=Case(
-                When(faculty_type=Requirement.AssignedFacultyType.FULL_TIME, then=Value(full_time_required_count)),
-                When(faculty_type=Requirement.AssignedFacultyType.PART_TIME, then=Value(part_time_required_count)),
-                default=Value(0),
-                output_field=IntegerField(),
-            ),
-            submitted_count=Count(
-                'submissions__requirement',
-                filter=Q(submissions__requirement__status=Requirement.ReqStatus.ACTIVE) & (
-                    Q(submissions__requirement__assigned_to=Requirement.AssignedFacultyType.ALL) |
-                    Q(submissions__requirement__assigned_to=F('faculty_type'))
-                ),
-                distinct=True,
-            ),
-            approved_count=Count(
-                'submissions__requirement',
-                filter=Q(submissions__status=DocumentSubmission.SubmissionStatus.APPROVED) & (
-                    Q(submissions__requirement__assigned_to=Requirement.AssignedFacultyType.ALL) |
-                    Q(submissions__requirement__assigned_to=F('faculty_type'))
-                ),
-                distinct=True,
-            ),
-        ).distinct().order_by(
-            'last_name', 'first_name'
-        )
+    submissions = DocumentSubmission.objects.filter(
+        requirement__status=Requirement.ReqStatus.ACTIVE,
+        faculty__role=User.Role.FACULTY,
+    ).select_related('faculty', 'requirement').order_by(
+        '-initially_submitted_at'
     )
 
     query = request.GET.get('q')
     faculty_type = request.GET.get('faculty_type')
-    completion_status = request.GET.get('completion')
-    approval_status = request.GET.get('approval')
+    category = request.GET.get('category')
+    review_stage = request.GET.get('review_stage')
+    status = request.GET.get('status')
 
     if query:
-        faculty_list = faculty_list.filter(
-            Q(first_name__icontains=query) | Q(last_name__icontains=query)
+        submissions = submissions.filter(
+            Q(faculty__first_name__icontains=query) |
+            Q(faculty__last_name__icontains=query) |
+            Q(requirement__requirement_title__icontains=query)
         )
     if faculty_type:
-        faculty_list = faculty_list.filter(faculty_type=faculty_type)
-    if completion_status == 'COMPLETE':
-        faculty_list = faculty_list.filter(
-            required_count__gt=0,
-            submitted_count__gte=F('required_count'),
-        )
-    elif completion_status == 'INCOMPLETE':
-        faculty_list = faculty_list.filter(
-            Q(submitted_count__lt=F('required_count')) | Q(required_count=0)
-        )
-    if approval_status == 'APPROVED':
-        faculty_list = faculty_list.filter(
-        required_count__gt=0,
-        approved_count__gte=F('required_count'),
-        )
-    elif approval_status == 'NOT_APPROVED':
-        faculty_list = faculty_list.filter(
-            Q(approved_count__lt=F('required_count')) | Q(required_count=0)
-        )
+        submissions = submissions.filter(faculty__faculty_type=faculty_type)
+    if category:
+        submissions = submissions.filter(requirement__category=category)
+    if review_stage:
+        submissions = submissions.filter(status=review_stage)
+    if status:
+        submissions = submissions.filter(status=status)
 
-    paginator = Paginator(faculty_list, 7)
+    paginator = Paginator(submissions, 7)
     page_obj = paginator.get_page(request.GET.get('page'))
 
-    for faculty_member in page_obj:
-        faculty_member.is_fully_approved = (
-            faculty_member.required_count > 0
-            and faculty_member.approved_count == faculty_member.required_count
-        )
-
     context = {
-        'faculty_list': page_obj,
+        'submissions': page_obj,
         'page_obj': page_obj,
         'is_paginated': page_obj.has_other_pages(),
         'faculty_type_choices': [
             c for c in Requirement.AssignedFacultyType.choices if c[0] != 'ALL'
         ],
+        'categories': Requirement.objects.values_list('category', flat=True).distinct(),
+        'review_stage_choices': DocumentSubmission.SubmissionStatus.choices,
+        'status_choices': DocumentSubmission.SubmissionStatus.choices,
     }
 
     return render(

@@ -46,7 +46,7 @@ select {
 }
 
 .sidebar {
-  width: 280px;
+  width: 214px;
   background: linear-gradient(180deg, #8a0d0d 0%, #7c0909 100%);
   color: #fff;
   border-right: 1px solid rgba(255,255,255,0.12);
@@ -122,6 +122,10 @@ select {
   border-radius: 8px;
   transition: background 0.2s ease, color 0.2s ease;
   font-size: 1.02rem;
+}
+
+.nav-link span:last-child {
+  white-space: nowrap;
 }
 
 .nav-link:hover {
