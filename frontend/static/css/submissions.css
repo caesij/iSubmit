@@ -1368,9 +1368,13 @@ select {
   font-size: 12px;
   border-bottom: 1px solid #e7e7e7;
 }
-.submission-bin-container .data-table th:nth-child(5),
-.submission-bin-container .data-table th:nth-child(6),
-.submission-bin-container .data-table th:nth-child(7) {
+.submission-bin-container .data-table th:first-child {
+  width: 28px;
+  text-align: center;
+  padding-left: 10px;
+  padding-right: 10px;
+}
+.submission-bin-container .data-table th:nth-child(6) {
   text-align: center;
 }
 .submission-bin-container .data-table td {
@@ -1379,9 +1383,23 @@ select {
   vertical-align: middle;
   color: #374151;
 }
-.submission-bin-container .data-table td:nth-child(5),
-.submission-bin-container .data-table td:nth-child(6),
-.submission-bin-container .data-table td:nth-child(7) {
+.submission-bin-container .data-table td:first-child,
+.submission-bin-container .data-table td:nth-child(6) {
+  text-align: center;
+}
+.submission-bin-container .row-menu-btn {
+  border: 1px solid #dfe3e8;
+  background: #fff;
+  border-radius: 6px;
+  width: 28px;
+  height: 28px;
+  font-size: 22px;
+  color: #6b7280;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0;
+}
+.submission-bin-container .action-cell {
   text-align: center;
 }
 .submission-bin-container .data-table .font-bold { font-weight: 700; color: #1a1a1a; }
@@ -1424,8 +1442,8 @@ select {
   max-width: none;
 }
 .submission-bin-container .file-icon-svg {
-  width: 26px;
-  height: 32px;
+  width: 22px;
+  height: 28px;
   display: block;
   flex-shrink: 0;
 }
@@ -1437,7 +1455,7 @@ select {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 145px;
+  max-width: 180px;
 }
 .submission-bin-container .file-size {
   display: block;
@@ -1478,7 +1496,7 @@ select {
 .submission-bin-container .bottom-bar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 16px;
   margin-top: 18px;
 }
@@ -1490,10 +1508,21 @@ select {
   border: 1px solid #bdd5ff;
   border-radius: 8px;
   padding: 12px 14px 12px 12px;
-  width: 509px;
-  min-height: 90px;
+  width: 100%;
+  min-height: 72px;
   position: relative;
   box-sizing: border-box;
+  margin-bottom: 18px;
+}
+.submission-bin-container .info-note-close {
+  margin-left: auto;
+  background: transparent;
+  border: none;
+  color: #6b7280;
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 4px;
 }
 .submission-bin-container .info-icon {
   color: #3b82f6;
@@ -1545,9 +1574,14 @@ select {
   padding: 14px 16px;
   margin-bottom: 20px;
 }
-.submission-bin-container .banner-success { background: #ecfdf5; border: 1px solid #a7f3d0; }
+.submission-bin-container .banner-success {
+  background: #eafaf0;
+  border: 1px solid #9ad6ae;
+  border-radius: 8px;
+  padding: 12px 16px;
+}
 .submission-bin-container .banner-success .banner-icon,
-.submission-bin-container .banner-success .banner-title { color: #15803d; }
+.submission-bin-container .banner-success .banner-title { color: #128a48; }
 .submission-bin-container .banner-success .banner-title { font-weight: 700; font-size: 13px; margin: 0; }
 .submission-bin-container .banner-success .banner-sub { color: #166534; font-size: 12px; margin: 2px 0 0; }
 .submission-bin-container .banner-info { background: #eff6ff; border: 1px solid #bfdbfe; }
@@ -1574,25 +1608,116 @@ select {
   font-size: 12px;
   font-weight: 700;
 }
-.submission-bin-container .pill-ready { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
+.submission-bin-container .pill-ready {
+  background: #d9f7e5;
+  color: #15803d;
+  border: 1px solid #7bbd94;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.25);
+}
 .submission-bin-container .pill-missing,
 .submission-bin-container .pill-revision { background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; }
-.submission-bin-container .pill-review { background: #fff; color: #1d4ed8; border: 1px solid #bfdbfe; }
+.submission-bin-container .pill-review {
+  background: #edf5ff;
+  color: #2d6cdf;
+  border: 1px solid #9ec3ff;
+}
 .submission-bin-container .pill-approved { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
 .submission-bin-container .pill-submitted { background: #fef3c7; color: #b45309; border: 1px solid #fde68a; }
-.submission-bin-container .btn-submit { background: #7f1d1d; color: #fff; padding: 12px 22px; border-radius: 8px; font-size: 13px; font-weight: 700; border: none; cursor: pointer; }
+.submission-bin-container .pill-complete {
+  background: #edf5ff;
+  color: #2d6cdf;
+  border: 1px solid #9ec3ff;
+}
+.submission-bin-container .btn-submit {
+  background: #a40d0d;
+  color: #fff;
+  padding: 0 18px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 280px;
+  height: 40px;
+  min-width: 280px;
+  line-height: 1;
+}
+.submission-bin-container .btn-submit-icon {
+  width: 14px;
+  height: 14px;
+  display: block;
+  filter: brightness(0) invert(1);
+}
 .submission-bin-container .btn-submit:disabled { background: #d1d5db; color: #6b7280; cursor: not-allowed; }
-.submission-bin-container .next-steps { margin-top: 24px; }
-.submission-bin-container .next-steps h3 { font-size: 14px; font-weight: 700; margin: 0 0 12px; }
-.submission-bin-container .next-steps-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
-.submission-bin-container .next-card { display: flex; align-items: center; gap: 10px; border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px 14px; text-decoration: none; color: inherit; }
-.submission-bin-container .next-card-icon { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 15px; flex-shrink: 0; }
-.submission-bin-container .next-card-icon.orange { background: #fef3c7; color: #b45309; }
-.submission-bin-container .next-card-icon.blue { background: #dbeafe; color: #1d4ed8; }
-.submission-bin-container .next-card-icon.green { background: #dcfce7; color: #15803d; }
-.submission-bin-container .next-card-title { font-size: 13px; font-weight: 700; color: #1a1a1a; margin: 0; }
-.submission-bin-container .next-card-sub { font-size: 11px; color: #9ca3af; margin: 2px 0 0; }
-.submission-bin-container .next-card-arrow { margin-left: auto; color: #9ca3af; }
+.submission-bin-container .next-steps {
+  margin-top: 24px;
+}
+.submission-bin-container .next-steps h3 {
+  font-size: 14px;
+  font-weight: 700;
+  margin: 0 0 12px;
+  color: #1a1a1a;
+}
+.submission-bin-container .next-steps-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+.submission-bin-container .next-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 72px;
+  border: 1px solid #dfe3e8;
+  border-radius: 8px;
+  padding: 12px 14px;
+  text-decoration: none;
+  color: inherit;
+  background: #fff;
+}
+.submission-bin-container .next-card-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  overflow: hidden;
+  margin-right: 2px;
+}
+.submission-bin-container .next-card-icon img {
+  width: 18px;
+  height: 18px;
+  display: block;
+}
+.submission-bin-container .next-card-icon.orange { background: #f5df9f; }
+.submission-bin-container .next-card-icon.blue { background: #cfe0ff; }
+.submission-bin-container .next-card-icon.green { background: #d4f3d9; }
+.submission-bin-container .next-card-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0;
+  line-height: 1.3;
+}
+.submission-bin-container .next-card-sub {
+  font-size: 11px;
+  color: #7a7f87;
+  margin: 2px 0 0;
+  line-height: 1.4;
+}
+.submission-bin-container .next-card-arrow {
+  margin-left: auto;
+  color: #6b7280;
+  font-size: 24px;
+  line-height: 1;
+  padding-left: 8px;
+}
 .submission-bin-container .document-preview { margin: 20px 0; }
 .submission-bin-container .preview-fallback { background: #f9fafb; border: 1px dashed #d1d5db; border-radius: 8px; padding: 32px; text-align: center; }
 .submission-bin-container .preview-fallback p { color: #6b7280; font-size: 14px; margin: 0 0 16px; }

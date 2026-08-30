@@ -14,6 +14,7 @@
 .docs-tab.active { color: #7f1d1d; border-bottom-color: #7f1d1d; }
 
 .docs-layout { display: grid; grid-template-columns: 220px 1fr; gap: 20px; align-items: start; }
+.docs-content { display: flex; flex-direction: column; gap: 0; }
 
 .filter-panel { background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 16px; }
 .filter-group { margin-bottom: 16px; }
@@ -37,9 +38,10 @@
 
 .btn-icon { border: none; background: none; cursor: pointer; font-size: 16px; color: #6b7280; }
 
-.pagination-footer { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-top: 1px solid #f0f0f0; font-size: 12px; color: #6b7280; }
+.pagination-footer { display: flex; align-items: center; justify-content: flex-start; gap: 16px; padding: 12px 16px; margin-top: 8px; background: #f9fafb; border-radius: 8px; font-size: 13px; color: #6b7280; }
+.pagination-info { flex-shrink: 0; }
 .pagination-controls { display: flex; gap: 6px; }
-.page-btn { width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border: 1px solid #e5e7eb; border-radius: 6px; text-decoration: none; color: #374151; font-size: 12px; }
+.page-btn { width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border: 1px solid #e5e7eb; border-radius: 6px; text-decoration: none; color: #374151; font-size: 12px; background: #fff; }
 .page-btn.active { background: #7f1d1d; color: #fff; border-color: #7f1d1d; }
 </style>
 
@@ -86,6 +88,7 @@
         <a href="{% url 'faculty_portal:pinned_documents' %}" class="btn-reset">Reset Filters</a>
     </form>
 
+    <div class="docs-content">
     <div class="table-card">
         <table class="data-table">
             <thead>
@@ -141,23 +144,24 @@
                 {% endfor %}
             </tbody>
         </table>
+    </div>
 
-        {% if is_paginated or page_obj %}
-        <div class="pagination-footer">
-            <span>Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }} documents</span>
-            <div class="pagination-controls">
-                {% if page_obj.has_previous %}
-                    <a href="?page={{ page_obj.previous_page_number }}{% if selected_academic_term %}&academic_term={{ selected_academic_term }}{% endif %}{% if selected_document_type %}&document_type={{ selected_document_type }}{% endif %}{% if selected_sort_by %}&sort_by={{ selected_sort_by }}{% endif %}" class="page-btn">&lt;</a>
-                {% endif %}
-                {% for page_num in page_obj.paginator.page_range %}
-                    <a href="?page={{ page_num }}{% if selected_academic_term %}&academic_term={{ selected_academic_term }}{% endif %}{% if selected_document_type %}&document_type={{ selected_document_type }}{% endif %}{% if selected_sort_by %}&sort_by={{ selected_sort_by }}{% endif %}" class="page-btn {% if page_obj.number == page_num %}active{% endif %}">{{ page_num }}</a>
-                {% endfor %}
-                {% if page_obj.has_next %}
-                    <a href="?page={{ page_obj.next_page_number }}{% if selected_academic_term %}&academic_term={{ selected_academic_term }}{% endif %}{% if selected_document_type %}&document_type={{ selected_document_type }}{% endif %}{% if selected_sort_by %}&sort_by={{ selected_sort_by }}{% endif %}" class="page-btn">&gt;</a>
-                {% endif %}
-            </div>
+    {% if is_paginated or page_obj %}
+    <div class="pagination-footer">
+        <span class="pagination-info">Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }} documents</span>
+        <div class="pagination-controls">
+            {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}{% if selected_academic_term %}&academic_term={{ selected_academic_term }}{% endif %}{% if selected_document_type %}&document_type={{ selected_document_type }}{% endif %}{% if selected_sort_by %}&sort_by={{ selected_sort_by }}{% endif %}" class="page-btn">&lt;</a>
+            {% endif %}
+            {% for page_num in page_obj.paginator.page_range %}
+                <a href="?page={{ page_num }}{% if selected_academic_term %}&academic_term={{ selected_academic_term }}{% endif %}{% if selected_document_type %}&document_type={{ selected_document_type }}{% endif %}{% if selected_sort_by %}&sort_by={{ selected_sort_by }}{% endif %}" class="page-btn {% if page_obj.number == page_num %}active{% endif %}">{{ page_num }}</a>
+            {% endfor %}
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}{% if selected_academic_term %}&academic_term={{ selected_academic_term }}{% endif %}{% if selected_document_type %}&document_type={{ selected_document_type }}{% endif %}{% if selected_sort_by %}&sort_by={{ selected_sort_by }}{% endif %}" class="page-btn">&gt;</a>
+            {% endif %}
         </div>
-        {% endif %}
+    </div>
+    {% endif %}
     </div>
 </div>
 {% endblock %}
