@@ -2,13 +2,15 @@
 {% load static %}
 
 {% block title %}Review &amp; Confirm - iSubmit{% endblock %}
+{% block heading %}Submission Bin{% endblock %}
+{% block topbar_subtitle %}Upload and manage academic documents{% endblock %}
 {% block extra_css %}<link rel="stylesheet" href="{% static 'css/submissions.css' %}">{% endblock %}
 
 {% block content %}
 <div class="submission-bin-container">
     <div class="page-header">
         <div class="page-title-wrap">
-            <span class="page-icon"><img src="{% static 'images/submission_bin.svg' %}" alt="Submission Bin icon"></span>
+            <span class="page-icon"><img src="{% static 'images/Submission Faculty.svg' %}" alt="Submission Bin icon"></span>
             <div>
                 <h1>Submission Bin</h1>
                 <p class="subtitle">Upload and manage academic documents</p>
@@ -66,6 +68,7 @@
             <table class="data-table">
                 <thead>
                     <tr>
+                        <th style="width: 32px;"><input type="checkbox" aria-label="Select all" id="select-all-checkbox"></th>
                         <th>File</th>
                         <th>Category</th>
                         <th>Deadline</th>
@@ -76,9 +79,10 @@
                 <tbody>
                     {% for row in rows %}
                         <tr>
+                            <td><input type="checkbox" aria-label="Select document" class="row-checkbox"></td>
                             <td>
                                 <div class="file-cell">
-                                    <span class="file-icon">&#128196;</span>
+                                    <img class="file-icon-svg" src="{% static 'images/PDF.svg' %}" alt="PDF file icon">
                                     <div>
                                         <div class="file-name">{{ row.requirement.requirement_title }}</div>
                                         {% if row.draft and row.draft.draft_file %}
@@ -110,7 +114,7 @@
                         </tr>
                     {% empty %}
                         <tr>
-                            <td colspan="5" class="text-center py-4">No active requirements found.</td>
+                            <td colspan="6" class="text-center py-4">No active requirements found.</td>
                         </tr>
                     {% endfor %}
                 </tbody>
@@ -118,10 +122,41 @@
         </div>
 
         <div class="bottom-bar">
+            <div></div>
             <button type="submit" class="btn-submit" {% if not all_ready %}disabled{% endif %}>
-                &#8593; Submit All Documents
+                <img src="{% static 'images/upload.svg' %}" alt="Upload icon" class="btn-submit-icon">
+                Submit Selected Documents
             </button>
         </div>
     </form>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const selectAll = document.getElementById('select-all-checkbox');
+        const rowCheckboxes = Array.from(document.querySelectorAll('.row-checkbox'));
+
+        if (selectAll) {
+            selectAll.addEventListener('change', function () {
+                rowCheckboxes.forEach(function (checkbox) {
+                    checkbox.checked = selectAll.checked;
+                });
+            });
+
+            rowCheckboxes.forEach(function (checkbox) {
+                checkbox.addEventListener('change', function () {
+                    const allChecked = rowCheckboxes.length > 0 && rowCheckboxes.every(function (item) {
+                        return item.checked;
+                    });
+                    const someChecked = rowCheckboxes.some(function (item) {
+                        return item.checked;
+                    });
+
+                    selectAll.checked = allChecked;
+                    selectAll.indeterminate = !allChecked && someChecked;
+                });
+            });
+        }
+    });
+</script>
 {% endblock %}

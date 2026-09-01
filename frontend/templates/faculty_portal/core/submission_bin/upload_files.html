@@ -11,7 +11,7 @@
     <div class="page-header">
         <div class="page-title-wrap">
             <span class="page-icon">
-                <img src="{% static 'images/submission_bin.svg' %}" alt="Submission Bin icon">
+                <img src="{% static 'images/Submission Faculty.svg' %}" alt="Submission Bin icon">
             </span>
             <div>
                 <h1>Submission Bin</h1>
@@ -93,11 +93,14 @@
                         {% if row.draft and row.draft.draft_file %}
                             <td><span class="status-badge status-attached">Attached</span></td>
                             <td>
-                                <a href="{% url 'faculty_portal:view_uploaded_document' row.draft.id %}" class="file-link">
-                                    <span class="file-icon">📄</span>
-                                    <span>
-                                        <div class="file-name">{{ row.draft.draft_file.name }}</div>
-                                    </span>
+                                <a href="{% url 'faculty_portal:view_uploaded_document' row.draft.id %}" class="file-link" title="{{ row.draft.draft_file.name }}">
+                                    <div class="file-box">
+                                        <img class="file-icon-svg" src="{% static 'images/PDF.svg' %}" alt="PDF file icon">
+                                        <div>
+                                            <div class="file-name">{{ row.draft.draft_file.name|cut:'.pdf'|default:row.draft.draft_file.name }}</div>
+                                            <span class="file-size">{{ row.draft.draft_file.size|filesizeformat }}</span>
+                                        </div>
+                                    </div>
                                 </a>
                             </td>
                             <td class="action-cell">
