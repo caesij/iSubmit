@@ -2,9 +2,16 @@ from django import forms
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 from accounts.models import User
-import re
 
 class BaseUserManagementForm(forms.ModelForm):
+    
+    is_active = forms.TypedChoiceField(
+        choices=[(True, 'Active'), (False, 'Inactive')],
+        coerce=lambda x: x == 'True',
+        widget=forms.Select(attrs={'class': 'form-select'}),
+        label='Account Status',
+    )
+    
     class Meta:
         model = User
         fields = [
@@ -13,7 +20,8 @@ class BaseUserManagementForm(forms.ModelForm):
             'last_name',
             'employee_ID',
             'email',
-            'is_active']
+            'is_active',
+        ]
 
     def __init__(self, *args, **kwargs):
         self.request_user = kwargs.pop('request_user', None)
