@@ -4,13 +4,12 @@ from admin_staff_portal import views
 app_name = 'admin_staff_portal'
 
 urlpatterns = [
-    path('dashboard/', views.DashboardView.as_view(), name='dashboard'),
+    # Dashboard URL
+    path('dashboard/', views.dashboard_view, name='dashboard'),
     
-    # User Management URLs
-    path('users/', views.UserListView.as_view(), name='user_list'),
-    path('users/add/', views.UserCreateView.as_view(), name='user_create'),
-    path('users/<uuid:pk>/edit/', views.UserUpdateView.as_view(), name='user_edit'),
-    path('users/<uuid:pk>/toggle-acc-status/', views.UserToggleAccStatusView.as_view(), name='user_toggle_acc_status'),
+    # Document Repo URLs
+    path('documents/document_repository/', views.document_repo_view, name='document_repo'),
+    path('documents/<uuid:document_id>/view/', views.document_file_view, name='document_file_view'),
     
     # Requirement Management (Submission Bin) URLs
     path('submissions/submission_bins/', views.requirements_list, name='requirements_list'),
@@ -26,7 +25,9 @@ urlpatterns = [
     path('faculty-submissions/<uuid:submission_id>/mark-reviewed/', views.mark_reviewed_view, name='mark_reviewed'),
     path('faculty-submissions/<uuid:faculty_id>/approve-all/', views.approve_all_submissions_view, name='approve_all_submissions'),
     
-    # Document Repo URLs
-    path('documents/document_repository/', views.document_repo_view, name='document_repo'),
-    path('documents/<uuid:document_id>/view/', views.document_file_view, name='document_file_view'),
+    # User Management URLs
+    path('users/', views.user_list_view, name='user_list'),
+    path('users/add/', views.user_create_view, name='user_create'),
+    path('users/<uuid:pk>/edit/', views.user_update_view, name='user_edit'),
+    path('users/<uuid:pk>/toggle-acc-status/', views.user_toggle_acc_status_view, name='user_toggle_acc_status'),
 ]

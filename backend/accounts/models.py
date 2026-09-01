@@ -4,12 +4,28 @@ from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from .managers import UserManager, FacultyManager, StaffManager
 
 class User(AbstractBaseUser, PermissionsMixin):
-    # Primary Key as UUID
+    # User Preferences
+    class DateFormatChoice(models.TextChoices):
+        LONG = 'F j, Y', 'Month DD, YYYY (June 1, 2026)'
+        SHORT = 'm/d/Y', 'MM/DD/YYYY'
+        ISO = 'Y-m-d', 'YYYY-MM-DD'
+
+    class TimeFormatChoice(models.TextChoices):
+        TWELVE = '12', '12-hour (AM/PM)'
+        TWENTY_FOUR = '24', '24-hour'
+    
+    language = models.CharField(max_length=10, default='en')
+    timezone = models.CharField(max_length=50, default='Asia/Manila')
+    date_format = models.CharField(max_length=10, choices=DateFormatChoice.choices, default=DateFormatChoice.LONG)
+    time_format = models.CharField(max_length=2, choices=TimeFormatChoice.choices, default=TimeFormatChoice.TWELVE)
+    
+    # Main User Creation
     id = models.UUIDField(
         primary_key=True,
         default=uuid.uuid4,
         editable=False
     )
+    
     class Role(models.TextChoices):
         ADMIN = "ADMIN", 'Admin'
         STAFF = "STAFF", 'Staff'
@@ -28,14 +44,6 @@ class User(AbstractBaseUser, PermissionsMixin):
         unique=True,
         error_messages={
             'unique': 'A user with this employee ID already exists.'
-        },
-    )
-
-    contact_no = models.CharField(
-        max_length=20,
-        unique=True,
-        error_messages={
-            'unique': 'A user with this contact number already exists.'
         },
     )
 

@@ -2,9 +2,16 @@ from django import forms
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 from accounts.models import User
-import re
 
 class BaseUserManagementForm(forms.ModelForm):
+    
+    is_active = forms.TypedChoiceField(
+        choices=[(True, 'Active'), (False, 'Inactive')],
+        coerce=lambda x: x == 'True',
+        widget=forms.Select(attrs={'class': 'form-select'}),
+        label='Account Status',
+    )
+    
     class Meta:
         model = User
         fields = [
@@ -12,9 +19,9 @@ class BaseUserManagementForm(forms.ModelForm):
             'middle_name',
             'last_name',
             'employee_ID',
-            'contact_no',
             'email',
-            'is_active']
+            'is_active',
+        ]
 
     def __init__(self, *args, **kwargs):
         self.request_user = kwargs.pop('request_user', None)
@@ -25,7 +32,6 @@ class BaseUserManagementForm(forms.ModelForm):
             'middle_name': 'Enter middle name',
             'last_name': 'Enter last name',
             'employee_ID': 'Enter employee ID',
-            'contact_no': '09XX XXX XXXX',
             'email': 'Enter institutional email',
         }
 
@@ -69,29 +75,6 @@ class BaseUserManagementForm(forms.ModelForm):
             raise ValidationError("A user with this employee ID already exists.")
 
         return employee_id
-
-    # Contact Number Cleaner & Formatter
-    def clean_contact_no(self):
-        contact_no = self.cleaned_data.get('contact_no', '').strip()
-
-        digits_only = re.sub(r'\D', '', contact_no)
-
-        if digits_only.startswith('639') and len(digits_only) == 12:
-            digits_only = '0' + digits_only[2:]
-
-        if not re.match(r'^09\d{9}$', digits_only):
-            raise ValidationError("Enter a valid 11-digit mobile number starting with '09' (e.g., 09123456789).")
-
-        formatted_contact_no = f"{digits_only[:4]}-{digits_only[4:7]}-{digits_only[7:]}"
-
-        query = User.objects.filter(contact_no=formatted_contact_no)
-        if self.instance.pk:
-            query = query.exclude(pk=self.instance.pk)
-
-        if query.exists():
-            raise ValidationError("A user with this contact number already exists.")
-
-        return formatted_contact_no
 
     # Validate Email
     def clean_email(self):

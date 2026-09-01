@@ -4,6 +4,7 @@ from django.contrib import messages
 from django.db.models import Q
 from django.http import HttpResponseForbidden
 from django.db import transaction
+from django.core.files.base import ContentFile
 
 from accounts.decorators import faculty
 from submissions.models import Requirement, DraftUpload, DocumentSubmission
@@ -143,16 +144,24 @@ def confirm_submission(request):
             created_submissions = []
             with transaction.atomic():
                 for row in rows:
+                    draft = row['draft']
+
+                    draft.draft_file.open('rb')
+                    file_content = ContentFile(draft.draft_file.read())
+                    original_name = draft.draft_file.name.split('/')[-1]
+                    draft.draft_file.close()
+
                     submission, created = DocumentSubmission.objects.get_or_create(
                         faculty=request.user,
                         requirement=row['requirement'],
-                        defaults={
-                            'status': DocumentSubmission.SubmissionStatus.SUBMITTED,
-                            'document_file': row['draft'].draft_file,
-                        }
+                        defaults={'status': DocumentSubmission.SubmissionStatus.SUBMITTED}
                     )
+                    submission.document_file.save(original_name, file_content, save=True)
                     created_submissions.append(submission)
 
+                    draft.draft_file.delete(save=False)
+                    draft.delete()
+                    
                 DraftUpload.objects.filter(faculty=request.user, requirement__in=requirements).delete()
 
             request.session['recently_submitted_ids'] = [str(s.id) for s in created_submissions]

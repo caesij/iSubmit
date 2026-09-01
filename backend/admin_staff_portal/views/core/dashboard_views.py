@@ -1,5 +1,14 @@
-from django.views.generic import TemplateView
-from admin_staff_portal.mixins import AdminOrStaffRequiredMixin
+from django.shortcuts import render
+from django.views.decorators.http import require_http_methods
 
-class DashboardView(AdminOrStaffRequiredMixin, TemplateView):
-    template_name = 'admin_staff_portal/core/dashboard.html'
+from accounts.decorators import role_required
+
+@role_required('ADMIN', 'STAFF')
+@require_http_methods(['GET'])
+def dashboard_view(request):
+    context = {}
+    return render(
+        request, 
+        'admin_staff_portal/core/dashboard.html', 
+        context
+    )
