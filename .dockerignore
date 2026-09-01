@@ -1,0 +1,32 @@
+# Python
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+*.egg-info/
+
+# Virtual environment
+.venv/
+venv/
+
+# Secrets
+.env
+*.env
+
+# Django
+*.sqlite3
+staticfiles/
+media/
+backend/staticfiles/
+
+# Git
+.git/
+.gitignore
+
+# Editor/OS cruft
+.vscode/
+.idea/
+.DS_Store
+
+# Docker
+Dockerfile
+docker-compose.yml
