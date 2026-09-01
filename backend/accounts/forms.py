@@ -24,11 +24,13 @@ class CustomLoginForm(AuthenticationForm):
                 'Please contact an administrator to unlock it.',
                 code='locked_out',
             )
-        raise forms.ValidationError(
-                'Your account has been deactivated. '
-                'Please contact an administrator.',
-                code='inactive',
-        )
+            
+        if not user.is_active:
+            raise forms.ValidationError(
+                    'Your account has been deactivated. '
+                    'Please contact an administrator.',
+                    code='inactive',
+            )
 
 class PreferencesForm(forms.ModelForm):
     class Meta:
