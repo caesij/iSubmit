@@ -5,6 +5,7 @@ services:
     command: /app/entrypoint.sh
     volumes:
       - .:/app
+      - /app/backend/staticfiles
     ports:
       - "8000:8000"
     env_file:
