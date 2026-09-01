@@ -1,35 +1,32 @@
-# Python build artifacts & cache
+# Python
 **/__pycache__/
 **/*.pyc
 **/*.pyo
-**/*.pyd
 *.egg-info/
 
-# Virtual environments
+# Virtual environment
 .venv/
 venv/
 
-# Environment files & secrets
+# Secrets
 .env
 *.env
 
-# Django generated assets & databases
+# Django
 *.sqlite3
 staticfiles/
 media/
 backend/staticfiles/
-backend/media/
 
-# Git metadata
+# Git
 .git/
 .gitignore
 
-# Editor & OS files
+# Editor/OS cruft
 .vscode/
 .idea/
 .DS_Store
 
-# Docker configuration files
+# Docker
 Dockerfile
 docker-compose.yml
-.dockerignore
