@@ -1,11 +1,11 @@
-from admin_staff_portal.views.core.dashboard_views import DashboardView
-from admin_staff_portal.views.core.user_mgmt_views import (
-    UserListView,
-    UserCreateView,
-    UserUpdateView,
-    UserToggleAccStatusView,
+from admin_staff_portal.views.core.dashboard_views import dashboard_view
+
+from admin_staff_portal.views.core.document_repo_views import (
+    document_repo_view,
+    document_file_view,
 )
-from .core.submissions_views import (
+
+from admin_staff_portal.views.core.submissions_views import (
     add_requirement,
     edit_requirement,
     requirements_list,
@@ -19,18 +19,20 @@ from .core.submissions_views import (
     approve_all_submissions_view,
 )
 
-from .core.document_repo_views import (
-    document_repo_view,
-    document_file_view
+
+from admin_staff_portal.views.core.user_mgmt_views import (
+    user_list_view,
+    user_create_view,
+    user_update_view,
+    user_toggle_acc_status_view,
 )
 
 __all__ = [
-    'DashboardView',
-    'UserListView',
-    'UserCreateView',
-    'UserUpdateView',
-    'UserToggleAccStatusView',
+    'dashboard_view',
     
+    'document_repo_view',
+    'document_file_view',
+
     'add_requirement',
     'edit_requirement',
     'requirements_list',
@@ -43,6 +45,8 @@ __all__ = [
     'mark_reviewed_view',
     'approve_all_submissions_view',
     
-    'document_repo_view',
-    'document_file_view'
+    'user_list_view',
+    'user_create_view',
+    'user_update_view',
+    'user_toggle_acc_status_view',
 ]
