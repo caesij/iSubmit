@@ -54,12 +54,10 @@ Only use `--build` again if you changed `requirements.txt`, the `Dockerfile`, or
 
 ### Running management commands
 
-Since there's no local Python install, run Django commands inside the container:
+Since there's no local Python install, run Django commands inside the container. Example:
 
 ```bash
 docker compose exec web python manage.py migrate
-docker compose exec web python manage.py createsuperuser
-docker compose exec web python manage.py shell
 ```
 
 ---
@@ -74,13 +72,9 @@ py -m venv .venv
 .venv\Scripts\activate
 ```
 
-**Mac**
+**Mac/Linux**
 ```bash
 python3 -m venv .venv
-```
-
-**Linux**
-```bash
 source .venv/bin/activate
 ```
 
