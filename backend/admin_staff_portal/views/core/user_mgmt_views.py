@@ -10,7 +10,7 @@ import secrets
 import string
 from axes.utils import reset as axes_reset
 
-from accounts.decorators import role_required
+from accounts.decorators import role_required, staff_permission_required
 from admin_staff_portal.helpers import (
     get_target_role,
     get_page_title,
@@ -65,6 +65,7 @@ def user_list_view(request):
     )
 
 @role_required('ADMIN', 'STAFF')
+@staff_permission_required('add_faculty_users')
 @require_http_methods(['GET', 'POST'])
 def user_create_view(request):
     target_role = get_target_role(request)
@@ -119,6 +120,7 @@ def user_create_view(request):
     )
 
 @role_required('ADMIN', 'STAFF')
+@staff_permission_required('add_faculty_users')
 @require_http_methods(['GET', 'POST'])
 def user_update_view(request, pk):
     target_user = get_object_or_404(User, pk=pk)
@@ -154,6 +156,7 @@ def user_update_view(request, pk):
     )
 
 @role_required('ADMIN', 'STAFF')
+@staff_permission_required('add_faculty_users')
 @require_http_methods(['POST'])
 def user_toggle_acc_status_view(request, pk):
     target_user = get_object_or_404(User, pk=pk)

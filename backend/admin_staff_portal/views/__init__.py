@@ -19,13 +19,21 @@ from admin_staff_portal.views.core.submissions_views import (
     approve_all_submissions_view,
 )
 
-
 from admin_staff_portal.views.core.user_mgmt_views import (
     user_list_view,
     user_create_view,
     user_update_view,
     user_toggle_acc_status_view,
 )
+
+from admin_staff_portal.views.general.settings_views import (
+    preferences_view,
+    notification_settings_view,
+    account_and_security_view,
+    staff_permissions_view,
+)
+
+from admin_staff_portal.views.general.profile_views import profile_view
 
 __all__ = [
     'dashboard_view',
@@ -49,4 +57,11 @@ __all__ = [
     'user_create_view',
     'user_update_view',
     'user_toggle_acc_status_view',
+    
+    'preferences_view',
+    'notification_settings_view',
+    'account_and_security_view',
+    'staff_permissions_view',
+    
+    'profile_view',
 ]
