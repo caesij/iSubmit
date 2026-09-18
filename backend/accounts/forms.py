@@ -31,7 +31,49 @@ class CustomLoginForm(AuthenticationForm):
                     'Please contact an administrator.',
                     code='inactive',
             )
+            
+class FacultyProfileForm(forms.ModelForm):
+    class Meta:
+        model = User
+        fields = ['first_name', 'middle_name', 'last_name', 'email', 'profile_photo']
 
+    def clean_email(self):
+        email = self.cleaned_data.get('email', '').strip().lower()
+        query = User.objects.filter(email__iexact=email)
+        if self.instance.pk:
+            query = query.exclude(pk=self.instance.pk)
+        if query.exists():
+            raise forms.ValidationError('A user with this email address already exists.')
+        return email
+
+    def clean_profile_photo(self):
+        photo = self.cleaned_data.get('profile_photo')
+        if photo and hasattr(photo, 'size'):
+            if photo.size > 10 * 1024 * 1024:
+                raise forms.ValidationError('Image must be smaller than 10MB.')
+        return photo
+
+class AdminStaffProfileForm(forms.ModelForm):
+    class Meta:
+        model = User
+        fields = ['first_name', 'middle_name', 'last_name', 'email', 'profile_photo']
+
+    def clean_email(self):
+        email = self.cleaned_data.get('email', '').strip().lower()
+        query = User.objects.filter(email__iexact=email)
+        if self.instance.pk:
+            query = query.exclude(pk=self.instance.pk)
+        if query.exists():
+            raise forms.ValidationError('A user with this email address already exists.')
+        return email
+
+    def clean_profile_photo(self):
+        photo = self.cleaned_data.get('profile_photo')
+        if photo and hasattr(photo, 'size'):
+            if photo.size > 10 * 1024 * 1024:
+                raise forms.ValidationError('Image must be smaller than 10MB.')
+        return photo
+    
 class PreferencesForm(forms.ModelForm):
     class Meta:
         model = User

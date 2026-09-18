@@ -1,7 +1,12 @@
 import uuid
 from django.db import models
+from django.conf import settings
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
+
 from .managers import UserManager, FacultyManager, StaffManager
+
+def profile_photo_path(instance, filename):
+    return f'profile_photos/user_{instance.id}/{filename}'
 
 class User(AbstractBaseUser, PermissionsMixin):
     # User Preferences
@@ -16,8 +21,18 @@ class User(AbstractBaseUser, PermissionsMixin):
     
     language = models.CharField(max_length=10, default='en')
     timezone = models.CharField(max_length=50, default='Asia/Manila')
-    date_format = models.CharField(max_length=10, choices=DateFormatChoice.choices, default=DateFormatChoice.LONG)
-    time_format = models.CharField(max_length=2, choices=TimeFormatChoice.choices, default=TimeFormatChoice.TWELVE)
+    
+    date_format = models.CharField(
+        max_length=10, 
+        choices=DateFormatChoice.choices, 
+        default=DateFormatChoice.LONG
+    )
+    
+    time_format = models.CharField(
+        max_length=2, 
+        choices=TimeFormatChoice.choices, 
+        default=TimeFormatChoice.TWELVE
+    )
     
     # Main User Creation
     id = models.UUIDField(
@@ -34,7 +49,13 @@ class User(AbstractBaseUser, PermissionsMixin):
     class FacultyType(models.TextChoices):
         FULL_TIME = "FULL_TIME", 'Full-Time Faculty'
         PART_TIME = "PART_TIME", 'Part-Time Faculty'
-
+        
+    profile_photo = models.ImageField(
+        upload_to=profile_photo_path,
+        blank=True,
+        null=True,
+    )
+    
     first_name = models.CharField(max_length=255)
     middle_name = models.CharField(max_length=255, blank=True)
     last_name = models.CharField(max_length=255)
@@ -127,3 +148,118 @@ class StaffAccount(User):
         proxy = True
         verbose_name = "Staff Account"
         verbose_name_plural = "Staff Accounts"
+
+class StaffPermission(models.Model):
+    review_faculty_submissions = models.BooleanField(default=True)
+    return_for_revisions = models.BooleanField(default=True)
+    create_submission_bins = models.BooleanField(default=True)
+    edit_submission_bin = models.BooleanField(default=True)
+    view_approved_documents = models.BooleanField(default=True)
+    add_faculty_users = models.BooleanField(default=False)
+
+    updated_at = models.DateTimeField(auto_now=True)
+
+    DEPENDENCIES = {
+        'return_for_revisions': ['review_faculty_submissions'],
+    }
+    
+    class Meta:
+        verbose_name = 'Staff Permission'
+        verbose_name_plural = 'Staff Permissions'
+
+    def __str__(self):
+        return 'Staff Permissions'
+
+    @classmethod
+    def get_solo(cls):
+        obj, _ = cls.objects.get_or_create(pk=1)
+        return obj
+
+    def is_effectively_enabled(self, field):
+        if not getattr(self, field, False):
+            return False
+        for dependency in self.DEPENDENCIES.get(field, []):
+            if not getattr(self, dependency, False):
+                return False
+        return True
+
+    def enforce_dependencies(self):
+        for field, dependencies in self.DEPENDENCIES.items():
+            if any(not getattr(self, dep, False) for dep in dependencies):
+                setattr(self, field, False)
+
+    def save(self, *args, **kwargs):
+        self.pk = 1
+        self.enforce_dependencies()
+        super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        pass
+     
+class NotificationPreference(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='notification_preferences'
+    )
+    
+    class NotificationType(models.TextChoices):
+        SYSTEM_ANNOUNCEMENT = 'SYSTEM_ANNOUNCEMENT', 'System Announcement'
+        DOCUMENT_UPDATES = 'DOCUMENT_UPDATES', 'Document Updates'
+        SUBMISSION_UPDATES = 'SUBMISSION_UPDATES', 'Submission Updates'
+        SUBMISSION_REMINDERS = 'SUBMISSION_REMINDERS', 'Submission Reminders'
+        APPROVAL_REJECTIONS = 'APPROVAL_REJECTIONS', 'Approval and Rejections'
+        SECURITY_ALERTS = 'SECURITY_ALERTS', 'Security Alerts'
+
+    DESCRIPTIONS = {
+        NotificationType.SYSTEM_ANNOUNCEMENT: 'Receive alerts about important system announcement and updates.',
+        NotificationType.DOCUMENT_UPDATES: 'Updates about your submitted documents.',
+        NotificationType.SUBMISSION_UPDATES: 'Get notified on submissions status.',
+        NotificationType.SUBMISSION_REMINDERS: 'Reminders for pending submission and deadlines.',
+        NotificationType.APPROVAL_REJECTIONS: 'Notifications about documents approvals or rejections.',
+        NotificationType.SECURITY_ALERTS: 'Login alerts and security-related notifications.',
+    }
+
+    ROLE_TYPES = {
+        'FACULTY': [
+            NotificationType.SYSTEM_ANNOUNCEMENT,
+            NotificationType.DOCUMENT_UPDATES,
+            NotificationType.SUBMISSION_REMINDERS,
+            NotificationType.APPROVAL_REJECTIONS,
+            NotificationType.SECURITY_ALERTS,
+        ],
+        'ADMIN': [
+            NotificationType.SYSTEM_ANNOUNCEMENT,
+            NotificationType.SUBMISSION_UPDATES,
+            NotificationType.SECURITY_ALERTS,
+        ],
+        'STAFF': [
+            NotificationType.SYSTEM_ANNOUNCEMENT,
+            NotificationType.SUBMISSION_UPDATES,
+            NotificationType.SECURITY_ALERTS,
+        ],
+    }
+    
+    notification_type = models.CharField(
+        max_length=30,
+        choices=NotificationType.choices,
+    )
+
+    enabled = models.BooleanField(default=True)
+    email_enabled = models.BooleanField(default=True)
+    system_enabled = models.BooleanField(default=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user', 'notification_type'],
+                name='unique_user_notification_type'
+            )
+        ]
+
+    @property
+    def description(self):
+        return self.DESCRIPTIONS.get(self.notification_type, '')
+
+    def __str__(self):
+        return f'{self.user.email} - {self.get_notification_type_display()}'

@@ -1,4 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
+from django.utils import timezone
 from django.views.decorators.http import require_http_methods
 from django.contrib import messages
 from django.db.models import Q
@@ -8,15 +9,17 @@ from django.core.files.base import ContentFile
 
 from accounts.decorators import faculty
 from submissions.models import Requirement, DraftUpload, DocumentSubmission
-from submissions.forms import DraftUploadForm
+from submissions.forms import DraftUploadForm, DocumentRevisionForm
 
 @faculty
 @require_http_methods(['GET'])
 def upload_files_view(request):
     already_submitted_ids = DocumentSubmission.objects.filter(
         faculty=request.user
+    ).exclude(
+        status=DocumentSubmission.SubmissionStatus.NEEDS_REVISION
     ).values_list('requirement_id', flat=True)
-    
+
     requirements = Requirement.objects.filter(
         status=Requirement.ReqStatus.ACTIVE,
     ).filter(
@@ -34,8 +37,21 @@ def upload_files_view(request):
         )
     }
 
+    needs_revision_by_requirement = {
+        s.requirement_id: s
+        for s in DocumentSubmission.objects.filter(
+            faculty=request.user,
+            requirement__in=requirements,
+            status=DocumentSubmission.SubmissionStatus.NEEDS_REVISION,
+        ).select_related('requirement').prefetch_related('revisions__reviews')
+    }
+
     rows = [
-        {'requirement': req, 'draft': drafts_by_requirement.get(req.id)}
+        {
+            'requirement': req,
+            'draft': drafts_by_requirement.get(req.id),
+            'needs_revision_submission': needs_revision_by_requirement.get(req.id),
+        }
         for req in requirements
     ]
 
@@ -218,3 +234,33 @@ def view_uploaded_document(request, document_id):
         'faculty_portal/core/submission_bin/view_uploaded_document.html',
         context
     )
+    
+@faculty
+@require_http_methods(['POST'])
+def resubmit_document_view(request, submission_id):
+    submission = get_object_or_404(
+        DocumentSubmission,
+        pk=submission_id,
+        faculty=request.user,
+        status=DocumentSubmission.SubmissionStatus.NEEDS_REVISION,
+    )
+
+    form = DocumentRevisionForm(
+        request.POST,
+        request.FILES,
+        submission=submission,
+    )
+
+    if not form.is_valid():
+        messages.error(request, 'Failed to resubmit. Please check the file format and size.')
+        return redirect('faculty_portal:upload_files')
+
+    revision = form.save()
+
+    submission.document_file = revision.file
+    submission.status = DocumentSubmission.SubmissionStatus.RESUBMITTED
+    submission.resubmitted_at = timezone.now()
+    submission.save(update_fields=['document_file', 'status', 'resubmitted_at'])
+
+    messages.success(request, 'Document resubmitted successfully.')
+    return redirect('faculty_portal:upload_files')

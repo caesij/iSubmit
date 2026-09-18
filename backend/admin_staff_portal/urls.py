@@ -30,4 +30,13 @@ urlpatterns = [
     path('users/add/', views.user_create_view, name='user_create'),
     path('users/<uuid:pk>/edit/', views.user_update_view, name='user_edit'),
     path('users/<uuid:pk>/toggle-acc-status/', views.user_toggle_acc_status_view, name='user_toggle_acc_status'),
+    
+    # Settings URLs
+    path('settings/preferences/', views.preferences_view, name='preferences'),
+    path('settings/notification_settings/', views.notification_settings_view, name='notification_settings'),
+    path('settings/account_and_security/', views.account_and_security_view, name='account_and_security'),
+    path('settings/staff_permissions/', views.staff_permissions_view, name='staff_permissions'),
+    
+    # Profile URL
+    path('profile/', views.profile_view, name='profile'),
 ]

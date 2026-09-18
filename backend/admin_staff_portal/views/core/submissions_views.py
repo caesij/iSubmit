@@ -1,20 +1,19 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.decorators.http import require_http_methods
 from django.core.paginator import Paginator
-from django.db.models import Count, Max, Q, F, Case, When, Value, IntegerField
 from django.contrib.auth import get_user_model
 from django.db.models import Q
 from django.utils import timezone
 from django.contrib import messages
 
-from accounts.decorators import admin, role_required
-from submissions.models import Requirement, DocumentSubmission
-from submissions.forms import RequirementForm
-
+from accounts.decorators import admin, role_required, staff_permission_required
+from submissions.models import Requirement, DocumentSubmission, DocumentRevision
+from submissions.forms import RequirementForm, DocumentReviewForm
 User = get_user_model()
 
 # Submission Bin Views
-@admin
+@role_required('ADMIN', 'STAFF')
+@staff_permission_required('create_submission_bins')
 @require_http_methods(['GET', 'POST'])
 def add_requirement(request):
     if request.method == 'POST':
@@ -33,7 +32,8 @@ def add_requirement(request):
         context
     )
 
-@admin
+@role_required('ADMIN', 'STAFF')
+@staff_permission_required('edit_submission_bin')
 @require_http_methods(['GET', 'POST'])
 def edit_requirement(request, requirement_id):
     requirement = get_object_or_404(Requirement, pk=requirement_id)
@@ -93,7 +93,8 @@ def requirements_list(request):
         context
     )
 
-@admin
+@role_required('ADMIN', 'STAFF')
+@staff_permission_required('edit_submission_bin')
 @require_http_methods(['POST'])
 def toggle_requirement_status(request, requirement_id):
     requirement = get_object_or_404(Requirement, pk=requirement_id)
@@ -105,7 +106,7 @@ def toggle_requirement_status(request, requirement_id):
     )
     
     requirement.save()
-    
+    messages.success(request, 'Requirement status updated.')
     return redirect('admin_staff_portal:requirements_list')
 
 # Faculty Submission Views
@@ -217,6 +218,7 @@ def faculty_submission_bins_view(request, faculty_id):
     )
     
 @role_required('ADMIN', 'STAFF')
+@staff_permission_required('review_faculty_submissions')
 @require_http_methods(['GET'])
 def review_submission(request, submission_id):
     submission = get_object_or_404(
@@ -233,6 +235,7 @@ def review_submission(request, submission_id):
     )
     
 @role_required('ADMIN', 'STAFF')
+@staff_permission_required('review_faculty_submissions')
 @require_http_methods(['POST'])
 def mark_under_review_view(request, submission_id):
     submission = get_object_or_404(
@@ -250,6 +253,7 @@ def mark_under_review_view(request, submission_id):
     return redirect('admin_staff_portal:review_submission', submission_id=submission.id)
 
 @role_required('ADMIN', 'STAFF')
+@staff_permission_required('review_faculty_submissions')
 @require_http_methods(['POST'])
 def mark_reviewed_view(request, submission_id):
     submission = get_object_or_404(
@@ -264,6 +268,47 @@ def mark_reviewed_view(request, submission_id):
     submission.reviewed_at = timezone.now()
     submission.save(update_fields=update_fields)
     
+    return redirect('admin_staff_portal:review_submission', submission_id=submission.id)
+
+@role_required('ADMIN', 'STAFF')
+@staff_permission_required('return_for_revisions')
+@require_http_methods(['POST'])
+def mark_needs_revision_view(request, submission_id):
+    submission = get_object_or_404(
+        DocumentSubmission,
+        pk=submission_id,
+        status__in=[
+            DocumentSubmission.SubmissionStatus.UNDER_REVIEW,
+            DocumentSubmission.SubmissionStatus.PENDING_APPROVAL,
+        ]
+    )
+
+    latest_revision = submission.revisions.order_by('-version_number').first()
+    if latest_revision is None:
+        latest_revision = DocumentRevision.objects.create(
+            submission=submission,
+            file=submission.document_file,
+            version_number=1,
+        )
+
+    form = DocumentReviewForm(
+        request.POST,
+        reviewer=request.user,
+        revision=latest_revision,
+    )
+
+    if not form.is_valid() or not form.cleaned_data.get('remarks'):
+        messages.error(request, 'Please provide remarks explaining what needs revision.')
+        return redirect('admin_staff_portal:review_submission', submission_id=submission_id)
+
+    form.save()
+
+    submission.status = DocumentSubmission.SubmissionStatus.NEEDS_REVISION
+    submission.reviewed_by = request.user
+    submission.reviewed_at = timezone.now()
+    submission.save(update_fields=['status', 'reviewed_by', 'reviewed_at'])
+
+    messages.success(request, 'Submission marked as needing revision.')
     return redirect('admin_staff_portal:review_submission', submission_id=submission.id)
 
 @admin

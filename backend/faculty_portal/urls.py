@@ -24,5 +24,14 @@ urlpatterns = [
     path('my_documents/pinned_documents/', views.pinned_documents_view, name='pinned_documents'),
     path('my_documents/all_documents/<uuid:document_id>/view/', views.document_file_view, {'source': 'all'}, name='document_file_view_all'),
     path('my_documents/pinned_documents/<uuid:document_id>/view/', views.document_file_view, {'source': 'pinned'}, name='document_file_view_pinned'),
-    path('my_documents/<uuid:document_id>/toggle-pin/', views.toggle_pin_view, name='toggle_pin')
+    path('my_documents/<uuid:document_id>/toggle-pin/', views.toggle_pin_view, name='toggle_pin'),
+    
+    # Settings URLs
+    path('settings/preferences/', views.preferences_view, name='preferences'),
+    path('settings/notification_settings/', views.notification_settings_view, name='notification_settings'),
+    path('settings/notification_channel/', views.notification_channel_view, name='notification_channel'),
+    path('settings/account_and_security/', views.account_and_security_view, name='account_and_security'),
+    
+    # Profile URL
+    path('profile/', views.profile_view, name='profile'),
 ]
