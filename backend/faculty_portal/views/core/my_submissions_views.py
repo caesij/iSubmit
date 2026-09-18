@@ -6,13 +6,6 @@ from django.db.models import Count, Q
 from accounts.decorators import faculty
 from submissions.models import DocumentSubmission
 
-from django.shortcuts import render, get_object_or_404
-from django.views.decorators.http import require_http_methods
-from django.db.models import Count, Q
-
-from accounts.decorators import faculty
-from submissions.models import DocumentSubmission
-
 
 @faculty
 @require_http_methods(['GET'])
@@ -60,7 +53,6 @@ def recent_submissions_list(request):
         'faculty_portal/core/my_submissions/recent_submissions_list.html',
         context
     )
-
 
 @faculty
 @require_http_methods(['GET'])
