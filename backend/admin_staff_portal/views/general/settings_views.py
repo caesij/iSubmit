@@ -26,7 +26,7 @@ def preferences_view(request):
         if form.is_valid():
             form.save()
             messages.success(request, 'Preferences updated successfully.')
-            return redirect('faculty_portal:preferences')
+            return redirect('admin_staff_portal:preferences')
         else:
             messages.error(request, 'Invalid.')
     else:
@@ -36,7 +36,7 @@ def preferences_view(request):
     
     return render(
         request,
-        'faculty_portal/settings/preferences.html',
+        'admin_staff_portal/general/settings_module/preferences.html',
         context
     )
 
@@ -61,7 +61,7 @@ def notification_settings_view(request):
     
     return render(
         request,
-        'admin_staff_portal/core/settings/notification_settings.html',
+        'admin_staff_portal/general/settings_module/notification_settings.html',
         context
     )
 
@@ -74,7 +74,7 @@ def account_and_security_view(request):
             user = form.save()
             update_session_auth_hash(request, user)
             messages.success(request, 'Your password was successfully updated!')
-            return redirect('faculty_portal:account_and_security')
+            return redirect('admin_staff_portal:account_and_security')
         else:
             messages.error(request, 'Please correct the error below.')
     else:
@@ -84,7 +84,7 @@ def account_and_security_view(request):
 
     return render(
         request,
-        'faculty_portal/settings/account_security.html',
+        'admin_staff_portal/general/settings_module/account_security.html',
         context
     )
     
@@ -107,6 +107,6 @@ def staff_permissions_view(request):
     
     return render(
         request,
-        'admin_staff_portal/core/settings/staff_permissions.html',
+        'admin_staff_portal/general/settings_module/staff_permissions.html',
         context
     )

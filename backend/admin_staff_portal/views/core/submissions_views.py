@@ -7,8 +7,24 @@ from django.utils import timezone
 from django.contrib import messages
 
 from accounts.decorators import admin, role_required, staff_permission_required
-from submissions.models import Requirement, DocumentSubmission, DocumentRevision
-from submissions.forms import RequirementForm, DocumentReviewForm
+
+from faculty_portal.realtime import refresh_faculty_dashboard
+
+from submissions.models import (
+    Requirement,
+    DocumentSubmission,
+    DocumentRevision,
+)
+
+from submissions.forms import (
+    RequirementForm,
+    DocumentReviewForm,
+)
+
+from accounts.models import StaffPermission
+
+from core.utils import notify
+
 User = get_user_model()
 
 # Submission Bin Views
@@ -19,16 +35,29 @@ def add_requirement(request):
     if request.method == 'POST':
         form = RequirementForm(request.POST)
         if form.is_valid():
-            form.save()
+            requirement = form.save()
+
+            faculty_qs = User.objects.filter(role=User.Role.FACULTY)
+            if requirement.assigned_to != Requirement.AssignedFacultyType.ALL:
+                faculty_qs = faculty_qs.filter(faculty_type=requirement.assigned_to)
+            for faculty_member in faculty_qs:
+                notify(
+                    faculty_member,
+                    'SUBMISSION_REMINDERS',
+                    'New requirement posted',
+                    f'"{requirement.requirement_title}" is due {requirement.deadline.strftime("%B %d, %Y")}.',
+                    link='/faculty-portal/submission-bin/'
+                )
+
             return redirect('admin_staff_portal:requirements_list')
     else:
         form = RequirementForm()
-        
+
     context = {'form': form}
-        
+    
     return render(
-        request, 
-        'admin_staff_portal/core/submissions/submission_bin/requirement_forms.html', 
+        request,
+        'admin_staff_portal/core/submissions/submission_bin/requirement_forms.html',
         context
     )
 
@@ -41,16 +70,16 @@ def edit_requirement(request, requirement_id):
     if request.method == 'POST':
         form = RequirementForm(request.POST, instance=requirement)
         if form.is_valid():
-            form.save()
+            requirement = form.save()
+
             return redirect('admin_staff_portal:requirements_list')
     else:
         form = RequirementForm(instance=requirement)
-        
-    context = {'form': form, 'requirement': requirement}
 
+    context = {'form': form, 'requirement': requirement}
     return render(
-        request, 
-        'admin_staff_portal/core/submissions/submission_bin/requirement_forms.html', 
+        request,
+        'admin_staff_portal/core/submissions/submission_bin/requirement_forms.html',
         context
     )
 
@@ -62,7 +91,8 @@ def requirements_list(request):
     query = request.GET.get('q')
     category = request.GET.get('category')
     assigned_to = request.GET.get('assigned_to')
-    academic_term = request.GET.get('academic_term')
+    semester = request.GET.get('semester')
+    academic_year = request.GET.get('academic_year')
 
     if query:
         requirements = requirements.filter(requirement_title__icontains=query)
@@ -70,8 +100,10 @@ def requirements_list(request):
         requirements = requirements.filter(category=category)
     if assigned_to:
         requirements = requirements.filter(assigned_to=assigned_to)
-    if academic_term:
-        requirements = requirements.filter(academic_term=academic_term)
+    if semester:
+        requirements = requirements.filter(semester=semester)
+    if academic_year:
+        requirements = requirements.filter(academic_term=f'A.Y. {academic_year}')
 
     paginator = Paginator(requirements, 7)
     page_obj = paginator.get_page(request.GET.get('page'))
@@ -84,7 +116,10 @@ def requirements_list(request):
         'assigned_to_choices': [
             c for c in Requirement.AssignedFacultyType.choices if c[0] != 'ALL'
         ],
-        'academic_terms': Requirement.objects.values_list('academic_term', flat=True).distinct(),
+        'academic_years': [
+            term.replace('A.Y. ', '')
+            for term in Requirement.objects.values_list('academic_term', flat=True).distinct().order_by('-academic_term')
+        ],
     }
 
     return render(
@@ -104,8 +139,8 @@ def toggle_requirement_status(request, requirement_id):
         if requirement.status == Requirement.ReqStatus.ACTIVE
         else Requirement.ReqStatus.ACTIVE
     )
-    
     requirement.save()
+
     messages.success(request, 'Requirement status updated.')
     return redirect('admin_staff_portal:requirements_list')
 
@@ -226,7 +261,13 @@ def review_submission(request, submission_id):
         pk=submission_id
     )
     
-    context = {'submission': submission}
+    context = {
+        'submission': submission,
+        'can_return_for_revisions': (
+            request.user.is_admin
+            or StaffPermission.get_solo().is_effectively_enabled('return_for_revisions')
+        ),
+    }
     
     return render(
         request,
@@ -238,18 +279,20 @@ def review_submission(request, submission_id):
 @staff_permission_required('review_faculty_submissions')
 @require_http_methods(['POST'])
 def mark_under_review_view(request, submission_id):
-    submission = get_object_or_404(
-        DocumentSubmission,
-        pk=submission_id,
-        status__in=[
-            DocumentSubmission.SubmissionStatus.SUBMITTED,
-            DocumentSubmission.SubmissionStatus.RESUBMITTED
-        ]
-    )
-    
+    submission = get_object_or_404(DocumentSubmission, pk=submission_id)
+
+    if submission.status not in (
+        DocumentSubmission.SubmissionStatus.SUBMITTED,
+        DocumentSubmission.SubmissionStatus.RESUBMITTED,
+    ):
+        messages.info(request, 'This submission was already updated by someone else.')
+        return redirect('admin_staff_portal:review_submission', submission_id=submission.id)
+
     submission.status = DocumentSubmission.SubmissionStatus.UNDER_REVIEW
     submission.save(update_fields=['status'])
-    
+
+    refresh_faculty_dashboard(submission.faculty)
+
     return redirect('admin_staff_portal:review_submission', submission_id=submission.id)
 
 @role_required('ADMIN', 'STAFF')
@@ -267,7 +310,9 @@ def mark_reviewed_view(request, submission_id):
     submission.reviewed_by = request.user
     submission.reviewed_at = timezone.now()
     submission.save(update_fields=update_fields)
-    
+
+    refresh_faculty_dashboard(submission.faculty)
+
     return redirect('admin_staff_portal:review_submission', submission_id=submission.id)
 
 @role_required('ADMIN', 'STAFF')
@@ -306,7 +351,15 @@ def mark_needs_revision_view(request, submission_id):
     submission.status = DocumentSubmission.SubmissionStatus.NEEDS_REVISION
     submission.reviewed_by = request.user
     submission.reviewed_at = timezone.now()
-    submission.save(update_fields=['status', 'reviewed_by', 'reviewed_at'])
+    submission.save(
+        update_fields=[
+            'status',
+            'reviewed_by',
+            'reviewed_at'
+        ]
+    )
+
+    refresh_faculty_dashboard(submission.faculty)
 
     messages.success(request, 'Submission marked as needing revision.')
     return redirect('admin_staff_portal:review_submission', submission_id=submission.id)
@@ -337,6 +390,10 @@ def approve_all_submissions_view(request, faculty_id):
         return redirect('admin_staff_portal:faculty_submission_bins_view', faculty_id=faculty_member.id)
 
     now = timezone.now()
+    
+    approved_submissions = list(submissions_qs.filter(
+        status=DocumentSubmission.SubmissionStatus.PENDING_APPROVAL
+    ))
     approved_count = submissions_qs.filter(
         status=DocumentSubmission.SubmissionStatus.PENDING_APPROVAL
     ).update(
@@ -344,6 +401,11 @@ def approve_all_submissions_view(request, faculty_id):
         approved_by=request.user,
         approved_at=now,
     )
+    
+    for sub in approved_submissions:
+        sub.refresh_from_db()
+
+    refresh_faculty_dashboard(faculty_member)
 
     messages.success(request, f'{approved_count} document(s) approved.')
     return redirect('admin_staff_portal:faculty_submission_bins_view', faculty_id=faculty_member.id)

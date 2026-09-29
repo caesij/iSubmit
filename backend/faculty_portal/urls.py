@@ -5,6 +5,7 @@ app_name = 'faculty_portal'
 
 urlpatterns = [
     path('dashboard/', views.dashboard_view, name='dashboard'),
+    path('dashboard/data/', views.dashboard_data_view, name='dashboard_data'),
     
     # Submission Bin URLs
     path('submission_bin/upload_files/', views.upload_files_view, name='upload_files'),

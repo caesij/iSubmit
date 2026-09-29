@@ -215,6 +215,17 @@
     line-height: 1.5;
   }
 
+  .rs-panel-live { display: flex; flex-direction: column; gap: 16px; }
+  .rs-live-note { font-size: 12px; color: #92400e; background: #fef3c7; border: 1px solid #fcd34d; border-radius: 8px; padding: 8px 12px; }
+
+  .rs-btn-danger { background: #b91c1c; color: #fff; }
+  .rs-revision summary { list-style: none; cursor: pointer; }
+  .rs-revision summary::-webkit-details-marker { display: none; }
+  .rs-revision textarea {
+    width: 100%; box-sizing: border-box; border: 1px solid var(--line); border-radius: 8px;
+    padding: 10px; font: inherit; font-size: 13px; margin: 10px 0; resize: vertical;
+  }
+
   @media (max-width: 900px) {
     .rs-grid { grid-template-columns: 1fr; }
   }
@@ -252,39 +263,7 @@
     </div>
 
     <!-- Side panel -->
-    <div class="rs-panel">
-
-      <div class="rs-card">
-        <h2>Document Details</h2>
-        <div class="rs-detail-row">
-          <span class="dot"></span>
-          <div>
-            <span class="label">File name</span>
-            <span class="value">{{ submission.document_file.name }}</span>
-          </div>
-        </div>
-        <div class="rs-detail-row">
-          <span class="dot"></span>
-          <div>
-            <span class="label">Academic term</span>
-            <span class="value">{{ submission.requirement.academic_term }}</span>
-          </div>
-        </div>
-        <div class="rs-detail-row">
-          <span class="dot"></span>
-          <div>
-            <span class="label">Category</span>
-            <span class="value">{{ submission.requirement.category }}</span>
-          </div>
-        </div>
-        <div class="rs-detail-row">
-          <span class="dot"></span>
-          <div>
-            <span class="label">Deadline</span>
-            <span class="value">{{ submission.requirement.deadline|date:"M j, Y g:i A" }}</span>
-          </div>
-        </div>
-      </div>
+    <div class="rs-panel-live" data-live-panel="review-panel-{{ submission.id }}">
 
       <div class="rs-card">
         <h2>Document Status</h2>
@@ -299,7 +278,15 @@
         {% elif submission.status == 'UNDER_REVIEW' %}
           <div class="rs-status-note">This document is currently being reviewed.</div>
         {% elif submission.status == 'NEEDS_REVISION' %}
-          <div class="rs-status-note">This document needs revision before it can be approved.</div>
+          {% with latest_review=submission.revisions.first.reviews.first %}
+            <div class="rs-status-note">
+              {% if latest_review %}
+                <strong>Remarks:</strong> {{ latest_review.remarks|linebreaksbr }}
+              {% else %}
+                This document needs revision before it can be approved.
+              {% endif %}
+            </div>
+          {% endwith %}
         {% endif %}
       </div>
 
@@ -338,6 +325,19 @@
             {% csrf_token %}
             <button type="submit" class="rs-btn rs-btn-secondary">Mark as Reviewed</button>
           </form>
+        {% endif %}
+
+        {% if submission.status == 'UNDER_REVIEW' or submission.status == 'PENDING_APPROVAL' %}
+          {% if can_return_for_revisions %}
+            <details class="rs-revision">
+              <summary class="rs-btn rs-btn-danger">Return for Revision</summary>
+              <form method="post" action="{% url 'admin_staff_portal:mark_needs_revision' submission.id %}">
+                {% csrf_token %}
+                <textarea name="remarks" rows="4" required placeholder="Explain what needs to be revised..."></textarea>
+                <button type="submit" class="rs-btn rs-btn-danger">Send Back to Faculty</button>
+              </form>
+            </details>
+          {% endif %}
         {% endif %}
 
         {% if submission.status == 'PENDING_APPROVAL' %}

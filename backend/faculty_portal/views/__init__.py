@@ -1,4 +1,4 @@
-from faculty_portal.views.core.dashboard_views import dashboard_view
+from faculty_portal.views.core.dashboard_views import dashboard_view, dashboard_data_view
 
 from faculty_portal.views.core.submission_bin_views import (
     upload_files_view,
@@ -32,6 +32,7 @@ from faculty_portal.views.general.profile_views import profile_view
 
 __all__ = [
     'dashboard_view',
+    'dashboard_data_view',
     
     'upload_files_view',
     'attach_document_view',

@@ -120,6 +120,91 @@
             </div>
         </main>
     </div>
+
+    <script>
+    (function () {
+
+        const protocol =
+            window.location.protocol === "https:"
+                ? "wss:"
+                : "ws:";
+
+        const socket = new WebSocket(
+            `${protocol}//${window.location.host}/ws/realtime/`
+        );
+
+
+        /*
+        =========================================================
+        WEBSOCKET CONNECTED
+        =========================================================
+        */
+
+        socket.addEventListener("open", function () {
+            console.log("Realtime connected");
+        });
+
+
+        /*
+        =========================================================
+        WEBSOCKET MESSAGE
+        =========================================================
+        */
+
+        socket.addEventListener("message", function (event) {
+
+            const message = JSON.parse(event.data);
+
+            /*
+            Dashboard changed
+            */
+            if (message.event === "dashboard.update") {
+
+                document.dispatchEvent(
+                    new CustomEvent("dashboard-update")
+                );
+            }
+
+
+            /*
+            New notification
+            */
+            if (message.event === "notification.new") {
+
+                document.dispatchEvent(
+                    new CustomEvent("notification-new", {
+                        detail: message.data
+                    })
+                );
+
+            }
+
+        });
+
+
+        /*
+        =========================================================
+        WEBSOCKET CLOSED
+        =========================================================
+        */
+
+        socket.addEventListener("close", function () {
+            console.log("Realtime disconnected");
+        });
+
+
+        /*
+        =========================================================
+        WEBSOCKET ERROR
+        =========================================================
+        */
+
+        socket.addEventListener("error", function (error) {
+            console.error("Realtime WebSocket error:", error);
+        });
+
+    })();
+    </script>
 </body>
 
 </html>
