@@ -8,4 +8,4 @@ echo "Collecting static files..."
 python manage.py collectstatic --noinput
 
 echo "Starting server..."
-exec gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 3
+exec uvicorn config.asgi:application --host 0.0.0.0 --port 8000 --workers 1

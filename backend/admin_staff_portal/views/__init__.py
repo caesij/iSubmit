@@ -15,6 +15,7 @@ from admin_staff_portal.views.core.submissions_views import (
     faculty_submission_bins_view,
     review_submission,
     mark_under_review_view,
+    mark_needs_revision_view,
     mark_reviewed_view,
     approve_all_submissions_view,
 )
@@ -50,6 +51,7 @@ __all__ = [
     'faculty_submission_bins_view',
     'review_submission',
     'mark_under_review_view',
+    'mark_needs_revision_view',
     'mark_reviewed_view',
     'approve_all_submissions_view',
     

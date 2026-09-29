@@ -22,6 +22,7 @@ urlpatterns = [
     path('submissions/faculty_submissions/faculty_submission_bins/<uuid:faculty_id>/', views.faculty_submission_bins_view, name='faculty_submission_bins_view'),
     path('submissions/faculty_submissions/review/<uuid:submission_id>', views.review_submission, name='review_submission'),
     path('faculty-submissions/<uuid:submission_id>/mark-under-review/', views.mark_under_review_view, name='mark_under_review'),
+    path('faculty-submissions/<uuid:submission_id>/mark-needs-revision/', views.mark_needs_revision_view, name='mark_needs_revision'),
     path('faculty-submissions/<uuid:submission_id>/mark-reviewed/', views.mark_reviewed_view, name='mark_reviewed'),
     path('faculty-submissions/<uuid:faculty_id>/approve-all/', views.approve_all_submissions_view, name='approve_all_submissions'),
     
