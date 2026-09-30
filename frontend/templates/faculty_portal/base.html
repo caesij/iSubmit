@@ -6,7 +6,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %} iSubmit - {{ request.user.get_role_display }} Portal {% endblock %}</title>
-    <link rel="stylesheet" href="{% static 'css/faculty_portal.css' %}">
+    <link rel="stylesheet" href="{% static 'css/layout/faculty_portal.css' %}">
     {% block extra_css %}{% endblock %}
 </head>
 
@@ -33,7 +33,7 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {% if request.resolver_match.url_name == 'all_documents' or request.resolver_match.url_name == 'pinned_documents' %}active{% endif %}" href="{% url 'faculty_portal:my_documents' %}">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'my_documents' or request.resolver_match.url_name == 'all_documents' or request.resolver_match.url_name == 'pinned_documents' or request.resolver_match.url_name == 'document_file_view_all' or request.resolver_match.url_name == 'document_file_view_pinned' %}active{% endif %}" href="{% url 'faculty_portal:my_documents' %}">
                             <span class="icon"><img src="{% static 'images/documents.svg' %}" alt="Documents icon"></span>
                             <span>My Documents</span>
                         </a>
@@ -82,8 +82,12 @@
             <header class="topbar">
                 <div>
                     <div class="topbar-title-wrap">
-                        {% if request.resolver_match.url_name == 'upload_files' or request.resolver_match.url_name == 'review_confirm' or request.resolver_match.url_name == 'submission_complete' %}
+                        {% if request.resolver_match.url_name == 'upload_files' or request.resolver_match.url_name == 'review_confirm' or request.resolver_match.url_name == 'submission_complete' or request.resolver_match.url_name == 'view_uploaded_document' %}
                             <span class="page-icon"><img src="{% static 'images/Submission Faculty.svg' %}" alt="Submission Bin icon"></span>
+                        {% elif request.resolver_match.url_name == 'my_documents' or request.resolver_match.url_name == 'all_documents' or request.resolver_match.url_name == 'pinned_documents' or request.resolver_match.url_name == 'document_file_view_all' or request.resolver_match.url_name == 'document_file_view_pinned' %}
+                            <span class="page-icon"><img src="{% static 'images/documents.svg' %}" alt="Documents icon"></span>
+                        {% elif request.resolver_match.url_name == 'recent_submissions' or request.resolver_match.url_name == 'view_my_submitted_document' %}
+                            <span class="page-icon"><img src="{% static 'images/submissions.svg' %}" alt="My submissions icon"></span>
                         {% else %}
                             <span class="page-icon"><img src="{% static 'images/dashboard.svg' %}" alt="Dashboard icon"></span>
                         {% endif %}

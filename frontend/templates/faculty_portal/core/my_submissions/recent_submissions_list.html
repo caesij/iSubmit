@@ -2,6 +2,9 @@
 {% load static %}
 
 {% block title %}My Submissions - iSubmit{% endblock %}
+{% block heading %}My Submissions{% endblock %}
+{% block topbar_subtitle %}Monitor submission progress and document status{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/pages/submissions.css' %}">{% endblock %}
 
 {% block content %}
 <style>
@@ -57,16 +60,6 @@
 </style>
 
 <div class="my-submissions-container">
-    <div class="page-header">
-        <div class="page-title-wrap">
-            <span class="page-icon"><img src="{% static 'images/my_submissions.svg' %}" alt="My Submissions icon"></span>
-            <div>
-                <h1>My Submissions</h1>
-                <p class="subtitle">Monitor submission progress and document status.</p>
-            </div>
-        </div>
-    </div>
-
     <div class="stat-grid" data-live-panel="my-submissions-stats">
         <div class="stat-card">
             <span class="stat-icon orange">&#128196;</span>

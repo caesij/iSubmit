@@ -4,7 +4,7 @@
 {% block title %}Submissions - iSubmit{% endblock %}
 {% block heading %}Submissions{% endblock %}
 {% block subtitle %}Manage and access all approved documents across the system.{% endblock %}
-{% block extra_css %}<link rel="stylesheet" href="{% static 'css/submissions.css' %}">{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/pages/submissions.css' %}">{% endblock %}
 
 {% block content %}
 <div class="submissions-container">
@@ -127,4 +127,33 @@
         {% endif %}
     </div>
 </div>
+
+<script>
+document.addEventListener("click", function (event) {
+    const trigger = event.target.closest(".dropdown .btn-icon");
+    const openMenus = document.querySelectorAll(".dropdown-menu.show");
+
+    if (trigger) {
+        const dropdown = trigger.closest(".dropdown");
+        const menu = dropdown.querySelector(".dropdown-menu");
+        const shouldOpen = !menu.classList.contains("show");
+
+        openMenus.forEach(function (openMenu) {
+            openMenu.classList.remove("show");
+            openMenu.closest(".dropdown").querySelector(".btn-icon").setAttribute("aria-expanded", "false");
+        });
+
+        menu.classList.toggle("show", shouldOpen);
+        trigger.setAttribute("aria-expanded", String(shouldOpen));
+        return;
+    }
+
+    if (!event.target.closest(".dropdown")) {
+        openMenus.forEach(function (openMenu) {
+            openMenu.classList.remove("show");
+            openMenu.closest(".dropdown").querySelector(".btn-icon").setAttribute("aria-expanded", "false");
+        });
+    }
+});
+</script>
 {% endblock %}

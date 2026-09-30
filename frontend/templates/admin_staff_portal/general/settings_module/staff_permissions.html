@@ -1,0 +1,42 @@
+{% extends 'admin_staff_portal/base.html' %}
+{% load static %}
+
+{% block title %}Settings - iSubmit{% endblock %}
+{% block heading %}Settings{% endblock %}
+{% block subtitle %}Configure system preferences and default behaviors.{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/pages/settings.css' %}">{% endblock %}
+
+{% block content %}
+<div class="settings-tabs">
+    <a href="{% url 'admin_staff_portal:preferences' %}" class="settings-tab">Preferences</a>
+    <a href="{% url 'admin_staff_portal:notification_settings' %}" class="settings-tab">Notifications Settings</a>
+    <a href="{% url 'admin_staff_portal:account_and_security' %}" class="settings-tab">Account &amp; Security</a>
+    <a href="{% url 'admin_staff_portal:staff_permissions' %}" class="settings-tab active">Staff Permissions</a>
+</div>
+
+<form method="POST" class="settings-card permissions-card">
+    {% csrf_token %}
+    <h2>Staff Permissions</h2>
+    <p class="card-sub">Choose which actions staff members can perform.</p>
+
+    <div class="permission-list">
+        {% for field, label, description in permission_fields %}
+            <label class="permission-row">
+                <span>
+                    <strong>{{ label }}</strong>
+                    <small>{{ description }}</small>
+                </span>
+                <input type="checkbox" name="{{ field }}"
+                    {% if field == 'review_faculty_submissions' and permissions.review_faculty_submissions %}checked{% endif %}
+                    {% if field == 'return_for_revisions' and permissions.return_for_revisions %}checked{% endif %}
+                    {% if field == 'create_submission_bins' and permissions.create_submission_bins %}checked{% endif %}
+                    {% if field == 'edit_submission_bin' and permissions.edit_submission_bin %}checked{% endif %}
+                    {% if field == 'view_approved_documents' and permissions.view_approved_documents %}checked{% endif %}
+                    {% if field == 'add_faculty_users' and permissions.add_faculty_users %}checked{% endif %}>
+            </label>
+        {% endfor %}
+    </div>
+
+    <div class="settings-actions"><button type="submit" class="btn-save">Save Permissions</button></div>
+</form>
+{% endblock %}

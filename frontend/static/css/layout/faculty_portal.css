@@ -46,7 +46,11 @@ select {
 }
 
 .sidebar {
-  width: 214px;
+  position: fixed;
+  inset: 0 auto 0 0;
+  width: 280px;
+  height: 100vh;
+  overflow-y: auto;
   background: linear-gradient(180deg, #8a0d0d 0%, #7c0909 100%);
   color: #fff;
   border-right: 1px solid rgba(255,255,255,0.12);
@@ -174,11 +178,15 @@ select {
 
 .main-area {
   flex: 1;
+  margin-left: 280px;
   background: #f2f2f2;
   min-width: 0;
 }
 
 .topbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
@@ -429,7 +437,14 @@ select {
   }
 
   .sidebar {
+    position: static;
     width: 100%;
+    height: auto;
+    overflow-y: visible;
+  }
+
+  .main-area {
+    margin-left: 0;
   }
 
   .topbar {

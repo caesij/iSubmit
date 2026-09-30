@@ -1,6 +1,10 @@
 {% extends 'faculty_portal/base.html' %}
+{% load static %}
 
 {% block title %}View Document - iSubmit{% endblock %}
+{% block heading %}My Submissions{% endblock %}
+{% block topbar_subtitle %}Monitor submission progress and document status{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/pages/submissions.css' %}">{% endblock %}
 
 {% block content %}
 <div class="submission-bin-container">

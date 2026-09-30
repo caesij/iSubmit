@@ -467,3 +467,23 @@ def resubmit_document_view(request, submission_id):
         )
 
     return redirect('faculty_portal:upload_files')
+
+
+@faculty
+@require_http_methods(['POST'])
+def remove_document_view(request, document_id):
+    draft = get_object_or_404(
+        DraftUpload,
+        pk=document_id,
+        faculty=request.user
+    )
+
+    if draft.draft_file:
+        draft.draft_file.delete(save=False)
+        draft.draft_file = ''
+        draft.save(update_fields=['draft_file', 'draft_updated_at'])
+        messages.success(request, 'File removed successfully.')
+    else:
+        messages.info(request, 'There is no file to remove.')
+
+    return redirect('faculty_portal:upload_files')

@@ -3,9 +3,10 @@
 
 {% block title %}Submission Bin - iSubmit{% endblock %}
 {% block heading %}Submission Bin{% endblock %}
+{% block topbar_subtitle %}Upload and manage academic documents{% endblock %}
 
 {% block extra_css %}
-  <link rel="stylesheet" href="{% static 'css/submissions.css' %}">
+    <link rel="stylesheet" href="{% static 'css/pages/submissions.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -104,7 +105,7 @@
                     <th>Deadline</th>
                     <th>Status</th>
                     <th>File</th>
-                    <th>Action</th>
+                    <th class="action-heading">Action</th>
                 </tr>
             </thead>
 
@@ -234,11 +235,12 @@
                             </td>
 
                             <td class="action-cell">
-                                <form
-                                    action="{% url 'faculty_portal:replace_document' row.draft.id %}"
-                                    method="post"
-                                    enctype="multipart/form-data"
-                                >
+                                <div class="file-actions">
+                                    <form
+                                        action="{% url 'faculty_portal:replace_document' row.draft.id %}"
+                                        method="post"
+                                        enctype="multipart/form-data"
+                                    >
                                     {% csrf_token %}
                                     <input
                                         type="file"
@@ -253,7 +255,16 @@
                                     >
                                         Replace
                                     </label>
-                                </form>
+                                    </form>
+                                    <form
+                                        action="{% url 'faculty_portal:remove_document' row.draft.id %}"
+                                        method="post"
+                                        onsubmit="return confirm('Remove this uploaded file?');"
+                                    >
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn-remove">Remove</button>
+                                    </form>
+                                </div>
                             </td>
 
                         {% else %}
@@ -317,12 +328,32 @@
 
 </div>
 
+<div class="upload-loading" id="upload-loading" hidden aria-live="polite" aria-busy="true">
+    <div class="upload-loading-card">
+        <span class="upload-spinner" aria-hidden="true"></span>
+        <span>Uploading file...</span>
+    </div>
+</div>
+
 <script>
 document.addEventListener("DOMContentLoaded", function () {
     const selectAll = document.getElementById("select-all-requirements");
+    const uploadLoading = document.getElementById("upload-loading");
     const checkboxes = Array.from(
         document.querySelectorAll(".requirement-checkbox")
     );
+
+    document.addEventListener("change", function (event) {
+        const fileInput = event.target;
+
+        if (
+            fileInput.matches('input[type="file"]') &&
+            fileInput.files.length > 0 &&
+            fileInput.form
+        ) {
+            uploadLoading.hidden = false;
+        }
+    }, true);
 
     if (selectAll) {
         selectAll.addEventListener("change", function () {

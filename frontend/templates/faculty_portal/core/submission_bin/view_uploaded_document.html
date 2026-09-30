@@ -1,7 +1,10 @@
 {% extends 'faculty_portal/base.html' %}
+{% load static %}
 
 {% block title %}View Document - iSubmit{% endblock %}
-{% block extra_css %}<link rel="stylesheet" href="{% static 'css/submissions.css' %}">{% endblock %}
+{% block heading %}Submission Bin{% endblock %}
+{% block topbar_subtitle %}Upload and manage academic documents{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/pages/submissions.css' %}">{% endblock %}
 
 {% block content %}
 <div class="submission-bin-container">

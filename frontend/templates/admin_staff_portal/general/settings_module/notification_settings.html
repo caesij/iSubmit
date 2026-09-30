@@ -1,0 +1,39 @@
+{% extends 'admin_staff_portal/base.html' %}
+{% load static %}
+
+{% block title %}Settings - iSubmit{% endblock %}
+{% block heading %}Settings{% endblock %}
+{% block subtitle %}Configure system preferences and default behaviors.{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/pages/settings.css' %}">{% endblock %}
+
+{% block content %}
+<div class="settings-tabs">
+    <a href="{% url 'admin_staff_portal:preferences' %}" class="settings-tab">Preferences</a>
+    <a href="{% url 'admin_staff_portal:notification_settings' %}" class="settings-tab active">Notifications Settings</a>
+    <a href="{% url 'admin_staff_portal:account_and_security' %}" class="settings-tab">Account &amp; Security</a>
+    {% if request.user.is_admin %}<a href="{% url 'admin_staff_portal:staff_permissions' %}" class="settings-tab">Staff Permissions</a>{% endif %}
+</div>
+
+<form method="POST" class="settings-card notification-card">
+    {% csrf_token %}
+    <h2>Notification Settings</h2>
+    <p class="card-sub">Choose which notifications you want to receive.</p>
+
+    <div class="notification-list">
+        {% for preference in preferences %}
+            <div class="notification-row">
+                <div>
+                    <strong>{{ preference.get_notification_type_display }}</strong>
+                    <p>{{ preference.description }}</p>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" name="{{ preference.notification_type }}" {% if preference.enabled %}checked{% endif %}>
+                    <span class="slider"></span>
+                </label>
+            </div>
+        {% endfor %}
+    </div>
+
+    <div class="settings-actions"><button type="submit" class="btn-save">Save Changes</button></div>
+</form>
+{% endblock %}

@@ -1,4 +1,5 @@
 {% extends 'admin_staff_portal/base.html' %}
+{% load static %}
 
 {% block title %}
 {% if requirement %}Edit {{ requirement.requirement_title }}{% else %}Add Requirement{% endif %} - iSubmit
@@ -6,12 +7,36 @@
 
 {% block heading %}{% if requirement %}Edit Requirement Bin{% else %}Add New Requirement Bin{% endif %}{% endblock %}
 {% block subtitle %}{% if requirement %}Update the details for this requirement bin.{% else %}Create a new requirement bin for faculty submissions.{% endif %}{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/pages/submissions.css' %}">{% endblock %}
 
 {% block content %}
-<div class="form-card">
-    <form method="POST" action="{% if requirement %}{% url 'admin_staff_portal:edit_requirement' requirement.id %}{% else %}{% url 'admin_staff_portal:add_requirement' %}{% endif %}">
+<div class="form-card requirement-form-card">
+    <form class="requirement-form" method="POST" action="{% if requirement %}{% url 'admin_staff_portal:edit_requirement' requirement.id %}{% else %}{% url 'admin_staff_portal:add_requirement' %}{% endif %}">
         {% csrf_token %}
-        {{ form.as_p }}
+        {% for hidden_field in form.hidden_fields %}
+            {{ hidden_field }}
+        {% endfor %}
+
+        <div class="requirement-fields">
+            {% for field in form.visible_fields %}
+                <div class="requirement-field{% if field.errors %} has-error{% endif %}">
+                    {{ field.label_tag }}
+                    {{ field }}
+                    {% for error in field.errors %}
+                        <span class="field-error">{{ error }}</span>
+                    {% endfor %}
+                </div>
+            {% endfor %}
+        </div>
+
+        {% if form.non_field_errors %}
+            <div class="form-errors">
+                {% for error in form.non_field_errors %}
+                    <span class="field-error">{{ error }}</span>
+                {% endfor %}
+            </div>
+        {% endif %}
+
         <div class="form-actions">
             <button type="submit" class="btn-add-bin">
                 {% if requirement %}Update Requirement{% else %}Save Requirement{% endif %}
