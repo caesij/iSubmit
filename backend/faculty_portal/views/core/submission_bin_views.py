@@ -166,6 +166,7 @@ def confirm_submission(request):
     )
 
     if not requirements.exists():
+        request.session.pop('selected_submission_ids', None)
         messages.warning(request, 'You have no active requirements to submit.')
         return redirect('faculty_portal:upload_files')
 
@@ -173,90 +174,179 @@ def confirm_submission(request):
         draft.requirement_id: draft
         for draft in DraftUpload.objects.filter(
             faculty=request.user,
-            requirement__in=requirements
+            requirement__in=requirements,
         )
     }
 
-    rows = []
-    all_ready = True
+    if request.method == 'POST':
+        action = request.POST.get('action')
+
+        if action == 'review':
+            selected_ids = request.POST.getlist('selected_requirements')
+
+            valid_ids = {str(requirement.id) for requirement in requirements}
+            selected_ids = [value for value in selected_ids if value in valid_ids]
+
+            if not selected_ids:
+                messages.error(
+                    request,
+                    'Please select at least one document to continue.',
+                )
+                return redirect('faculty_portal:upload_files')
+
+            selected_rows = []
+
+            for requirement in requirements:
+                if str(requirement.id) not in selected_ids:
+                    continue
+
+                draft = drafts_by_requirement.get(requirement.id)
+
+                selected_rows.append({
+                    'requirement': requirement,
+                    'draft': draft,
+                    'is_ready': bool(draft and draft.draft_file),
+                })
+
+            if any(not row['is_ready'] for row in selected_rows):
+                messages.error(
+                    request,
+                    'All selected documents must have an attached file.',
+                )
+                return redirect('faculty_portal:upload_files')
+
+            request.session['selected_submission_ids'] = selected_ids
+
+            return redirect('faculty_portal:review_confirm')
+
+        if action == 'submit':
+            selected_ids = request.session.get('selected_submission_ids', [])
+
+            if not selected_ids:
+                messages.error(request, 'No documents were selected for submission.')
+                return redirect('faculty_portal:upload_files')
+
+            valid_ids = {str(requirement.id) for requirement in requirements}
+            selected_ids = [value for value in selected_ids if value in valid_ids]
+
+            if not selected_ids:
+                request.session.pop('selected_submission_ids', None)
+                messages.error(
+                    request,
+                    'The selected documents are no longer available.',
+                )
+                return redirect('faculty_portal:upload_files')
+
+            selected_rows = []
+
+            for requirement in requirements:
+                if str(requirement.id) not in selected_ids:
+                    continue
+
+                draft = drafts_by_requirement.get(requirement.id)
+
+                selected_rows.append({
+                    'requirement': requirement,
+                    'draft': draft,
+                    'is_ready': bool(draft and draft.draft_file),
+                })
+
+            if not selected_rows:
+                messages.error(request, 'No valid documents were selected.')
+                return redirect('faculty_portal:upload_files')
+
+            if any(not row['is_ready'] for row in selected_rows):
+                messages.error(
+                    request,
+                    'One or more selected documents do not have an attached file.',
+                )
+                return redirect('faculty_portal:upload_files')
+
+            try:
+                completed_submissions = []
+
+                with transaction.atomic():
+                    for row in selected_rows:
+                        draft = row['draft']
+
+                        draft.draft_file.open('rb')
+                        file_content = ContentFile(draft.draft_file.read())
+                        original_name = draft.draft_file.name.split('/')[-1]
+                        draft.draft_file.close()
+
+                        submission = DocumentSubmission.objects.create(
+                            faculty=request.user,
+                            requirement=row['requirement'],
+                            status=DocumentSubmission.SubmissionStatus.SUBMITTED,
+                        )
+
+                        submission.document_file.save(
+                            original_name,
+                            file_content,
+                            save=True,
+                        )
+
+                        completed_submissions.append(submission)
+
+                        draft.draft_file.delete(save=False)
+                        draft.delete()
+
+                request.session['recently_submitted_ids'] = [
+                    str(submission.id) for submission in completed_submissions
+                ]
+                request.session.pop('selected_submission_ids', None)
+
+                messages.success(
+                    request,
+                    'Selected documents submitted successfully.',
+                )
+
+                return redirect('faculty_portal:submission_complete')
+
+            except Exception as e:
+                print('SUBMISSION ERROR:', repr(e))
+
+                messages.error(
+                    request,
+                    'An error occurred while processing your submission. Please try again.',
+                )
+
+                return redirect('faculty_portal:review_confirm')
+
+    selected_ids = request.session.get('selected_submission_ids', [])
+
+    valid_ids = {str(requirement.id) for requirement in requirements}
+    selected_ids = [value for value in selected_ids if value in valid_ids]
+
+    if not selected_ids:
+        messages.info(request, 'Please select at least one document to continue.')
+        return redirect('faculty_portal:upload_files')
+
+    selected_rows = []
 
     for requirement in requirements:
+        if str(requirement.id) not in selected_ids:
+            continue
+
         draft = drafts_by_requirement.get(requirement.id)
-        is_ready = bool(draft and draft.draft_file)
 
-        if not is_ready:
-            all_ready = False
-
-        rows.append({
+        selected_rows.append({
             'requirement': requirement,
             'draft': draft,
-            'is_ready': is_ready,
+            'is_ready': bool(draft and draft.draft_file),
         })
 
-    if request.method == 'POST':
-        if not all_ready:
-            messages.error(
-                request,
-                'All documents must be ready before you can submit.'
-            )
-            return redirect('faculty_portal:review_confirm')
-
-        try:
-            completed_submissions = []
-
-            with transaction.atomic():
-                for row in rows:
-                    draft = row['draft']
-
-                    if not draft or not draft.draft_file:
-                        continue
-
-                    draft.draft_file.open('rb')
-                    file_content = ContentFile(draft.draft_file.read())
-                    original_name = draft.draft_file.name.split('/')[-1]
-                    draft.draft_file.close()
-
-                    submission = DocumentSubmission.objects.create(
-                        faculty=request.user,
-                        requirement=row['requirement'],
-                        status=DocumentSubmission.SubmissionStatus.SUBMITTED
-                    )
-
-                    submission.document_file.save(
-                        original_name,
-                        file_content,
-                        save=True
-                    )
-
-                    completed_submissions.append(submission)
-
-                    draft.draft_file.delete(save=False)
-                    draft.delete()
-
-            request.session['recently_submitted_ids'] = [
-                str(submission.id) for submission in completed_submissions
-            ]
-
-            messages.success(request, 'Documents submitted successfully.')
-            return redirect('faculty_portal:submission_complete')
-
-        except Exception as e:
-            print('SUBMISSION ERROR:', repr(e))
-            messages.error(
-                request,
-                'An error occurred while processing your submission. Please try again.'
-            )
-            return redirect('faculty_portal:review_confirm')
+    all_ready = bool(selected_rows) and all(row['is_ready'] for row in selected_rows)
 
     context = {
-        'rows': rows,
+        'rows': selected_rows,
         'all_ready': all_ready,
     }
 
     return render(
         request,
         'faculty_portal/core/submission_bin/review_confirm.html',
-        context
+        context,
     )
 
 
