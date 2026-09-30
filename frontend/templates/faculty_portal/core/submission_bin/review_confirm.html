@@ -2,7 +2,6 @@
 {% load static %}
 
 {% block title %}Review &amp; Confirm - iSubmit{% endblock %}
-
 {% block heading %}Submission Bin{% endblock %}
 
 {% block topbar_subtitle %}
@@ -46,7 +45,9 @@ Upload and manage academic documents
                 <div class="step-sub">Upload your document</div>
             </div>
         </div>
+
         <div class="step-divider done"></div>
+
         <div class="step-item done">
             <span class="step-circle">&#10003;</span>
             <div>
@@ -54,7 +55,9 @@ Upload and manage academic documents
                 <div class="step-sub">OCR and NLP checking</div>
             </div>
         </div>
+
         <div class="step-divider done"></div>
+
         <div class="step-item active">
             <span class="step-circle">3</span>
             <div>
@@ -62,7 +65,9 @@ Upload and manage academic documents
                 <div class="step-sub">Review before submission</div>
             </div>
         </div>
+
         <div class="step-divider"></div>
+
         <div class="step-item">
             <span class="step-circle">4</span>
             <div>
@@ -76,28 +81,28 @@ Upload and manage academic documents
     {% if all_ready %}
         <div class="info-note info">
             <span class="info-icon">&#9432;</span>
-            <p>All your documents are ready. Review the list below, then submit.</p>
+            <p>All selected documents are ready. Review the list below, then submit.</p>
         </div>
     {% else %}
         <div class="info-note warn">
             <span class="info-icon">&#9888;</span>
-            <p>All bins must have an attached file before you can submit. Go back to Upload Files to complete the missing ones.</p>
+            <p>One or more selected documents no longer have an attached file. Go back to Upload Files and check your selection.</p>
         </div>
     {% endif %}
 
     <h2 class="section-title">Step 3. Review and Confirm</h2>
-    <p class="section-desc">Review your details carefully before final submission.</p>
+
+    <p class="section-desc">Review your selected documents carefully before final submission.</p>
 
     <form method="POST" action="{% url 'faculty_portal:review_confirm' %}">
         {% csrf_token %}
+        <input type="hidden" name="action" value="submit">
 
         <div class="table-card">
             <table class="data-table">
                 <thead>
                     <tr>
-                        <th style="width: 32px;">
-                            <input type="checkbox" aria-label="Select all" id="select-all-checkbox">
-                        </th>
+                        <th style="width: 32px;"></th>
                         <th>File</th>
                         <th>Category</th>
                         <th>Deadline</th>
@@ -105,19 +110,33 @@ Upload and manage academic documents
                         <th>Status</th>
                     </tr>
                 </thead>
+
                 <tbody>
                     {% for row in rows %}
                         <tr>
                             <td>
-                                <input type="checkbox" aria-label="Select document" class="row-checkbox">
+                                <input
+                                    type="checkbox"
+                                    aria-label="Selected document"
+                                    class="row-checkbox"
+                                    checked
+                                    disabled
+                                >
                             </td>
+
                             <td>
                                 <div class="file-cell">
-                                    <img class="file-icon-svg" src="{% static 'images/PDF.svg' %}" alt="PDF file icon">
+                                    <img
+                                        class="file-icon-svg"
+                                        src="{% static 'images/PDF.svg' %}"
+                                        alt="PDF file icon"
+                                    >
+
                                     <div>
                                         <div class="file-name">
                                             {{ row.requirement.requirement_title }}
                                         </div>
+
                                         {% if row.draft and row.draft.draft_file %}
                                             <div class="file-size">
                                                 {{ row.draft.draft_file.size|filesizeformat }}
@@ -126,13 +145,16 @@ Upload and manage academic documents
                                     </div>
                                 </div>
                             </td>
+
                             <td>
                                 {{ row.requirement.category }}
                             </td>
+
                             <td>
                                 <div>{{ row.requirement.deadline|date:"F j, Y" }}</div>
                                 <div class="text-sub">{{ row.requirement.deadline|date:"g:i A" }}</div>
                             </td>
+
                             <td>
                                 {% if row.draft %}
                                     <div>{{ row.draft.draft_created_at|date:"F j, Y" }}</div>
@@ -141,6 +163,7 @@ Upload and manage academic documents
                                     &mdash;
                                 {% endif %}
                             </td>
+
                             <td>
                                 {% if row.is_ready %}
                                     <span class="pill-ready">Ready to Submit</span>
@@ -149,10 +172,11 @@ Upload and manage academic documents
                                 {% endif %}
                             </td>
                         </tr>
+
                     {% empty %}
                         <tr>
                             <td colspan="6" class="text-center py-4">
-                                No active requirements found.
+                                No selected documents found.
                             </td>
                         </tr>
                     {% endfor %}
@@ -163,41 +187,21 @@ Upload and manage academic documents
         <!-- Bottom Action Bar -->
         <div class="bottom-bar">
             <div></div>
-            <button type="submit" class="btn-submit" {% if not all_ready %}disabled{% endif %}>
-                <img src="{% static 'images/upload.svg' %}" alt="Upload icon" class="btn-submit-icon">
+
+            <button
+                type="submit"
+                class="btn-submit"
+                {% if not all_ready %}disabled{% endif %}
+            >
+                <img
+                    src="{% static 'images/upload.svg' %}"
+                    alt="Upload icon"
+                    class="btn-submit-icon"
+                >
                 Submit Selected Documents
             </button>
         </div>
     </form>
 
 </div>
-
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    const selectAll = document.getElementById('select-all-checkbox');
-    const rowCheckboxes = Array.from(document.querySelectorAll('.row-checkbox'));
-
-    if (selectAll) {
-        selectAll.addEventListener('change', function () {
-            rowCheckboxes.forEach(function (checkbox) {
-                checkbox.checked = selectAll.checked;
-            });
-        });
-
-        rowCheckboxes.forEach(function (checkbox) {
-            checkbox.addEventListener('change', function () {
-                const allChecked = rowCheckboxes.length > 0 && rowCheckboxes.every(function (item) {
-                    return item.checked;
-                });
-                const someChecked = rowCheckboxes.some(function (item) {
-                    return item.checked;
-                });
-
-                selectAll.checked = allChecked;
-                selectAll.indeterminate = !allChecked && someChecked;
-            });
-        });
-    }
-});
-</script>
 {% endblock %}

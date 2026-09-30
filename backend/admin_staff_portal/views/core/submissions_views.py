@@ -7,8 +7,11 @@ from django.utils import timezone
 from django.contrib import messages
 
 from accounts.decorators import admin, role_required, staff_permission_required
-
-from faculty_portal.realtime import refresh_faculty_dashboard
+from faculty_portal.realtime import (
+    refresh_faculty_dashboard,
+    refresh_faculty_submission_bin,
+    refresh_all_faculty_submission_bins,
+)
 
 from submissions.models import (
     Requirement,
@@ -37,6 +40,7 @@ def add_requirement(request):
 
         if form.is_valid():
             requirement = form.save()
+            refresh_all_faculty_submission_bins()
 
             faculty_qs = User.objects.filter(role=User.Role.FACULTY)
 
@@ -77,6 +81,7 @@ def edit_requirement(request, requirement_id):
         form = RequirementForm(request.POST, instance=requirement)
         if form.is_valid():
             requirement = form.save()
+            refresh_all_faculty_submission_bins()
 
             faculty_qs = User.objects.filter(role=User.Role.FACULTY)
 
@@ -159,6 +164,7 @@ def toggle_requirement_status(request, requirement_id):
     )
 
     requirement.save()
+    refresh_all_faculty_submission_bins()
 
     faculty_qs = User.objects.filter(role=User.Role.FACULTY)
 
@@ -385,6 +391,7 @@ def mark_needs_revision_view(request, submission_id):
     submission.save(update_fields=['status', 'reviewed_by', 'reviewed_at',])
 
     refresh_faculty_dashboard(submission.faculty)
+    refresh_faculty_submission_bin(submission.faculty)
 
     messages.success(request, 'Submission marked as needing revision.')
 
