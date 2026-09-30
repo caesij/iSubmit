@@ -8,59 +8,80 @@ from django.db import transaction
 from django.core.files.base import ContentFile
 
 from accounts.decorators import faculty
-from submissions.models import Requirement, DraftUpload, DocumentSubmission
+from submissions.models import (
+    Requirement,
+    DraftUpload,
+    DocumentSubmission,
+    DocumentRevision,
+)
 from submissions.forms import DraftUploadForm, DocumentRevisionForm
+
 
 @faculty
 @require_http_methods(['GET'])
 def upload_files_view(request):
-    already_submitted_ids = DocumentSubmission.objects.filter(
-        faculty=request.user
-    ).exclude(
-        status=DocumentSubmission.SubmissionStatus.NEEDS_REVISION
-    ).values_list('requirement_id', flat=True)
+    already_submitted_ids = (
+        DocumentSubmission.objects
+        .filter(faculty=request.user)
+        .exclude(status=DocumentSubmission.SubmissionStatus.NEEDS_REVISION)
+        .values_list('requirement_id', flat=True)
+    )
 
-    requirements = Requirement.objects.filter(
-        status=Requirement.ReqStatus.ACTIVE,
-    ).filter(
-        Q(assigned_to=Requirement.AssignedFacultyType.ALL) |
-        Q(assigned_to=request.user.faculty_type)
-    ).exclude(
-        id__in=already_submitted_ids
-    ).order_by('deadline')
+    requirements = (
+        Requirement.objects
+        .filter(status=Requirement.ReqStatus.ACTIVE)
+        .filter(
+            Q(assigned_to=Requirement.AssignedFacultyType.ALL)
+            | Q(assigned_to=request.user.faculty_type)
+        )
+        .exclude(id__in=already_submitted_ids)
+        .order_by('deadline')
+    )
 
     drafts_by_requirement = {
-        d.requirement_id: d
-        for d in DraftUpload.objects.filter(
+        draft.requirement_id: draft
+        for draft in DraftUpload.objects.filter(
             faculty=request.user,
             requirement__in=requirements
         )
     }
 
     needs_revision_by_requirement = {
-        s.requirement_id: s
-        for s in DocumentSubmission.objects.filter(
-            faculty=request.user,
-            requirement__in=requirements,
-            status=DocumentSubmission.SubmissionStatus.NEEDS_REVISION,
-        ).select_related('requirement').prefetch_related('revisions__reviews')
+        submission.requirement_id: submission
+        for submission in (
+            DocumentSubmission.objects
+            .filter(
+                faculty=request.user,
+                requirement__in=requirements,
+                status=DocumentSubmission.SubmissionStatus.NEEDS_REVISION,
+            )
+            .select_related('requirement')
+            .prefetch_related('revisions__reviews')
+        )
     }
 
-    rows = [
-        {
-            'requirement': req,
-            'draft': drafts_by_requirement.get(req.id),
-            'needs_revision_submission': needs_revision_by_requirement.get(req.id),
-        }
-        for req in requirements
-    ]
+    rows = []
+
+    for requirement in requirements:
+        submission = needs_revision_by_requirement.get(requirement.id)
+        draft = drafts_by_requirement.get(requirement.id)
+
+        rows.append({
+            'requirement': requirement,
+            'draft': draft,
+            'submission': submission,
+            'needs_revision_submission': submission,
+            'is_resubmission': bool(submission),
+        })
 
     context = {'rows': rows}
+
     return render(
         request,
         'faculty_portal/core/submission_bin/upload_files.html',
         context
     )
+
 
 @faculty
 @require_http_methods(['POST'])
@@ -70,7 +91,11 @@ def attach_document_view(request, requirement_id):
         pk=requirement_id,
         status=Requirement.ReqStatus.ACTIVE,
     )
-    if requirement.assigned_to not in (Requirement.AssignedFacultyType.ALL, request.user.faculty_type):
+
+    if requirement.assigned_to not in (
+        Requirement.AssignedFacultyType.ALL,
+        request.user.faculty_type
+    ):
         return HttpResponseForbidden('You are not assigned to this requirement.')
 
     draft, _ = DraftUpload.objects.get_or_create(
@@ -83,13 +108,18 @@ def attach_document_view(request, requirement_id):
         request.FILES,
         instance=draft
     )
+
     if form.is_valid():
         form.save()
         messages.success(request, 'File attached successfully.')
     else:
-        messages.error(request, 'Failed to upload file. Please check the format and size.')
+        messages.error(
+            request,
+            'Failed to upload file. Please check the format and size.'
+        )
 
     return redirect('faculty_portal:upload_files')
+
 
 @faculty
 @require_http_methods(['POST'])
@@ -105,7 +135,7 @@ def replace_document_view(request, document_id):
         request.FILES,
         instance=draft
     )
-    
+
     if form.is_valid():
         form.save()
         messages.success(request, 'File replaced successfully.')
@@ -114,29 +144,34 @@ def replace_document_view(request, document_id):
 
     return redirect('faculty_portal:upload_files')
 
+
 @faculty
 @require_http_methods(['GET', 'POST'])
 def confirm_submission(request):
-    already_submitted_ids = DocumentSubmission.objects.filter(
-        faculty=request.user
-    ).values_list('requirement_id', flat=True)
-    
-    requirements = Requirement.objects.filter(
-        status=Requirement.ReqStatus.ACTIVE,
-    ).filter(
-        Q(assigned_to=Requirement.AssignedFacultyType.ALL) |
-        Q(assigned_to=request.user.faculty_type)
-    ).exclude(
-        id__in=already_submitted_ids
-    ).order_by('deadline')
+    already_submitted_ids = (
+        DocumentSubmission.objects
+        .filter(faculty=request.user)
+        .values_list('requirement_id', flat=True)
+    )
+
+    requirements = (
+        Requirement.objects
+        .filter(status=Requirement.ReqStatus.ACTIVE)
+        .filter(
+            Q(assigned_to=Requirement.AssignedFacultyType.ALL)
+            | Q(assigned_to=request.user.faculty_type)
+        )
+        .exclude(id__in=already_submitted_ids)
+        .order_by('deadline')
+    )
 
     if not requirements.exists():
         messages.warning(request, 'You have no active requirements to submit.')
         return redirect('faculty_portal:upload_files')
 
     drafts_by_requirement = {
-        d.requirement_id: d
-        for d in DraftUpload.objects.filter(
+        draft.requirement_id: draft
+        for draft in DraftUpload.objects.filter(
             faculty=request.user,
             requirement__in=requirements
         )
@@ -144,80 +179,112 @@ def confirm_submission(request):
 
     rows = []
     all_ready = True
-    for req in requirements:
-        draft = drafts_by_requirement.get(req.id)
+
+    for requirement in requirements:
+        draft = drafts_by_requirement.get(requirement.id)
         is_ready = bool(draft and draft.draft_file)
+
         if not is_ready:
             all_ready = False
-        rows.append({'requirement': req, 'draft': draft, 'is_ready': is_ready})
+
+        rows.append({
+            'requirement': requirement,
+            'draft': draft,
+            'is_ready': is_ready,
+        })
 
     if request.method == 'POST':
         if not all_ready:
-            messages.error(request, 'All documents must be ready before you can submit.')
+            messages.error(
+                request,
+                'All documents must be ready before you can submit.'
+            )
             return redirect('faculty_portal:review_confirm')
 
         try:
-            created_submissions = []
+            completed_submissions = []
+
             with transaction.atomic():
                 for row in rows:
                     draft = row['draft']
+
+                    if not draft or not draft.draft_file:
+                        continue
 
                     draft.draft_file.open('rb')
                     file_content = ContentFile(draft.draft_file.read())
                     original_name = draft.draft_file.name.split('/')[-1]
                     draft.draft_file.close()
 
-                    submission, created = DocumentSubmission.objects.get_or_create(
+                    submission = DocumentSubmission.objects.create(
                         faculty=request.user,
                         requirement=row['requirement'],
-                        defaults={'status': DocumentSubmission.SubmissionStatus.SUBMITTED}
+                        status=DocumentSubmission.SubmissionStatus.SUBMITTED
                     )
-                    submission.document_file.save(original_name, file_content, save=True)
-                    created_submissions.append(submission)
+
+                    submission.document_file.save(
+                        original_name,
+                        file_content,
+                        save=True
+                    )
+
+                    completed_submissions.append(submission)
 
                     draft.draft_file.delete(save=False)
                     draft.delete()
-                    
-                DraftUpload.objects.filter(faculty=request.user, requirement__in=requirements).delete()
 
-            request.session['recently_submitted_ids'] = [str(s.id) for s in created_submissions]
+            request.session['recently_submitted_ids'] = [
+                str(submission.id) for submission in completed_submissions
+            ]
 
             messages.success(request, 'Documents submitted successfully.')
             return redirect('faculty_portal:submission_complete')
 
-        except Exception:
-            messages.error(request, 'An error occurred while processing your submission. Please try again.')
+        except Exception as e:
+            print('SUBMISSION ERROR:', repr(e))
+            messages.error(
+                request,
+                'An error occurred while processing your submission. Please try again.'
+            )
             return redirect('faculty_portal:review_confirm')
 
-    context = {'rows': rows, 'all_ready': all_ready}
-    
+    context = {
+        'rows': rows,
+        'all_ready': all_ready,
+    }
+
     return render(
         request,
         'faculty_portal/core/submission_bin/review_confirm.html',
         context
     )
-        
+
+
 @faculty
 @require_http_methods(['GET'])
 def submission_complete(request):
     submitted_ids = request.session.pop('recently_submitted_ids', [])
-    submitted_documents = DocumentSubmission.objects.filter(
-        faculty=request.user,
-        id__in=submitted_ids
-    ).select_related('requirement').order_by('-initially_submitted_at')
+
+    submitted_documents = (
+        DocumentSubmission.objects
+        .filter(faculty=request.user, id__in=submitted_ids)
+        .select_related('requirement')
+        .order_by('-initially_submitted_at')
+    )
 
     if not submitted_documents.exists():
         messages.info(request, 'No recent submission to show.')
         return redirect('faculty_portal:upload_files')
 
     context = {'submitted_documents': submitted_documents}
-    
+
     return render(
         request,
         'faculty_portal/core/submission_bin/submission_complete.html',
         context
     )
-        
+
+
 @faculty
 @require_http_methods(['GET'])
 def view_uploaded_document(request, document_id):
@@ -226,15 +293,16 @@ def view_uploaded_document(request, document_id):
         pk=document_id,
         faculty=request.user,
     )
-    
+
     context = {'uploaded_document': uploaded_document}
-    
+
     return render(
         request,
         'faculty_portal/core/submission_bin/view_uploaded_document.html',
         context
     )
-    
+
+
 @faculty
 @require_http_methods(['POST'])
 def resubmit_document_view(request, submission_id):
@@ -248,19 +316,64 @@ def resubmit_document_view(request, submission_id):
     form = DocumentRevisionForm(
         request.POST,
         request.FILES,
-        submission=submission,
     )
 
     if not form.is_valid():
-        messages.error(request, 'Failed to resubmit. Please check the file format and size.')
+        messages.error(
+            request,
+            'Failed to resubmit. Please check the file format and size.'
+        )
         return redirect('faculty_portal:upload_files')
 
-    revision = form.save()
+    try:
+        with transaction.atomic():
+            uploaded_file = form.cleaned_data['file']
 
-    submission.document_file = revision.file
-    submission.status = DocumentSubmission.SubmissionStatus.RESUBMITTED
-    submission.resubmitted_at = timezone.now()
-    submission.save(update_fields=['document_file', 'status', 'resubmitted_at'])
+            last_version = (
+                submission.revisions
+                .order_by('-version_number')
+                .values_list('version_number', flat=True)
+                .first()
+            )
 
-    messages.success(request, 'Document resubmitted successfully.')
+            next_version = (last_version or 0) + 1
+
+            DocumentRevision.objects.create(
+                submission=submission,
+                version_number=next_version,
+            )
+
+            old_file_name = submission.document_file.name
+
+            submission.document_file.save(
+                uploaded_file.name,
+                uploaded_file,
+                save=False,
+            )
+
+            submission.status = DocumentSubmission.SubmissionStatus.RESUBMITTED
+            submission.resubmitted_at = timezone.now()
+
+            submission.save(
+                update_fields=[
+                    'document_file',
+                    'status',
+                    'resubmitted_at',
+                ]
+            )
+
+            new_file_name = submission.document_file.name
+
+            if old_file_name and old_file_name != new_file_name:
+                submission.document_file.storage.delete(old_file_name)
+
+        messages.success(request, 'Document resubmitted successfully.')
+
+    except Exception as e:
+        print('RESUBMISSION ERROR:', repr(e))
+        messages.error(
+            request,
+            'An error occurred while processing your resubmission. Please try again.'
+        )
+
     return redirect('faculty_portal:upload_files')

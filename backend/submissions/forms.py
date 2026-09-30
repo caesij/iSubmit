@@ -7,7 +7,6 @@ from django.core.exceptions import ValidationError
 ALLOWED_EXTENSIONS = {'.pdf', '.doc', '.docx', '.xlsx'}
 MAX_UPLOAD_SIZE = 10 * 1024 * 1024
 
-
 def _academic_year_choices():
     current_year = datetime.date.today().year
     return [
@@ -116,48 +115,20 @@ class DraftUploadForm(forms.ModelForm):
             raise ValidationError("File too large. Maximum size is 10MB.")
         return file
     
-class DocumentRevisionForm(forms.ModelForm):
-    class Meta:
-        model = DocumentRevision
-        fields = ['file']
-
-    def __init__(self, *args, **kwargs):
-        self.submission = kwargs.pop('submission', None)
-        super().__init__(*args, **kwargs)
+class DocumentRevisionForm(forms.Form):
+    file = forms.FileField()
 
     def clean_file(self):
         file = self.cleaned_data['file']
         ext = os.path.splitext(file.name)[1].lower()
-        
+
         if ext not in ALLOWED_EXTENSIONS:
-            raise ValidationError(f"Unsupported file type: {ext}")
+            raise ValidationError(f'Unsupported file type: {ext}')
+
         if file.size > MAX_UPLOAD_SIZE:
-            raise ValidationError("File too large. Maximum size is 10MB.")
-        
+            raise ValidationError('File too large. Maximum size is 10MB.')
+
         return file
-
-    def save(self, commit=True, submission=None):
-        revision = super().save(commit=False)
-
-        submission = submission or self.submission
-        
-        if not submission:
-            raise ValueError("DocumentRevisionForm.save() requires a 'submission', either via the 'submission' argument or at init.")
-            
-        revision.submission = submission
-
-        last_version = (
-            submission.revisions.order_by('-version_number')
-            .values_list('version_number', flat=True)
-            .first()
-        )
-        
-        revision.version_number = (last_version or 0) + 1
-
-        if commit:
-            revision.save()
-
-        return revision
 
 class DocumentReviewForm(forms.ModelForm):
     class Meta:

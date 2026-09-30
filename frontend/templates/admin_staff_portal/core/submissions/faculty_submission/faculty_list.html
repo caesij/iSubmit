@@ -41,16 +41,6 @@
             </div>
 
             <div class="select-wrap">
-                <label>Review Stage</label>
-                <select name="review_stage" onchange="this.form.submit()">
-                    <option value="">All Review Stage</option>
-                    {% for value, label in review_stage_choices %}
-                        <option value="{{ value }}" {% if request.GET.review_stage == value %}selected{% endif %}>{{ label }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-
-            <div class="select-wrap">
                 <label>Status</label>
                 <select name="status" onchange="this.form.submit()">
                     <option value="">All Status</option>

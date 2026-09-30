@@ -10,6 +10,7 @@ urlpatterns = [
     # Submission Bin URLs
     path('submission_bin/upload_files/', views.upload_files_view, name='upload_files'),
     path('submission_bin/attach/<int:requirement_id>/', views.attach_document_view, name='attach_document'),
+    path('submission_bin/resubmit/<uuid:submission_id>/', views.resubmit_document_view, name='resubmit_document'),
     path('submission_bin/replace/<uuid:document_id>/', views.replace_document_view, name='replace_document'),
     path('submission_bin/view/<uuid:document_id>/', views.view_uploaded_document, name='view_uploaded_document'),
     path('submission_bin/review_confirm/', views.confirm_submission, name='review_confirm'),
