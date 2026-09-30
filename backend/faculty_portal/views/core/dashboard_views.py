@@ -11,6 +11,49 @@ from submissions.models import DocumentSubmission
 def dashboard_data_view(request):
     data = get_dashboard_data(request.user)
 
+    tab = request.GET.get('tab', 'all')
+
+    overview_qs = (
+        DocumentSubmission.objects
+        .filter(faculty=request.user)
+        .select_related('requirement')
+        .order_by('-initially_submitted_at')
+    )
+
+    if tab == 'approved':
+        overview_qs = overview_qs.filter(
+            status=DocumentSubmission.SubmissionStatus.APPROVED
+        )
+    elif tab == 'submitted':
+        overview_qs = overview_qs.filter(
+            status__in=[
+                DocumentSubmission.SubmissionStatus.SUBMITTED,
+                DocumentSubmission.SubmissionStatus.RESUBMITTED,
+            ]
+        )
+    elif tab == 'under_review':
+        overview_qs = overview_qs.filter(
+            status=DocumentSubmission.SubmissionStatus.UNDER_REVIEW
+        )
+    elif tab == 'pending_approval':
+        overview_qs = overview_qs.filter(
+            status=DocumentSubmission.SubmissionStatus.PENDING_APPROVAL
+        )
+    elif tab == 'returned':
+        overview_qs = overview_qs.filter(
+            status=DocumentSubmission.SubmissionStatus.NEEDS_REVISION
+        )
+
+    data['overview_submissions'] = [
+        {
+            'title': submission.requirement.requirement_title,
+            'date': submission.initially_submitted_at.strftime('%b %d, %Y').replace(' 0', ' '),
+            'time': submission.initially_submitted_at.strftime('%I:%M %p').lstrip('0'),
+            'status': submission.status,
+        }
+        for submission in overview_qs[:5]
+    ]
+
     return JsonResponse(data)
 
 @faculty

@@ -34,18 +34,24 @@ User = get_user_model()
 def add_requirement(request):
     if request.method == 'POST':
         form = RequirementForm(request.POST)
+
         if form.is_valid():
             requirement = form.save()
 
             faculty_qs = User.objects.filter(role=User.Role.FACULTY)
+
             if requirement.assigned_to != Requirement.AssignedFacultyType.ALL:
                 faculty_qs = faculty_qs.filter(faculty_type=requirement.assigned_to)
+
             for faculty_member in faculty_qs:
+                refresh_faculty_dashboard(faculty_member)
+
                 notify(
                     faculty_member,
                     'SUBMISSION_REMINDERS',
                     'New requirement posted',
-                    f'"{requirement.requirement_title}" is due {requirement.deadline.strftime("%B %d, %Y")}.',
+                    f'"{requirement.requirement_title}" is due '
+                    f'{requirement.deadline.strftime("%B %d, %Y")}.',
                     link='/faculty-portal/submission-bin/'
                 )
 
@@ -54,7 +60,7 @@ def add_requirement(request):
         form = RequirementForm()
 
     context = {'form': form}
-    
+
     return render(
         request,
         'admin_staff_portal/core/submissions/submission_bin/requirement_forms.html',
@@ -72,11 +78,20 @@ def edit_requirement(request, requirement_id):
         if form.is_valid():
             requirement = form.save()
 
+            faculty_qs = User.objects.filter(role=User.Role.FACULTY)
+
+            if requirement.assigned_to != Requirement.AssignedFacultyType.ALL:
+                faculty_qs = faculty_qs.filter(faculty_type=requirement.assigned_to)
+
+            for faculty_member in faculty_qs:
+                refresh_faculty_dashboard(faculty_member)
+
             return redirect('admin_staff_portal:requirements_list')
     else:
         form = RequirementForm(instance=requirement)
 
     context = {'form': form, 'requirement': requirement}
+    
     return render(
         request,
         'admin_staff_portal/core/submissions/submission_bin/requirement_forms.html',
@@ -132,16 +147,29 @@ def requirements_list(request):
 @staff_permission_required('edit_submission_bin')
 @require_http_methods(['POST'])
 def toggle_requirement_status(request, requirement_id):
-    requirement = get_object_or_404(Requirement, pk=requirement_id)
-    
+    requirement = get_object_or_404(
+        Requirement,
+        pk=requirement_id
+    )
+
     requirement.status = (
         Requirement.ReqStatus.INACTIVE
         if requirement.status == Requirement.ReqStatus.ACTIVE
         else Requirement.ReqStatus.ACTIVE
     )
+
     requirement.save()
 
+    faculty_qs = User.objects.filter(role=User.Role.FACULTY)
+
+    if requirement.assigned_to != Requirement.AssignedFacultyType.ALL:
+        faculty_qs = faculty_qs.filter(faculty_type=requirement.assigned_to)
+
+    for faculty_member in faculty_qs:
+        refresh_faculty_dashboard(faculty_member)
+
     messages.success(request, 'Requirement status updated.')
+
     return redirect('admin_staff_portal:requirements_list')
 
 # Faculty Submission Views
@@ -158,7 +186,6 @@ def faculty_submissions_list(request):
     query = request.GET.get('q')
     faculty_type = request.GET.get('faculty_type')
     category = request.GET.get('category')
-    review_stage = request.GET.get('review_stage')
     status = request.GET.get('status')
 
     if query:
@@ -171,8 +198,6 @@ def faculty_submissions_list(request):
         submissions = submissions.filter(faculty__faculty_type=faculty_type)
     if category:
         submissions = submissions.filter(requirement__category=category)
-    if review_stage:
-        submissions = submissions.filter(status=review_stage)
     if status:
         submissions = submissions.filter(status=status)
 
@@ -187,7 +212,6 @@ def faculty_submissions_list(request):
             c for c in Requirement.AssignedFacultyType.choices if c[0] != 'ALL'
         ],
         'categories': Requirement.objects.values_list('category', flat=True).distinct(),
-        'review_stage_choices': DocumentSubmission.SubmissionStatus.choices,
         'status_choices': DocumentSubmission.SubmissionStatus.choices,
     }
 
@@ -324,17 +348,22 @@ def mark_needs_revision_view(request, submission_id):
         pk=submission_id,
         status__in=[
             DocumentSubmission.SubmissionStatus.UNDER_REVIEW,
-            DocumentSubmission.SubmissionStatus.PENDING_APPROVAL,
         ]
     )
 
-    latest_revision = submission.revisions.order_by('-version_number').first()
-    if latest_revision is None:
-        latest_revision = DocumentRevision.objects.create(
-            submission=submission,
-            file=submission.document_file,
-            version_number=1,
-        )
+    last_version = (
+        submission.revisions
+        .order_by('-version_number')
+        .values_list('version_number', flat=True)
+        .first()
+    )
+
+    next_version = (last_version or 0) + 1
+
+    latest_revision = DocumentRevision.objects.create(
+        submission=submission,
+        version_number=next_version,
+    )
 
     form = DocumentReviewForm(
         request.POST,
@@ -344,24 +373,21 @@ def mark_needs_revision_view(request, submission_id):
 
     if not form.is_valid() or not form.cleaned_data.get('remarks'):
         messages.error(request, 'Please provide remarks explaining what needs revision.')
+        latest_revision.delete()
+
         return redirect('admin_staff_portal:review_submission', submission_id=submission_id)
 
     form.save()
 
-    submission.status = DocumentSubmission.SubmissionStatus.NEEDS_REVISION
+    submission.status = (DocumentSubmission.SubmissionStatus.NEEDS_REVISION)
     submission.reviewed_by = request.user
     submission.reviewed_at = timezone.now()
-    submission.save(
-        update_fields=[
-            'status',
-            'reviewed_by',
-            'reviewed_at'
-        ]
-    )
+    submission.save(update_fields=['status', 'reviewed_by', 'reviewed_at',])
 
     refresh_faculty_dashboard(submission.faculty)
 
     messages.success(request, 'Submission marked as needing revision.')
+
     return redirect('admin_staff_portal:review_submission', submission_id=submission.id)
 
 @admin

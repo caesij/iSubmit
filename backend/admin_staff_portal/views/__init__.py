@@ -1,4 +1,9 @@
-from admin_staff_portal.views.core.dashboard_views import dashboard_view
+from admin_staff_portal.views.core.dashboard_views import (
+    admin_dashboard_data_view,
+    
+    admin_dashboard_view,
+    staff_dashboard_view,
+)
 
 from admin_staff_portal.views.core.document_repo_views import (
     document_repo_view,
@@ -37,7 +42,9 @@ from admin_staff_portal.views.general.settings_views import (
 from admin_staff_portal.views.general.profile_views import profile_view
 
 __all__ = [
-    'dashboard_view',
+    'admin_dashboard_data_view',
+    'admin_dashboard_view',
+    'staff_dashboard_view',
     
     'document_repo_view',
     'document_file_view',

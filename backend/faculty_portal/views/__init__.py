@@ -3,6 +3,7 @@ from faculty_portal.views.core.dashboard_views import dashboard_view, dashboard_
 from faculty_portal.views.core.submission_bin_views import (
     upload_files_view,
     attach_document_view,
+    resubmit_document_view,
     replace_document_view,
     view_uploaded_document,
     confirm_submission,
@@ -36,6 +37,7 @@ __all__ = [
     
     'upload_files_view',
     'attach_document_view',
+    'resubmit_document_view',
     'replace_document_view',
     'view_uploaded_document',
     'confirm_submission',

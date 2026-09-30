@@ -44,6 +44,8 @@ def logout_view(request):
 def redirect_user_by_role(user):
     if user.is_faculty:
         return redirect('faculty_portal:dashboard')
-    elif user.is_admin or user.is_staff_role:
-        return redirect('admin_staff_portal:dashboard')
+    elif user.is_admin:
+        return redirect('admin_staff_portal:admin_dashboard')
+    elif user.is_staff_role:
+        return redirect('admin_staff_portal:staff_dashboard')
     return redirect('accounts:login')

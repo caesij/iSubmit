@@ -1,0 +1,703 @@
+{% extends 'admin_staff_portal/base.html' %}
+
+{% block title %}Dashboard - iSubmit{% endblock %}
+
+{% block content %}
+
+<div class="dashboard-page">
+    <div class="dashboard-header">
+        <div>
+            <h1>Dashboard</h1>
+            <p>Overview of system activities and updates</p>
+        </div>
+        <span class="live-indicator">
+            <span></span> Live
+        </span>
+    </div>
+
+    <div class="welcome-card">
+        <div class="welcome-label">Welcome,</div>
+        <h2>{{ request.user.get_full_name }}</h2>
+        <p>Administrator</p>
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon">👥</div>
+            <div>
+                <span class="stat-number" id="stat-faculty">
+                    {{ faculty_count }}
+                </span>
+                <span class="stat-label">Total Faculty Members</span>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon">📄</div>
+            <div>
+                <span class="stat-number" id="stat-submitted">
+                    {{ submitted_count }}
+                </span>
+                <span class="stat-label">Submitted Documents</span>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon">✓</div>
+            <div>
+                <span class="stat-number" id="stat-approved">
+                    {{ approved_count }}
+                </span>
+                <span class="stat-label">Approved Documents</span>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon">◉</div>
+            <div>
+                <span class="stat-number" id="stat-review">
+                    {{ final_review_count }}
+                </span>
+                <span class="stat-label">For Final Review</span>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon">▦</div>
+            <div>
+                <span class="stat-number" id="stat-requirements">
+                    {{ active_requirement_count }}
+                </span>
+                <span class="stat-label">Active Requirements</span>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon">◔</div>
+            <div>
+                <span class="stat-number" id="stat-compliance">
+                    {{ compliance }}%
+                </span>
+                <span class="stat-label">Overall Compliance</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="dashboard-grid">
+        <div class="dashboard-card compliance-card">
+            <div class="card-header">
+                <h2>Compliance Overview</h2>
+            </div>
+
+            <div class="compliance-content">
+                <div class="compliance-circle">
+                    <span id="compliance-value">
+                        {{ compliance }}%
+                    </span>
+                </div>
+
+                <div class="compliance-legend">
+                    <div>
+                        <span class="legend-dot complete"></span>
+                        Approved
+                    </div>
+                    <div>
+                        <span class="legend-dot progress"></span>
+                        In Progress
+                    </div>
+                    <div>
+                        <span class="legend-dot pending"></span>
+                        Not Submitted
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="dashboard-card trends-card">
+            <div class="card-header">
+                <h2>Submission Trends</h2>
+            </div>
+
+            <div class="trend-chart" id="submission-trend-chart">
+                <div class="chart-grid">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+
+                <svg
+                    id="trend-line"
+                    viewBox="0 0 500 200"
+                    preserveAspectRatio="none"
+                ></svg>
+
+                <div class="chart-labels" id="trend-labels">
+                    {% for trend in submission_trends %}
+                        <span>{{ trend.month }}</span>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <div class="dashboard-card department-card">
+            <div class="card-header">
+                <h2>Compliance by Department</h2>
+            </div>
+
+            <div class="department-placeholder"></div>
+        </div>
+    </div>
+
+    <div class="dashboard-card pending-card">
+        <div class="card-header">
+            <h2>Pending Review</h2>
+            <a href="{% url 'admin_staff_portal:faculty_submissions_list' %}">
+                View all ›
+            </a>
+        </div>
+
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Faculty Member</th>
+                        <th>Document</th>
+                        <th>Date Submitted</th>
+                    </tr>
+                </thead>
+
+                <tbody id="pending-review-body">
+                    {% for submission in pending_review %}
+                        <tr>
+                            <td>{{ submission.id }}</td>
+                            <td>
+                                {{ submission.faculty.get_full_name }}
+                            </td>
+                            <td>
+                                {{ submission.requirement.requirement_title }}
+                            </td>
+                            <td>
+                                {{ submission.initially_submitted_at|date:"M j, Y" }}
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="5" class="empty-row">
+                                No pending reviews.
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<style>
+.dashboard-page {
+    padding: 24px;
+}
+
+.dashboard-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 18px;
+}
+
+.dashboard-header h1 {
+    margin: 0;
+    font-size: 24px;
+}
+
+.dashboard-header p {
+    margin: 4px 0 0;
+    color: #777;
+    font-size: 13px;
+}
+
+.live-indicator {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: #15803d;
+}
+
+.live-indicator span {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #22c55e;
+}
+
+.welcome-card,
+.dashboard-card {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+}
+
+.welcome-card {
+    padding: 18px;
+    margin-bottom: 14px;
+}
+
+.welcome-label {
+    font-size: 12px;
+    color: #777;
+}
+
+.welcome-card h2 {
+    margin: 4px 0 2px;
+    font-size: 18px;
+}
+
+.welcome-card p {
+    margin: 0;
+    color: #8b0000;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 10px;
+    margin-bottom: 14px;
+}
+
+.stat-card {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+    padding: 14px 12px;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 9px;
+}
+
+.stat-icon {
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    border-radius: 7px;
+    background: #fef2f2;
+    color: #991b1b;
+    font-size: 13px;
+}
+
+.stat-number {
+    display: block;
+    font-size: 20px;
+    font-weight: 700;
+    color: #991b1b;
+}
+
+.stat-label {
+    display: block;
+    margin-top: 2px;
+    color: #777;
+    font-size: 10px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 14px;
+    margin-bottom: 14px;
+}
+
+.dashboard-card {
+    padding: 16px;
+}
+
+.card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+}
+
+.card-header h2 {
+    margin: 0;
+    font-size: 14px;
+}
+
+.card-header a {
+    color: #991b1b;
+    font-size: 11px;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.compliance-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 180px;
+}
+
+.compliance-circle {
+    width: 120px;
+    height: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 9px solid #991b1b;
+    border-left-color: #e5e7eb;
+    border-radius: 50%;
+}
+
+.compliance-circle span {
+    font-size: 24px;
+    font-weight: 700;
+    color: #991b1b;
+}
+
+.compliance-legend {
+    display: flex;
+    gap: 12px;
+    margin-top: 14px;
+    font-size: 10px;
+    color: #777;
+}
+
+.legend-dot {
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    margin-right: 3px;
+    border-radius: 50%;
+}
+
+.legend-dot.complete {
+    background: #991b1b;
+}
+
+.legend-dot.progress {
+    background: #d4d400;
+}
+
+.legend-dot.pending {
+    background: #d1d5db;
+}
+
+.trend-chart {
+    position: relative;
+    height: 180px;
+    padding: 5px 5px 0;
+}
+
+.chart-grid {
+    position: absolute;
+    inset: 5px 5px 28px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.chart-grid span {
+    border-top: 1px solid #eee;
+}
+
+#trend-line {
+    position: absolute;
+    left: 5px;
+    right: 5px;
+    top: 5px;
+    width: calc(100% - 10px);
+    height: 145px;
+    overflow: visible;
+}
+
+#trend-line polyline {
+    fill: none;
+    stroke: #991b1b;
+    stroke-width: 3;
+}
+
+#trend-line circle {
+    fill: #991b1b;
+}
+
+.chart-labels {
+    position: absolute;
+    bottom: 0;
+    left: 5px;
+    right: 5px;
+    display: flex;
+    justify-content: space-between;
+    color: #777;
+    font-size: 10px;
+}
+
+.department-placeholder {
+    height: 180px;
+}
+
+.pending-card {
+    margin-bottom: 20px;
+}
+
+.table-container {
+    overflow-x: auto;
+}
+
+.pending-card table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 11px;
+}
+
+.pending-card th {
+    padding: 9px 8px;
+    background: #fef2f2;
+    color: #555;
+    text-align: left;
+    font-weight: 600;
+}
+
+.pending-card td {
+    padding: 9px 8px;
+    border-top: 1px solid #eee;
+    color: #444;
+}
+
+.empty-row {
+    padding: 20px !important;
+    text-align: center;
+    color: #999 !important;
+}
+
+@media (max-width: 1100px) {
+    .stats-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    .dashboard-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .department-card {
+        grid-column: span 2;
+    }
+}
+
+@media (max-width: 700px) {
+    .stats-grid,
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .department-card {
+        grid-column: auto;
+    }
+}
+</style>
+
+<script>
+async function refreshAdminDashboard() {
+    try {
+        const response = await fetch(
+            "{% url 'admin_staff_portal:admin_dashboard_data' %}",
+            {
+                method: "GET",
+                credentials: "same-origin",
+                headers: {
+                    "X-Requested-With": "XMLHttpRequest"
+                }
+            }
+        );
+
+        if (!response.ok) {
+            return;
+        }
+
+        const data = await response.json();
+
+        updateStats(data);
+        updateCompliance(data);
+        updatePendingReview(data);
+        updateSubmissionTrends(data);
+    } catch (error) {
+        console.error(
+            "Admin dashboard update failed:",
+            error
+        );
+    }
+}
+
+function updateStats(data) {
+    const stats = {
+        "stat-faculty": data.faculty_count,
+        "stat-submitted": data.submitted_count,
+        "stat-approved": data.approved_count,
+        "stat-review": data.final_review_count,
+        "stat-requirements": data.active_requirement_count,
+        "stat-compliance": `${data.compliance}%`
+    };
+
+    Object.entries(stats).forEach(([id, value]) => {
+        const element = document.getElementById(id);
+
+        if (element) {
+            element.textContent = value;
+        }
+    });
+}
+
+function updateCompliance(data) {
+    const value = document.getElementById("compliance-value");
+
+    if (value) {
+        value.textContent = `${data.compliance}%`;
+    }
+
+    const circle = document.querySelector(
+        ".compliance-circle"
+    );
+
+    if (circle) {
+        const percentage = Math.max(
+            0,
+            Math.min(100, data.compliance)
+        );
+
+        circle.style.borderLeftColor = "#e5e7eb";
+        circle.style.borderTopColor = "#991b1b";
+
+        if (percentage >= 50) {
+            circle.style.borderRightColor = "#991b1b";
+        } else {
+            circle.style.borderRightColor = "#e5e7eb";
+        }
+
+        if (percentage >= 75) {
+            circle.style.borderBottomColor = "#991b1b";
+        } else {
+            circle.style.borderBottomColor = "#e5e7eb";
+        }
+    }
+}
+
+function updatePendingReview(data) {
+    const body = document.getElementById(
+        "pending-review-body"
+    );
+
+    if (!body) {
+        return;
+    }
+
+    body.innerHTML = "";
+
+    if (
+        !data.pending_review ||
+        data.pending_review.length === 0
+    ) {
+        body.innerHTML = `
+            <tr>
+                <td colspan="4" class="empty-row">
+                    No pending reviews.
+                </td>
+            </tr>
+        `;
+
+        return;
+    }
+
+    data.pending_review.forEach(submission => {
+        const row = document.createElement("tr");
+
+        row.innerHTML = `
+            <td>${submission.id}</td>
+            <td>${submission.faculty}</td>
+            <td>${submission.document}</td>
+            <td>${submission.date}</td>
+        `;
+
+        body.appendChild(row);
+    });
+}
+
+function updateSubmissionTrends(data) {
+    const svg = document.getElementById("trend-line");
+
+    if (!svg || !data.submission_trends) {
+        return;
+    }
+
+    svg.innerHTML = "";
+
+    const values = data.submission_trends.map(
+        item => Number(item.count) || 0
+    );
+
+    if (!values.length) {
+        return;
+    }
+
+    const width = 500;
+    const height = 200;
+    const padding = 20;
+
+    const max = Math.max(...values, 1);
+    const step = values.length > 1
+        ? (width - padding * 2) / (values.length - 1)
+        : 0;
+
+    const points = values.map((value, index) => {
+        const x = padding + index * step;
+        const y =
+            height -
+            padding -
+            (value / max) * (height - padding * 2);
+
+        return `${x},${y}`;
+    }).join(" ");
+
+    const polyline = document.createElementNS(
+        "http://www.w3.org/2000/svg",
+        "polyline"
+    );
+
+    polyline.setAttribute("points", points);
+    svg.appendChild(polyline);
+
+    values.forEach((value, index) => {
+        const x = padding + index * step;
+        const y =
+            height -
+            padding -
+            (value / max) * (height - padding * 2);
+
+        const circle = document.createElementNS(
+            "http://www.w3.org/2000/svg",
+            "circle"
+        );
+
+        circle.setAttribute("cx", x);
+        circle.setAttribute("cy", y);
+        circle.setAttribute("r", 4);
+
+        svg.appendChild(circle);
+    });
+}
+
+document.addEventListener(
+    "dashboard-update",
+    refreshAdminDashboard
+);
+</script>
+
+{% endblock %}

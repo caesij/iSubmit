@@ -43,10 +43,12 @@
 
             <nav class="sidebar-nav" aria-label="Main navigation">
                 <div class="nav-section-title">Main</div>
-                <ul class="nav-list">
                     <li class="nav-item">
-                        <a class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}" href="{% url 'admin_staff_portal:dashboard' %}">
-                            <span class="icon"><img src="{% static 'images/dashboard.svg' %}" alt="Dashboard icon"></span>
+                        <a class="nav-link {% if request.resolver_match.url_name == 'admin_dashboard' or request.resolver_match.url_name == 'staff_dashboard' %}active{% endif %}"
+                        href="{% if request.user.is_admin %}{% url 'admin_staff_portal:admin_dashboard' %}{% else %}{% url 'admin_staff_portal:staff_dashboard' %}{% endif %}">
+                            <span class="icon">
+                                <img src="{% static 'images/dashboard.svg' %}" alt="Dashboard icon">
+                            </span>
                             <span>Dashboard</span>
                         </a>
                     </li>

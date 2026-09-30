@@ -8,9 +8,6 @@ def draft_upload_path(instance, filename):
 def submission_upload_path(instance, filename):
     return f'submissions/user_{instance.faculty.id}/{filename}'
 
-def revision_upload_path(instance, filename):
-    return f'submissions/user_{instance.submission.faculty.id}/{filename}'
-
 class Requirement(models.Model):
     class ReqStatus(models.TextChoices):
         ACTIVE = 'ACTIVE', 'Active'
@@ -198,10 +195,7 @@ class DocumentRevision(models.Model):
         related_name='revisions'
     )
 
-    file = models.FileField(upload_to=revision_upload_path)
-
     version_number = models.PositiveIntegerField()
-
     uploaded_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -211,10 +205,14 @@ class DocumentRevision(models.Model):
                 name='unique_submission_version'
             )
         ]
+
         ordering = ['-version_number']
 
     def __str__(self):
-        return f'{self.submission.requirement.requirement_title} - Revision {self.version_number}'
+        return (
+            f'{self.submission.requirement.requirement_title} '
+            f'- Revision {self.version_number}'
+        )
 
 class DocumentReview(models.Model):
     revision = models.ForeignKey(
