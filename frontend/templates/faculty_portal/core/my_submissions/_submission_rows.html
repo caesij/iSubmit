@@ -1,0 +1,75 @@
+{% load static %}
+
+{% for doc in submitted_documents %}
+    <tr>
+        <td>
+            <input
+                type="checkbox"
+                name="selected_documents"
+                value="{{ doc.id }}"
+            >
+        </td>
+        <td>
+            <div class="file-cell">
+                <span class="file-icon">&#128196;</span>
+                <div>
+                    <div class="file-name">
+                        {{ doc.requirement.requirement_title }}
+                    </div>
+                    <div class="file-size">
+                        {{ doc.document_file.size|filesizeformat }}
+                    </div>
+                </div>
+            </div>
+        </td>
+        <td>{{ doc.requirement.category }}</td>
+        <td>
+            {% if doc.status == 'RESUBMITTED' and doc.resubmitted_at %}
+                <div>{{ doc.resubmitted_at|date:"F j, Y" }}</div>
+                <div class="text-sub">{{ doc.resubmitted_at|date:"g:i A" }}</div>
+            {% else %}
+                <div>{{ doc.initially_submitted_at|date:"F j, Y" }}</div>
+                <div class="text-sub">{{ doc.initially_submitted_at|date:"g:i A" }}</div>
+            {% endif %}
+        </td>
+        <td>
+            <div>{{ doc.requirement.deadline|date:"F j, Y" }}</div>
+            <div class="text-sub">{{ doc.requirement.deadline|date:"g:i A" }}</div>
+        </td>
+        <td>
+            {% if doc.status == 'APPROVED' %}
+                <span class="pill pill-approved">Approved</span>
+            {% elif doc.status == 'NEEDS_REVISION' %}
+                <span class="pill pill-revision">Needs Revision</span>
+            {% elif doc.status == 'UNDER_REVIEW' %}
+                <span class="pill pill-review">Under Review</span>
+            {% elif doc.status == 'PENDING_APPROVAL' %}
+                <span class="pill pill-review">Pending Approval</span>
+            {% else %}
+                <span class="pill pill-submitted">{{ doc.get_status_display }}</span>
+            {% endif %}
+        </td>
+        <td>
+            {% if doc.reviewed_by %}
+                <div>{{ doc.reviewed_by.get_full_name }}</div>
+                <div class="text-sub">{{ doc.reviewed_by.get_role_display }}</div>
+            {% else %}
+                &mdash;
+            {% endif %}
+        </td>
+        <td>
+            <a
+                href="{% url 'faculty_portal:view_my_submitted_document' doc.id %}"
+                class="btn-icon"
+            >
+                &#8942;
+            </a>
+        </td>
+    </tr>
+{% empty %}
+    <tr>
+        <td colspan="8" class="text-center py-4">
+            No submissions found.
+        </td>
+    </tr>
+{% endfor %}

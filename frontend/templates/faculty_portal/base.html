@@ -39,13 +39,13 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {% if request.resolver_match.url_name == 'upload_files' or request.resolver_match.url_name == 'review_confirm' or request.resolver_match.url_name == 'submission_complete' %}active{% endif %}" href="{% url 'faculty_portal:upload_files' %}">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'upload_files' or request.resolver_match.url_name == 'submission_complete' %}active{% endif %}" href="{% url 'faculty_portal:upload_files' %}">
                             <span class="icon"><img src="{% static 'images/Submission Faculty.svg' %}" alt="Submissions icon"></span>
                             <span>Submission Bin</span>
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {% if request.resolver_match.url_name == 'recent_submissions' %}active{% endif %}" href="{% url 'faculty_portal:recent_submissions' %}">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'my_submissions' %}active{% endif %}" href="{% url 'faculty_portal:my_submissions' %}">
                             <span class="icon"><img src="{% static 'images/email.svg' %}" alt="My Submissions icon"></span>
                             <span>My Submissions</span>
                         </a>
@@ -82,11 +82,11 @@
             <header class="topbar">
                 <div>
                     <div class="topbar-title-wrap">
-                        {% if request.resolver_match.url_name == 'upload_files' or request.resolver_match.url_name == 'review_confirm' or request.resolver_match.url_name == 'submission_complete' or request.resolver_match.url_name == 'view_uploaded_document' %}
+                        {% if request.resolver_match.url_name == 'upload_files' or request.resolver_match.url_name == 'submission_complete' or request.resolver_match.url_name == 'view_uploaded_document' %}
                             <span class="page-icon"><img src="{% static 'images/Submission Faculty.svg' %}" alt="Submission Bin icon"></span>
                         {% elif request.resolver_match.url_name == 'my_documents' or request.resolver_match.url_name == 'all_documents' or request.resolver_match.url_name == 'pinned_documents' or request.resolver_match.url_name == 'document_file_view_all' or request.resolver_match.url_name == 'document_file_view_pinned' %}
                             <span class="page-icon"><img src="{% static 'images/documents.svg' %}" alt="Documents icon"></span>
-                        {% elif request.resolver_match.url_name == 'recent_submissions' or request.resolver_match.url_name == 'view_my_submitted_document' %}
+                        {% elif request.resolver_match.url_name == 'my_submissions' or request.resolver_match.url_name == 'view_my_submitted_document' %}
                             <span class="page-icon"><img src="{% static 'images/submissions.svg' %}" alt="My submissions icon"></span>
                         {% else %}
                             <span class="page-icon"><img src="{% static 'images/dashboard.svg' %}" alt="Dashboard icon"></span>
@@ -127,7 +127,6 @@
 
     <script>
     (function () {
-
         const protocol =
             window.location.protocol === "https:"
                 ? "wss:"
@@ -137,80 +136,62 @@
             `${protocol}//${window.location.host}/ws/realtime/`
         );
 
-
-        /*
-        =========================================================
-        WEBSOCKET CONNECTED
-        =========================================================
-        */
-
         socket.addEventListener("open", function () {
             console.log("Realtime connected");
         });
 
-
-        /*
-        =========================================================
-        WEBSOCKET MESSAGE
-        =========================================================
-        */
-
         socket.addEventListener("message", function (event) {
-
             const message = JSON.parse(event.data);
 
-            /*
-            Dashboard changed
-            */
-            if (message.event === "dashboard.update") {
+            if (message.event === "admin-dashboard.update") {
+                document.dispatchEvent(
+                    new CustomEvent("admin-dashboard-update")
+                );
+            }
 
+            if (message.event === "staff-dashboard.update") {
+                document.dispatchEvent(
+                    new CustomEvent("staff-dashboard-update")
+                );
+            }
+
+            if (message.event === "dashboard.update") {
                 document.dispatchEvent(
                     new CustomEvent("dashboard-update")
                 );
             }
 
             if (message.event === "submission_bin.update") {
-                document.dispatchEvent(new CustomEvent("submission-bin-update"));
+                document.dispatchEvent(
+                    new CustomEvent("submission-bin-update")
+                );
             }
 
+            if (message.event === "my-submissions.update") {
+                document.dispatchEvent(
+                    new CustomEvent("my-submissions-update")
+                );
+            }
 
-            /*
-            New notification
-            */
             if (message.event === "notification.new") {
-
                 document.dispatchEvent(
                     new CustomEvent("notification-new", {
                         detail: message.data
                     })
                 );
-
             }
-
         });
-
-
-        /*
-        =========================================================
-        WEBSOCKET CLOSED
-        =========================================================
-        */
 
         socket.addEventListener("close", function () {
             console.log("Realtime disconnected");
         });
 
-
-        /*
-        =========================================================
-        WEBSOCKET ERROR
-        =========================================================
-        */
-
         socket.addEventListener("error", function (error) {
-            console.error("Realtime WebSocket error:", error);
+            console.error(
+                "Realtime WebSocket error:",
+                error
+            );
         });
-
     })();
     </script>
 </body>

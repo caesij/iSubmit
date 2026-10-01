@@ -1,0 +1,350 @@
+{% extends 'faculty_portal/base.html' %}
+{% load static %}
+
+{% block title %}My Submissions - iSubmit{% endblock %}
+{% block heading %}My Submissions{% endblock %}
+
+{% block topbar_subtitle %}
+Monitor submission progress and document status
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/pages/submissions.css' %}">
+{% endblock %}
+
+{% block content %}
+<style>
+    .my-submissions-container {
+        padding: 24px 32px;
+        font-family: 'Segoe UI', Arial, sans-serif;
+        color: #1a1a1a;
+    }
+
+    /* ---------- Page header ---------- */
+    .page-header { margin-bottom: 20px; }
+    .page-title-wrap { display: flex; align-items: center; gap: 12px; }
+    .page-icon img { width: 26px; height: 26px; }
+    .page-header h1 { font-size: 22px; font-weight: 700; margin: 0; }
+    .page-header .subtitle { margin: 2px 0 0; font-size: 13px; color: #6b7280; }
+
+    /* ---------- Stat cards ---------- */
+    .stat-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 14px;
+        margin-bottom: 20px;
+    }
+    .stat-card {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: #fff;
+        border: 1px solid #e5e7eb;
+        border-radius: 10px;
+        padding: 14px 16px;
+    }
+    .stat-icon {
+        width: 34px;
+        height: 34px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 15px;
+        flex-shrink: 0;
+    }
+    .stat-icon.orange { background: #fef3c7; color: #b45309; }
+    .stat-icon.blue { background: #dbeafe; color: #1d4ed8; }
+    .stat-icon.green { background: #dcfce7; color: #15803d; }
+    .stat-icon.red { background: #fee2e2; color: #b91c1c; }
+
+    .stat-value { font-size: 18px; font-weight: 700; margin: 0; }
+    .stat-label { font-size: 11px; color: #6b7280; margin: 0; }
+    .stat-value.orange { color: #b45309; }
+    .stat-value.blue { color: #1d4ed8; }
+    .stat-value.green { color: #15803d; }
+    .stat-value.red { color: #b91c1c; }
+
+    /* ---------- Layout and filters ---------- */
+    .layout { display: grid; grid-template-columns: 220px 1fr; gap: 20px; align-items: start; }
+
+    .filter-panel { background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 16px; }
+    .filter-group { margin-bottom: 16px; }
+    .filter-group label {
+        display: block;
+        font-size: 12px;
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 6px;
+    }
+    .filter-group select {
+        width: 100%;
+        padding: 8px 10px;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        font-size: 13px;
+    }
+    .btn-reset {
+        width: 100%;
+        padding: 9px;
+        border: 1px solid #b91c1c;
+        color: #b91c1c;
+        background: #fff;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 700;
+        cursor: pointer;
+    }
+
+    /* ---------- Table ---------- */
+    .table-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; overflow: hidden; }
+    .data-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .data-table thead tr { background: #fbe4e4; }
+    .data-table th { text-align: left; padding: 12px 16px; font-weight: 700; color: #374151; font-size: 12px; }
+    .data-table td {
+        padding: 14px 16px;
+        border-top: 1px solid #f0f0f0;
+        vertical-align: middle;
+        color: #374151;
+    }
+    .data-table input[type="checkbox"] { width: 15px; height: 15px; accent-color: #7f1d1d; }
+
+    .file-cell { display: flex; align-items: center; gap: 8px; }
+    .file-icon { font-size: 18px; }
+    .file-name { font-weight: 700; font-size: 13px; color: #1a1a1a; }
+    .file-size { font-size: 11px; color: #9ca3af; }
+    .text-sub { font-size: 11px; color: #9ca3af; }
+
+    /* ---------- Status pills ---------- */
+    .pill {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 700;
+        border: 1px solid transparent;
+    }
+    .pill-review { background: #fff; color: #1d4ed8; border-color: #bfdbfe; }
+    .pill-approved { background: #dcfce7; color: #15803d; border-color: #bbf7d0; }
+    .pill-revision { background: #fee2e2; color: #b91c1c; border-color: #fecaca; }
+    .pill-submitted { background: #fef3c7; color: #b45309; border-color: #fde68a; }
+
+    .btn-icon { border: none; background: none; cursor: pointer; font-size: 16px; color: #6b7280; }
+</style>
+
+
+<div class="my-submissions-container">
+
+    <!-- Stat cards -->
+    <div class="stat-grid">
+        <div class="stat-card">
+            <span class="stat-icon orange">&#128196;</span>
+            <div>
+                <p id="stat-total-submitted" class="stat-value orange">
+                    {{ stats.total_submitted }}
+                </p>
+                <p class="stat-label">Total Submitted</p>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <span class="stat-icon blue">&#128257;</span>
+            <div>
+                <p id="stat-under-review" class="stat-value blue">
+                    {{ stats.under_review }}
+                </p>
+                <p class="stat-label">Under Review</p>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <span class="stat-icon green">&#9989;</span>
+            <div>
+                <p id="stat-approved" class="stat-value green">
+                    {{ stats.approved }}
+                </p>
+                <p class="stat-label">Approved</p>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <span class="stat-icon red">&#128257;</span>
+            <div>
+                <p id="stat-returned" class="stat-value red">
+                    {{ stats.returned }}
+                </p>
+                <p class="stat-label">Returned</p>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="layout">
+
+        <!-- Filters -->
+        <form method="GET" action="{% url 'faculty_portal:my_submissions' %}">
+            <div class="filter-panel">
+
+                <div class="filter-group">
+                    <label>Status</label>
+
+                    <select name="status" onchange="this.form.submit()">
+                        <option value="">All Statuses</option>
+
+                        {% for value, label in status_choices %}
+                            <option value="{{ value }}" {% if request.GET.status == value %}selected{% endif %}>
+                                {{ label }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label>Category</label>
+
+                    <select name="category" onchange="this.form.submit()">
+                        <option value="">All Categories</option>
+
+                        {% for cat in categories %}
+                            <option value="{{ cat }}" {% if request.GET.category == cat %}selected{% endif %}>
+                                {{ cat }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label>Sort by</label>
+
+                    <select name="sort" onchange="this.form.submit()">
+                        <option
+                            value="newest"
+                            {% if request.GET.sort == 'newest' or not request.GET.sort %}selected{% endif %}
+                        >
+                            Newest
+                        </option>
+
+                        <option value="oldest" {% if request.GET.sort == 'oldest' %}selected{% endif %}>
+                            Oldest
+                        </option>
+
+                        <option value="deadline" {% if request.GET.sort == 'deadline' %}selected{% endif %}>
+                            Deadline
+                        </option>
+                    </select>
+                </div>
+
+                <a
+                    href="{% url 'faculty_portal:my_submissions' %}"
+                    class="btn-reset"
+                    style="display:block; text-align:center; text-decoration:none;"
+                >
+                    Reset Filters
+                </a>
+
+            </div>
+        </form>
+
+
+        <!-- Submissions table -->
+        <div class="table-card">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th><input type="checkbox" aria-label="Select all"></th>
+                        <th>File</th>
+                        <th>Category</th>
+                        <th>Date Submitted</th>
+                        <th>Deadline</th>
+                        <th>Status</th>
+                        <th>Reviewed by</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+
+                <tbody id="my-submissions-body">
+                    {% include 'faculty_portal/core/my_submissions/_submission_rows.html' %}
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+</div>
+
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const tableBody = document.getElementById("my-submissions-body");
+    const totalSubmitted = document.getElementById("stat-total-submitted");
+    const underReview = document.getElementById("stat-under-review");
+    const approved = document.getElementById("stat-approved");
+    const returned = document.getElementById("stat-returned");
+
+    let refreshController = null;
+
+    async function refreshMySubmissions() {
+        if (!tableBody) {
+            return;
+        }
+
+        if (refreshController) {
+            refreshController.abort();
+        }
+
+        refreshController = new AbortController();
+
+        try {
+            const response = await fetch(
+                "{% url 'faculty_portal:submissions_data' %}" +
+                window.location.search,
+                {
+                    method: "GET",
+                    cache: "no-store",
+                    headers: {
+                        "X-Requested-With": "XMLHttpRequest"
+                    },
+                    signal: refreshController.signal
+                }
+            );
+
+            if (!response.ok) {
+                throw new Error(
+                    "Failed to refresh My Submissions."
+                );
+            }
+
+            const data = await response.json();
+
+            tableBody.innerHTML = data.rows_html;
+
+            totalSubmitted.textContent =
+                data.stats.total_submitted;
+
+            underReview.textContent =
+                data.stats.under_review;
+
+            approved.textContent =
+                data.stats.approved;
+
+            returned.textContent =
+                data.stats.returned;
+
+        } catch (error) {
+            if (error.name !== "AbortError") {
+                console.error(
+                    "My Submissions realtime update failed:",
+                    error
+                );
+            }
+        }
+    }
+
+    document.addEventListener(
+        "my-submissions-update",
+        function () {
+            refreshMySubmissions();
+        }
+    );
+});
+</script>
+{% endblock %}

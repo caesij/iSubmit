@@ -13,18 +13,18 @@ class RealtimeConsumer(AsyncJsonWebsocketConsumer):
 
         self.is_faculty_user = user.is_faculty
         self.is_staff_user = user.is_staff_role
+        self.is_admin_user = user.is_admin
 
         if self.is_faculty_user:
             await self.channel_layer.group_add('faculty_submission_bins', self.channel_name)
 
-        if user.is_admin:
+        if self.is_admin_user:
             await self.channel_layer.group_add('admin_dashboard', self.channel_name)
 
         if self.is_staff_user:
-            await self.channel_layer.group_add('staff_dashboard', self.channel_name)
+            await self.channel_layer.group_add('staff_dashboard',self.channel_name)
 
         await self.accept()
-
 
     async def disconnect(self, close_code):
         if hasattr(self, 'group_name'):
@@ -32,22 +32,18 @@ class RealtimeConsumer(AsyncJsonWebsocketConsumer):
 
         if getattr(self, 'is_faculty_user', False):
             await self.channel_layer.group_discard('faculty_submission_bins', self.channel_name)
-        
+
         if getattr(self, 'is_staff_user', False):
             await self.channel_layer.group_discard('staff_dashboard', self.channel_name)
 
-        user = self.scope.get('user')
-
-        if (user and not user.is_anonymous and user.is_admin):
+        if getattr(self, 'is_admin_user', False):
             await self.channel_layer.group_discard('admin_dashboard', self.channel_name)
-
 
     async def realtime_event(self, event):
         await self.send_json({
             'event': event['event'],
             'data': event.get('data', {}),
         })
-
 
     async def receive_json(self, content, **kwargs):
         pass

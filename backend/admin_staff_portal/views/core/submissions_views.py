@@ -15,6 +15,7 @@ from faculty_portal.realtime import (
     refresh_faculty_dashboard,
     refresh_faculty_submission_bin,
     refresh_all_faculty_submission_bins,
+    refresh_faculty_my_submissions,
 )
 
 from submissions.models import (
@@ -266,7 +267,7 @@ def faculty_submission_bins_view(request, faculty_id):
     not_ready_count = all_faculty_submissions.exclude(
         status__in=[
             DocumentSubmission.SubmissionStatus.PENDING_APPROVAL,
-            DocumentSubmission.SubmissionStatus.APPROVED,
+            DocumentSubmission.SubmissionStatus.APPROVED
         ]
     ).count()
     pending_approval_count = all_faculty_submissions.filter(
@@ -283,7 +284,7 @@ def faculty_submission_bins_view(request, faculty_id):
         'status_choices': DocumentSubmission.SubmissionStatus.choices,
         'can_approve_all': can_approve_all,
         'pending_approval_count': pending_approval_count,
-        'not_ready_count': not_ready_count,
+        'not_ready_count': not_ready_count
     }
     
     return render(
@@ -334,6 +335,7 @@ def mark_under_review_view(request, submission_id):
     refresh_admin_dashboard()
     refresh_staff_dashboard()
     refresh_faculty_dashboard(submission.faculty)
+    refresh_faculty_my_submissions(submission.faculty)
 
     return redirect('admin_staff_portal:review_submission', submission_id=submission.id)
 
@@ -356,6 +358,7 @@ def mark_reviewed_view(request, submission_id):
     refresh_admin_dashboard()
     refresh_staff_dashboard()
     refresh_faculty_dashboard(submission.faculty)
+    refresh_faculty_my_submissions(submission.faculty)
 
     return redirect('admin_staff_portal:review_submission', submission_id=submission.id)
 
@@ -366,9 +369,7 @@ def mark_needs_revision_view(request, submission_id):
     submission = get_object_or_404(
         DocumentSubmission,
         pk=submission_id,
-        status__in=[
-            DocumentSubmission.SubmissionStatus.UNDER_REVIEW,
-        ]
+        status__in=[DocumentSubmission.SubmissionStatus.UNDER_REVIEW]
     )
 
     last_version = (
@@ -382,13 +383,13 @@ def mark_needs_revision_view(request, submission_id):
 
     latest_revision = DocumentRevision.objects.create(
         submission=submission,
-        version_number=next_version,
+        version_number=next_version
     )
 
     form = DocumentReviewForm(
         request.POST,
         reviewer=request.user,
-        revision=latest_revision,
+        revision=latest_revision
     )
 
     if not form.is_valid() or not form.cleaned_data.get('remarks'):
@@ -408,6 +409,7 @@ def mark_needs_revision_view(request, submission_id):
     refresh_staff_dashboard()
     refresh_faculty_dashboard(submission.faculty)
     refresh_faculty_submission_bin(submission.faculty)
+    refresh_faculty_my_submissions(submission.faculty)
     
     messages.success(request, 'Submission marked as needing revision.')
 
@@ -450,6 +452,7 @@ def approve_all_submissions_view(request, faculty_id):
 
     refresh_staff_dashboard()
     refresh_faculty_dashboard(faculty_member)
+    refresh_faculty_my_submissions(faculty_member)
 
     messages.success(request, f'{approved_count} document(s) approved.')
     return redirect('admin_staff_portal:faculty_submission_bins_view', faculty_id=faculty_member.id)

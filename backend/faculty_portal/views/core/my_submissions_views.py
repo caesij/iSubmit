@@ -2,6 +2,8 @@ from django.shortcuts import render, get_object_or_404
 from django.views.decorators.http import require_http_methods
 from django.contrib import messages
 from django.db.models import Count, Q
+from django.http import JsonResponse
+from django.template.loader import render_to_string
 
 from accounts.decorators import faculty
 from submissions.models import DocumentSubmission
@@ -9,7 +11,7 @@ from submissions.models import DocumentSubmission
 
 @faculty
 @require_http_methods(['GET'])
-def recent_submissions_list(request):
+def submissions_list(request):
     all_submissions = DocumentSubmission.objects.filter(faculty=request.user)
     
     if not all_submissions.exists():
@@ -50,9 +52,88 @@ def recent_submissions_list(request):
     
     return render(
         request,
-        'faculty_portal/core/my_submissions/recent_submissions_list.html',
+        'faculty_portal/core/my_submissions/submissions_list.html',
         context
     )
+
+@faculty
+@require_http_methods(['GET'])
+def submissions_data_view(request):
+    all_submissions = DocumentSubmission.objects.filter(
+        faculty=request.user
+    )
+
+    stats = all_submissions.aggregate(
+        total_submitted=Count('id'),
+        under_review=Count(
+            'id',
+            filter=Q(
+                status=DocumentSubmission.SubmissionStatus.UNDER_REVIEW
+            )
+        ),
+        approved=Count(
+            'id',
+            filter=Q(
+                status=DocumentSubmission.SubmissionStatus.APPROVED
+            )
+        ),
+        returned=Count(
+            'id',
+            filter=Q(
+                status=DocumentSubmission.SubmissionStatus.NEEDS_REVISION
+            )
+        ),
+    )
+
+    submitted_documents = all_submissions.select_related(
+        'requirement',
+        'reviewed_by'
+    )
+
+    submission_status = request.GET.get('status')
+    category = request.GET.get('category')
+    sort_by = request.GET.get('sort', 'newest')
+
+    if submission_status:
+        submitted_documents = submitted_documents.filter(
+            status=submission_status
+        )
+
+    if category:
+        submitted_documents = submitted_documents.filter(
+            requirement__category=category
+        )
+
+    if sort_by == 'oldest':
+        submitted_documents = submitted_documents.order_by(
+            'initially_submitted_at'
+        )
+    elif sort_by == 'deadline':
+        submitted_documents = submitted_documents.order_by(
+            'requirement__deadline'
+        )
+    else:
+        submitted_documents = submitted_documents.order_by(
+            '-initially_submitted_at'
+        )
+
+    rows_html = render_to_string(
+        'faculty_portal/core/my_submissions/_submission_rows.html',
+        {
+            'submitted_documents': submitted_documents,
+        },
+        request=request,
+    )
+
+    response = JsonResponse({
+        'stats': stats,
+        'rows_html': rows_html,
+    })
+
+    response['Cache-Control'] = 'no-store'
+
+    return response
+
 
 @faculty
 @require_http_methods(['GET'])
