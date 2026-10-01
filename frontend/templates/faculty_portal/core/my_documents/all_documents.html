@@ -2,6 +2,9 @@
 {% load static %}
 
 {% block title %}My Documents - iSubmit{% endblock %}
+{% block heading %}My Documents{% endblock %}
+{% block topbar_subtitle %}View and manage all your submitted documents{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/pages/documents.css' %}">{% endblock %}
 
 {% block content %}
 <style>
@@ -44,11 +47,6 @@
 .page-btn { width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border: 1px solid #e5e7eb; border-radius: 6px; text-decoration: none; color: #374151; font-size: 12px; background: #fff; }
 .page-btn.active { background: #7f1d1d; color: #fff; border-color: #7f1d1d; }
 </style>
-
-<div class="docs-header">
-    <h1>📄 My Documents</h1>
-    <div class="docs-sub">View and manage all your submitted documents</div>
-</div>
 
 <div class="docs-tabs">
     <a href="{% url 'faculty_portal:all_documents' %}" class="docs-tab active">All Documents</a>

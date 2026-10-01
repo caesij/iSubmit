@@ -1,0 +1,96 @@
+{% extends 'admin_staff_portal/base.html' %}
+{% load static %}
+
+{% block title %}Profile - iSubmit{% endblock %}
+{% block heading %}Profile{% endblock %}
+{% block subtitle %}Manage your personal information and profile photo.{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/pages/profile.css' %}">{% endblock %}
+
+{% block content %}
+<div class="profile-card">
+    <div class="profile-section-heading">
+        <div>
+            <h2>Profile Information</h2>
+            <p>View your personal and professional details.</p>
+        </div>
+        <button type="button" class="profile-edit" id="profile-edit-button">
+            <img src="{% static 'images/Edit Profile.svg' %}" alt="">
+            Edit Profile
+        </button>
+    </div>
+
+    <div class="profile-summary">
+        <div class="profile-identity">
+            <div class="profile-avatar">
+                {% if request.user.profile_photo %}
+                    <img src="{{ request.user.profile_photo.url }}" alt="Profile photo">
+                {% else %}
+                    <img src="{% static 'images/profile.svg' %}" alt="Profile photo placeholder">
+                {% endif %}
+            </div>
+            <strong>{{ request.user.get_full_name }}</strong>
+            <span>{{ request.user.get_role_display }}</span>
+            <small>{% if request.user.is_faculty %}{{ request.user.get_faculty_type_display }}{% else %}Administrative Personnel{% endif %}</small>
+        </div>
+
+        <div class="profile-details">
+            <div class="profile-detail">
+                <span><img src="{% static 'images/Faculty ID Profile.svg' %}" alt="">Faculty ID</span>
+                <strong>{{ request.user.employee_ID|default:'Not provided' }}</strong>
+            </div>
+            <div class="profile-detail">
+                <span><img src="{% static 'images/Email Profile.svg' %}" alt="">Institutional Email Address</span>
+                <strong>{{ request.user.email }}</strong>
+            </div>
+            <div class="profile-detail">
+                <span><img src="{% static 'images/Program Department Profile.svg' %}" alt="">Program / Department</span>
+                <strong>Not provided</strong>
+            </div>
+            <div class="profile-detail">
+                <span><img src="{% static 'images/Contact Numbe Profile.svg' %}" alt="">Contact Number</span>
+                <strong>Not provided</strong>
+            </div>
+            <div class="profile-detail">
+                <span><img src="{% static 'images/Position Profile.svg' %}" alt="">Position</span>
+                <strong>{{ request.user.get_role_display }}</strong>
+            </div>
+            <div class="profile-detail">
+                <span><img src="{% static 'images/Faculty Type Profile.svg' %}" alt="">Faculty Type</span>
+                <strong>{% if request.user.faculty_type %}{{ request.user.get_faculty_type_display }}{% else %}Not applicable{% endif %}</strong>
+            </div>
+            <div class="profile-detail">
+                <span><img src="{% static 'images/Account role.svg' %}" alt="">Account Role</span>
+                <strong>{{ request.user.get_role_display }}</strong>
+            </div>
+            <div class="profile-detail">
+                <span><img src="{% static 'images/Account Status Profile.svg' %}" alt="">Account Status</span>
+                <strong>{{ request.user.is_active|yesno:'Active,Inactive' }}</strong>
+            </div>
+        </div>
+    </div>
+
+    <form method="POST" enctype="multipart/form-data" class="profile-form" id="profile-edit-form" hidden>
+        {% csrf_token %}
+        {% for field in form.visible_fields %}
+            <div class="profile-field{% if field.errors %} has-error{% endif %}">
+                {{ field.label_tag }}
+                {{ field }}
+                {% for error in field.errors %}<span class="profile-error">{{ error }}</span>{% endfor %}
+            </div>
+        {% endfor %}
+        <div class="profile-actions">
+            <button type="submit" class="profile-save">Save Changes</button>
+        </div>
+    </form>
+</div>
+
+<script>
+document.getElementById("profile-edit-button").addEventListener("click", function () {
+    const form = document.getElementById("profile-edit-form");
+    const card = this.closest(".profile-card");
+    form.hidden = !form.hidden;
+    card.classList.toggle("is-editing", !form.hidden);
+    this.textContent = form.hidden ? "Edit Profile" : "Cancel Editing";
+});
+</script>
+{% endblock %}

@@ -2,6 +2,9 @@
 {% load static %}
 
 {% block title %}{{ document.requirement.requirement_title }} - iSubmit{% endblock %}
+{% block heading %}My Documents{% endblock %}
+{% block topbar_subtitle %}View and manage all your submitted documents{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/pages/documents.css' %}">{% endblock %}
 
 {% block content %}
 <style>

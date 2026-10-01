@@ -2,6 +2,9 @@
 {% load static %}
 
 {% block title %}Dashboard - iSubmit{% endblock %}
+{% block heading %}Dashboard{% endblock %}
+{% block topbar_subtitle %}Overview of system activities and updates{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/pages/dashboard.css' %}">{% endblock %}
 
 {% block content %}
 
@@ -438,23 +441,6 @@
         }
     }
 </style>
-
-
-<!-- =========================================================
-     HEADER
-     ========================================================= -->
-
-<div class="dash-header">
-    <h1>
-        ⊞ Dashboard
-        <span class="live-dot" title="Live updates active"></span>
-    </h1>
-</div>
-
-<div class="dash-sub">
-    Overview of system activities and updates
-</div>
-
 
 <!-- =========================================================
      WELCOME CARD

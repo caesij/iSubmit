@@ -2,6 +2,7 @@
 {% load static %}
 
 {% block title %}{% if object %}Edit Staff{% else %}Add Staff{% endif %} - iSubmit{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/pages/user-management.css' %}">{% endblock %}
 
 {% block content %}
 <div class="panel-header">

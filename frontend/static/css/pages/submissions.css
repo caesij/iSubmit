@@ -44,6 +44,145 @@ select {
   font: inherit;
 }
 
+.upload-loading[hidden] {
+  display: none;
+}
+
+.upload-loading {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.upload-loading-card {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 18px;
+  border: 1px solid var(--submissions-border);
+  border-radius: 10px;
+  background: var(--submissions-surface);
+  box-shadow: 0 4px 16px var(--submissions-shadow);
+  color: var(--submissions-text);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.upload-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid #f0d6d7;
+  border-top-color: var(--submissions-red-600);
+  border-radius: 50%;
+  animation: upload-spin 0.8s linear infinite;
+}
+
+@keyframes upload-spin {
+  to { transform: rotate(360deg); }
+}
+
+.requirement-form-card {
+  max-width: 920px;
+  padding: 24px;
+}
+
+.requirement-form {
+  width: 100%;
+}
+
+.requirement-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px 22px;
+}
+
+.requirement-field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.requirement-field label {
+  color: var(--submissions-text);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.requirement-field input,
+.requirement-field select {
+  width: 100%;
+  min-height: 42px;
+  padding: 9px 12px;
+  border: 1px solid #cfcfcf;
+  border-radius: 8px;
+  background: #fff;
+  color: var(--submissions-text);
+  font-size: 13px;
+}
+
+.requirement-field input:focus,
+.requirement-field select:focus {
+  outline: 2px solid rgba(166, 7, 0, 0.16);
+  border-color: var(--submissions-red-600);
+}
+
+.requirement-field.has-error input,
+.requirement-field.has-error select {
+  border-color: var(--submissions-error);
+}
+
+.field-error {
+  color: var(--submissions-error);
+  font-size: 12px;
+}
+
+.form-errors {
+  margin-top: 18px;
+}
+
+.requirement-form .form-actions {
+  justify-content: flex-start;
+  gap: 12px;
+  margin-top: 24px;
+  padding-top: 18px;
+  border-top: 1px solid var(--submissions-border);
+}
+
+.requirement-form .btn-add-bin {
+  width: 150px;
+  min-height: 40px;
+  padding: 11px 22px;
+  border: 1px solid var(--submissions-red-700);
+  border-radius: 8px;
+  background: var(--submissions-red-700);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.requirement-form .btn-add-bin:hover {
+  background: var(--submissions-red-800);
+}
+
+.requirement-form .btn-clear {
+  min-height: 40px;
+  padding: 9px 16px;
+  border: 1px solid transparent;
+  color: var(--submissions-red-700);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+@media (max-width: 700px) {
+  .requirement-fields {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* Layout */
 .submissions-shell {
   display: flex;
@@ -1163,7 +1302,6 @@ select {
   margin-top: 4px;
 }
 
-.dropdown:hover .dropdown-menu,
 .dropdown-menu.show {
   display: block;
 }
@@ -1473,6 +1611,17 @@ select {
   justify-content: center;
   margin: 0;
 }
+
+.submission-bin-container .file-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.submission-bin-container .file-actions form {
+  display: block;
+}
 .submission-bin-container .btn-outline,
 .submission-bin-container .btn-outline-danger {
   display: inline-block;
@@ -1491,6 +1640,22 @@ select {
   border: 1px dashed #d44d4d;
   color: #d44d4d;
   background: transparent;
+}
+
+.submission-bin-container .btn-remove {
+  min-width: 76px;
+  padding: 6px 10px;
+  border: 1px solid #d44d4d;
+  border-radius: 6px;
+  background: #fff;
+  color: #b91c1c;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.submission-bin-container .btn-remove:hover {
+  background: #fef2f2;
 }
 
 .submission-bin-container .bottom-bar {

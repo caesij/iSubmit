@@ -6,7 +6,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %} iSubmit - {{ request.user.get_role_display }} Portal {% endblock %}</title>
-    <link rel="stylesheet" href="{% static 'css/admin_staff_portal.css' %}">
+    <link rel="stylesheet" href="{% static 'css/layout/admin_staff_portal.css' %}">
     {% block extra_css %}{% endblock %}
 
     <style>
@@ -43,6 +43,7 @@
 
             <nav class="sidebar-nav" aria-label="Main navigation">
                 <div class="nav-section-title">Main</div>
+                <ul class="nav-list">
                     <li class="nav-item">
                         <a class="nav-link {% if request.resolver_match.url_name == 'admin_dashboard' or request.resolver_match.url_name == 'staff_dashboard' %}active{% endif %}"
                         href="{% if request.user.is_admin %}{% url 'admin_staff_portal:admin_dashboard' %}{% else %}{% url 'admin_staff_portal:staff_dashboard' %}{% endif %}">
@@ -64,11 +65,11 @@
                             <span>Submissions</span>
                         </a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link {% if request.resolver_match.url_name in 'user_list,user_create,user_edit,user_toggle_acc_status' %}active{% endif %}" href="{% url 'admin_staff_portal:user_list' %}?role=STAFF">
+                    <li class="nav-item user-management-nav {% if request.resolver_match.url_name in 'user_list,user_create,user_edit,user_toggle_acc_status' %}is-open{% endif %}">
+                        <button type="button" class="nav-link nav-toggle {% if request.resolver_match.url_name in 'user_list,user_create,user_edit,user_toggle_acc_status' %}active{% endif %}" aria-expanded="{% if request.resolver_match.url_name in 'user_list,user_create,user_edit,user_toggle_acc_status' %}true{% else %}false{% endif %}">
                             <span class="icon"><img src="{% static 'images/usermanagement.svg' %}" alt="User management icon"></span>
                             <span>User Management</span>
-                        </a>
+                        </button>
                         <ul class="subnav-list">
                             {% if request.user.is_admin %}
                             <li class="subnav-item">
@@ -114,12 +115,16 @@
             <header class="topbar">
                 <div>
                     <div class="topbar-title-wrap">
-                        {% if request.resolver_match.url_name == 'dashboard' %}
+                        {% if request.resolver_match.url_name == 'admin_dashboard' or request.resolver_match.url_name == 'staff_dashboard' %}
                             <span class="page-icon"><img src="{% static 'images/dashboard.svg' %}" alt="Dashboard icon"></span>
                         {% elif request.resolver_match.url_name in 'user_list,user_create,user_edit,user_toggle_acc_status' %}
                             <span class="page-icon"><img src="{% static 'images/usermanagement.svg' %}" alt="User management icon"></span>
                         {% elif request.resolver_match.url_name in 'requirements_list,add_requirement,edit_requirement,faculty_submissions_list,faculty_submission_bins_view,review_submission' %}
                             <span class="page-icon"><img src="{% static 'images/submissions.svg' %}" alt="Submissions icon"></span>
+                        {% elif request.resolver_match.url_name == 'document_repo' or request.resolver_match.url_name == 'document_file_view' %}
+                            <span class="page-icon"><img src="{% static 'images/documents.svg' %}" alt="Documents icon"></span>
+                        {% elif request.resolver_match.url_name in 'preferences,notification_settings,account_and_security,staff_permissions' %}
+                            <span class="page-icon"><img src="{% static 'images/settings.svg' %}" alt="Settings icon"></span>
                         {% else %}
                             <span class="page-icon"><img src="{% static 'images/profile.svg' %}" alt="Page icon"></span>
                         {% endif %}
@@ -159,6 +164,18 @@
             </div>
         </main>
     </div>
+
+    <script>
+    document.addEventListener("click", function (event) {
+        const toggle = event.target.closest(".user-management-nav .nav-toggle");
+
+        if (!toggle) return;
+
+        const navItem = toggle.closest(".user-management-nav");
+        const isOpen = navItem.classList.toggle("is-open");
+        toggle.setAttribute("aria-expanded", String(isOpen));
+    });
+    </script>
 
     <script>
     (function () {

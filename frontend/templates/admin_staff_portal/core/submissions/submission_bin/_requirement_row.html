@@ -19,7 +19,7 @@
     </td>
     <td class="action-cell">
         <div class="dropdown">
-            <button class="btn-icon" aria-label="Actions">⋮</button>
+            <button type="button" class="btn-icon" aria-label="Actions" aria-expanded="false">⋮</button>
             <div class="dropdown-menu">
                 <a href="{% url 'admin_staff_portal:edit_requirement' req.id %}">Edit Bin</a>
                 <form action="{% url 'admin_staff_portal:toggle_requirement_status' req.id %}" method="POST">
