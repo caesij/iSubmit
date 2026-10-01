@@ -7,6 +7,10 @@ from django.utils import timezone
 from django.contrib import messages
 
 from accounts.decorators import admin, role_required, staff_permission_required
+from admin_staff_portal.realtime import refresh_admin_dashboard
+from admin_staff_portal.realtime import refresh_staff_dashboard
+from admin_staff_portal.helpers.submissions import refresh_requirement_faculty_dashboards
+
 from faculty_portal.realtime import (
     refresh_faculty_dashboard,
     refresh_faculty_submission_bin,
@@ -40,6 +44,9 @@ def add_requirement(request):
 
         if form.is_valid():
             requirement = form.save()
+            
+            refresh_admin_dashboard()
+            refresh_staff_dashboard()
             refresh_all_faculty_submission_bins()
 
             faculty_qs = User.objects.filter(role=User.Role.FACULTY)
@@ -78,25 +85,28 @@ def edit_requirement(request, requirement_id):
     requirement = get_object_or_404(Requirement, pk=requirement_id)
 
     if request.method == 'POST':
+        old_assigned_to = requirement.assigned_to
+
         form = RequirementForm(request.POST, instance=requirement)
+
         if form.is_valid():
             requirement = form.save()
+
+            refresh_admin_dashboard()
+            refresh_staff_dashboard()
             refresh_all_faculty_submission_bins()
 
-            faculty_qs = User.objects.filter(role=User.Role.FACULTY)
-
-            if requirement.assigned_to != Requirement.AssignedFacultyType.ALL:
-                faculty_qs = faculty_qs.filter(faculty_type=requirement.assigned_to)
-
-            for faculty_member in faculty_qs:
-                refresh_faculty_dashboard(faculty_member)
+            refresh_requirement_faculty_dashboards(old_assigned_to, requirement.assigned_to)
 
             return redirect('admin_staff_portal:requirements_list')
     else:
         form = RequirementForm(instance=requirement)
 
-    context = {'form': form, 'requirement': requirement}
-    
+    context = {
+        'form': form,
+        'requirement': requirement,
+    }
+
     return render(
         request,
         'admin_staff_portal/core/submissions/submission_bin/requirement_forms.html',
@@ -321,6 +331,8 @@ def mark_under_review_view(request, submission_id):
     submission.status = DocumentSubmission.SubmissionStatus.UNDER_REVIEW
     submission.save(update_fields=['status'])
 
+    refresh_admin_dashboard()
+    refresh_staff_dashboard()
     refresh_faculty_dashboard(submission.faculty)
 
     return redirect('admin_staff_portal:review_submission', submission_id=submission.id)
@@ -341,6 +353,8 @@ def mark_reviewed_view(request, submission_id):
     submission.reviewed_at = timezone.now()
     submission.save(update_fields=update_fields)
 
+    refresh_admin_dashboard()
+    refresh_staff_dashboard()
     refresh_faculty_dashboard(submission.faculty)
 
     return redirect('admin_staff_portal:review_submission', submission_id=submission.id)
@@ -390,9 +404,11 @@ def mark_needs_revision_view(request, submission_id):
     submission.reviewed_at = timezone.now()
     submission.save(update_fields=['status', 'reviewed_by', 'reviewed_at',])
 
+    refresh_admin_dashboard()
+    refresh_staff_dashboard()
     refresh_faculty_dashboard(submission.faculty)
     refresh_faculty_submission_bin(submission.faculty)
-
+    
     messages.success(request, 'Submission marked as needing revision.')
 
     return redirect('admin_staff_portal:review_submission', submission_id=submission.id)
@@ -423,10 +439,7 @@ def approve_all_submissions_view(request, faculty_id):
         return redirect('admin_staff_portal:faculty_submission_bins_view', faculty_id=faculty_member.id)
 
     now = timezone.now()
-    
-    approved_submissions = list(submissions_qs.filter(
-        status=DocumentSubmission.SubmissionStatus.PENDING_APPROVAL
-    ))
+
     approved_count = submissions_qs.filter(
         status=DocumentSubmission.SubmissionStatus.PENDING_APPROVAL
     ).update(
@@ -434,10 +447,8 @@ def approve_all_submissions_view(request, faculty_id):
         approved_by=request.user,
         approved_at=now,
     )
-    
-    for sub in approved_submissions:
-        sub.refresh_from_db()
 
+    refresh_staff_dashboard()
     refresh_faculty_dashboard(faculty_member)
 
     messages.success(request, f'{approved_count} document(s) approved.')

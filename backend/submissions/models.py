@@ -35,6 +35,7 @@ class Requirement(models.Model):
     )
     
     deadline = models.DateTimeField()
+    ocr_enabled = models.BooleanField(default=False)
     
     assigned_to = models.CharField(
         max_length=20,

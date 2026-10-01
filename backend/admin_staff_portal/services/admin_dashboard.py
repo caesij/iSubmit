@@ -2,13 +2,11 @@ from collections import OrderedDict
 from datetime import timedelta
 
 from django.contrib.auth import get_user_model
-from django.db.models import Count
 from django.utils import timezone
 
 from submissions.models import Requirement, DocumentSubmission
 
 User = get_user_model()
-
 
 def get_admin_dashboard_data():
     faculty_count = User.objects.filter(
@@ -48,8 +46,9 @@ def get_admin_dashboard_data():
         submissions
         .filter(
             status__in=[
+                DocumentSubmission.SubmissionStatus.RESUBMITTED,
                 DocumentSubmission.SubmissionStatus.UNDER_REVIEW,
-                DocumentSubmission.SubmissionStatus.PENDING_APPROVAL,
+                DocumentSubmission.SubmissionStatus.PENDING_APPROVAL
             ]
         )
         .select_related(
@@ -71,7 +70,7 @@ def get_admin_dashboard_data():
         'active_requirement_count': active_requirement_count,
         'compliance': compliance,
         'pending_review': pending_review,
-        'submission_trends': trends,
+        'submission_trends': trends
     }
 
 
@@ -99,7 +98,7 @@ def get_submission_trends(submissions):
 
         count = submissions.filter(
             initially_submitted_at__gte=month,
-            initially_submitted_at__lt=next_month,
+            initially_submitted_at__lt=next_month
         ).count()
 
         results[month.strftime('%b')] = count
@@ -107,7 +106,7 @@ def get_submission_trends(submissions):
     return [
         {
             'month': month,
-            'count': count,
+            'count': count
         }
         for month, count in results.items()
     ]

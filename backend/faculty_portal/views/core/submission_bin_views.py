@@ -2,18 +2,18 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.views.decorators.http import require_http_methods
 from django.contrib import messages
 from django.http import HttpResponseForbidden
-from django.db import transaction
 
 from accounts.decorators import faculty
-from faculty_portal.helpers.submission_bin_helpers import (
-    run_ocr_if_enabled,
+from admin_staff_portal.realtime import refresh_admin_dashboard
+from admin_staff_portal.realtime import refresh_staff_dashboard
+
+from faculty_portal.helpers.submission_bin import (
     get_available_requirements,
     get_drafts_by_requirement,
     get_needs_revision_by_requirement,
     build_upload_rows,
     process_submission,
     save_draft_form,
-    apply_resubmission,
 )
 
 from submissions.models import (
@@ -21,8 +21,6 @@ from submissions.models import (
     DraftUpload,
     DocumentSubmission,
 )
-from submissions.forms import DocumentRevisionForm
-
 
 @faculty
 @require_http_methods(['GET', 'POST'])
@@ -30,18 +28,15 @@ def upload_files_view(request):
     requirements = get_available_requirements(request.user)
     drafts_by_requirement = get_drafts_by_requirement(request.user, requirements)
 
-    if request.method == 'POST' and request.POST.get('action') == 'submit':
+    if (request.method == 'POST' and request.POST.get('action') == 'submit'):
         return process_submission(request, requirements, drafts_by_requirement)
 
-    needs_revision_by_requirement = get_needs_revision_by_requirement(
-        request.user,
-        requirements,
-    )
+    needs_revision_by_requirement = (get_needs_revision_by_requirement(request.user,requirements))
 
     rows = build_upload_rows(
-        requirements,
-        drafts_by_requirement,
-        needs_revision_by_requirement,
+            requirements,
+            drafts_by_requirement,
+            needs_revision_by_requirement
     )
 
     context = {'rows': rows}
@@ -49,7 +44,7 @@ def upload_files_view(request):
     return render(
         request,
         'faculty_portal/core/submission_bin/upload_files.html',
-        context,
+        context
     )
 
 
@@ -66,7 +61,9 @@ def attach_document_view(request, requirement_id):
         Requirement.AssignedFacultyType.ALL,
         request.user.faculty_type,
     ):
-        return HttpResponseForbidden('You are not assigned to this requirement.')
+        return HttpResponseForbidden(
+            'You are not assigned to this requirement.'
+        )
 
     draft, _ = DraftUpload.objects.get_or_create(
         faculty=request.user,
@@ -87,14 +84,14 @@ def replace_document_view(request, document_id):
     draft = get_object_or_404(
         DraftUpload,
         pk=document_id,
-        faculty=request.user,
+        faculty=request.user
     )
 
     return save_draft_form(
         request,
         draft,
         success_message='File replaced successfully.',
-        error_message='Failed to replace file.',
+        error_message='Failed to replace file.'
     )
 
 
@@ -113,6 +110,9 @@ def submission_complete(request):
     if not submitted_documents.exists():
         messages.info(request, 'No recent submission to show.')
         return redirect('faculty_portal:upload_files')
+    
+    refresh_admin_dashboard()
+    refresh_staff_dashboard()
 
     context = {'submitted_documents': submitted_documents}
 
@@ -148,30 +148,17 @@ def resubmit_document_view(request, submission_id):
         DocumentSubmission,
         pk=submission_id,
         faculty=request.user,
-        status=DocumentSubmission.SubmissionStatus.NEEDS_REVISION,
+        status=DocumentSubmission.SubmissionStatus.NEEDS_REVISION
     )
 
-    form = DocumentRevisionForm(request.POST, request.FILES)
+    draft, _ = DraftUpload.objects.get_or_create(faculty=request.user, requirement=submission.requirement)
 
-    if not form.is_valid():
-        messages.error(request, 'Failed to resubmit. Please check the file format and size.')
-        return redirect('faculty_portal:upload_files')
-
-    try:
-        with transaction.atomic():
-            apply_resubmission(submission, form.cleaned_data['file'])
-
-        messages.success(request, 'Document resubmitted successfully.')
-
-    except Exception as e:
-        print('RESUBMISSION ERROR:', repr(e))
-
-        messages.error(
-            request,
-            'An error occurred while processing your resubmission. Please try again.',
-        )
-
-    return redirect('faculty_portal:upload_files')
+    return save_draft_form(
+        request,
+        draft,
+        success_message='Replacement file uploaded. Select it and submit it when ready.',
+        error_message='Failed to replace the returned file. Please check the format and size.'
+    )
 
 
 @faculty

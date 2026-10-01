@@ -1,7 +1,7 @@
 import os
 import datetime
 from django import forms
-from submissions.models import Requirement, DraftUpload, DocumentRevision, DocumentReview
+from submissions.models import Requirement, DraftUpload, DocumentReview
 from django.core.exceptions import ValidationError
 
 ALLOWED_EXTENSIONS = {'.pdf', '.doc', '.docx', '.xlsx'}
@@ -26,14 +26,20 @@ class RequirementForm(forms.ModelForm):
             'academic_year',
             'semester',
             'status', 
-            'deadline'
+            'deadline',
+            'ocr_enabled',
         ]
         
         widgets = {
             'deadline': forms.DateTimeInput(
                 attrs={'type': 'datetime-local'},
                 format='%Y-%m-%dT%H:%M'
-            )
+            ),
+            'ocr_enabled': forms.CheckboxInput(
+                attrs={
+                    'class': 'ocr-checkbox'
+                }
+            ),
         }
         
         error_messages = {

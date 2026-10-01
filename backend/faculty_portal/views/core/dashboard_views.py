@@ -3,7 +3,7 @@ from django.views.decorators.http import require_http_methods
 from django.http import JsonResponse
 
 from accounts.decorators import faculty
-from faculty_portal.services import get_dashboard_data
+from faculty_portal.services.faculty_dashboard import get_dashboard_data
 from submissions.models import DocumentSubmission
 
 @faculty

@@ -178,7 +178,7 @@
                 <tbody id="pending-review-body">
                     {% for submission in pending_review %}
                         <tr>
-                            <td>{{ submission.id }}</td>
+                            <td>{{ submission.faculty.employee_ID }}</td>
                             <td>
                                 {{ submission.faculty.get_full_name }}
                             </td>
@@ -186,12 +186,15 @@
                                 {{ submission.requirement.requirement_title }}
                             </td>
                             <td>
-                                {{ submission.initially_submitted_at|date:"M j, Y" }}
+                                {% if submission.status == 'RESUBMITTED' and submission.resubmitted_at %}
+                                    {{ submission.resubmitted_at|date:"M j, Y" }}
+                                {% else %}
+                                    {{ submission.initially_submitted_at|date:"M j, Y" }}
+                                {% endif %}
                             </td>
-                        </tr>
                     {% empty %}
                         <tr>
-                            <td colspan="5" class="empty-row">
+                            <td colspan="4" class="empty-row">
                                 No pending reviews.
                             </td>
                         </tr>
@@ -317,7 +320,7 @@ function updatePendingReview(data) {
         const row = document.createElement("tr");
 
         row.innerHTML = `
-            <td>${submission.id}</td>
+            <td>${ submission.faculty.employee_ID }</td>
             <td>${submission.faculty}</td>
             <td>${submission.document}</td>
             <td>${submission.date}</td>
@@ -392,7 +395,7 @@ function updateSubmissionTrends(data) {
 }
 
 document.addEventListener(
-    "dashboard-update",
+    "admin-dashboard-update",
     refreshAdminDashboard
 );
 </script>

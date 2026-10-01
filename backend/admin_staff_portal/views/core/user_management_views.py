@@ -11,7 +11,7 @@ import string
 from axes.utils import reset as axes_reset
 
 from accounts.decorators import role_required, staff_permission_required
-from admin_staff_portal.helpers import (
+from admin_staff_portal.helpers.user_management import (
     get_target_role,
     get_page_title,
     get_form_class,
