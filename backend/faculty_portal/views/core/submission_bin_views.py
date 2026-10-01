@@ -49,6 +49,29 @@ def upload_files_view(request):
 
 
 @faculty
+@require_http_methods(['GET'])
+def submission_bin_data_view(request):
+    requirements = get_available_requirements(request.user)
+    drafts_by_requirement = get_drafts_by_requirement(request.user, requirements)
+    needs_revision_by_requirement = get_needs_revision_by_requirement(request.user, requirements)
+    
+    rows = build_upload_rows(
+        requirements,
+        drafts_by_requirement,
+        needs_revision_by_requirement
+    )
+    
+    response = render(
+        request,
+        'faculty_portal/core/submission_bin/_upload_rows.html',
+        {'rows': rows}
+    )
+    
+    response['Cache-Control'] = 'no-store'
+    return response
+
+
+@faculty
 @require_http_methods(['POST'])
 def attach_document_view(request, requirement_id):
     requirement = get_object_or_404(

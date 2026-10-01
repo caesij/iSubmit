@@ -2,6 +2,7 @@ from faculty_portal.views.core.dashboard_views import dashboard_view, dashboard_
 
 from faculty_portal.views.core.submission_bin_views import (
     upload_files_view,
+    submission_bin_data_view,
     attach_document_view,
     resubmit_document_view,
     replace_document_view,
@@ -11,7 +12,8 @@ from faculty_portal.views.core.submission_bin_views import (
 )
 
 from faculty_portal.views.core.my_submissions_views import (
-    recent_submissions_list,
+    submissions_list,
+    submissions_data_view,
     view_my_submitted_document
 )
 
@@ -36,6 +38,7 @@ __all__ = [
     'dashboard_data_view',
     
     'upload_files_view',
+    'submission_bin_data_view',
     'attach_document_view',
     'resubmit_document_view',
     'replace_document_view',
@@ -43,7 +46,8 @@ __all__ = [
     'view_uploaded_document',
     'submission_complete',
     
-    'recent_submissions_list',
+    'submissions_list',
+    'submissions_data_view',
     'view_my_submitted_document',
     
     'all_documents_view',
