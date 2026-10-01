@@ -1,7 +1,8 @@
 from admin_staff_portal.views.core.dashboard_views import (
     admin_dashboard_data_view,
-    
     admin_dashboard_view,
+    
+    staff_dashboard_data_view,
     staff_dashboard_view,
 )
 
@@ -25,7 +26,7 @@ from admin_staff_portal.views.core.submissions_views import (
     approve_all_submissions_view,
 )
 
-from admin_staff_portal.views.core.user_mgmt_views import (
+from admin_staff_portal.views.core.user_management_views import (
     user_list_view,
     user_create_view,
     user_update_view,
@@ -44,6 +45,8 @@ from admin_staff_portal.views.general.profile_views import profile_view
 __all__ = [
     'admin_dashboard_data_view',
     'admin_dashboard_view',
+    
+    'staff_dashboard_data_view',
     'staff_dashboard_view',
     
     'document_repo_view',

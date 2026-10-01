@@ -197,9 +197,15 @@
 
             const message = JSON.parse(event.data);
 
-            if (message.event === "dashboard.update") {
+            if (message.event === "admin-dashboard.update") {
                 document.dispatchEvent(
-                    new CustomEvent("dashboard-update")
+                    new CustomEvent("admin-dashboard-update")
+                );
+            }
+            
+            if (message.event === "staff-dashboard.update") {
+                document.dispatchEvent(
+                    new CustomEvent("staff-dashboard-update")
                 );
             }
 

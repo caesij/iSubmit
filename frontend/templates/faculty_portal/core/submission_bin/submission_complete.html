@@ -114,7 +114,7 @@ Upload and manage academic documents
     </h2>
 
     <p class="section-desc">
-        Your document has been submitted and is now waiting for review.
+        Your selected documents have been submitted and are now waiting for review.
     </p>
 
     <div class="banner banner-success">
@@ -126,7 +126,7 @@ Upload and manage academic documents
         <div>
 
             <p class="banner-title">
-                Your document has been submitted!
+                Your document(s) have been submitted!
             </p>
 
             <p class="banner-sub">
@@ -150,30 +150,16 @@ Upload and manage academic documents
         <table class="data-table">
 
             <thead>
-
                 <tr>
-
-                    <th style="width: 32px;">
-                        <input
-                            type="checkbox"
-                            aria-label="Select all"
-                        >
-                    </th>
-
                     <th>File</th>
                     <th>Category</th>
                     <th>Deadline</th>
                     <th>Date Uploaded</th>
                     <th>Status</th>
-
-                    <th
-                        style="width: 76px; text-align: center;"
-                    >
+                    <th style="width: 76px; text-align: center;">
                         Action
                     </th>
-
                 </tr>
-
             </thead>
 
             <tbody>
@@ -181,16 +167,6 @@ Upload and manage academic documents
                 {% for doc in submitted_documents %}
 
                     <tr>
-
-                        <td>
-
-                            <input
-                                type="checkbox"
-                                name="selected_documents"
-                                value="{{ doc.id }}"
-                            >
-
-                        </td>
 
                         <td>
 
@@ -320,7 +296,7 @@ Upload and manage academic documents
                     <tr>
 
                         <td
-                            colspan="7"
+                            colspan="6"
                             class="text-center py-4"
                         >
                             No submitted documents to show.

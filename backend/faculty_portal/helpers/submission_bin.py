@@ -4,6 +4,12 @@ from django.contrib import messages
 from django.db.models import Q
 from django.db import transaction
 from django.core.files.base import ContentFile
+from urllib3 import request
+
+from admin_staff_portal.realtime import refresh_admin_dashboard
+from admin_staff_portal.realtime import refresh_staff_dashboard
+from faculty_portal.realtime import refresh_faculty_dashboard, refresh_faculty_submission_bin
+from submissions.forms import DraftUploadForm
 
 from submissions.models import (
     Requirement,
@@ -11,12 +17,11 @@ from submissions.models import (
     DocumentSubmission,
     DocumentRevision,
 )
-from submissions.forms import DraftUploadForm
+
 
 def run_ocr_if_enabled(draft):
     if not getattr(draft.requirement, 'ocr_enabled', False):
         return
-
 
 def get_available_requirements(user):
     already_submitted_ids = (
@@ -74,7 +79,7 @@ def build_upload_rows(requirements, drafts_by_requirement, needs_revision_by_req
     return rows
 
 
-def build_selected_rows(requirements, selected_ids, drafts_by_requirement):
+def build_selected_rows(requirements, selected_ids, drafts_by_requirement, needs_revision_by_requirement):
     rows = []
 
     for requirement in requirements:
@@ -82,10 +87,13 @@ def build_selected_rows(requirements, selected_ids, drafts_by_requirement):
             continue
 
         draft = drafts_by_requirement.get(requirement.id)
+        submission = needs_revision_by_requirement.get(requirement.id)
 
         rows.append({
             'requirement': requirement,
             'draft': draft,
+            'submission': submission,
+            'is_resubmission': bool(submission),
             'is_ready': bool(draft and draft.draft_file),
         })
 
@@ -109,12 +117,17 @@ def create_submissions(user, selected_rows):
             draft = row['draft']
             file_content, original_name = read_draft_file(draft)
 
-            submission = DocumentSubmission.objects.create(
-                faculty=user,
-                requirement=row['requirement'],
-                status=DocumentSubmission.SubmissionStatus.SUBMITTED,
-            )
-            submission.document_file.save(original_name, file_content, save=True)
+            if row['is_resubmission']:
+                submission = row['submission']
+                apply_resubmission(submission, file_content, original_name)
+            else:
+                submission = DocumentSubmission.objects.create(
+                    faculty=user,
+                    requirement=row['requirement'],
+                    status=DocumentSubmission.SubmissionStatus.SUBMITTED,
+                )
+
+                submission.document_file.save(original_name, file_content, save=True)
 
             completed_submissions.append(submission)
 
@@ -132,8 +145,15 @@ def process_submission(request, requirements, drafts_by_requirement):
     if not selected_ids:
         messages.error(request, 'Please select at least one document to submit.')
         return redirect('faculty_portal:upload_files')
+    
+    needs_revision_by_requirement = (get_needs_revision_by_requirement(request.user, requirements))
 
-    selected_rows = build_selected_rows(requirements, selected_ids, drafts_by_requirement)
+    selected_rows = build_selected_rows(
+        requirements, 
+        selected_ids, 
+        drafts_by_requirement, 
+        needs_revision_by_requirement
+    )
 
     if not selected_rows:
         messages.error(request, 'No valid documents were selected.')
@@ -149,6 +169,14 @@ def process_submission(request, requirements, drafts_by_requirement):
         request.session['recently_submitted_ids'] = [
             str(submission.id) for submission in completed_submissions
         ]
+        
+        try:
+            refresh_admin_dashboard()
+            refresh_staff_dashboard()
+            refresh_faculty_dashboard(request.user)
+            refresh_faculty_submission_bin(request.user)
+        except Exception as e:
+            print('DASHBOARD REALTIME ERROR:', repr(e))
 
         messages.success(request, 'Selected documents submitted successfully.')
         return redirect('faculty_portal:submission_complete')
@@ -160,6 +188,7 @@ def process_submission(request, requirements, drafts_by_requirement):
             request,
             'An error occurred while processing your submission. Please try again.',
         )
+        
         return redirect('faculty_portal:upload_files')
 
 
@@ -187,7 +216,7 @@ def get_next_version(submission):
     return (last_version or 0) + 1
 
 
-def apply_resubmission(submission, uploaded_file):
+def apply_resubmission(submission, file_content, original_name):
     DocumentRevision.objects.create(
         submission=submission,
         version_number=get_next_version(submission),
@@ -195,7 +224,7 @@ def apply_resubmission(submission, uploaded_file):
 
     old_file_name = submission.document_file.name
 
-    submission.document_file.save(uploaded_file.name, uploaded_file, save=False)
+    submission.document_file.save(original_name, file_content, save=False)
     submission.status = DocumentSubmission.SubmissionStatus.RESUBMITTED
     submission.resubmitted_at = timezone.now()
     submission.save(update_fields=['document_file', 'status', 'resubmitted_at'])

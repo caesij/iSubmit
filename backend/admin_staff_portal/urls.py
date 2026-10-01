@@ -9,6 +9,7 @@ urlpatterns = [
     path('admin-dashboard/data/', views.admin_dashboard_data_view, name='admin_dashboard_data'),
     
     path('staff-dashboard/', views.staff_dashboard_view, name='staff_dashboard'),
+    path('staff-dashboard/data/', views.staff_dashboard_data_view, name='staff_dashboard_data'),
     
     # Document Repo URLs
     path('documents/document_repository/', views.document_repo_view, name='document_repo'),

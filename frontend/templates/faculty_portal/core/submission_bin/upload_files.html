@@ -122,16 +122,7 @@
 
                         <td>
 
-                            {% if row.is_resubmission %}
-
-                                <input
-                                    type="checkbox"
-                                    disabled
-                                    aria-label="This submission needs revision"
-                                >
-
-                            {% elif row.draft and row.draft.draft_file %}
-
+                            {% if row.is_resubmission and row.draft and row.draft.draft_file %}
                                 <input
                                     type="checkbox"
                                     name="selected_requirements"
@@ -139,15 +130,26 @@
                                     form="selection-form"
                                     class="requirement-checkbox"
                                 >
-
+                            {% elif row.is_resubmission %}
+                                <input
+                                    type="checkbox"
+                                    disabled
+                                    aria-label="Upload a replacement file first"
+                                >
+                            {% elif row.draft and row.draft.draft_file %}
+                                <input
+                                    type="checkbox"
+                                    name="selected_requirements"
+                                    value="{{ row.requirement.id }}"
+                                    form="selection-form"
+                                    class="requirement-checkbox"
+                                >
                             {% else %}
-
                                 <input
                                     type="checkbox"
                                     disabled
                                     aria-label="No file available for this requirement"
                                 >
-
                             {% endif %}
 
                         </td>
@@ -179,9 +181,29 @@
                             </td>
 
                             <td>
-
-                                {% if row.submission and row.submission.document_file %}
-
+                                {% if row.draft and row.draft.draft_file %}
+                                    <a
+                                        href="{% url 'faculty_portal:view_uploaded_document' row.draft.id %}"
+                                        class="file-link"
+                                        title="{{ row.draft.draft_file.name }}"
+                                    >
+                                        <div class="file-box">
+                                            <img
+                                                class="file-icon-svg"
+                                                src="{% static 'images/PDF.svg' %}"
+                                                alt="PDF file icon"
+                                            >
+                                            <div>
+                                                <div class="file-name">
+                                                    {{ row.draft.draft_file.name }}
+                                                </div>
+                                                <span class="file-size">
+                                                    Replacement file
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </a>
+                                {% elif row.submission and row.submission.document_file %}
                                     <a
                                         href="{{ row.submission.document_file.url }}"
                                         class="file-link"
@@ -189,36 +211,26 @@
                                         target="_blank"
                                     >
                                         <div class="file-box">
-
                                             <img
                                                 class="file-icon-svg"
                                                 src="{% static 'images/PDF.svg' %}"
                                                 alt="PDF file icon"
                                             >
-
                                             <div>
-
                                                 <div class="file-name">
                                                     {{ row.submission.document_file.name }}
                                                 </div>
-
                                                 <span class="file-size">
                                                     Current submitted file
                                                 </span>
-
                                             </div>
-
                                         </div>
                                     </a>
-
                                 {% else %}
-
                                     —
-
                                 {% endif %}
-
                             </td>
-
+                            
                             <td class="action-cell">
 
                                 <form
@@ -231,7 +243,7 @@
 
                                     <input
                                         type="file"
-                                        name="file"
+                                        name="draft_file"
                                         id="resubmit-{{ row.submission.id }}"
                                         hidden
                                         required
