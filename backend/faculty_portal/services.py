@@ -4,18 +4,13 @@ from django.utils.formats import date_format
 
 from submissions.models import Requirement, DocumentSubmission
 
-
 def get_dashboard_data(user):
-
     active_requirements = (
         Requirement.objects
-        .filter(
-            status=Requirement.ReqStatus.ACTIVE
-        )
+        .filter(status=Requirement.ReqStatus.ACTIVE)
         .filter(
             Q(assigned_to=Requirement.AssignedFacultyType.ALL)
-            |
-            Q(assigned_to=user.faculty_type)
+            | Q(assigned_to=user.faculty_type)
         )
     )
 
@@ -24,13 +19,6 @@ def get_dashboard_data(user):
     submissions = DocumentSubmission.objects.filter(
         faculty=user,
         requirement__in=active_requirements,
-    )
-
-    total_submitted_count = (
-        submissions
-        .values('requirement_id')
-        .distinct()
-        .count()
     )
 
     approved_count = submissions.filter(
@@ -55,35 +43,58 @@ def get_dashboard_data(user):
     returned_count = submissions.filter(
         status=DocumentSubmission.SubmissionStatus.NEEDS_REVISION
     ).count()
-    
+
+    total_submitted_count = submissions.filter(
+        status__in=[
+            DocumentSubmission.SubmissionStatus.APPROVED,
+            DocumentSubmission.SubmissionStatus.SUBMITTED,
+            DocumentSubmission.SubmissionStatus.RESUBMITTED,
+            DocumentSubmission.SubmissionStatus.UNDER_REVIEW,
+            DocumentSubmission.SubmissionStatus.PENDING_APPROVAL,
+        ]
+    ).count()
+
+    submitted_requirement_ids = (
+        submissions
+        .exclude(status=DocumentSubmission.SubmissionStatus.NEEDS_REVISION)
+        .values_list('requirement_id', flat=True)
+    )
+
     deadline_queryset = (
         active_requirements
-        .filter(
-            deadline__isnull=False,
-            deadline__gte=timezone.now(),
-        )
-        .order_by("deadline")[:5]
+        .filter(deadline__isnull=False, deadline__gte=timezone.now())
+        .exclude(id__in=submitted_requirement_ids)
+        .order_by('deadline')[:5]
     )
 
     upcoming_deadlines = [
         {
-            "requirement_title": requirement.requirement_title,
-            "deadline": date_format(
-                requirement.deadline,
-                "M j, Y"
-            ),
+            'requirement_title': requirement.requirement_title,
+            'deadline': date_format(requirement.deadline, 'M j, Y'),
         }
         for requirement in deadline_queryset
     ]
 
     def percentage(count):
-
         if not total_requirements:
             return 0
+        return round((count / total_requirements) * 100)
 
-        return round(
-            (count / total_requirements) * 100
-        )
+    overview_submissions = (
+        submissions
+        .select_related('requirement')
+        .order_by('-initially_submitted_at')[:5]
+    )
+
+    overview_data = [
+        {
+            'title': submission.requirement.requirement_title,
+            'date': date_format(submission.initially_submitted_at, 'M j, Y'),
+            'time': date_format(submission.initially_submitted_at, 'g:i A'),
+            'status': submission.status,
+        }
+        for submission in overview_submissions
+    ]
 
     return {
         'total_requirements': total_requirements,
@@ -94,10 +105,9 @@ def get_dashboard_data(user):
         'pending_approval_count': pending_approval_count,
         'returned_count': returned_count,
         'upcoming_deadlines': upcoming_deadlines,
-
         'approved_pct': percentage(approved_count),
         'submitted_pct': percentage(submitted_count),
         'under_review_pct': percentage(under_review_count),
         'pending_approval_pct': percentage(pending_approval_count),
-        'returned_pct': percentage(returned_count),
+        'overview_submissions': overview_data,
     }

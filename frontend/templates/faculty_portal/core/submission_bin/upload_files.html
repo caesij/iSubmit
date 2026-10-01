@@ -1,7 +1,9 @@
 {% extends 'faculty_portal/base.html' %}
+
 {% load static %}
 
 {% block title %}Submission Bin - iSubmit{% endblock %}
+
 {% block heading %}Submission Bin{% endblock %}
 {% block topbar_subtitle %}Upload and manage academic documents{% endblock %}
 
@@ -10,31 +12,44 @@
 {% endblock %}
 
 {% block content %}
+
 <div class="submission-bin-container">
 
-    <!-- Page Header -->
     <div class="page-header">
         <div class="page-title-wrap">
             <span class="page-icon">
-                <img src="{% static 'images/Submission Faculty.svg' %}" alt="Submission Bin icon">
+                <img
+                    src="{% static 'images/Submission Faculty.svg' %}"
+                    alt="Submission Bin icon"
+                >
             </span>
             <div>
                 <h1>Submission Bin</h1>
-                <p class="subtitle">Upload and manage academic documents</p>
+                <p class="subtitle">
+                    Upload and manage academic documents
+                </p>
             </div>
         </div>
     </div>
 
-    <!-- Navigation Tabs -->
     <div class="tab-nav">
-        <a href="{% url 'faculty_portal:upload_files' %}" class="tab-link active">Upload Files</a>
-        <a href="#" class="tab-link">Document Analysis</a>
-        <a href="{% url 'faculty_portal:review_confirm' %}" class="tab-link">Review &amp; Confirm</a>
-        <a href="#" class="tab-link">Submission Complete</a>
+        <a
+            href="{% url 'faculty_portal:upload_files' %}"
+            class="tab-link active"
+        >
+            Upload Files
+        </a>
+
+        <a
+            href="{% url 'faculty_portal:submission_complete' %}"
+            class="tab-link"
+        >
+            Submission Complete
+        </a>
     </div>
 
-    <!-- Step Indicator -->
     <div class="step-card">
+
         <div class="step-item active">
             <span class="step-circle">1</span>
             <div>
@@ -48,48 +63,38 @@
         <div class="step-item">
             <span class="step-circle">2</span>
             <div>
-                <div class="step-title">Document Analysis</div>
-                <div class="step-sub">OCR and NLP checking</div>
-            </div>
-        </div>
-
-        <div class="step-divider"></div>
-
-        <div class="step-item">
-            <span class="step-circle">3</span>
-            <div>
-                <div class="step-title">Review &amp; Confirm</div>
-                <div class="step-sub">Review before submission</div>
-            </div>
-        </div>
-
-        <div class="step-divider"></div>
-
-        <div class="step-item">
-            <span class="step-circle">4</span>
-            <div>
                 <div class="step-title">Submission Complete</div>
-                <div class="step-sub">Your document has been submitted for review</div>
+                <div class="step-sub">
+                    Your document has been submitted for review
+                </div>
             </div>
         </div>
+
     </div>
 
     <h2 class="section-title">Step 1. Upload Files</h2>
-    <p class="section-desc">Upload your documents. You can upload one or more files.</p>
 
-    <!-- Selection Form -->
+    <p class="section-desc">
+        Upload your documents, review the attached files, then submit the selected requirements.
+    </p>
+
     <form
         id="selection-form"
-        action="{% url 'faculty_portal:review_confirm' %}"
+        action="{% url 'faculty_portal:upload_files' %}"
         method="post"
     >
         {% csrf_token %}
-        <input type="hidden" name="action" value="review">
+        <input
+            type="hidden"
+            name="action"
+            value="submit"
+        >
     </form>
 
-    <!-- Requirements & Drafts Table -->
     <div class="table-card">
+
         <table class="data-table">
+
             <thead>
                 <tr>
                     <th>
@@ -110,16 +115,23 @@
             </thead>
 
             <tbody>
+
                 {% for row in rows %}
+
                     <tr>
+
                         <td>
+
                             {% if row.is_resubmission %}
+
                                 <input
                                     type="checkbox"
                                     disabled
                                     aria-label="This submission needs revision"
                                 >
+
                             {% elif row.draft and row.draft.draft_file %}
+
                                 <input
                                     type="checkbox"
                                     name="selected_requirements"
@@ -127,33 +139,49 @@
                                     form="selection-form"
                                     class="requirement-checkbox"
                                 >
+
                             {% else %}
+
                                 <input
                                     type="checkbox"
                                     disabled
                                     aria-label="No file available for this requirement"
                                 >
+
                             {% endif %}
+
                         </td>
 
                         <td class="font-bold">
-                            {{ forloop.counter }}. {{ row.requirement.requirement_title }}
+                            {{ forloop.counter }}.
+                            {{ row.requirement.requirement_title }}
                         </td>
 
-                        <td>{{ row.requirement.category }}</td>
+                        <td>
+                            {{ row.requirement.category }}
+                        </td>
 
                         <td>
-                            <div>{{ row.requirement.deadline|date:"F j, Y" }}</div>
-                            <div class="text-sub">{{ row.requirement.deadline|date:"g:i A" }}</div>
+                            <div>
+                                {{ row.requirement.deadline|date:"F j, Y" }}
+                            </div>
+                            <div class="text-sub">
+                                {{ row.requirement.deadline|date:"g:i A" }}
+                            </div>
                         </td>
 
                         {% if row.is_resubmission %}
+
                             <td>
-                                <span class="status-badge status-no-file">Needs Revision</span>
+                                <span class="status-badge status-no-file">
+                                    Needs Revision
+                                </span>
                             </td>
 
                             <td>
+
                                 {% if row.submission and row.submission.document_file %}
+
                                     <a
                                         href="{{ row.submission.document_file.url }}"
                                         class="file-link"
@@ -161,33 +189,46 @@
                                         target="_blank"
                                     >
                                         <div class="file-box">
+
                                             <img
                                                 class="file-icon-svg"
                                                 src="{% static 'images/PDF.svg' %}"
                                                 alt="PDF file icon"
                                             >
+
                                             <div>
+
                                                 <div class="file-name">
-                                                    {{ row.submission.document_file.name|cut:'.pdf'|default:row.submission.document_file.name }}
+                                                    {{ row.submission.document_file.name }}
                                                 </div>
+
                                                 <span class="file-size">
                                                     Current submitted file
                                                 </span>
+
                                             </div>
+
                                         </div>
                                     </a>
+
                                 {% else %}
+
                                     —
+
                                 {% endif %}
+
                             </td>
 
                             <td class="action-cell">
+
                                 <form
                                     action="{% url 'faculty_portal:resubmit_document' row.submission.id %}"
                                     method="post"
                                     enctype="multipart/form-data"
                                 >
+
                                     {% csrf_token %}
+
                                     <input
                                         type="file"
                                         name="file"
@@ -196,42 +237,58 @@
                                         required
                                         onchange="this.form.submit()"
                                     >
+
                                     <label
                                         for="resubmit-{{ row.submission.id }}"
                                         class="btn-outline-danger"
                                     >
                                         &uarr; Replace File
                                     </label>
+
                                 </form>
+
                             </td>
 
                         {% elif row.draft and row.draft.draft_file %}
+
                             <td>
-                                <span class="status-badge status-attached">Attached</span>
+                                <span class="status-badge status-attached">
+                                    Attached
+                                </span>
                             </td>
 
                             <td>
+
                                 <a
                                     href="{% url 'faculty_portal:view_uploaded_document' row.draft.id %}"
                                     class="file-link"
                                     title="{{ row.draft.draft_file.name }}"
                                 >
+
                                     <div class="file-box">
+
                                         <img
                                             class="file-icon-svg"
                                             src="{% static 'images/PDF.svg' %}"
                                             alt="PDF file icon"
                                         >
+
                                         <div>
+
                                             <div class="file-name">
-                                                {{ row.draft.draft_file.name|cut:'.pdf'|default:row.draft.draft_file.name }}
+                                                {{ row.draft.draft_file.name }}
                                             </div>
+
                                             <span class="file-size">
                                                 {{ row.draft.draft_file.size|filesizeformat }}
                                             </span>
+
                                         </div>
+
                                     </div>
+
                                 </a>
+
                             </td>
 
                             <td class="action-cell">
@@ -242,6 +299,7 @@
                                         enctype="multipart/form-data"
                                     >
                                     {% csrf_token %}
+
                                     <input
                                         type="file"
                                         name="draft_file"
@@ -249,6 +307,7 @@
                                         hidden
                                         onchange="this.form.submit()"
                                     >
+
                                     <label
                                         for="replace-{{ row.draft.id }}"
                                         class="btn-outline"
@@ -268,19 +327,27 @@
                             </td>
 
                         {% else %}
+
                             <td>
-                                <span class="status-badge status-no-file">No file yet</span>
+                                <span class="status-badge status-no-file">
+                                    No file yet
+                                </span>
                             </td>
 
-                            <td>—</td>
+                            <td>
+                                —
+                            </td>
 
                             <td class="action-cell">
+
                                 <form
                                     action="{% url 'faculty_portal:attach_document' row.requirement.id %}"
                                     method="post"
                                     enctype="multipart/form-data"
                                 >
+
                                     {% csrf_token %}
+
                                     <input
                                         type="file"
                                         name="draft_file"
@@ -288,33 +355,48 @@
                                         hidden
                                         onchange="this.form.submit()"
                                     >
+
                                     <label
                                         for="upload-{{ row.requirement.id }}"
                                         class="btn-outline-danger"
                                     >
                                         &uarr; Upload
                                     </label>
+
                                 </form>
+
                             </td>
+
                         {% endif %}
+
                     </tr>
 
                 {% empty %}
+
                     <tr>
-                        <td colspan="7" class="text-center py-4">
+                        <td
+                            colspan="7"
+                            class="text-center py-4"
+                        >
                             No active requirements assigned.
                         </td>
                     </tr>
+
                 {% endfor %}
+
             </tbody>
+
         </table>
+
     </div>
 
-    <!-- Note + Continue Bar -->
     <div class="bottom-bar">
+
         <div class="info-note">
             <span class="info-icon">ⓘ</span>
-            <p>You can upload one or more documents. Select the bins you want to proceed with.</p>
+            <p>
+                You can upload one or more documents. Select the bins you want to submit.
+            </p>
         </div>
 
         <button
@@ -322,8 +404,9 @@
             form="selection-form"
             class="btn-continue"
         >
-            Proceed with Selected &rarr;
+            Submit Selected Documents &rarr;
         </button>
+
     </div>
 
 </div>
@@ -340,7 +423,9 @@ document.addEventListener("DOMContentLoaded", function () {
     const selectAll = document.getElementById("select-all-requirements");
     const uploadLoading = document.getElementById("upload-loading");
     const checkboxes = Array.from(
-        document.querySelectorAll(".requirement-checkbox")
+        document.querySelectorAll(
+            ".requirement-checkbox"
+        )
     );
 
     document.addEventListener("change", function (event) {
@@ -356,35 +441,60 @@ document.addEventListener("DOMContentLoaded", function () {
     }, true);
 
     if (selectAll) {
-        selectAll.addEventListener("change", function () {
-            checkboxes.forEach(function (checkbox) {
-                checkbox.checked = selectAll.checked;
-            });
-        });
+        selectAll.addEventListener(
+            "change",
+            function () {
+                checkboxes.forEach(
+                    function (checkbox) {
+                        checkbox.checked =
+                            selectAll.checked;
+                    }
+                );
+            }
+        );
     }
 
-    checkboxes.forEach(function (checkbox) {
-        checkbox.addEventListener("change", function () {
-            if (!selectAll) return;
+    checkboxes.forEach(
+        function (checkbox) {
+            checkbox.addEventListener(
+                "change",
+                function () {
+                    if (!selectAll) {
+                        return;
+                    }
 
-            const allSelected =
-                checkboxes.length > 0 &&
-                checkboxes.every(function (item) {
-                    return item.checked;
-                });
+                    const allSelected =
+                        checkboxes.length > 0 &&
+                        checkboxes.every(
+                            function (item) {
+                                return item.checked;
+                            }
+                        );
 
-            const someSelected = checkboxes.some(function (item) {
-                return item.checked;
-            });
+                    const someSelected =
+                        checkboxes.some(
+                            function (item) {
+                                return item.checked;
+                            }
+                        );
 
-            selectAll.checked = allSelected;
-            selectAll.indeterminate = !allSelected && someSelected;
-        });
-    });
+                    selectAll.checked =
+                        allSelected;
 
-    document.addEventListener("submission-bin-update", function () {
-        window.location.reload();
-    });
+                    selectAll.indeterminate =
+                        !allSelected &&
+                        someSelected;
+                }
+            );
+        }
+    );
+
+    document.addEventListener(
+        "submission-bin-update",
+        function () {
+            window.location.reload();
+        }
+    );
 });
 </script>
 
