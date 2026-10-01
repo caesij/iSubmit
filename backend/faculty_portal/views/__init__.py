@@ -7,7 +7,6 @@ from faculty_portal.views.core.submission_bin_views import (
     replace_document_view,
     remove_document_view,
     view_uploaded_document,
-    confirm_submission,
     submission_complete,
 )
 
@@ -42,7 +41,6 @@ __all__ = [
     'replace_document_view',
     'remove_document_view',
     'view_uploaded_document',
-    'confirm_submission',
     'submission_complete',
     
     'recent_submissions_list',

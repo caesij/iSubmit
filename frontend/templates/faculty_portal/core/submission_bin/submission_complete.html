@@ -1,11 +1,13 @@
 {% extends 'faculty_portal/base.html' %}
+
 {% load static %}
 
 {% block title %}Submission Complete - iSubmit{% endblock %}
+
 {% block heading %}Submission Bin{% endblock %}
 
 {% block topbar_subtitle %}
-    Upload and manage academic documents
+Upload and manage academic documents
 {% endblock %}
 
 {% block extra_css %}
@@ -13,45 +15,43 @@
 {% endblock %}
 
 {% block content %}
+
 <div class="submission-bin-container">
 
-    <!-- Page Header -->
     <div class="page-header">
+
         <div class="page-title-wrap">
+
             <span class="page-icon">
+
                 <img
                     src="{% static 'images/Submission Faculty.svg' %}"
                     alt="Submission Bin icon"
                 >
+
             </span>
 
             <div>
+
                 <h1>Submission Bin</h1>
+
                 <p class="subtitle">
                     Upload and manage academic documents
                 </p>
+
             </div>
+
         </div>
+
     </div>
 
-    <!-- Navigation Tabs -->
     <div class="tab-nav">
+
         <a
             href="{% url 'faculty_portal:upload_files' %}"
             class="tab-link"
         >
             Upload Files
-        </a>
-
-        <a href="#" class="tab-link">
-            Document Analysis
-        </a>
-
-        <a
-            href="{% url 'faculty_portal:review_confirm' %}"
-            class="tab-link"
-        >
-            Review &amp; Confirm
         </a>
 
         <a
@@ -60,68 +60,71 @@
         >
             Submission Complete
         </a>
+
     </div>
 
-    <!-- Step Indicator -->
     <div class="step-card">
-        <div class="step-item done">
-            <span class="step-circle">&#10003;</span>
-
-            <div>
-                <div class="step-title">Upload Files</div>
-                <div class="step-sub">Upload your document</div>
-            </div>
-        </div>
-
-        <div class="step-divider done"></div>
 
         <div class="step-item done">
-            <span class="step-circle">&#10003;</span>
+
+            <span class="step-circle">
+                &#10003;
+            </span>
 
             <div>
-                <div class="step-title">Document Analysis</div>
-                <div class="step-sub">OCR and NLP checking</div>
+
+                <div class="step-title">
+                    Upload Files
+                </div>
+
+                <div class="step-sub">
+                    Upload your document
+                </div>
+
             </div>
-        </div>
 
-        <div class="step-divider done"></div>
-
-        <div class="step-item done">
-            <span class="step-circle">&#10003;</span>
-
-            <div>
-                <div class="step-title">Review &amp; Confirm</div>
-                <div class="step-sub">Review before submission</div>
-            </div>
         </div>
 
         <div class="step-divider done"></div>
 
         <div class="step-item active">
-            <span class="step-circle">4</span>
+
+            <span class="step-circle">
+                2
+            </span>
 
             <div>
-                <div class="step-title">Submission Complete</div>
+
+                <div class="step-title">
+                    Submission Complete
+                </div>
+
                 <div class="step-sub">
                     Your document has been submitted for review
                 </div>
+
             </div>
+
         </div>
+
     </div>
 
     <h2 class="section-title">
-        Step 4. Submission Complete
+        Step 2. Submission Complete
     </h2>
 
     <p class="section-desc">
         Your document has been submitted and is now waiting for review.
     </p>
 
-    <!-- Success Banner -->
     <div class="banner banner-success">
-        <span class="banner-icon">&#10003;</span>
+
+        <span class="banner-icon">
+            &#10003;
+        </span>
 
         <div>
+
             <p class="banner-title">
                 Your document has been submitted!
             </p>
@@ -129,6 +132,7 @@
             <p class="banner-sub">
                 We will review your submission and notify you once there is an update.
             </p>
+
         </div>
 
         <button
@@ -138,44 +142,60 @@
         >
             &times;
         </button>
+
     </div>
 
-    <!-- Submitted Documents -->
     <div class="table-card">
+
         <table class="data-table">
+
             <thead>
+
                 <tr>
+
                     <th style="width: 32px;">
                         <input
                             type="checkbox"
                             aria-label="Select all"
                         >
                     </th>
+
                     <th>File</th>
                     <th>Category</th>
                     <th>Deadline</th>
                     <th>Date Uploaded</th>
                     <th>Status</th>
-                    <th style="width: 76px; text-align: center;">
+
+                    <th
+                        style="width: 76px; text-align: center;"
+                    >
                         Action
                     </th>
+
                 </tr>
+
             </thead>
 
             <tbody>
+
                 {% for doc in submitted_documents %}
+
                     <tr>
+
                         <td>
+
                             <input
                                 type="checkbox"
                                 name="selected_documents"
                                 value="{{ doc.id }}"
                             >
+
                         </td>
 
-                        <!-- FILE -->
                         <td>
+
                             <div class="file-cell">
+
                                 <img
                                     class="file-icon-svg"
                                     src="{% static 'images/PDF.svg' %}"
@@ -183,26 +203,31 @@
                                 >
 
                                 <div>
+
                                     <div class="file-name">
                                         {{ doc.requirement.requirement_title }}
                                     </div>
 
                                     {% if doc.document_file %}
+
                                         <div class="file-size">
                                             {{ doc.document_file.size|filesizeformat }}
                                         </div>
+
                                     {% endif %}
+
                                 </div>
+
                             </div>
+
                         </td>
 
-                        <!-- CATEGORY -->
                         <td>
                             {{ doc.requirement.category }}
                         </td>
 
-                        <!-- DEADLINE -->
                         <td>
+
                             <div>
                                 {{ doc.requirement.deadline|date:"F j, Y" }}
                             </div>
@@ -210,11 +235,13 @@
                             <div class="text-sub">
                                 {{ doc.requirement.deadline|date:"g:i A" }}
                             </div>
+
                         </td>
 
-                        <!-- DATE UPLOADED -->
                         <td>
+
                             {% if doc.status == 'RESUBMITTED' and doc.resubmitted_at %}
+
                                 <div>
                                     {{ doc.resubmitted_at|date:"F j, Y" }}
                                 </div>
@@ -222,7 +249,9 @@
                                 <div class="text-sub">
                                     {{ doc.resubmitted_at|date:"g:i A" }}
                                 </div>
+
                             {% elif doc.initially_submitted_at %}
+
                                 <div>
                                     {{ doc.initially_submitted_at|date:"F j, Y" }}
                                 </div>
@@ -230,54 +259,91 @@
                                 <div class="text-sub">
                                     {{ doc.initially_submitted_at|date:"g:i A" }}
                                 </div>
+
                             {% else %}
+
                                 &mdash;
+
                             {% endif %}
+
                         </td>
 
-                        <!-- STATUS -->
                         <td>
+
                             {% if doc.status == 'RESUBMITTED' %}
+
                                 <span class="pill-review pill-complete">
                                     Resubmitted
                                 </span>
+
                             {% else %}
+
                                 <span class="pill-review pill-complete">
                                     Submitted
                                 </span>
+
                             {% endif %}
+
                         </td>
 
-                        <!-- ACTION -->
                         <td class="action-cell">
-                            <button
-                                type="button"
-                                class="row-menu-btn"
-                            >
-                                &#8942;
-                            </button>
+
+                            {% if doc.document_file %}
+
+                                <a
+                                    href="{{ doc.document_file.url }}"
+                                    target="_blank"
+                                    class="row-menu-btn"
+                                    title="View document"
+                                >
+                                    &#128065;
+                                </a>
+
+                            {% else %}
+
+                                <button
+                                    type="button"
+                                    class="row-menu-btn"
+                                    disabled
+                                >
+                                    &#8942;
+                                </button>
+
+                            {% endif %}
+
                         </td>
+
                     </tr>
 
                 {% empty %}
+
                     <tr>
+
                         <td
                             colspan="7"
                             class="text-center py-4"
                         >
                             No submitted documents to show.
                         </td>
+
                     </tr>
+
                 {% endfor %}
+
             </tbody>
+
         </table>
+
     </div>
 
-    <!-- Information Banner -->
     <div class="banner banner-info">
-        <span class="banner-icon">&#9432;</span>
+
+        <span class="banner-icon">
+            &#9432;
+        </span>
 
         <div>
+
             <p class="banner-title">
                 What happens next?
             </p>
@@ -287,6 +353,7 @@
                 Notified once the review is complete &bull;
                 Upload and submit remaining requirements anytime.
             </p>
+
         </div>
 
         <button
@@ -296,51 +363,33 @@
         >
             &times;
         </button>
+
     </div>
 
-    <!-- Next Steps -->
     <div class="next-steps">
-        <h3>What can you do next?</h3>
+
+        <h3>
+            What can you do next?
+        </h3>
 
         <div class="next-steps-grid">
 
-            <!-- Track Submission -->
-            <a href="#" class="next-card">
-                <span class="next-card-icon orange">
-                    <img
-                        src="{% static 'images/Submission Faculty.svg' %}"
-                        alt="Track Submission icon"
-                    >
-                </span>
-
-                <div>
-                    <p class="next-card-title">
-                        Track Submission
-                    </p>
-
-                    <p class="next-card-sub">
-                        Check the status and updates of your submissions
-                    </p>
-                </div>
-
-                <span class="next-card-arrow">
-                    &rsaquo;
-                </span>
-            </a>
-
-            <!-- Upload More Documents -->
             <a
                 href="{% url 'faculty_portal:upload_files' %}"
                 class="next-card"
             >
-                <span class="next-card-icon blue">
+
+                <span class="next-card-icon orange">
+
                     <img
-                        src="{% static 'images/upload.svg' %}"
+                        src="{% static 'images/Submission Faculty.svg' %}"
                         alt="Upload More Documents icon"
                     >
+
                 </span>
 
                 <div>
+
                     <p class="next-card-title">
                         Upload More Documents
                     </p>
@@ -348,26 +397,31 @@
                     <p class="next-card-sub">
                         Continue uploading the rest of your requirements
                     </p>
+
                 </div>
 
                 <span class="next-card-arrow">
                     &rsaquo;
                 </span>
+
             </a>
 
-            <!-- Back to Dashboard -->
             <a
                 href="{% url 'faculty_portal:dashboard' %}"
                 class="next-card"
             >
+
                 <span class="next-card-icon green">
+
                     <img
                         src="{% static 'images/dashboard.svg' %}"
                         alt="Back to Dashboard icon"
                     >
+
                 </span>
 
                 <div>
+
                     <p class="next-card-title">
                         Back to Dashboard
                     </p>
@@ -375,15 +429,19 @@
                     <p class="next-card-sub">
                         Go to your dashboard overview
                     </p>
+
                 </div>
 
                 <span class="next-card-arrow">
                     &rsaquo;
                 </span>
+
             </a>
 
         </div>
+
     </div>
 
 </div>
+
 {% endblock %}
