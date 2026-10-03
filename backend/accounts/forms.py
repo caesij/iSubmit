@@ -35,7 +35,7 @@ class CustomLoginForm(AuthenticationForm):
 class FacultyProfileForm(forms.ModelForm):
     class Meta:
         model = User
-        fields = ['first_name', 'middle_name', 'last_name', 'email', 'profile_photo']
+        fields = ['first_name', 'middle_name', 'last_name', 'email', 'profile_picture']
 
     def clean_email(self):
         email = self.cleaned_data.get('email', '').strip().lower()
@@ -46,8 +46,8 @@ class FacultyProfileForm(forms.ModelForm):
             raise forms.ValidationError('A user with this email address already exists.')
         return email
 
-    def clean_profile_photo(self):
-        photo = self.cleaned_data.get('profile_photo')
+    def clean_profile_picture(self):
+        photo = self.cleaned_data.get('profile_picture')
         if photo and hasattr(photo, 'size'):
             if photo.size > 10 * 1024 * 1024:
                 raise forms.ValidationError('Image must be smaller than 10MB.')
@@ -56,7 +56,7 @@ class FacultyProfileForm(forms.ModelForm):
 class AdminStaffProfileForm(forms.ModelForm):
     class Meta:
         model = User
-        fields = ['first_name', 'middle_name', 'last_name', 'email', 'profile_photo']
+        fields = ['first_name', 'middle_name', 'last_name', 'email', 'profile_picture']
 
     def clean_email(self):
         email = self.cleaned_data.get('email', '').strip().lower()
@@ -67,8 +67,8 @@ class AdminStaffProfileForm(forms.ModelForm):
             raise forms.ValidationError('A user with this email address already exists.')
         return email
 
-    def clean_profile_photo(self):
-        photo = self.cleaned_data.get('profile_photo')
+    def clean_profile_picture(self):
+        photo = self.cleaned_data.get('profile_picture')
         if photo and hasattr(photo, 'size'):
             if photo.size > 10 * 1024 * 1024:
                 raise forms.ValidationError('Image must be smaller than 10MB.')

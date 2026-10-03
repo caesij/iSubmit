@@ -4,11 +4,14 @@ from django.contrib import messages
 from django.db.models import Q
 from django.db import transaction
 from django.core.files.base import ContentFile
-from urllib3 import request
+from django.contrib.auth import get_user_model
 
 from admin_staff_portal.realtime import refresh_admin_dashboard
 from admin_staff_portal.realtime import refresh_staff_dashboard
 from faculty_portal.realtime import refresh_faculty_dashboard, refresh_faculty_submission_bin
+from notifications.services import notify_roles
+
+from notifications.models import NotificationPreference
 from submissions.forms import DraftUploadForm
 
 from submissions.models import (
@@ -17,6 +20,8 @@ from submissions.models import (
     DocumentSubmission,
     DocumentRevision,
 )
+
+User = get_user_model()
 
 
 def run_ocr_if_enabled(draft):
@@ -145,13 +150,13 @@ def process_submission(request, requirements, drafts_by_requirement):
     if not selected_ids:
         messages.error(request, 'Please select at least one document to submit.')
         return redirect('faculty_portal:upload_files')
-    
-    needs_revision_by_requirement = (get_needs_revision_by_requirement(request.user, requirements))
+
+    needs_revision_by_requirement = get_needs_revision_by_requirement(request.user, requirements)
 
     selected_rows = build_selected_rows(
-        requirements, 
-        selected_ids, 
-        drafts_by_requirement, 
+        requirements,
+        selected_ids,
+        drafts_by_requirement,
         needs_revision_by_requirement
     )
 
@@ -164,31 +169,46 @@ def process_submission(request, requirements, drafts_by_requirement):
         return redirect('faculty_portal:upload_files')
 
     try:
-        completed_submissions = create_submissions(request.user, selected_rows)
+        with transaction.atomic():
+            completed_submissions = create_submissions(request.user, selected_rows)
 
-        request.session['recently_submitted_ids'] = [
-            str(submission.id) for submission in completed_submissions
-        ]
-        
-        try:
-            refresh_admin_dashboard()
-            refresh_staff_dashboard()
-            refresh_faculty_dashboard(request.user)
-            refresh_faculty_submission_bin(request.user)
-        except Exception as e:
-            print('DASHBOARD REALTIME ERROR:', repr(e))
+            request.session['recently_submitted_ids'] = [
+                str(submission.id) for submission in completed_submissions
+            ]
+
+            def send_submission_updates():
+                try:
+                    refresh_admin_dashboard()
+                    refresh_staff_dashboard()
+                    refresh_faculty_dashboard(request.user)
+                    refresh_faculty_submission_bin(request.user)
+
+                    for submission in completed_submissions:
+                        notify_roles(
+                            roles=[User.Role.ADMIN, User.Role.STAFF],
+                            notification_type=(NotificationPreference.NotificationType.SUBMISSION_UPDATES),
+                            title='New Document Submission',
+                            message=(
+                                f'{request.user.get_full_name()} submitted '
+                                f'{submission.requirement.requirement_title}.'
+                            ),
+                            link=''
+                        )
+                        
+                except Exception as e:
+                    print('SUBMISSION REALTIME/NOTIFICATION ERROR:', repr(e))
+
+            transaction.on_commit(send_submission_updates)
 
         messages.success(request, 'Selected documents submitted successfully.')
         return redirect('faculty_portal:submission_complete')
 
     except Exception as e:
         print('SUBMISSION ERROR:', repr(e))
-
         messages.error(
             request,
-            'An error occurred while processing your submission. Please try again.',
+            'An error occurred while processing your submission. Please try again.'
         )
-        
         return redirect('faculty_portal:upload_files')
 
 

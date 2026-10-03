@@ -1,4 +1,4 @@
-from accounts.models import NotificationPreference
+from notifications.models import NotificationPreference
 
 def validate_portal_access(user, login_type):
     if login_type == 'FACULTY':

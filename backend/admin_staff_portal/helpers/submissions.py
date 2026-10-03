@@ -1,7 +1,7 @@
+from faculty_portal.realtime import refresh_faculty_dashboard
 from django.contrib.auth import get_user_model
 
 from submissions.models import Requirement
-from faculty_portal.realtime import refresh_faculty_dashboard
 
 
 User = get_user_model()

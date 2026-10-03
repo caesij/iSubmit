@@ -5,9 +5,11 @@ from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.forms import PasswordChangeForm
 
 from accounts.decorators import admin, role_required
-from accounts.forms import PreferencesForm
-from accounts.models import NotificationPreference, StaffPermission
 from accounts.utils import get_or_create_preferences
+
+from accounts.forms import PreferencesForm
+from accounts.models import StaffPermission
+from notifications.models import NotificationPreference
 
 PERMISSION_FIELDS = [
     ('review_faculty_submissions', 'Review Faculty Submissions', 'Review submitted documents from faculty.'),
