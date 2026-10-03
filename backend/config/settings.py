@@ -25,6 +25,7 @@ INSTALLED_APPS = [
     'axes',
     'accounts',
     'submissions',
+    'notifications',
     'admin_staff_portal',
     'faculty_portal',
 ]

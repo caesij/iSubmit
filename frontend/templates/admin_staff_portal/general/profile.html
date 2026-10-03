@@ -22,8 +22,8 @@
     <div class="profile-summary">
         <div class="profile-identity">
             <div class="profile-avatar">
-                {% if request.user.profile_photo %}
-                    <img src="{{ request.user.profile_photo.url }}" alt="Profile photo">
+                {% if request.user.profile_picture %}
+                    <img src="{{ request.user.profile_picture.url }}" alt="Profile photo">
                 {% else %}
                     <img src="{% static 'images/profile.svg' %}" alt="Profile photo placeholder">
                 {% endif %}

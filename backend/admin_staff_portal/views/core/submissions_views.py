@@ -5,11 +5,15 @@ from django.contrib.auth import get_user_model
 from django.db.models import Q
 from django.utils import timezone
 from django.contrib import messages
+from django.db import transaction
+from django.urls import reverse
 
 from accounts.decorators import admin, role_required, staff_permission_required
 from admin_staff_portal.realtime import refresh_admin_dashboard
 from admin_staff_portal.realtime import refresh_staff_dashboard
 from admin_staff_portal.helpers.submissions import refresh_requirement_faculty_dashboards
+from notifications.services import create_notif
+from notifications.models import NotificationPreference
 
 from faculty_portal.realtime import (
     refresh_faculty_dashboard,
@@ -31,46 +35,47 @@ from submissions.forms import (
 
 from accounts.models import StaffPermission
 
-from core.utils import notify
-
 User = get_user_model()
 
 # Submission Bin Views
 @role_required('ADMIN', 'STAFF')
 @staff_permission_required('create_submission_bins')
+@require_http_methods(['GET'])
+def bulk_requirements_view(request):
+    bulk_requirements = request.session.get('bulk_requirements', [])
+    context = {'bulk_requirements': bulk_requirements}
+    
+    return render(
+        request,
+        'admin_staff_portal/core/submissions/submission_bin/bulk_requirements.html',
+        context
+    )
+
+
+@role_required('ADMIN', 'STAFF')
+@staff_permission_required('create_submission_bins')
 @require_http_methods(['GET', 'POST'])
-def add_requirement(request):
+def add_requirement_to_bulk(request):
     if request.method == 'POST':
         form = RequirementForm(request.POST)
 
         if form.is_valid():
-            requirement = form.save()
-            
-            refresh_admin_dashboard()
-            refresh_staff_dashboard()
-            refresh_all_faculty_submission_bins()
+            bulk_requirements = request.session.get('bulk_requirements', [])
 
-            faculty_qs = User.objects.filter(role=User.Role.FACULTY)
+            bulk_requirements.append({
+                'requirement_title': form.cleaned_data['requirement_title'],
+                'category': form.cleaned_data['category'],
+                'deadline': form.cleaned_data['deadline'].isoformat(),
+                'assigned_to': form.cleaned_data['assigned_to'],
+            })
 
-            if requirement.assigned_to != Requirement.AssignedFacultyType.ALL:
-                faculty_qs = faculty_qs.filter(faculty_type=requirement.assigned_to)
+            request.session['bulk_requirements'] = bulk_requirements
+            request.session.modified = True
 
-            for faculty_member in faculty_qs:
-                refresh_faculty_dashboard(faculty_member)
-
-                notify(
-                    faculty_member,
-                    'SUBMISSION_REMINDERS',
-                    'New requirement posted',
-                    f'"{requirement.requirement_title}" is due '
-                    f'{requirement.deadline.strftime("%B %d, %Y")}.',
-                    link='/faculty-portal/submission-bin/'
-                )
-
-            return redirect('admin_staff_portal:requirements_list')
+            return redirect('admin_staff_portal:bulk_requirements')
     else:
         form = RequirementForm()
-
+        
     context = {'form': form}
 
     return render(
@@ -78,6 +83,132 @@ def add_requirement(request):
         'admin_staff_portal/core/submissions/submission_bin/requirement_forms.html',
         context
     )
+
+@role_required('ADMIN', 'STAFF')
+@staff_permission_required('create_submission_bins')
+@require_http_methods(['POST'])
+def delete_bulk_requirement(request, index):
+    bulk_requirements = request.session.get('bulk_requirements', [])
+
+    if 0 <= index < len(bulk_requirements):
+        bulk_requirements.pop(index)
+        request.session['bulk_requirements'] = bulk_requirements
+        request.session.modified = True
+
+    return redirect('admin_staff_portal:bulk_requirements')
+
+
+@role_required('ADMIN', 'STAFF')
+@staff_permission_required('create_submission_bins')
+@require_http_methods(['POST'])
+def post_bulk_requirements(request):
+    bulk_requirements = request.session.get('bulk_requirements', [])
+
+    if not bulk_requirements:
+        messages.error(request, 'There are no requirements to post.')
+        return redirect('admin_staff_portal:bulk_requirements')
+
+    try:
+        with transaction.atomic():
+            created_requirements = []
+
+            for item in bulk_requirements:
+                form = RequirementForm(data={
+                    'requirement_title': item['requirement_title'],
+                    'category': item['category'],
+                    'assigned_to': item['assigned_to'],
+                    'academic_year': item['academic_year'],
+                    'semester': item['semester'],
+                    'status': item['status'],
+                    'deadline': item['deadline'],
+                    'ocr_enabled': item['ocr_enabled'],
+                })
+
+                if not form.is_valid():
+                    raise ValueError('One or more staged requirements are invalid.')
+
+                requirement = form.save()
+                created_requirements.append(requirement)
+
+            active_requirements = [
+                requirement
+                for requirement in created_requirements
+                if requirement.status == Requirement.ReqStatus.ACTIVE
+            ]
+
+            def publish_bulk_updates():
+                try:
+                    refresh_admin_dashboard()
+                    refresh_staff_dashboard()
+
+                    if not active_requirements:
+                        return
+
+                    faculty_users = User.objects.filter(role=User.Role.FACULTY, is_active=True)
+
+                    for faculty_member in faculty_users:
+                        matching_requirements = [
+                            requirement
+                            for requirement in active_requirements
+                            if (requirement.assigned_to == Requirement.AssignedFacultyType.ALL
+                                or
+                                requirement.assigned_to== faculty_member.faculty_type
+                            )
+                        ]
+
+                        if not matching_requirements:
+                            continue
+
+                        refresh_faculty_dashboard(faculty_member)
+                        refresh_faculty_submission_bin(faculty_member)
+
+                        titles = '\n'.join(
+                            f'• {requirement.requirement_title}'
+                            for requirement
+                            in matching_requirements
+                        )
+
+                        create_notif(
+                            user=faculty_member,
+                            notification_type=(NotificationPreference.NotificationType.SYSTEM_ANNOUNCEMENT),
+                            title='New Submission Requirements',
+                            message=(
+                                f'{len(matching_requirements)} new '
+                                f'submission requirement(s) have been '
+                                f'posted:\n\n'
+                                f'{titles}'
+                            ),
+                            link=reverse('faculty_portal:upload_files')
+                        )
+
+                except Exception as e:
+                    print('BULK REQUIREMENT REALTIME ERROR:', repr(e))
+
+            transaction.on_commit(
+                publish_bulk_updates
+            )
+
+        request.session.pop('bulk_requirements', None)
+        request.session.modified = True
+
+        messages.success(
+            request,
+            f'{len(created_requirements)} requirement(s) '
+            f'posted successfully.'
+        )
+
+        return redirect('admin_staff_portal:requirements_list')
+
+    except Exception as e:
+        print('BULK REQUIREMENT ERROR:', repr(e))
+
+        messages.error(
+            request,
+            f'An error occurred while posting the requirements. '
+            f'Please review the staged requirements and try again.'
+        )
+
+        return redirect('admin_staff_portal:bulk_requirements')
 
 @role_required('ADMIN', 'STAFF')
 @staff_permission_required('edit_submission_bin')
@@ -329,13 +460,29 @@ def mark_under_review_view(request, submission_id):
         messages.info(request, 'This submission was already updated by someone else.')
         return redirect('admin_staff_portal:review_submission', submission_id=submission.id)
 
-    submission.status = DocumentSubmission.SubmissionStatus.UNDER_REVIEW
-    submission.save(update_fields=['status'])
+    with transaction.atomic():
+        submission.status = DocumentSubmission.SubmissionStatus.UNDER_REVIEW
+        submission.save(update_fields=['status'])
 
-    refresh_admin_dashboard()
-    refresh_staff_dashboard()
-    refresh_faculty_dashboard(submission.faculty)
-    refresh_faculty_my_submissions(submission.faculty)
+        transaction.on_commit(
+                lambda: (
+                    refresh_admin_dashboard(),
+                    refresh_staff_dashboard(),
+                    refresh_faculty_dashboard(submission.faculty),
+                    refresh_faculty_my_submissions(submission.faculty),
+                    
+                    create_notif(
+                        user=submission.faculty,
+                        notification_type=NotificationPreference.NotificationType.SUBMISSION_UPDATES,
+                        title='Document Submission Under Review',
+                        message=(
+                            f'Your submission for {submission.requirement.requirement_title} '
+                            f'is now under review.'
+                        ),
+                        link=''
+                    )
+                )
+        )
 
     return redirect('admin_staff_portal:review_submission', submission_id=submission.id)
 
@@ -349,16 +496,31 @@ def mark_reviewed_view(request, submission_id):
         status=DocumentSubmission.SubmissionStatus.UNDER_REVIEW
     )
     
-    update_fields = ['status', 'reviewed_by', 'reviewed_at']
-    submission.status = DocumentSubmission.SubmissionStatus.PENDING_APPROVAL
-    submission.reviewed_by = request.user
-    submission.reviewed_at = timezone.now()
-    submission.save(update_fields=update_fields)
+    with transaction.atomic():
+        submission.status = DocumentSubmission.SubmissionStatus.PENDING_APPROVAL
+        submission.reviewed_by = request.user
+        submission.reviewed_at = timezone.now()
+        submission.save(update_fields=['status', 'reviewed_by', 'reviewed_at'])
 
-    refresh_admin_dashboard()
-    refresh_staff_dashboard()
-    refresh_faculty_dashboard(submission.faculty)
-    refresh_faculty_my_submissions(submission.faculty)
+        transaction.on_commit(
+                lambda: (
+                    refresh_admin_dashboard(),
+                    refresh_staff_dashboard(),
+                    refresh_faculty_dashboard(submission.faculty),
+                    refresh_faculty_my_submissions(submission.faculty),
+                    
+                    create_notif(
+                        user=submission.faculty,
+                        notification_type=NotificationPreference.NotificationType.SUBMISSION_UPDATES,
+                        title='Document Submission Reviewed',
+                        message=(
+                            f'Your submission for {submission.requirement.requirement_title} '
+                            f'has been reviewed and is now pending approval.'
+                        ),
+                        link=''
+                    )
+                )
+        )
 
     return redirect('admin_staff_portal:review_submission', submission_id=submission.id)
 
@@ -381,10 +543,7 @@ def mark_needs_revision_view(request, submission_id):
 
     next_version = (last_version or 0) + 1
 
-    latest_revision = DocumentRevision.objects.create(
-        submission=submission,
-        version_number=next_version
-    )
+    latest_revision = DocumentRevision.objects.create(submission=submission, version_number=next_version)
 
     form = DocumentReviewForm(
         request.POST,
@@ -400,17 +559,33 @@ def mark_needs_revision_view(request, submission_id):
 
     form.save()
 
-    submission.status = (DocumentSubmission.SubmissionStatus.NEEDS_REVISION)
-    submission.reviewed_by = request.user
-    submission.reviewed_at = timezone.now()
-    submission.save(update_fields=['status', 'reviewed_by', 'reviewed_at',])
+    with transaction.atomic():
+            submission.status = (DocumentSubmission.SubmissionStatus.NEEDS_REVISION)
+            submission.reviewed_by = request.user
+            submission.reviewed_at = timezone.now()
+            submission.save(update_fields=['status', 'reviewed_by', 'reviewed_at'])
 
-    refresh_admin_dashboard()
-    refresh_staff_dashboard()
-    refresh_faculty_dashboard(submission.faculty)
-    refresh_faculty_submission_bin(submission.faculty)
-    refresh_faculty_my_submissions(submission.faculty)
-    
+            transaction.on_commit(
+                    lambda: (      
+                            refresh_admin_dashboard(),
+                            refresh_staff_dashboard(),
+                            refresh_faculty_dashboard(submission.faculty),
+                            refresh_faculty_submission_bin(submission.faculty),
+                            refresh_faculty_my_submissions(submission.faculty),
+                            
+                        create_notif(
+                            user=submission.faculty,
+                            notification_type=NotificationPreference.NotificationType.SUBMISSION_UPDATES,
+                            title='Document Submission Needs Revision',
+                            message=(
+                                f'Your submission for {submission.requirement.requirement_title} '
+                                f'needs revision. Please check the remarks provided by the reviewer.'
+                            ),
+                            link=''
+                        )
+                    )
+        )
+
     messages.success(request, 'Submission marked as needing revision.')
 
     return redirect('admin_staff_portal:review_submission', submission_id=submission.id)
@@ -442,17 +617,30 @@ def approve_all_submissions_view(request, faculty_id):
 
     now = timezone.now()
 
-    approved_count = submissions_qs.filter(
-        status=DocumentSubmission.SubmissionStatus.PENDING_APPROVAL
-    ).update(
-        status=DocumentSubmission.SubmissionStatus.APPROVED,
-        approved_by=request.user,
-        approved_at=now,
-    )
-
-    refresh_staff_dashboard()
-    refresh_faculty_dashboard(faculty_member)
-    refresh_faculty_my_submissions(faculty_member)
+    with transaction.atomic():
+        approved_count = submissions_qs.filter(
+            status=DocumentSubmission.SubmissionStatus.PENDING_APPROVAL
+        ).update(
+            status=DocumentSubmission.SubmissionStatus.APPROVED,
+            approved_by=request.user,
+            approved_at=now,
+        )
+        
+        transaction.on_commit(
+            lambda: (
+                    refresh_staff_dashboard(),
+                    refresh_faculty_dashboard(faculty_member),
+                    refresh_faculty_my_submissions(faculty_member),
+                    
+                    create_notif(
+                        user=faculty_member,
+                        notification_type=NotificationPreference.NotificationType.SUBMISSION_UPDATES,
+                        title='All Document Submissions Approved',
+                        message=(f'All your document submissions have been approved.'),
+                        link=''
+                    )
+            )
+        )
 
     messages.success(request, f'{approved_count} document(s) approved.')
     return redirect('admin_staff_portal:faculty_submission_bins_view', faculty_id=faculty_member.id)

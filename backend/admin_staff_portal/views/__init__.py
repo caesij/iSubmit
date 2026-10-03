@@ -12,7 +12,10 @@ from admin_staff_portal.views.core.document_repo_views import (
 )
 
 from admin_staff_portal.views.core.submissions_views import (
-    add_requirement,
+    bulk_requirements_view,
+    add_requirement_to_bulk,
+    delete_bulk_requirement,
+    post_bulk_requirements,
     edit_requirement,
     requirements_list,
     toggle_requirement_status,
@@ -52,7 +55,10 @@ __all__ = [
     'document_repo_view',
     'document_file_view',
 
-    'add_requirement',
+    'bulk_requirements_view',
+    'add_requirement_to_bulk',
+    'delete_bulk_requirement',
+    'post_bulk_requirements',
     'edit_requirement',
     'requirements_list',
     'toggle_requirement_status',

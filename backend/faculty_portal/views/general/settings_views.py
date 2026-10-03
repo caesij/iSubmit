@@ -5,9 +5,10 @@ from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.forms import PasswordChangeForm
 
 from accounts.decorators import faculty
-from accounts.forms import PreferencesForm
-from accounts.models import NotificationPreference
 from accounts.utils import get_or_create_preferences
+
+from accounts.forms import PreferencesForm
+from notifications.models import NotificationPreference
 
 
 @faculty
