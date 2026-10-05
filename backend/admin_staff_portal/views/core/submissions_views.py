@@ -7,6 +7,8 @@ from django.utils import timezone
 from django.contrib import messages
 from django.db import transaction
 from django.urls import reverse
+from django.utils.dateparse import parse_datetime
+from django.utils.formats import date_format
 
 from accounts.decorators import admin, role_required, staff_permission_required
 from admin_staff_portal.realtime import refresh_admin_dashboard
@@ -43,8 +45,52 @@ User = get_user_model()
 @require_http_methods(['GET'])
 def bulk_requirements_view(request):
     bulk_requirements = request.session.get('bulk_requirements', [])
-    context = {'bulk_requirements': bulk_requirements}
-    
+
+    display_requirements = []
+
+    assigned_labels = dict(Requirement.AssignedFacultyType.choices)
+    semester_labels = dict(Requirement.Semester.choices)
+    status_labels = dict(Requirement.ReqStatus.choices)
+
+    for index, item in enumerate(bulk_requirements):
+        display_item = item.copy()
+
+        deadline = parse_datetime(item.get('deadline', ''))
+
+        if deadline:
+            display_item['deadline_date'] = date_format(deadline, 'F j, Y')
+            display_item['deadline_time'] = date_format(deadline, 'g:i A')
+        else:
+            display_item['deadline_date'] = ''
+            display_item['deadline_time'] = ''
+
+        display_item['assigned_to_display'] = (
+            assigned_labels.get(
+                item.get('assigned_to'),
+                item.get('assigned_to', '')
+            )
+        )
+
+        display_item['semester_display'] = (
+            semester_labels.get(
+                item.get('semester'),
+                item.get('semester', '')
+            )
+        )
+
+        display_item['status_display'] = (
+            status_labels.get(
+                item.get('status'),
+                item.get('status', '')
+            )
+        )
+
+        display_item['index'] = index
+
+        display_requirements.append(display_item)
+
+    context = {'bulk_requirements': display_requirements,}
+
     return render(
         request,
         'admin_staff_portal/core/submissions/submission_bin/bulk_requirements.html',
@@ -62,20 +108,51 @@ def add_requirement_to_bulk(request):
         if form.is_valid():
             bulk_requirements = request.session.get('bulk_requirements', [])
 
-            bulk_requirements.append({
-                'requirement_title': form.cleaned_data['requirement_title'],
-                'category': form.cleaned_data['category'],
-                'deadline': form.cleaned_data['deadline'].isoformat(),
-                'assigned_to': form.cleaned_data['assigned_to'],
-            })
+            requirement_title = (form.cleaned_data['requirement_title'])
+            academic_year = (form.cleaned_data['academic_year'])
+            semester = (form.cleaned_data['semester'])
 
-            request.session['bulk_requirements'] = bulk_requirements
-            request.session.modified = True
+            staged_key = (
+                requirement_title.casefold(),
+                academic_year,
+                semester
+            )
 
-            return redirect('admin_staff_portal:bulk_requirements')
+            existing_keys = {
+                (
+                    item['requirement_title'].casefold(),
+                    item['academic_year'],
+                    item['semester'],
+                )
+                for item in bulk_requirements
+            }
+
+            if staged_key in existing_keys:
+                form.add_error(
+                    'requirement_title',
+                    'This requirement is already in the current list.'
+                )
+            else:
+                deadline = form.cleaned_data['deadline']
+
+                bulk_requirements.append({
+                    'requirement_title': requirement_title,
+                    'category': form.cleaned_data['category'],
+                    'assigned_to': form.cleaned_data['assigned_to'],
+                    'academic_year': academic_year,
+                    'semester': semester,
+                    'status': form.cleaned_data['status'],
+                    'deadline': deadline.strftime('%Y-%m-%dT%H:%M'),
+                    'ocr_enabled':form.cleaned_data['ocr_enabled']
+                })
+
+                request.session['bulk_requirements'] = (bulk_requirements)
+                request.session.modified = True
+
+                return redirect('admin_staff_portal:bulk_requirements')
     else:
         form = RequirementForm()
-        
+
     context = {'form': form}
 
     return render(
