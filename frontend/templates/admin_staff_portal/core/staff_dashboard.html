@@ -1,24 +1,36 @@
 {% extends 'admin_staff_portal/base.html' %}
+
 {% load static %}
 
 {% block title %}Dashboard - iSubmit{% endblock %}
+
 {% block heading %}Dashboard{% endblock %}
-{% block subtitle %}Overview of system activities and updates{% endblock %}
+
+{% block subtitle %}
+Overview of system activities and updates
+{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/pages/staff_dashboard.css' %}">
+<link
+    rel="stylesheet"
+    href="{% static 'css/pages/staff_dashboard.css' %}"
+>
 {% endblock %}
 
 {% block content %}
+
 <div class="dashboard-page">
 
     <!-- Welcome card -->
     <div class="welcome-card">
         <div class="welcome-label">Welcome,</div>
-        <h2>{{ request.user.get_full_name }}</h2>
+
+        <h2>
+            {{ request.user.get_full_name }}
+        </h2>
+
         <p>Staff</p>
     </div>
-
 
     <!-- Stat cards -->
     <div class="stats-grid">
@@ -26,100 +38,172 @@
         <!-- Assigned Submissions -->
         <div class="stat-card">
             <div class="stat-icon">
-                <img src="{% static 'images/Icon - Total Faculty Member.svg' %}" alt="Assigned submissions">
+                <img
+                    src="{% static 'images/Icon - Total Faculty Member.svg' %}"
+                    alt="Assigned submissions"
+                >
             </div>
+
             <div>
-                <span class="stat-number" id="stat-assigned">{{ assigned_count }}</span>
-                <span class="stat-label">Assigned Submissions</span>
+                <span
+                    class="stat-number"
+                    id="stat-assigned"
+                >
+                    {{ assigned_count }}
+                </span>
+
+                <span class="stat-label">
+                    Assigned Submissions
+                </span>
             </div>
         </div>
 
-        <!-- Under Initial Review -->
+        <!-- Under Review -->
         <div class="stat-card">
             <div class="stat-icon">
-                <img src="{% static 'images/Icon - Pending Review.svg' %}" alt="Under initial review">
+                <img
+                    src="{% static 'images/Icon - Pending Review.svg' %}"
+                    alt="Under review"
+                >
             </div>
-            <div>
-                <span class="stat-number" id="stat-under-review">{{ under_review_count }}</span>
-                <span class="stat-label">Under Initial Review</span>
-            </div>
-        </div>
 
-        <!-- Pending Approval -->
-        <div class="stat-card">
-            <div class="stat-icon">
-                <img src="{% static 'images/Icon - Pending Review.svg' %}" alt="Pending approval">
-            </div>
             <div>
-                <span class="stat-number" id="stat-pending-approval">{{ final_review_count }}</span>
-                <span class="stat-label">Pending Approval</span>
+                <span
+                    class="stat-number"
+                    id="stat-under-review"
+                >
+                    {{ under_review_count }}
+                </span>
+
+                <span class="stat-label">
+                    Under Review
+                </span>
             </div>
         </div>
 
         <!-- Returned for Revisions -->
         <div class="stat-card">
             <div class="stat-icon">
-                <img src="{% static 'images/Icon - Pending Review.svg' %}" alt="Returned for revisions">
+                <img
+                    src="{% static 'images/Icon - Pending Review.svg' %}"
+                    alt="Returned for revisions"
+                >
             </div>
+
             <div>
-                <span class="stat-number" id="stat-returned">{{ returned_count }}</span>
-                <span class="stat-label">Returned for Revisions</span>
+                <span
+                    class="stat-number"
+                    id="stat-returned"
+                >
+                    {{ returned_count }}
+                </span>
+
+                <span class="stat-label">
+                    Returned for Revisions
+                </span>
             </div>
         </div>
 
-        <!-- Approved -->
+        <!-- Reviewed / Completed Reviews -->
         <div class="stat-card">
             <div class="stat-icon">
-                <img src="{% static 'images/Icon - Approved Documents.svg' %}" alt="Approved submissions">
+                <img
+                    src="{% static 'images/Icon - Approved Documents.svg' %}"
+                    alt="Reviewed submissions"
+                >
             </div>
-            <div>
-                <span class="stat-number" id="stat-approved">{{ approved_count }}</span>
-                <span class="stat-label">Approved Submissions</span>
-            </div>
-        </div>
 
-        <!-- Review Progress -->
-        <div class="stat-card">
-            <div class="stat-icon">
-                <img src="{% static 'images/Icon - Overall Compliance.svg' %}" alt="Review progress">
-            </div>
             <div>
-                <span class="stat-number" id="stat-progress">{{ review_progress }}%</span>
-                <span class="stat-label">Review Progress</span>
+                <span
+                    class="stat-number"
+                    id="stat-completed-reviews"
+                >
+                    {{ completed_reviews_count }}
+                </span>
+
+                <span class="stat-label">
+                    Reviewed / Completed Reviews
+                </span>
             </div>
         </div>
 
     </div>
-
 
     <!-- Dashboard grid -->
     <div class="dashboard-grid">
 
         <!-- Review progress -->
         <div class="dashboard-card compliance-card">
+
             <div class="card-header">
                 <h2>Initial Review Progress</h2>
             </div>
 
             <div class="compliance-content">
-                <div class="compliance-circle">
-                    <span id="compliance-value">{{ review_progress }}%</span>
+
+                <div
+                    class="compliance-circle"
+                    style="
+                        --reviewed: {{ review_progress }}%;
+                        --pending: {{ pending_review_progress }}%;
+                    "
+                >
+                    <span id="compliance-value">
+                        {{ review_progress }}%
+                    </span>
                 </div>
 
                 <div class="compliance-legend">
-                    <div><span class="legend-dot complete"></span> Reviewed</div>
-                    <div><span class="legend-dot progress"></span> Pending Review</div>
+
+                    <div class="legend-item">
+                        <span class="legend-dot complete"></span>
+
+                        <div>
+                            <div>Reviewed</div>
+                            <small id="reviewed-details">
+                                {{ review_progress }}% ({{ completed_reviews_count }})
+                            </small>
+                        </div>
+                    </div>
+
+                    <div class="legend-item">
+                        <span class="legend-dot progress"></span>
+
+                        <div>
+                            <div>Pending Review</div>
+                            <small id="pending-details">
+                                {{ pending_review_progress }}% ({{ pending_review_count }})
+                            </small>
+                        </div>
+                    </div>
                 </div>
+
+                <div class="compliance-legend">
+                    <div>
+                        <span class="legend-dot complete"></span>
+                        Reviewed
+                    </div>
+
+                    <div>
+                        <span class="legend-dot progress"></span>
+                        Pending Review
+                    </div>
+                </div>
+
             </div>
         </div>
 
         <!-- Submission trends -->
         <div class="dashboard-card trends-card">
+
             <div class="card-header">
                 <h2>Submission Trends</h2>
             </div>
 
-            <div class="trend-chart" id="submission-trend-chart">
+            <div
+                class="trend-chart"
+                id="submission-trend-chart"
+            >
                 <div class="chart-grid">
                     <span></span>
                     <span></span>
@@ -127,32 +211,52 @@
                     <span></span>
                 </div>
 
-                <svg id="trend-line" viewBox="0 0 500 200" preserveAspectRatio="none"></svg>
+                <svg
+                    id="trend-line"
+                    viewBox="0 0 500 200"
+                    preserveAspectRatio="none"
+                ></svg>
 
-                <div class="chart-labels" id="trend-labels">
+                <div
+                    class="chart-labels"
+                    id="trend-labels"
+                >
                     {% for trend in submission_trends %}
                         <span>{{ trend.month }}</span>
                     {% endfor %}
                 </div>
             </div>
+
         </div>
 
         <!-- Compliance by Department -->
         <div class="dashboard-card department-card">
+
             <div class="card-header">
                 <h2>Compliance by Department</h2>
             </div>
+
             <div class="department-placeholder"></div>
+
         </div>
+
+    </div>
 
     <!-- Review queue -->
     <div class="dashboard-card pending-card">
+
         <div class="card-header">
             <h2>Review Queue</h2>
-            <a href="{% url 'admin_staff_portal:faculty_submissions_list' %}">View all &rsaquo;</a>
+
+            <a
+                href="{% url 'admin_staff_portal:faculty_submissions_list' %}"
+            >
+                View all &rsaquo;
+            </a>
         </div>
 
         <div class="table-container">
+
             <table>
                 <thead>
                     <tr>
@@ -164,11 +268,22 @@
                 </thead>
 
                 <tbody id="review-queue-body">
+
                     {% for submission in review_queue %}
+
                         <tr>
-                            <td>{{ submission.faculty.employee_ID }}</td>
-                            <td>{{ submission.faculty.get_full_name }}</td>
-                            <td>{{ submission.requirement.requirement_title }}</td>
+                            <td>
+                                {{ submission.faculty.employee_ID }}
+                            </td>
+
+                            <td>
+                                {{ submission.faculty.get_full_name }}
+                            </td>
+
+                            <td>
+                                {{ submission.requirement.requirement_title }}
+                            </td>
+
                             <td>
                                 {% if submission.status == 'RESUBMITTED' and submission.resubmitted_at %}
                                     {{ submission.resubmitted_at|date:"M j, Y" }}
@@ -177,21 +292,32 @@
                                 {% endif %}
                             </td>
                         </tr>
+
                     {% empty %}
+
                         <tr>
-                            <td colspan="4" class="empty-row">No submissions in the review queue.</td>
+                            <td
+                                colspan="4"
+                                class="empty-row"
+                            >
+                                No submissions in the review queue.
+                            </td>
                         </tr>
+
                     {% endfor %}
+
                 </tbody>
             </table>
+
         </div>
     </div>
 
 </div>
 
-
 <style>
-    .dashboard-page { padding: 24px; }
+    .dashboard-page {
+        padding: 24px;
+    }
 
     .welcome-card,
     .dashboard-card {
@@ -201,18 +327,36 @@
     }
 
     /* ---------- Welcome card ---------- */
-    .welcome-card { padding: 18px; margin-bottom: 14px; }
-    .welcome-label { font-size: 12px; color: #777; }
-    .welcome-card h2 { margin: 4px 0 2px; font-size: 18px; }
-    .welcome-card p { margin: 0; color: #8b0000; font-size: 12px; font-weight: 600; }
+    .welcome-card {
+        padding: 18px;
+        margin-bottom: 14px;
+    }
+
+    .welcome-label {
+        font-size: 12px;
+        color: #777;
+    }
+
+    .welcome-card h2 {
+        margin: 4px 0 2px;
+        font-size: 18px;
+    }
+
+    .welcome-card p {
+        margin: 0;
+        color: #8b0000;
+        font-size: 12px;
+        font-weight: 600;
+    }
 
     /* ---------- Stat cards ---------- */
     .stats-grid {
         display: grid;
-        grid-template-columns: repeat(6, minmax(0, 1fr));
+        grid-template-columns: repeat(4, minmax(0, 1fr));
         gap: 10px;
         margin-bottom: 14px;
     }
+
     .stat-card {
         display: flex;
         align-items: center;
@@ -223,6 +367,7 @@
         border: 1px solid #e5e7eb;
         border-radius: 9px;
     }
+
     .stat-icon {
         width: 30px;
         height: 30px;
@@ -235,8 +380,19 @@
         color: #991b1b;
         font-size: 13px;
     }
-    .stat-icon img { width: 16px; height: 16px; }
-    .stat-number { display: block; font-size: 20px; font-weight: 700; color: #991b1b; }
+
+    .stat-icon img {
+        width: 16px;
+        height: 16px;
+    }
+
+    .stat-number {
+        display: block;
+        font-size: 20px;
+        font-weight: 700;
+        color: #991b1b;
+    }
+
     .stat-label {
         display: block;
         margin-top: 2px;
@@ -253,15 +409,29 @@
         gap: 14px;
         margin-bottom: 14px;
     }
-    .dashboard-card { padding: 16px; }
+
+    .dashboard-card {
+        padding: 16px;
+    }
+
     .card-header {
         display: flex;
         align-items: center;
         justify-content: space-between;
         margin-bottom: 14px;
     }
-    .card-header h2 { margin: 0; font-size: 14px; }
-    .card-header a { color: #991b1b; font-size: 11px; font-weight: 600; text-decoration: none; }
+
+    .card-header h2 {
+        margin: 0;
+        font-size: 14px;
+    }
+
+    .card-header a {
+        color: #991b1b;
+        font-size: 11px;
+        font-weight: 600;
+        text-decoration: none;
+    }
 
     /* ---------- Review progress ---------- */
     .compliance-content {
@@ -271,30 +441,85 @@
         justify-content: center;
         min-height: 180px;
     }
+
     .compliance-circle {
-        width: 120px;
-        height: 120px;
+        --reviewed: 0%;
+        --pending: 100%;
+        width: 176px;
+        height: 176px;
         display: flex;
         align-items: center;
         justify-content: center;
-        border: 9px solid #991b1b;
-        border-left-color: #e5e7eb;
+        position: relative;
         border-radius: 50%;
+        background: conic-gradient(
+            #991b1b 0% var(--reviewed),
+            #e6e600 var(--reviewed) 100%
+        );
     }
-    .compliance-circle span { font-size: 24px; font-weight: 700; color: #991b1b; }
-    .compliance-legend { display: flex; gap: 12px; margin-top: 14px; font-size: 10px; color: #777; }
+
+    .compliance-circle::before {
+        content: "";
+        position: absolute;
+        width: 142px;
+        height: 142px;
+        border-radius: 50%;
+        background: #fff;
+    }
+
+    .compliance-circle span {
+        position: relative;
+        z-index: 1;
+        font-size: 34px;
+        font-weight: 700;
+        color: #991b1b;
+    }
+
+    .compliance-legend {
+        display: flex;
+        justify-content: center;
+        gap: 24px;
+        margin-top: 18px;
+        font-size: 11px;
+        color: #777;
+    }
+
+    .legend-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 7px;
+    }
+
+    .legend-item small {
+        display: block;
+        margin-top: 2px;
+        color: #777;
+        font-size: 10px;
+    }
+
     .legend-dot {
-        display: inline-block;
-        width: 7px;
-        height: 7px;
-        margin-right: 3px;
+        width: 12px;
+        height: 12px;
+        margin-top: 2px;
+        flex-shrink: 0;
         border-radius: 50%;
     }
-    .legend-dot.complete { background: #991b1b; }
-    .legend-dot.progress { background: #d4d400; }
+
+    .legend-dot.complete {
+        background: #991b1b;
+    }
+
+    .legend-dot.progress {
+        background: #e6e600;
+    }
 
     /* ---------- Submission trends ---------- */
-    .trend-chart { position: relative; height: 180px; padding: 5px 5px 0; }
+    .trend-chart {
+        position: relative;
+        height: 180px;
+        padding: 5px 5px 0;
+    }
+
     .chart-grid {
         position: absolute;
         inset: 5px 5px 28px;
@@ -302,7 +527,11 @@
         flex-direction: column;
         justify-content: space-between;
     }
-    .chart-grid span { border-top: 1px solid #eee; }
+
+    .chart-grid span {
+        border-top: 1px solid #eee;
+    }
+
     #trend-line {
         position: absolute;
         left: 5px;
@@ -312,8 +541,17 @@
         height: 145px;
         overflow: visible;
     }
-    #trend-line polyline { fill: none; stroke: #991b1b; stroke-width: 3; }
-    #trend-line circle { fill: #991b1b; }
+
+    #trend-line polyline {
+        fill: none;
+        stroke: #991b1b;
+        stroke-width: 3;
+    }
+
+    #trend-line circle {
+        fill: #991b1b;
+    }
+
     .chart-labels {
         position: absolute;
         bottom: 0;
@@ -324,13 +562,31 @@
         color: #777;
         font-size: 10px;
     }
-    .department-placeholder { height: 180px; }
+
+    .department-placeholder {
+        height: 180px;
+    }
 
     /* ---------- Review queue ---------- */
-    .pending-card { width: 100%; margin-bottom: 20px; }
-    .table-container { overflow-x: auto; }
-    .pending-card table { width: 100%; border-collapse: collapse; font-size: 11px; }
-    .pending-card .table-container { width: 100%; }
+    .pending-card {
+        width: 100%;
+        margin-bottom: 20px;
+    }
+
+    .table-container {
+        overflow-x: auto;
+    }
+
+    .pending-card table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 11px;
+    }
+
+    .pending-card .table-container {
+        width: 100%;
+    }
+
     .pending-card th {
         padding: 9px 8px;
         background: #fef2f2;
@@ -338,118 +594,211 @@
         text-align: left;
         font-weight: 600;
     }
-    .pending-card td { padding: 9px 8px; border-top: 1px solid #eee; color: #444; }
-    .empty-row { padding: 20px !important; text-align: center; color: #999 !important; }
+
+    .pending-card td {
+        padding: 9px 8px;
+        border-top: 1px solid #eee;
+        color: #444;
+    }
+
+    .empty-row {
+        padding: 20px !important;
+        text-align: center;
+        color: #999 !important;
+    }
 
     /* ---------- Responsive ---------- */
     @media (max-width: 1100px) {
-        .stats-grid { grid-template-columns: repeat(3, 1fr); }
-        .dashboard-grid { grid-template-columns: 1fr 1fr; }
-        .department-card { grid-column: span 2; }
+        .stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .dashboard-grid {
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .department-card {
+            grid-column: span 2;
+        }
     }
+
     @media (max-width: 700px) {
         .stats-grid,
-        .dashboard-grid { grid-template-columns: 1fr; }
-        .department-card { grid-column: auto; }
+        .dashboard-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .department-card {
+            grid-column: auto;
+        }
     }
 </style>
 
-
 <script>
-    async function refreshStaffDashboard() {
-        try {
-            const response = await fetch(
-                "{% url 'admin_staff_portal:staff_dashboard_data' %}",
-                {
-                    method: "GET",
-                    credentials: "same-origin",
-                    headers: { "X-Requested-With": "XMLHttpRequest" }
+async function refreshStaffDashboard() {
+    try {
+        const response = await fetch(
+            "{% url 'admin_staff_portal:staff_dashboard_data' %}",
+            {
+                method: "GET",
+                credentials: "same-origin",
+                headers: {
+                    "X-Requested-With": "XMLHttpRequest"
                 }
-            );
+            }
+        );
 
-            if (!response.ok) return;
-
-            const data = await response.json();
-
-            updateStats(data);
-            updateReviewProgress(data);
-            updateReviewQueue(data);
-        } catch (error) {
-            console.error("Staff dashboard update failed:", error);
-        }
-    }
-
-
-    function updateStats(data) {
-        const stats = {
-            "stat-assigned": data.assigned_count,
-            "stat-under-review": data.under_review_count,
-            "stat-pending-approval": data.final_review_count,
-            "stat-returned": data.returned_count,
-            "stat-approved": data.approved_count,
-            "stat-progress": `${data.review_progress}%`
-        };
-
-        Object.entries(stats).forEach(([id, value]) => {
-            const element = document.getElementById(id);
-
-            if (element) element.textContent = value;
-        });
-    }
-
-
-    function updateReviewProgress(data) {
-        const value = document.getElementById("compliance-value");
-
-        if (value) value.textContent = `${data.review_progress}%`;
-
-        const circle = document.querySelector(".compliance-circle");
-
-        if (!circle) return;
-
-        const percentage = Math.max(0, Math.min(100, Number(data.review_progress) || 0));
-
-        circle.style.borderLeftColor = "#e5e7eb";
-        circle.style.borderTopColor = "#991b1b";
-        circle.style.borderRightColor = percentage >= 50 ? "#991b1b" : "#e5e7eb";
-        circle.style.borderBottomColor = percentage >= 75 ? "#991b1b" : "#e5e7eb";
-    }
-
-
-    function updateReviewQueue(data) {
-        const body = document.getElementById("review-queue-body");
-
-        if (!body) {
+        if (!response.ok) {
             return;
         }
 
-        body.innerHTML = "";
+        const data = await response.json();
 
-        if (!data.review_queue || data.review_queue.length === 0) {
-            body.innerHTML = `
-                <tr>
-                    <td colspan="4" class="empty-row">
-                        No submissions in the review queue.
-                    </td>
-                </tr>
-            `;
-            return;
+        updateStats(data);
+        updateReviewProgress(data);
+        updateReviewQueue(data);
+
+    } catch (error) {
+        console.error(
+            "Staff dashboard update failed:",
+            error
+        );
+    }
+}
+
+function updateStats(data) {
+    const stats = {
+        "stat-assigned": data.assigned_count,
+        "stat-under-review": data.under_review_count,
+        "stat-returned": data.returned_count,
+        "stat-completed-reviews":
+            data.completed_reviews_count,
+        "stat-progress":
+            `${data.review_progress}%`
+    };
+
+    Object.entries(stats).forEach(([id, value]) => {
+        const element =
+            document.getElementById(id);
+
+        if (element) {
+            element.textContent = value;
         }
+    });
+}
 
-        data.review_queue.forEach(submission => {
-            const row = document.createElement("tr");
+function updateReviewProgress(data) {
+    const value =
+        document.getElementById("compliance-value");
 
-            row.innerHTML = `
-                <td>${submission.id}</td>
-                <td>${submission.faculty}</td>
-                <td>${submission.document}</td>
-                <td>${submission.date}</td>
-            `;
+    const circle =
+        document.querySelector(".compliance-circle");
 
-            body.appendChild(row);
-        });
+    const reviewedDetails =
+        document.getElementById("reviewed-details");
+
+    const pendingDetails =
+        document.getElementById("pending-details");
+
+    const reviewedPercentage = Math.max(
+        0,
+        Math.min(
+            100,
+            Number(data.review_progress) || 0
+        )
+    );
+
+    const pendingPercentage = Math.max(
+        0,
+        Math.min(
+            100,
+            Number(data.pending_review_progress) || 0
+        )
+    );
+
+    const completedCount =
+        Number(data.completed_reviews_count) || 0;
+
+    const pendingCount =
+        Number(data.pending_review_count) || 0;
+
+    if (value) {
+        value.textContent =
+            `${reviewedPercentage}%`;
     }
 
-    document.addEventListener("staff-dashboard-update", refreshStaffDashboard);
+    if (circle) {
+        circle.style.setProperty(
+            "--reviewed",
+            `${reviewedPercentage}%`
+        );
+
+        circle.style.setProperty(
+            "--pending",
+            `${pendingPercentage}%`
+        );
+    }
+
+    if (reviewedDetails) {
+        reviewedDetails.textContent =
+            `${reviewedPercentage}% (${completedCount})`;
+    }
+
+    if (pendingDetails) {
+        pendingDetails.textContent =
+            `${pendingPercentage}% (${pendingCount})`;
+    }
+}
+
+function updateReviewQueue(data) {
+    const body =
+        document.getElementById(
+            "review-queue-body"
+        );
+
+    if (!body) {
+        return;
+    }
+
+    body.innerHTML = "";
+
+    if (
+        !data.review_queue ||
+        data.review_queue.length === 0
+    ) {
+        body.innerHTML = `
+            <tr>
+                <td
+                    colspan="4"
+                    class="empty-row"
+                >
+                    No submissions in the review queue.
+                </td>
+            </tr>
+        `;
+
+        return;
+    }
+
+    data.review_queue.forEach(submission => {
+        const row =
+            document.createElement("tr");
+
+        row.innerHTML = `
+            <td>${submission.id}</td>
+            <td>${submission.faculty}</td>
+            <td>${submission.document}</td>
+            <td>${submission.date}</td>
+        `;
+
+        body.appendChild(row);
+    });
+}
+
+document.addEventListener(
+    "staff-dashboard-update",
+    refreshStaffDashboard
+);
 </script>
+
 {% endblock %}

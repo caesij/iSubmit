@@ -1,0 +1,73 @@
+<div class="notification-list">
+    {% for notification in notifications %}
+        <div class="notification-card{% if not notification.is_read %} unread{% endif %}">
+            <div class="notification-card-content">
+                <h3>{{ notification.title }}</h3>
+
+                <p>{{ notification.message }}</p>
+
+                <div class="notification-meta">
+                    {{ notification.get_notification_type_display }}
+                    ·
+                    {{ notification.created_at|date:"F j, Y g:i A" }}
+
+                    {% if not notification.is_read %}
+                        · Unread
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="notification-card-actions">
+                {% if not notification.is_read %}
+                    <form
+                        method="post"
+                        action="{% url 'notifications:mark_read' notification.id %}"
+                    >
+                        {% csrf_token %}
+
+                        <button type="submit">
+                            Mark as Read
+                        </button>
+                    </form>
+                {% endif %}
+
+                {% if notification.link %}
+                    <a href="{{ notification.link }}">
+                        View
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    {% empty %}
+        <div class="notification-empty">
+            No notifications found.
+        </div>
+    {% endfor %}
+</div>
+
+{% if page_obj.has_other_pages %}
+    <div class="notification-pagination">
+        {% if page_obj.has_previous %}
+            <a
+                class="page-btn"
+                href="?type={{ selected_type }}&read={{ selected_read }}&sort={{ selected_sort }}&page={{ page_obj.previous_page_number }}"
+            >
+                &lt;
+            </a>
+        {% endif %}
+
+        <span class="page-info">
+            Page {{ page_obj.number }}
+            of {{ page_obj.paginator.num_pages }}
+        </span>
+
+        {% if page_obj.has_next %}
+            <a
+                class="page-btn"
+                href="?type={{ selected_type }}&read={{ selected_read }}&sort={{ selected_sort }}&page={{ page_obj.next_page_number }}"
+            >
+                &gt;
+            </a>
+        {% endif %}
+    </div>
+{% endif %}

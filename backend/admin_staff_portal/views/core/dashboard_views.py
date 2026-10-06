@@ -92,12 +92,12 @@ def staff_dashboard_data_view(request):
         'assigned_count': data['assigned_count'],
         'under_review_count': data['under_review_count'],
         'returned_count': data['returned_count'],
-        'final_review_count': data['final_review_count'],
-        'approved_count': data['approved_count'],
+        'completed_reviews_count': data['completed_reviews_count'],
+        'pending_review_count': data['pending_review_count'],
         'review_progress': data['review_progress'],
+        'pending_review_progress': data['pending_review_progress'],
         'review_queue': review_queue
     })
-
 
 @role_required('STAFF')
 @require_http_methods(['GET'])

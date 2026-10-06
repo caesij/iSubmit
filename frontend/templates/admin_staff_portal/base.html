@@ -1,85 +1,179 @@
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %} iSubmit - {{ request.user.get_role_display }} Portal {% endblock %}</title>
+    <title>{% block title %}iSubmit - {{ request.user.get_role_display }} Portal{% endblock %}</title>
     <link rel="stylesheet" href="{% static 'css/layout/admin_staff_portal.css' %}">
     {% block extra_css %}{% endblock %}
 
     <style>
-    .notif-badge {
-        position: absolute; top: -4px; right: -6px;
-        background: #b91c1c; color: #fff; font-size: 10px; font-weight: 700;
-        border-radius: 999px; min-width: 16px; height: 16px;
-        display: flex; align-items: center; justify-content: center; padding: 0 3px;
-    }
-    .notif-dropdown {
-        position: absolute; top: calc(100% + 8px); right: 0; width: 320px; max-height: 400px;
-        overflow-y: auto; background: #fff; border: 1px solid #e5e7eb; border-radius: 10px;
-        box-shadow: 0 4px 16px rgba(0,0,0,.1); z-index: 50;
-    }
-    .notif-item { padding: 12px 14px; border-bottom: 1px solid #f3f4f6; cursor: pointer; font-size: 13px; }
-    .notif-item:hover { background: #fafafa; }
-    .notif-item strong { display: block; font-size: 13px; color: #1a1a1a; margin-bottom: 2px; }
-    .notif-item p { margin: 0; color: #6b7280; font-size: 12px; }
+        .notif-badge {
+            position: absolute;
+            top: -4px;
+            right: -6px;
+            background: #b91c1c;
+            color: #fff;
+            font-size: 10px;
+            font-weight: 700;
+            border-radius: 999px;
+            min-width: 16px;
+            height: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 3px;
+        }
+
+        .notif-dropdown {
+            position: absolute;
+            top: calc(100% + 8px);
+            right: 0;
+            width: 320px;
+            max-height: 400px;
+            overflow-y: auto;
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            box-shadow: 0 4px 16px rgba(0,0,0,.1);
+            z-index: 50;
+        }
+
+        .notif-item {
+            padding: 12px 14px;
+            border-bottom: 1px solid #f3f4f6;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        .notif-item:hover {
+            background: #fafafa;
+        }
+
+        .notif-item strong {
+            display: block;
+            font-size: 13px;
+            color: #1a1a1a;
+            margin-bottom: 2px;
+        }
+
+        .notif-item p {
+            margin: 0;
+            color: #6b7280;
+            font-size: 12px;
+        }
     </style>
 </head>
 
 <body>
     <div class="admin-shell">
+        <!-- Sidebar -->
         <aside class="sidebar">
             <div class="brand-box">
                 <div class="brand-mark">
-                    <img src="{% static 'images/logo.svg' %}" alt="iSubmit logo" class="brand-symbol">
+                    <img
+                        src="{% static 'images/logo.svg' %}"
+                        alt="iSubmit logo"
+                        class="brand-symbol"
+                    >
                 </div>
+
                 <div>
                     <div class="brand-name">iSubmit</div>
-                    <div class="brand-sub">Polytechnic University of the Philippines<br>Santa Rosa Campus</div>
+
+                    <div class="brand-sub">
+                        Polytechnic University of the Philippines<br>
+                        Santa Rosa Campus
+                    </div>
                 </div>
             </div>
 
             <nav class="sidebar-nav" aria-label="Main navigation">
                 <div class="nav-section-title">Main</div>
+
                 <ul class="nav-list">
                     <li class="nav-item">
-                        <a class="nav-link {% if request.resolver_match.url_name == 'admin_dashboard' or request.resolver_match.url_name == 'staff_dashboard' %}active{% endif %}"
-                        href="{% if request.user.is_admin %}{% url 'admin_staff_portal:admin_dashboard' %}{% else %}{% url 'admin_staff_portal:staff_dashboard' %}{% endif %}">
+                        <a
+                            class="nav-link {% if request.resolver_match.url_name == 'admin_dashboard' or request.resolver_match.url_name == 'staff_dashboard' %}active{% endif %}"
+                            href="{% if request.user.is_admin %}{% url 'admin_staff_portal:admin_dashboard' %}{% else %}{% url 'admin_staff_portal:staff_dashboard' %}{% endif %}"
+                        >
                             <span class="icon">
-                                <img src="{% static 'images/dashboard.svg' %}" alt="Dashboard icon">
+                                <img
+                                    src="{% static 'images/dashboard.svg' %}"
+                                    alt="Dashboard icon"
+                                >
                             </span>
                             <span>Dashboard</span>
                         </a>
                     </li>
+
                     <li class="nav-item">
-                        <a class="nav-link {% if request.resolver_match.url_name == 'document_repo' or request.resolver_match.url_name == 'document_file_view' %}active{% endif %}" href="{% url 'admin_staff_portal:document_repo' %}">
-                            <span class="icon"><img src="{% static 'images/documents.svg' %}" alt="Documents icon"></span>
+                        <a
+                            class="nav-link {% if request.resolver_match.url_name == 'document_repo' or request.resolver_match.url_name == 'document_file_view' %}active{% endif %}"
+                            href="{% url 'admin_staff_portal:document_repo' %}"
+                        >
+                            <span class="icon">
+                                <img
+                                    src="{% static 'images/documents.svg' %}"
+                                    alt="Documents icon"
+                                >
+                            </span>
                             <span>Documents</span>
                         </a>
                     </li>
+
                     <li class="nav-item">
-                        <a class="nav-link {% if request.resolver_match.url_name in 'requirements_list,add_requirement,edit_requirement,faculty_submissions_list,faculty_submission_bins_view,review_submission' %}active{% endif %}" href="{% url 'admin_staff_portal:requirements_list' %}">
-                            <span class="icon"><img src="{% static 'images/submissions.svg' %}" alt="Submissions icon"></span>
+                        <a
+                            class="nav-link {% if request.resolver_match.url_name in 'requirements_list,add_requirement,edit_requirement,faculty_submissions_list,faculty_submission_bins_view,review_submission' %}active{% endif %}"
+                            href="{% url 'admin_staff_portal:requirements_list' %}"
+                        >
+                            <span class="icon">
+                                <img
+                                    src="{% static 'images/submissions.svg' %}"
+                                    alt="Submissions icon"
+                                >
+                            </span>
                             <span>Submissions</span>
                         </a>
                     </li>
+
                     <li class="nav-item user-management-nav {% if request.resolver_match.url_name in 'user_list,user_create,user_edit,user_toggle_acc_status' %}is-open{% endif %}">
-                        <button type="button" class="nav-link nav-toggle {% if request.resolver_match.url_name in 'user_list,user_create,user_edit,user_toggle_acc_status' %}active{% endif %}" aria-expanded="{% if request.resolver_match.url_name in 'user_list,user_create,user_edit,user_toggle_acc_status' %}true{% else %}false{% endif %}">
-                            <span class="icon"><img src="{% static 'images/usermanagement.svg' %}" alt="User management icon"></span>
+                        <button
+                            type="button"
+                            class="nav-link nav-toggle {% if request.resolver_match.url_name in 'user_list,user_create,user_edit,user_toggle_acc_status' %}active{% endif %}"
+                            aria-expanded="{% if request.resolver_match.url_name in 'user_list,user_create,user_edit,user_toggle_acc_status' %}true{% else %}false{% endif %}"
+                        >
+                            <span class="icon">
+                                <img
+                                    src="{% static 'images/usermanagement.svg' %}"
+                                    alt="User management icon"
+                                >
+                            </span>
                             <span>User Management</span>
                         </button>
+
                         <ul class="subnav-list">
                             {% if request.user.is_admin %}
-                            <li class="subnav-item">
-                                <a class="subnav-link {% if request.GET.role == 'STAFF' %}active{% endif %}" href="{% url 'admin_staff_portal:user_list' %}?role=STAFF">Staff Management</a>
-                            </li>
+                                <li class="subnav-item">
+                                    <a
+                                        class="subnav-link {% if request.GET.role == 'STAFF' %}active{% endif %}"
+                                        href="{% url 'admin_staff_portal:user_list' %}?role=STAFF"
+                                    >
+                                        Staff Management
+                                    </a>
+                                </li>
                             {% endif %}
+
                             {% if request.user.is_admin or request.user.is_staff_role %}
-                            <li class="subnav-item">
-                                <a class="subnav-link {% if request.GET.role == 'FACULTY' %}active{% endif %}" href="{% url 'admin_staff_portal:user_list' %}?role=FACULTY">Faculty Management</a>
-                            </li>
+                                <li class="subnav-item">
+                                    <a
+                                        class="subnav-link {% if request.GET.role == 'FACULTY' %}active{% endif %}"
+                                        href="{% url 'admin_staff_portal:user_list' %}?role=FACULTY"
+                                    >
+                                        Faculty Management
+                                    </a>
+                                </li>
                             {% endif %}
                         </ul>
                     </li>
@@ -88,22 +182,49 @@
                 <div class="sidebar-divider"></div>
 
                 <div class="nav-section-title">General</div>
+
                 <ul class="nav-list">
                     <li class="nav-item">
-                        <a class="nav-link {% if request.resolver_match.url_name in 'preferences,notification_settings,account_security,staff_permissions' %}active{% endif %}" href="{% url 'admin_staff_portal:preferences' %}">
-                            <span class="icon"><img src="{% static 'images/settings.svg' %}" alt="Settings icon"></span>
+                        <a
+                            class="nav-link {% if request.resolver_match.url_name in 'preferences,notification_settings,account_security,staff_permissions' %}active{% endif %}"
+                            href="{% url 'admin_staff_portal:preferences' %}"
+                        >
+                            <span class="icon">
+                                <img
+                                    src="{% static 'images/settings.svg' %}"
+                                    alt="Settings icon"
+                                >
+                            </span>
                             <span>Settings</span>
                         </a>
                     </li>
+
                     <li class="nav-item">
-                        <a class="nav-link {% if request.resolver_match.url_name == 'profile' %}active{% endif %}" href="{% url 'admin_staff_portal:profile' %}">
-                            <span class="icon"><img src="{% static 'images/profile.svg' %}" alt="Profile icon"></span>
+                        <a
+                            class="nav-link {% if request.resolver_match.url_name == 'profile' %}active{% endif %}"
+                            href="{% url 'admin_staff_portal:profile' %}"
+                        >
+                            <span class="icon">
+                                <img
+                                    src="{% static 'images/profile.svg' %}"
+                                    alt="Profile icon"
+                                >
+                            </span>
                             <span>Profile</span>
                         </a>
                     </li>
+
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'accounts:logout' %}">
-                            <span class="icon"><img src="{% static 'images/logout.svg' %}" alt="Logout icon"></span>
+                        <a
+                            class="nav-link"
+                            href="{% url 'accounts:logout' %}"
+                        >
+                            <span class="icon">
+                                <img
+                                    src="{% static 'images/logout.svg' %}"
+                                    alt="Logout icon"
+                                >
+                            </span>
                             <span>Logout</span>
                         </a>
                     </li>
@@ -111,49 +232,146 @@
             </nav>
         </aside>
 
+        <!-- Main area -->
         <main class="main-area">
             <header class="topbar">
                 <div>
                     <div class="topbar-title-wrap">
                         {% if request.resolver_match.url_name == 'admin_dashboard' or request.resolver_match.url_name == 'staff_dashboard' %}
-                            <span class="page-icon"><img src="{% static 'images/dashboard.svg' %}" alt="Dashboard icon"></span>
+                            <span class="page-icon">
+                                <img
+                                    src="{% static 'images/dashboard.svg' %}"
+                                    alt="Dashboard icon"
+                                >
+                            </span>
+
                         {% elif request.resolver_match.url_name in 'user_list,user_create,user_edit,user_toggle_acc_status' %}
-                            <span class="page-icon"><img src="{% static 'images/usermanagement.svg' %}" alt="User management icon"></span>
+                            <span class="page-icon">
+                                <img
+                                    src="{% static 'images/usermanagement.svg' %}"
+                                    alt="User management icon"
+                                >
+                            </span>
+
                         {% elif request.resolver_match.url_name in 'requirements_list,add_requirement,edit_requirement,faculty_submissions_list,faculty_submission_bins_view,review_submission' %}
-                            <span class="page-icon"><img src="{% static 'images/submissions.svg' %}" alt="Submissions icon"></span>
+                            <span class="page-icon">
+                                <img
+                                    src="{% static 'images/submissions.svg' %}"
+                                    alt="Submissions icon"
+                                >
+                            </span>
+
                         {% elif request.resolver_match.url_name == 'document_repo' or request.resolver_match.url_name == 'document_file_view' %}
-                            <span class="page-icon"><img src="{% static 'images/documents.svg' %}" alt="Documents icon"></span>
+                            <span class="page-icon">
+                                <img
+                                    src="{% static 'images/documents.svg' %}"
+                                    alt="Documents icon"
+                                >
+                            </span>
+
                         {% elif request.resolver_match.url_name in 'preferences,notification_settings,account_and_security,staff_permissions' %}
-                            <span class="page-icon"><img src="{% static 'images/settings.svg' %}" alt="Settings icon"></span>
+                            <span class="page-icon">
+                                <img
+                                    src="{% static 'images/settings.svg' %}"
+                                    alt="Settings icon"
+                                >
+                            </span>
+
                         {% else %}
-                            <span class="page-icon"><img src="{% static 'images/profile.svg' %}" alt="Page icon"></span>
+                            <span class="page-icon">
+                                <img
+                                    src="{% static 'images/profile.svg' %}"
+                                    alt="Page icon"
+                                >
+                            </span>
                         {% endif %}
-                        <h1 class="topbar-title">{% block heading %}{{ page_title|default:'User Management' }}{% endblock %}</h1>
+
+                        <h1 class="topbar-title">
+                            {% block heading %}
+                                {{ page_title|default:'User Management' }}
+                            {% endblock %}
+                        </h1>
                     </div>
-                    <div class="topbar-subtitle">{% block subtitle %}Manage and access all approved documents across the system.{% endblock %}</div>
+
+                    <div class="topbar-subtitle">
+                        {% block subtitle %}
+                            Manage and access all approved documents across the system.
+                        {% endblock %}
+                    </div>
                 </div>
 
                 <div class="topbar-controls">
-                    <form class="global-search" action="{% url 'admin_staff_portal:user_list' %}" method="GET">
-                        <span class="icon"><img src="{% static 'images/search.svg' %}" alt="Search icon"></span>
-                        <input type="text" name="q" value="{{ request.GET.q|default:'' }}" placeholder="Search requirements, documents, or submissions...">
+                    <form
+                        class="global-search"
+                        action="{% url 'admin_staff_portal:user_list' %}"
+                        method="GET"
+                    >
+                        <span class="icon">
+                            <img
+                                src="{% static 'images/search.svg' %}"
+                                alt="Search icon"
+                            >
+                        </span>
+
+                        <input
+                            type="text"
+                            name="q"
+                            value="{{ request.GET.q|default:'' }}"
+                            placeholder="Search requirements, documents, or submissions..."
+                        >
                     </form>
 
-                    <div class="notification-wrap" aria-label="Notifications" style="position: relative;">
-                        <button type="button" id="notif-bell" style="background:none; border:none; cursor:pointer; padding:0; display:flex; align-items:center;">
-                            <img src="{% static 'images/Icon - Notifications.svg' %}" alt="Notifications" class="icon">
-                            <span class="notif-badge" id="notif-badge" style="display:none;">0</span>
+                    <div
+                        class="notification-wrap"
+                        aria-label="Notifications"
+                        style="position: relative;"
+                    >
+                        <button
+                            type="button"
+                            id="notif-bell"
+                            style="background:none; border:none; cursor:pointer; padding:0; display:flex; align-items:center;"
+                            aria-label="Open notifications"
+                            aria-expanded="false"
+                        >
+                            <img
+                                src="{% static 'images/Icon - Notifications.svg' %}"
+                                alt="Notifications"
+                                class="icon"
+                            >
+
+                            <span
+                                class="notif-badge"
+                                id="notif-badge"
+                                style="display:none;"
+                            >
+                                0
+                            </span>
                         </button>
-                        <div class="notif-dropdown" id="notif-dropdown" style="display:none;"></div>
+
+                        <div
+                            class="notif-dropdown"
+                            id="notif-dropdown"
+                            style="display:none;"
+                        ></div>
                     </div>
 
                     <div class="user-badge">
                         <div class="user-badge-avatar">
-                            <img src="{% static 'images/profile.svg' %}" alt="User profile" class="user-badge-img">
+                            <img
+                                src="{% static 'images/profile.svg' %}"
+                                alt="User profile"
+                                class="user-badge-img"
+                            >
                         </div>
+
                         <div>
-                            <div class="user-badge-name">{{ request.user.get_full_name|default:request.user.email }}</div>
-                            <span class="user-badge-meta">{{ request.user.get_role_display }}</span>
+                            <div class="user-badge-name">
+                                {{ request.user.get_full_name|default:request.user.email }}
+                            </div>
+
+                            <span class="user-badge-meta">
+                                {{ request.user.get_role_display }}
+                            </span>
                         </div>
                     </div>
                 </div>
@@ -165,21 +383,34 @@
         </main>
     </div>
 
+    <!-- Sidebar toggle -->
     <script>
     document.addEventListener("click", function (event) {
-        const toggle = event.target.closest(".user-management-nav .nav-toggle");
+        const toggle =
+            event.target.closest(
+                ".user-management-nav .nav-toggle"
+            );
 
-        if (!toggle) return;
+        if (!toggle) {
+            return;
+        }
 
-        const navItem = toggle.closest(".user-management-nav");
-        const isOpen = navItem.classList.toggle("is-open");
-        toggle.setAttribute("aria-expanded", String(isOpen));
+        const navItem =
+            toggle.closest(".user-management-nav");
+
+        const isOpen =
+            navItem.classList.toggle("is-open");
+
+        toggle.setAttribute(
+            "aria-expanded",
+            String(isOpen)
+        );
     });
     </script>
 
+    <!-- Realtime WebSocket -->
     <script>
     (function () {
-
         const protocol =
             window.location.protocol === "https:"
                 ? "wss:"
@@ -194,7 +425,6 @@
         });
 
         socket.addEventListener("message", function (event) {
-
             const message = JSON.parse(event.data);
 
             if (message.event === "admin-dashboard.update") {
@@ -202,7 +432,7 @@
                     new CustomEvent("admin-dashboard-update")
                 );
             }
-            
+
             if (message.event === "staff-dashboard.update") {
                 document.dispatchEvent(
                     new CustomEvent("staff-dashboard-update")
@@ -216,7 +446,6 @@
                     })
                 );
             }
-
         });
 
         socket.addEventListener("close", function () {
@@ -229,9 +458,208 @@
                 error
             );
         });
-
     })();
     </script>
-</body>
 
+    <!-- Notifications -->
+    <script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const bell =
+            document.getElementById("notif-bell");
+
+        const badge =
+            document.getElementById("notif-badge");
+
+        const dropdown =
+            document.getElementById("notif-dropdown");
+
+        const listContainer =
+            document.getElementById(
+                "notification-list-container"
+            );
+
+        if (!bell || !badge || !dropdown) {
+            return;
+        }
+
+        let dropdownLoading = false;
+        let listLoading = false;
+
+        function updateBadge(count) {
+            const unreadCount = Math.max(
+                0,
+                Number(count) || 0
+            );
+
+            if (unreadCount > 0) {
+                badge.textContent = unreadCount;
+                badge.style.display = "flex";
+            } else {
+                badge.textContent = "0";
+                badge.style.display = "none";
+            }
+        }
+
+        async function loadNotificationDropdown() {
+            if (dropdownLoading) {
+                return;
+            }
+
+            dropdownLoading = true;
+
+            try {
+                const response = await fetch(
+                    "{% url 'notifications:dropdown' %}",
+                    {
+                        method: "GET",
+                        cache: "no-store",
+                        headers: {
+                            "X-Requested-With":
+                                "XMLHttpRequest"
+                        }
+                    }
+                );
+
+                if (!response.ok) {
+                    throw new Error(
+                        "Failed to load notifications."
+                    );
+                }
+
+                const data =
+                    await response.json();
+
+                dropdown.innerHTML = data.html;
+
+                updateBadge(
+                    data.unread_count
+                );
+            } catch (error) {
+                console.error(
+                    "Notification dropdown failed:",
+                    error
+                );
+
+                dropdown.innerHTML = `
+                    <div class="notif-dropdown-empty">
+                        Failed to load notifications.
+                    </div>
+                `;
+            } finally {
+                dropdownLoading = false;
+            }
+        }
+
+        async function loadNotificationList() {
+            if (!listContainer || listLoading) {
+                return;
+            }
+
+            listLoading = true;
+
+            try {
+                const response = await fetch(
+                    "{% url 'notifications:list_data' %}" +
+                    window.location.search,
+                    {
+                        method: "GET",
+                        cache: "no-store",
+                        headers: {
+                            "X-Requested-With":
+                                "XMLHttpRequest"
+                        }
+                    }
+                );
+
+                if (!response.ok) {
+                    throw new Error(
+                        "Failed to refresh notification list."
+                    );
+                }
+
+                const data =
+                    await response.json();
+
+                listContainer.innerHTML =
+                    data.html;
+            } catch (error) {
+                console.error(
+                    "Notification list refresh failed:",
+                    error
+                );
+            } finally {
+                listLoading = false;
+            }
+        }
+
+        bell.addEventListener(
+            "click",
+            function (event) {
+                event.stopPropagation();
+
+                const isOpen =
+                    dropdown.style.display ===
+                    "block";
+
+                if (isOpen) {
+                    dropdown.style.display =
+                        "none";
+
+                    bell.setAttribute(
+                        "aria-expanded",
+                        "false"
+                    );
+
+                    return;
+                }
+
+                dropdown.style.display =
+                    "block";
+
+                bell.setAttribute(
+                    "aria-expanded",
+                    "true"
+                );
+
+                dropdown.innerHTML = `
+                    <div class="notif-dropdown-empty">
+                        Loading notifications...
+                    </div>
+                `;
+
+                loadNotificationDropdown();
+            }
+        );
+
+        document.addEventListener(
+            "click",
+            function (event) {
+                if (
+                    !event.target.closest(
+                        ".notification-wrap"
+                    )
+                ) {
+                    dropdown.style.display =
+                        "none";
+
+                    bell.setAttribute(
+                        "aria-expanded",
+                        "false"
+                    );
+                }
+            }
+        );
+
+        document.addEventListener(
+            "notification-new",
+            function () {
+                loadNotificationDropdown();
+                loadNotificationList();
+            }
+        );
+
+        loadNotificationDropdown();
+    });
+    </script>
+</body>
 </html>
