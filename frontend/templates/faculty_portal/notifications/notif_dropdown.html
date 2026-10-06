@@ -1,0 +1,46 @@
+<div class="notif-dropdown-header">
+    <strong>Notifications</strong>
+
+    {% if unread_count %}
+        <span>{{ unread_count }} unread</span>
+    {% endif %}
+</div>
+
+<div class="notif-dropdown-list">
+    {% for notification in notifications %}
+        <form
+            method="post"
+            action="{% url 'notifications:mark_read' notification.id %}"
+            class="notif-dropdown-form"
+        >
+            {% csrf_token %}
+
+            <button
+                type="submit"
+                class="notif-dropdown-item{% if not notification.is_read %} unread{% endif %}"
+            >
+                <strong>
+                    {{ notification.title }}
+                </strong>
+
+                <p>
+                    {{ notification.message }}
+                </p>
+
+                <small>
+                    {{ notification.created_at|date:"M j, Y g:i A" }}
+                </small>
+            </button>
+        </form>
+    {% empty %}
+        <div class="notif-dropdown-empty">
+            No notifications.
+        </div>
+    {% endfor %}
+</div>
+
+<div class="notif-dropdown-footer">
+    <a href="{% url 'notifications:notification_list' %}">
+        View All
+    </a>
+</div>

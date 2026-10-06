@@ -1,0 +1,149 @@
+<style>
+.notif-dropdown-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 14px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.notif-dropdown-header strong {
+    font-size: 14px;
+    color: #1a1a1a;
+}
+
+.notif-dropdown-header span {
+    font-size: 11px;
+    color: #6b7280;
+}
+
+.notif-dropdown-list {
+    max-height: 320px;
+    overflow-y: auto;
+}
+
+.notif-dropdown-form {
+    margin: 0;
+}
+
+.notif-dropdown-item {
+    width: 100%;
+    display: block;
+    padding: 12px 14px;
+    border: none;
+    border-bottom: 1px solid #f3f4f6;
+    background: #fff;
+    text-align: left;
+    cursor: pointer;
+}
+
+.notif-dropdown-item:hover {
+    background: #fafafa;
+}
+
+.notif-dropdown-item.unread {
+    background: #fff7f7;
+}
+
+.notif-dropdown-item strong {
+    display: block;
+    margin-bottom: 4px;
+    font-size: 13px;
+    color: #1a1a1a;
+}
+
+.notif-dropdown-item p {
+    margin: 0 0 5px;
+    color: #6b7280;
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+.notif-dropdown-item small {
+    color: #9ca3af;
+    font-size: 10px;
+}
+
+.notif-dropdown-empty {
+    padding: 28px 14px;
+    text-align: center;
+    color: #6b7280;
+    font-size: 12px;
+}
+
+.notif-dropdown-footer {
+    border-top: 1px solid #e5e7eb;
+}
+
+.notif-dropdown-footer a {
+    display: block;
+    padding: 11px;
+    color: #b91c1c;
+    text-align: center;
+    text-decoration: none;
+    font-size: 12px;
+    font-weight: 700;
+}
+</style>
+
+<div class="notif-dropdown-header">
+
+    <strong>Notifications</strong>
+
+    {% if unread_count %}
+        <span>{{ unread_count }} unread</span>
+    {% endif %}
+
+</div>
+
+<div class="notif-dropdown-list">
+
+    {% for notification in notifications %}
+
+        <form
+            method="post"
+            action="{% url 'notifications:mark_read' notification.id %}"
+            class="notif-dropdown-form"
+        >
+            {% csrf_token %}
+
+            <button
+                type="submit"
+                class="notif-dropdown-item{% if not notification.is_read %} unread{% endif %}"
+            >
+
+                <strong>
+                    {{ notification.title }}
+                </strong>
+
+                <p>
+                    {{ notification.message }}
+                </p>
+
+                <small>
+                    {{ notification.created_at|date:"M j, Y g:i A" }}
+                </small>
+
+            </button>
+
+        </form>
+
+    {% empty %}
+
+        <div class="notif-dropdown-empty">
+            No notifications.
+        </div>
+
+    {% endfor %}
+
+</div>
+
+<div class="notif-dropdown-footer">
+
+    <a
+        href="{% url 'notifications:notification_list' %}"
+    >
+        View All
+    </a>
+
+</div>

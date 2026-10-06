@@ -20,6 +20,7 @@ urlpatterns = [
     path('auth/', include('accounts.urls')),
     path('admin-portal/', include('admin_staff_portal.urls')),
     path('faculty-portal/', include('faculty_portal.urls')),
+    path('notifications/', include('notifications.urls')),
 ]
 
 if settings.DEBUG:
