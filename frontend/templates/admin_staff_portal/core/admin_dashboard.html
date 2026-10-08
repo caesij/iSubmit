@@ -159,10 +159,20 @@
     </div>
 
 
-    <!-- Pending review -->
+    <!-- Documents Overview -->
     <div class="dashboard-card pending-card">
         <div class="card-header">
-            <h2>Pending Review</h2>
+            <div>
+                <h2>Documents Overview</h2>
+
+                <div class="document-tabs">
+                    <button type="button" class="document-tab active" data-status="">All</button>
+                    <button type="button" class="document-tab" data-status="APPROVED">Approved</button>
+                    <button type="button" class="document-tab" data-status="SUBMITTED">Submitted</button>
+                    <button type="button" class="document-tab" data-status="PENDING_APPROVAL">Pending Approval</button>
+                </div>
+            </div>
+
             <a href="{% url 'admin_staff_portal:faculty_submissions_list' %}">View all &rsaquo;</a>
         </div>
 
@@ -170,18 +180,19 @@
             <table>
                 <thead>
                     <tr>
-                        <th>ID</th>
                         <th>Faculty Member</th>
-                        <th>Document</th>
-                        <th>Date Submitted</th>
+                        <th>Faculty Type</th>
+                        <th>Bin Title</th>
+                        <th>Latest Submission</th>
+                        <th>Action</th>
                     </tr>
                 </thead>
 
-                <tbody id="pending-review-body">
-                    {% for submission in pending_review %}
+                <tbody id="documents-overview-body">
+                    {% for submission in documents_overview %}
                         <tr>
-                            <td>{{ submission.faculty.employee_ID }}</td>
                             <td>{{ submission.faculty.get_full_name }}</td>
+                            <td>{{ submission.faculty.get_faculty_type_display }}</td>
                             <td>{{ submission.requirement.requirement_title }}</td>
                             <td>
                                 {% if submission.status == 'RESUBMITTED' and submission.resubmitted_at %}
@@ -190,10 +201,15 @@
                                     {{ submission.initially_submitted_at|date:"M j, Y" }}
                                 {% endif %}
                             </td>
+                            <td>
+                                <a href="{% url 'admin_staff_portal:faculty_submission_bins_view' submission.faculty.id %}">
+                                    View Bins &rsaquo;
+                                </a>
+                            </td>
                         </tr>
                     {% empty %}
                         <tr>
-                            <td colspan="4" class="empty-row">No pending reviews.</td>
+                            <td colspan="5" class="empty-row">No documents found.</td>
                         </tr>
                     {% endfor %}
                 </tbody>
@@ -205,6 +221,8 @@
 
 
 <script>
+    let selectedDocumentsStatus = "";
+
     async function refreshAdminDashboard() {
         try {
             const response = await fetch(
@@ -222,7 +240,7 @@
 
             updateStats(data);
             updateCompliance(data);
-            updatePendingReview(data);
+            updateDocumentsOverview(data);
             updateSubmissionTrends(data);
         } catch (error) {
             console.error("Admin dashboard update failed:", error);
@@ -297,34 +315,51 @@
     }
 
 
-    function updatePendingReview(data) {
-        const body = document.getElementById("pending-review-body");
+    function updateDocumentsOverview(data) {
+        const body = document.getElementById("documents-overview-body");
 
-        if (!body) return;
-
-        body.innerHTML = "";
-
-        if (!data.pending_review || data.pending_review.length === 0) {
-            body.innerHTML = `
-                <tr>
-                    <td colspan="4" class="empty-row">No pending reviews.</td>
-                </tr>
-            `;
+        if (!body) {
             return;
         }
 
-        data.pending_review.forEach(submission => {
+        body.innerHTML = "";
+
+        if (
+            !data.documents_overview ||
+            data.documents_overview.length === 0
+        ) {
+            body.innerHTML = `
+                <tr>
+                    <td colspan="5" class="empty-row">
+                        No documents found.
+                    </td>
+                </tr>
+            `;
+
+            return;
+        }
+
+        data.documents_overview.forEach(submission => {
             const row = document.createElement("tr");
 
+            row.dataset.status = submission.status;
+
             row.innerHTML = `
-                <td>${submission.id}</td>
                 <td>${submission.faculty}</td>
-                <td>${submission.document}</td>
-                <td>${submission.date}</td>
+                <td>${submission.faculty_type}</td>
+                <td>${submission.bin_title}</td>
+                <td>${submission.latest_submission_date}</td>
+                <td>
+                    <a href="${submission.faculty_bins_url}">
+                        View Bins &rsaquo;
+                    </a>
+                </td>
             `;
 
             body.appendChild(row);
         });
+
+        applyDocumentsOverviewFilter();
     }
 
 
@@ -372,6 +407,39 @@
         });
     }
 
+    function applyDocumentsOverviewFilter() {
+        const rows = document.querySelectorAll(
+            "#documents-overview-body tr[data-status]"
+        );
+
+        rows.forEach(row => {
+            if (
+                !selectedDocumentsStatus ||
+                row.dataset.status === selectedDocumentsStatus
+            ) {
+                row.style.display = "";
+            } else {
+                row.style.display = "none";
+            }
+        });
+    }
+
+    document.querySelectorAll(".document-tab").forEach(tab => {
+        tab.addEventListener("click", function () {
+            selectedDocumentsStatus =
+                this.dataset.status;
+
+            document
+                .querySelectorAll(".document-tab")
+                .forEach(item => {
+                    item.classList.remove("active");
+                });
+
+            this.classList.add("active");
+
+            applyDocumentsOverviewFilter();
+        });
+    });
 
     document.addEventListener("admin-dashboard-update", refreshAdminDashboard);
 
