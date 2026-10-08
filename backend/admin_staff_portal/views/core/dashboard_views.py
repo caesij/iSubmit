@@ -1,5 +1,6 @@
 from django.shortcuts import render
 from django.views.decorators.http import require_http_methods
+from django.urls import reverse
 from django.utils import timezone
 from django.http import JsonResponse
 
@@ -13,25 +14,30 @@ from submissions.models import DocumentSubmission
 def admin_dashboard_data_view(request):
     data = get_admin_dashboard_data()
 
-    pending_review = []
+    documents_overview = []
 
-    for submission in data['pending_review']:
-        submission_date = (
+    for submission in data['documents_overview']:
+        latest_submission_date = (
             submission.resubmitted_at
             if submission.status == DocumentSubmission.SubmissionStatus.RESUBMITTED
             else submission.initially_submitted_at
         )
 
-        pending_review.append({
-            'id': str(submission.faculty.employee_ID),
+        documents_overview.append({
+            'faculty_id': submission.faculty.id,
             'faculty': submission.faculty.get_full_name(),
-            'document': submission.requirement.requirement_title,
-            'date': (
-                timezone.localtime(submission_date).strftime('%b %d, %Y').replace(' 0', ' ')
-                if submission_date
+            'faculty_type': submission.faculty.get_faculty_type_display(),
+            'bin_title': submission.requirement.requirement_title,
+            'latest_submission_date': (
+                timezone.localtime(latest_submission_date).strftime('%b %d, %Y').replace(' 0', ' ')
+                if latest_submission_date
                 else ''
             ),
             'status': submission.status,
+            'faculty_bins_url': reverse(
+                'admin_staff_portal:faculty_submission_bins_view',
+                args=[submission.faculty.id]
+            )
         })
 
     return JsonResponse({
@@ -50,7 +56,7 @@ def admin_dashboard_data_view(request):
         'not_submitted_percentage': data['not_submitted_percentage'],
 
         'submission_trends': data['submission_trends'],
-        'pending_review': pending_review,
+        'documents_overview': documents_overview,
     })
 
 
@@ -71,27 +77,30 @@ def admin_dashboard_view(request):
 def staff_dashboard_data_view(request):
     data = get_staff_dashboard_data()
 
-    review_queue = []
-
-    for submission in data['review_queue']:
-        submission_date = (
+    documents_overview = []
+    
+    for submission in data['documents_overview']:
+        latest_submission_date = (
             submission.resubmitted_at
             if submission.status == DocumentSubmission.SubmissionStatus.RESUBMITTED
             else submission.initially_submitted_at
         )
 
-        review_queue.append({
-            'id': str(submission.faculty.employee_ID),
+        documents_overview.append({
+            'faculty_id': submission.faculty.id,
             'faculty': submission.faculty.get_full_name(),
-            'document': submission.requirement.requirement_title,
-            'date': (
-                timezone.localtime(submission_date)
-                .strftime('%b %d, %Y')
-                .replace(' 0', ' ')
-                if submission_date
+            'faculty_type': submission.faculty.get_faculty_type_display(),
+            'bin_title': submission.requirement.requirement_title,
+            'latest_submission_date': (
+                timezone.localtime(latest_submission_date).strftime('%b %d, %Y').replace(' 0', ' ')
+                if latest_submission_date
                 else ''
             ),
-            'status': submission.status
+            'status': submission.status,
+            'faculty_bins_url': reverse(
+                'admin_staff_portal:faculty_submission_bins_view',
+                args=[submission.faculty.id]
+            )
         })
 
     return JsonResponse({
@@ -101,10 +110,12 @@ def staff_dashboard_data_view(request):
         'under_review_count': data['under_review_count'],
         'returned_count': data['returned_count'],
         'pending_review_count': data['pending_review_count'],
+        
         'review_progress': data['review_progress'],
         'pending_review_progress': data['pending_review_progress'],
+        
         'submission_trends': data['submission_trends'],
-        'review_queue': review_queue
+        'documents_overview': documents_overview
     })
 
 

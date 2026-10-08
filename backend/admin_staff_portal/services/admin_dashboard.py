@@ -25,9 +25,17 @@ def get_admin_dashboard_data():
     submissions = DocumentSubmission.objects.all()
 
     faculty_count = len(faculty)
+    
     approved_count = submissions.filter(status=DocumentSubmission.SubmissionStatus.APPROVED).count()
-    submitted_count = submissions.count()
+    
+    submitted_count = submissions.filter(
+        status__in=[
+            DocumentSubmission.SubmissionStatus.SUBMITTED, 
+            DocumentSubmission.SubmissionStatus.RESUBMITTED]
+    ).count()
+    
     pending_approval_count = submissions.filter(status=DocumentSubmission.SubmissionStatus.PENDING_APPROVAL).count()
+    
     active_requirement_count = len(active_requirements)
 
     faculty_ids = [user.id for user in faculty]
@@ -102,12 +110,13 @@ def get_admin_dashboard_data():
 
     not_submitted_percentage = (round((not_submitted_count / faculty_count) * 100) if faculty_count else 0)
 
-    pending_review = (
+    documents_overview = (
         submissions
         .filter(
             status__in=[
+                DocumentSubmission.SubmissionStatus.APPROVED,
                 DocumentSubmission.SubmissionStatus.SUBMITTED,
-                DocumentSubmission.SubmissionStatus.RESUBMITTED
+                DocumentSubmission.SubmissionStatus.PENDING_APPROVAL
             ]
         )
         .select_related('faculty', 'requirement')
@@ -131,8 +140,8 @@ def get_admin_dashboard_data():
         'in_progress_percentage': in_progress_percentage,
         'not_submitted_percentage': not_submitted_percentage,
 
-        'pending_review': pending_review,
-        'submission_trends': trends,
+        'documents_overview': documents_overview,
+        'submission_trends': trends
     }
 
 
