@@ -4,76 +4,133 @@
 {% block title %}Submissions - iSubmit{% endblock %}
 {% block heading %}Submissions{% endblock %}
 {% block subtitle %}Manage and access all approved documents across the system.{% endblock %}
-{% block extra_css %}<link rel="stylesheet" href="{% static 'css/pages/submissions.css' %}">{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/pages/submissions.css' %}">
+{% endblock %}
 
 {% block content %}
 <div class="submissions-container">
+
+    <!-- Tabs -->
     <div class="tab-nav">
-        <a href="{% url 'admin_staff_portal:requirements_list' %}" class="tab-link {% if request.resolver_match.url_name == 'requirements_list' %}active{% endif %}">Submission Bin</a>
-        <a href="{% url 'admin_staff_portal:faculty_submissions_list' %}" class="tab-link {% if request.resolver_match.url_name == 'faculty_submissions_list' %}active{% endif %}">Faculty Submission</a>
+        <a
+            href="{% url 'admin_staff_portal:requirements_list' %}"
+            class="tab-link {% if request.resolver_match.url_name == 'requirements_list' %}active{% endif %}"
+        >
+            Submission Bin
+        </a>
+
+        <a
+            href="{% url 'admin_staff_portal:faculty_submissions_list' %}"
+            class="tab-link {% if request.resolver_match.url_name == 'faculty_submissions_list' %}active{% endif %}"
+        >
+            Faculty Submission
+        </a>
     </div>
 
+
+    <!-- Filters -->
     <div class="filter-card">
-        <form method="GET" action="{% url 'admin_staff_portal:requirements_list' %}" class="filter-form">
-            <span class="search-icon"><img src="{% static 'images/search.svg' %}" alt="Search"></span>
-            
+        <form
+            method="GET"
+            action="{% url 'admin_staff_portal:requirements_list' %}"
+            class="filter-form"
+        >
+            <span class="search-icon">
+                <img src="{% static 'images/search.svg' %}" alt="Search">
+            </span>
+
             <div class="search-input-wrap">
-                <input type="text" name="q" value="{{ request.GET.q|default:'' }}" placeholder="Search requirements, documents, or submissions...">
+                <input
+                    type="text"
+                    name="q"
+                    value="{{ request.GET.q|default:'' }}"
+                    placeholder="Search requirements, documents, or submissions..."
+                >
             </div>
 
             <div class="select-wrap">
                 <label>Category</label>
+
                 <select name="category" onchange="this.form.submit()">
                     <option value="">All Category</option>
+
                     {% for cat in categories %}
-                        <option value="{{ cat }}" {% if request.GET.category == cat %}selected{% endif %}>{{ cat }}</option>
+                        <option value="{{ cat }}" {% if request.GET.category == cat %}selected{% endif %}>
+                            {{ cat }}
+                        </option>
                     {% endfor %}
                 </select>
             </div>
 
             <div class="select-wrap">
                 <label>Assigned To</label>
+
                 <select name="assigned_to" onchange="this.form.submit()">
                     <option value="">All Faculties</option>
+
                     {% for value, label in assigned_to_choices %}
-                        <option value="{{ value }}" {% if request.GET.assigned_to == value %}selected{% endif %}>{{ label }}</option>
+                        <option value="{{ value }}" {% if request.GET.assigned_to == value %}selected{% endif %}>
+                            {{ label }}
+                        </option>
                     {% endfor %}
                 </select>
             </div>
 
             <div class="select-wrap">
                 <label>Semester</label>
+
                 <select name="semester" onchange="this.form.submit()">
                     <option value="">All Semesters</option>
-                    <option value="FIRST" {% if request.GET.semester == 'FIRST' %}selected{% endif %}>First Semester</option>
-                    <option value="SECOND" {% if request.GET.semester == 'SECOND' %}selected{% endif %}>Second Semester</option>
-                    <option value="SUMMER" {% if request.GET.semester == 'SUMMER' %}selected{% endif %}>Summer</option>
+
+                    <option value="FIRST_SEM" {% if request.GET.semester == 'FIRST_SEM' %}selected{% endif %}>
+                        First Semester
+                    </option>
+
+                    <option value="SECOND_SEM" {% if request.GET.semester == 'SECOND_SEM' %}selected{% endif %}>
+                        Second Semester
+                    </option>
+
+                    <option value="SUMMER" {% if request.GET.semester == 'SUMMER' %}selected{% endif %}>
+                        Summer
+                    </option>
                 </select>
             </div>
 
             <div class="select-wrap">
                 <label>Academic Year</label>
+
                 <select name="academic_year" onchange="this.form.submit()">
                     <option value="">All Years</option>
+
                     {% for year in academic_years %}
-                        <option value="{{ year }}" {% if request.GET.academic_year == year %}selected{% endif %}>{{ year }}</option>
+                        <option value="{{ year }}" {% if request.GET.academic_year == year %}selected{% endif %}>
+                            {{ year }}
+                        </option>
                     {% endfor %}
                 </select>
             </div>
 
             {% if request.GET.q or request.GET.category or request.GET.assigned_to or request.GET.semester or request.GET.academic_year %}
-                <a href="{% url 'admin_staff_portal:requirements_list' %}" class="btn-clear">Clear Filters</a>
+                <a href="{% url 'admin_staff_portal:requirements_list' %}" class="btn-clear">
+                    Clear Filters
+                </a>
             {% endif %}
         </form>
-
     </div>
 
+
+    <!-- Actions -->
     <div class="submission-actions">
         <a href="{% url 'admin_staff_portal:bulk_requirements' %}" class="btn-add-bin">
-            <span class="plus-icon">+</span> Add Bin
+            <span class="plus-icon">+</span>
+            Add Bin
         </a>
     </div>
 
+
+    <!-- Requirements table -->
     <div class="table-card">
         <table class="data-table">
             <thead>
@@ -85,75 +142,95 @@
                     <th>Deadline</th>
                     <th>Completion Progress</th>
                     <th>Status</th>
+                    <th>OCR Enabled</th>
                     <th class="action-heading">Action</th>
                 </tr>
             </thead>
+
             <tbody data-live-container="requirements-table">
                 {% for req in requirements %}
                     {% include 'admin_staff_portal/core/submissions/submission_bin/_requirement_row.html' %}
                 {% empty %}
                     <tr>
-                        <td colspan="8" class="text-center py-4">No requirement bins found.</td>
+                        <td colspan="9" class="text-center py-4">No requirement bins found.</td>
                     </tr>
                 {% endfor %}
             </tbody>
         </table>
 
+
+        <!-- Pagination -->
         {% if is_paginated or page_obj %}
-        <div class="pagination-footer">
-            <span class="pagination-info">
-                Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }} documents
-            </span>
-            <div class="pagination-controls">
-                {% if page_obj.has_previous %}
-                    <a href="?page={{ page_obj.previous_page_number }}" class="page-btn">&lt;</a>
-                {% else %}
-                    <span class="page-btn page-btn-disabled" aria-disabled="true">&lt;</span>
-                {% endif %}
+            <div class="pagination-footer">
+                <span class="pagination-info">
+                    Showing {{ page_obj.start_index }} to {{ page_obj.end_index }}
+                    of {{ page_obj.paginator.count }} documents
+                </span>
 
-                {% for page_num in page_obj.paginator.page_range %}
-                    <a href="?page={{ page_num }}" class="page-btn {% if page_obj.number == page_num %}active{% endif %}">
-                        {{ page_num }}
-                    </a>
-                {% endfor %}
+                <div class="pagination-controls">
+                    {% if page_obj.has_previous %}
+                        <a href="?page={{ page_obj.previous_page_number }}" class="page-btn">&lt;</a>
+                    {% else %}
+                        <span class="page-btn page-btn-disabled" aria-disabled="true">&lt;</span>
+                    {% endif %}
 
-                {% if page_obj.has_next %}
-                    <a href="?page={{ page_obj.next_page_number }}" class="page-btn">&gt;</a>
-                {% else %}
-                    <span class="page-btn page-btn-disabled" aria-disabled="true">&gt;</span>
-                {% endif %}
+                    {% for page_num in page_obj.paginator.page_range %}
+                        <a
+                            href="?page={{ page_num }}"
+                            class="page-btn {% if page_obj.number == page_num %}active{% endif %}"
+                        >
+                            {{ page_num }}
+                        </a>
+                    {% endfor %}
+
+                    {% if page_obj.has_next %}
+                        <a href="?page={{ page_obj.next_page_number }}" class="page-btn">&gt;</a>
+                    {% else %}
+                        <span class="page-btn page-btn-disabled" aria-disabled="true">&gt;</span>
+                    {% endif %}
+                </div>
             </div>
-        </div>
         {% endif %}
     </div>
+
 </div>
 
+
 <script>
-document.addEventListener("click", function (event) {
-    const trigger = event.target.closest(".dropdown .btn-icon");
-    const openMenus = document.querySelectorAll(".dropdown-menu.show");
+    document.addEventListener("click", function (event) {
+        const trigger = event.target.closest(".dropdown .btn-icon");
+        const openMenus = document.querySelectorAll(".dropdown-menu.show");
 
-    if (trigger) {
-        const dropdown = trigger.closest(".dropdown");
-        const menu = dropdown.querySelector(".dropdown-menu");
-        const shouldOpen = !menu.classList.contains("show");
+        if (trigger) {
+            const dropdown = trigger.closest(".dropdown");
+            const menu = dropdown.querySelector(".dropdown-menu");
+            const shouldOpen = !menu.classList.contains("show");
 
-        openMenus.forEach(function (openMenu) {
-            openMenu.classList.remove("show");
-            openMenu.closest(".dropdown").querySelector(".btn-icon").setAttribute("aria-expanded", "false");
-        });
+            openMenus.forEach(function (openMenu) {
+                openMenu.classList.remove("show");
 
-        menu.classList.toggle("show", shouldOpen);
-        trigger.setAttribute("aria-expanded", String(shouldOpen));
-        return;
-    }
+                openMenu
+                    .closest(".dropdown")
+                    .querySelector(".btn-icon")
+                    .setAttribute("aria-expanded", "false");
+            });
 
-    if (!event.target.closest(".dropdown")) {
-        openMenus.forEach(function (openMenu) {
-            openMenu.classList.remove("show");
-            openMenu.closest(".dropdown").querySelector(".btn-icon").setAttribute("aria-expanded", "false");
-        });
-    }
-});
+            menu.classList.toggle("show", shouldOpen);
+            trigger.setAttribute("aria-expanded", String(shouldOpen));
+
+            return;
+        }
+
+        if (!event.target.closest(".dropdown")) {
+            openMenus.forEach(function (openMenu) {
+                openMenu.classList.remove("show");
+
+                openMenu
+                    .closest(".dropdown")
+                    .querySelector(".btn-icon")
+                    .setAttribute("aria-expanded", "false");
+            });
+        }
+    });
 </script>
 {% endblock %}

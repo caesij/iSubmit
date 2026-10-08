@@ -1,9 +1,7 @@
 {% extends 'admin_staff_portal/base.html' %}
-
 {% load static %}
 
 {% block title %}Create Submission Requirements - iSubmit{% endblock %}
-
 {% block heading %}Create Submission Requirements{% endblock %}
 
 {% block subtitle %}
@@ -15,180 +13,105 @@ Add multiple requirement bins before posting them to faculty.
 {% endblock %}
 
 {% block content %}
-
 <div class="submissions-container">
 
+    <!-- Tabs -->
     <div class="tab-nav">
-
-        <a
-            href="{% url 'admin_staff_portal:requirements_list' %}"
-            class="tab-link"
-        >
+        <a href="{% url 'admin_staff_portal:requirements_list' %}" class="tab-link">
             Submission Bin
         </a>
 
-        <a
-            href="{% url 'admin_staff_portal:faculty_submissions_list' %}"
-            class="tab-link"
-        >
+        <a href="{% url 'admin_staff_portal:faculty_submissions_list' %}" class="tab-link">
             Faculty Submission
         </a>
-
     </div>
 
-    <div class="submission-actions">
 
-        <a
-            href="{% url 'admin_staff_portal:add_requirement' %}"
-            class="btn-add-bin"
-        >
+    <!-- Add requirement -->
+    <div class="submission-actions">
+        <a href="{% url 'admin_staff_portal:add_requirement' %}" class="btn-add-bin">
             <span class="plus-icon">+</span>
             Add Requirement
         </a>
-
     </div>
 
+
+    <!-- Staged requirements -->
     <div class="table-card">
-
         <table class="data-table">
-
             <thead>
-
                 <tr>
                     <th>Bin Title</th>
                     <th>Category</th>
                     <th>Assigned To</th>
-                    <th>Academic Year</th>
-                    <th>Semester</th>
+                    <th>Academic Term</th>
                     <th>Deadline</th>
                     <th>Status</th>
                     <th>OCR</th>
                     <th class="action-heading">Action</th>
                 </tr>
-
             </thead>
 
             <tbody>
-
                 {% for requirement in bulk_requirements %}
-
                     <tr>
-
                         <td class="font-bold">
-                            {{ forloop.counter }}.
-                            {{ requirement.requirement_title }}
+                            {{ forloop.counter }}. {{ requirement.requirement_title }}
+                        </td>
+
+                        <td>{{ requirement.category }}</td>
+                        <td>{{ requirement.assigned_to_display }}</td>
+
+                        <td>
+                            <div>{{ requirement.semester_display }}</div>
+                            <div class="text-sub">A.Y. {{ requirement.academic_year }}</div>
                         </td>
 
                         <td>
-                            {{ requirement.category }}
+                            <div>{{ requirement.deadline_date }}</div>
+                            <div class="text-sub">{{ requirement.deadline_time }}</div>
                         </td>
 
-                        <td>
-                            {{ requirement.assigned_to_display }}
-                        </td>
+                        <td>{{ requirement.status_display }}</td>
 
                         <td>
-                            {{ requirement.academic_year }}
-                        </td>
-
-                        <td>
-                            {{ requirement.semester_display }}
-                        </td>
-
-                        <td>
-                            <div>
-                                {{ requirement.deadline_date }}
-                            </div>
-                            <div class="text-sub">
-                                {{ requirement.deadline_time }}
-                            </div>
-                        </td>
-
-                        <td>
-                            {{ requirement.status_display }}
-                        </td>
-
-                        <td>
-                            {% if requirement.ocr_enabled %}
-                                Yes
-                            {% else %}
-                                No
-                            {% endif %}
+                            {% if requirement.ocr_enabled %}Enabled{% else %}Disabled{% endif %}
                         </td>
 
                         <td class="action-cell">
-
                             <form
                                 method="post"
                                 action="{% url 'admin_staff_portal:delete_bulk_requirement' forloop.counter0 %}"
                             >
                                 {% csrf_token %}
-
-                                <button
-                                    type="submit"
-                                    class="btn-remove"
-                                >
-                                    Delete
-                                </button>
-
+                                <button type="submit" class="btn-remove">Delete</button>
                             </form>
-
                         </td>
-
                     </tr>
-
                 {% empty %}
-
                     <tr>
-
-                        <td
-                            colspan="9"
-                            class="text-center py-4"
-                        >
+                        <td colspan="8" class="text-center py-4">
                             No requirements added yet.
                             Click + Add Requirement to begin.
                         </td>
-
                     </tr>
-
                 {% endfor %}
-
             </tbody>
-
         </table>
-
     </div>
 
-    <div class="submission-actions">
 
-        <a
-            href="{% url 'admin_staff_portal:requirements_list' %}"
-            class="btn-clear"
-        >
-            Cancel
-        </a>
+    <!-- Cancel / post -->
+    <div class="submission-actions">
+        <a href="{% url 'admin_staff_portal:requirements_list' %}" class="btn-clear">Cancel</a>
 
         {% if bulk_requirements %}
-
-            <form
-                method="post"
-                action="{% url 'admin_staff_portal:post_bulk_requirements' %}"
-            >
+            <form method="post" action="{% url 'admin_staff_portal:post_bulk_requirements' %}">
                 {% csrf_token %}
-
-                <button
-                    type="submit"
-                    class="btn-add-bin"
-                >
-                    Post Requirements
-                </button>
-
+                <button type="submit" class="btn-add-bin">Post Requirements</button>
             </form>
-
         {% endif %}
-
     </div>
 
 </div>
-
 {% endblock %}

@@ -19,8 +19,8 @@ class Requirement(models.Model):
         PART_TIME = 'PART_TIME', 'Part-Time Faculty'
         
     class Semester(models.TextChoices):
-        FIRST = 'FIRST', 'First Semester'
-        SECOND = 'SECOND', 'Second Semester'
+        FIRST_SEM = 'FIRST_SEM', '1st Semester'
+        SECOND_SEM = 'SECOND_SEM', '2nd Semester'
         SUMMER = 'SUMMER', 'Summer'
 
     requirement_title = models.CharField(max_length=255)
@@ -31,7 +31,7 @@ class Requirement(models.Model):
     semester = models.CharField(
         max_length=10,
         choices=Semester.choices,
-        default=Semester.FIRST
+        default=Semester.FIRST_SEM
     )
     
     deadline = models.DateTimeField()

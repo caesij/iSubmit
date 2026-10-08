@@ -29,8 +29,7 @@
                 <input type="checkbox" name="{{ field }}"
                     {% if field == 'review_faculty_submissions' and permissions.review_faculty_submissions %}checked{% endif %}
                     {% if field == 'return_for_revisions' and permissions.return_for_revisions %}checked{% endif %}
-                    {% if field == 'create_submission_bins' and permissions.create_submission_bins %}checked{% endif %}
-                    {% if field == 'edit_submission_bin' and permissions.edit_submission_bin %}checked{% endif %}
+                    {% if field == 'manage_submission_bins' and permissions.manage_submission_bins %}checked{% endif %}
                     {% if field == 'view_approved_documents' and permissions.view_approved_documents %}checked{% endif %}
                     {% if field == 'add_faculty_users' and permissions.add_faculty_users %}checked{% endif %}>
             </label>

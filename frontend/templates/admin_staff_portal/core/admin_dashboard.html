@@ -4,93 +4,81 @@
 {% block title %}Dashboard - iSubmit{% endblock %}
 {% block heading %}Dashboard{% endblock %}
 {% block subtitle %}Overview of system activities and updates{% endblock %}
-{% block extra_css %}<link rel="stylesheet" href="{% static 'css/pages/admin_dashboard.css' %}">{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/pages/admin_dashboard.css' %}">
+{% endblock %}
 
 {% block content %}
-
 <div class="dashboard-page">
-    
+
+    <!-- Welcome card -->
     <div class="welcome-card">
         <div class="welcome-label">Welcome,</div>
         <h2>{{ request.user.get_full_name }}</h2>
         <p>Administrator</p>
     </div>
 
+
+    <!-- Stat cards -->
     <div class="stats-grid">
-        <div class="stat-card">
+        <div class="stat-card faculty-card">
             <div class="stat-icon">
                 <img src="{% static 'images/Icon - Total Faculty Member.svg' %}" alt="Total faculty members">
             </div>
-            <div>
-                <span class="stat-number" id="stat-faculty">
-                    {{ faculty_count }}
-                </span>
+            <div class="stat-content">
+                <span class="stat-number" id="stat-faculty">{{ faculty_count }}</span>
                 <span class="stat-label">Total Faculty Members</span>
             </div>
         </div>
 
-        <div class="stat-card">
-            <div class="stat-icon">
-                <img src="{% static 'images/Icon Submitted Documents.svg' %}" alt="Submitted documents">
-            </div>
-            <div>
-                <span class="stat-number" id="stat-submitted">
-                    {{ submitted_count }}
-                </span>
-                <span class="stat-label">Submitted Documents</span>
-            </div>
-        </div>
-
-        <div class="stat-card">
+        <div class="stat-card approved-card">
             <div class="stat-icon">
                 <img src="{% static 'images/Icon - Approved Documents.svg' %}" alt="Approved documents">
             </div>
-            <div>
-                <span class="stat-number" id="stat-approved">
-                    {{ approved_count }}
-                </span>
+            <div class="stat-content">
+                <span class="stat-number" id="stat-approved">{{ approved_count }}</span>
                 <span class="stat-label">Approved Documents</span>
             </div>
         </div>
 
-        <div class="stat-card">
+        <div class="stat-card submitted-card">
             <div class="stat-icon">
-                <img src="{% static 'images/Icon - Pending Review.svg' %}" alt="Documents pending final review">
+                <img src="{% static 'images/Icon Submitted Documents.svg' %}" alt="Submitted documents">
             </div>
-            <div>
-                <span class="stat-number" id="stat-review">
-                    {{ final_review_count }}
-                </span>
-                <span class="stat-label">For Final Review</span>
+            <div class="stat-content">
+                <span class="stat-number" id="stat-submitted">{{ submitted_count }}</span>
+                <span class="stat-label">Submitted Documents</span>
             </div>
         </div>
 
-        <div class="stat-card">
+        <div class="stat-card pending-approval-card">
+            <div class="stat-icon">
+                <img src="{% static 'images/Icon - Pending Review.svg' %}" alt="Documents pending approval">
+            </div>
+            <div class="stat-content">
+                <span class="stat-number" id="stat-pending-approval">{{ pending_approval_count }}</span>
+                <span class="stat-label">Pending Approval</span>
+            </div>
+
+        </div>
+
+        <div class="stat-card requirements-card">
             <div class="stat-icon">
                 <img src="{% static 'images/Icon - Pending Review.svg' %}" alt="Active requirements">
             </div>
-            <div>
-                <span class="stat-number" id="stat-requirements">
-                    {{ active_requirement_count }}
-                </span>
+            <div class="stat-content">
+                <span class="stat-number" id="stat-requirements">{{ active_requirement_count }}</span>
                 <span class="stat-label">Active Requirements</span>
-            </div>
-        </div>
-
-        <div class="stat-card">
-            <div class="stat-icon">
-                <img src="{% static 'images/Icon - Overall Compliance.svg' %}" alt="Overall compliance">
-            </div>
-            <div>
-                <span class="stat-number" id="stat-compliance">
-                    {{ compliance }}%
-                </span>
-                <span class="stat-label">Overall Compliance</span>
             </div>
         </div>
     </div>
 
+
+    <!-- Dashboard grid -->
     <div class="dashboard-grid">
+
+        <!-- Compliance overview -->
         <div class="dashboard-card compliance-card">
             <div class="card-header">
                 <h2>Compliance Overview</h2>
@@ -98,28 +86,44 @@
 
             <div class="compliance-content">
                 <div class="compliance-circle">
-                    <span id="compliance-value">
-                        {{ compliance }}%
-                    </span>
+                    <span id="compliance-value">{{ fully_compliant_percentage  }}%</span>
                 </div>
 
                 <div class="compliance-legend">
                     <div>
                         <span class="legend-dot complete"></span>
-                        Approved
+                        <div>
+                            Fully Compliant
+                            <small id="fully-compliant-details">
+                                {{ fully_compliant_percentage }}% ({{ fully_compliant_count }})
+                            </small>
+                        </div>
                     </div>
+
                     <div>
                         <span class="legend-dot progress"></span>
-                        In Progress
+                        <div>
+                            In Progress
+                            <small id="in-progress-details">
+                                {{ in_progress_percentage }}% ({{ in_progress_count }})
+                            </small>
+                        </div>
                     </div>
+
                     <div>
                         <span class="legend-dot pending"></span>
-                        Not Submitted
+                        <div>
+                            Not Submitted
+                            <small id="not-submitted-details">
+                                {{ not_submitted_percentage }}% ({{ not_submitted_count }})
+                            </small>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
 
+        <!-- Submission trends -->
         <div class="dashboard-card trends-card">
             <div class="card-header">
                 <h2>Submission Trends</h2>
@@ -133,11 +137,7 @@
                     <span></span>
                 </div>
 
-                <svg
-                    id="trend-line"
-                    viewBox="0 0 500 200"
-                    preserveAspectRatio="none"
-                ></svg>
+                <svg id="trend-line" viewBox="0 0 500 200" preserveAspectRatio="none"></svg>
 
                 <div class="chart-labels" id="trend-labels">
                     {% for trend in submission_trends %}
@@ -147,6 +147,7 @@
             </div>
         </div>
 
+        <!-- Compliance by department -->
         <div class="dashboard-card department-card">
             <div class="card-header">
                 <h2>Compliance by Department</h2>
@@ -154,14 +155,15 @@
 
             <div class="department-placeholder"></div>
         </div>
+
     </div>
 
+
+    <!-- Pending review -->
     <div class="dashboard-card pending-card">
         <div class="card-header">
             <h2>Pending Review</h2>
-            <a href="{% url 'admin_staff_portal:faculty_submissions_list' %}">
-                View all ›
-            </a>
+            <a href="{% url 'admin_staff_portal:faculty_submissions_list' %}">View all &rsaquo;</a>
         </div>
 
         <div class="table-container">
@@ -179,12 +181,8 @@
                     {% for submission in pending_review %}
                         <tr>
                             <td>{{ submission.faculty.employee_ID }}</td>
-                            <td>
-                                {{ submission.faculty.get_full_name }}
-                            </td>
-                            <td>
-                                {{ submission.requirement.requirement_title }}
-                            </td>
+                            <td>{{ submission.faculty.get_full_name }}</td>
+                            <td>{{ submission.requirement.requirement_title }}</td>
                             <td>
                                 {% if submission.status == 'RESUBMITTED' and submission.resubmitted_at %}
                                     {{ submission.resubmitted_at|date:"M j, Y" }}
@@ -192,212 +190,191 @@
                                     {{ submission.initially_submitted_at|date:"M j, Y" }}
                                 {% endif %}
                             </td>
+                        </tr>
                     {% empty %}
                         <tr>
-                            <td colspan="4" class="empty-row">
-                                No pending reviews.
-                            </td>
+                            <td colspan="4" class="empty-row">No pending reviews.</td>
                         </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
     </div>
+
 </div>
 
-<script>
-async function refreshAdminDashboard() {
-    try {
-        const response = await fetch(
-            "{% url 'admin_staff_portal:admin_dashboard_data' %}",
-            {
-                method: "GET",
-                credentials: "same-origin",
-                headers: {
-                    "X-Requested-With": "XMLHttpRequest"
-                }
-            }
-        );
 
-        if (!response.ok) {
+<script>
+    async function refreshAdminDashboard() {
+        try {
+            const response = await fetch(
+                "{% url 'admin_staff_portal:admin_dashboard_data' %}",
+                {
+                    method: "GET",
+                    credentials: "same-origin",
+                    headers: { "X-Requested-With": "XMLHttpRequest" }
+                }
+            );
+
+            if (!response.ok) return;
+
+            const data = await response.json();
+
+            updateStats(data);
+            updateCompliance(data);
+            updatePendingReview(data);
+            updateSubmissionTrends(data);
+        } catch (error) {
+            console.error("Admin dashboard update failed:", error);
+        }
+    }
+
+
+    function updateStats(data) {
+        const stats = {
+            "stat-faculty": data.faculty_count,
+            "stat-approved": data.approved_count,
+            "stat-submitted": data.submitted_count,
+            "stat-pending-approval": data.pending_approval_count,
+            "stat-requirements": data.active_requirement_count
+        };
+
+        Object.entries(stats).forEach(([id, value]) => {
+            const element = document.getElementById(id);
+            if (element) {
+                element.textContent = value;
+            }
+        });
+    }
+
+
+    function updateCompliance(data) {
+        const value = document.getElementById("compliance-value");
+        const circle = document.querySelector(".compliance-circle");
+        const fullyCompliantDetails = document.getElementById("fully-compliant-details");
+        const inProgressDetails = document.getElementById("in-progress-details");
+        const notSubmittedDetails = document.getElementById("not-submitted-details");
+
+        const fullyCompliantPercentage =
+            Math.max(0, Math.min(100, Number(data.fully_compliant_percentage) || 0));
+
+        const inProgressPercentage =
+            Math.max(0, Math.min(100, Number(data.in_progress_percentage) || 0));
+
+        const notSubmittedPercentage =
+            Math.max(0, Math.min(100, Number(data.not_submitted_percentage) || 0));
+
+        const fullyCompliantCount = Number(data.fully_compliant_count) || 0;
+        const inProgressCount = Number(data.in_progress_count) || 0;
+        const notSubmittedCount = Number(data.not_submitted_count) || 0;
+
+        if (value) value.textContent = `${fullyCompliantPercentage}%`;
+
+        if (circle) {
+            const firstEnd = fullyCompliantPercentage;
+            const secondEnd = fullyCompliantPercentage + inProgressPercentage;
+
+            circle.style.background = `
+                conic-gradient(
+                    #991b1b 0% ${firstEnd}%,
+                    #e6e600 ${firstEnd}% ${secondEnd}%,
+                    #bdbdbd ${secondEnd}% 100%
+                )
+            `;
+        }
+
+        if (fullyCompliantDetails) {
+            fullyCompliantDetails.textContent = `${fullyCompliantPercentage}% (${fullyCompliantCount})`;
+        }
+
+        if (inProgressDetails) {
+            inProgressDetails.textContent = `${inProgressPercentage}% (${inProgressCount})`;
+        }
+
+        if (notSubmittedDetails) {
+            notSubmittedDetails.textContent = `${notSubmittedPercentage}% (${notSubmittedCount})`;
+        }
+    }
+
+
+    function updatePendingReview(data) {
+        const body = document.getElementById("pending-review-body");
+
+        if (!body) return;
+
+        body.innerHTML = "";
+
+        if (!data.pending_review || data.pending_review.length === 0) {
+            body.innerHTML = `
+                <tr>
+                    <td colspan="4" class="empty-row">No pending reviews.</td>
+                </tr>
+            `;
             return;
         }
 
-        const data = await response.json();
+        data.pending_review.forEach(submission => {
+            const row = document.createElement("tr");
 
-        updateStats(data);
-        updateCompliance(data);
-        updatePendingReview(data);
-        updateSubmissionTrends(data);
-    } catch (error) {
-        console.error(
-            "Admin dashboard update failed:",
-            error
-        );
-    }
-}
+            row.innerHTML = `
+                <td>${submission.id}</td>
+                <td>${submission.faculty}</td>
+                <td>${submission.document}</td>
+                <td>${submission.date}</td>
+            `;
 
-function updateStats(data) {
-    const stats = {
-        "stat-faculty": data.faculty_count,
-        "stat-submitted": data.submitted_count,
-        "stat-approved": data.approved_count,
-        "stat-review": data.final_review_count,
-        "stat-requirements": data.active_requirement_count,
-        "stat-compliance": `${data.compliance}%`
-    };
-
-    Object.entries(stats).forEach(([id, value]) => {
-        const element = document.getElementById(id);
-
-        if (element) {
-            element.textContent = value;
-        }
-    });
-}
-
-function updateCompliance(data) {
-    const value = document.getElementById("compliance-value");
-
-    if (value) {
-        value.textContent = `${data.compliance}%`;
+            body.appendChild(row);
+        });
     }
 
-    const circle = document.querySelector(
-        ".compliance-circle"
-    );
 
-    if (circle) {
-        const percentage = Math.max(
-            0,
-            Math.min(100, data.compliance)
-        );
+    function updateSubmissionTrends(data) {
+        const svg = document.getElementById("trend-line");
 
-        circle.style.borderLeftColor = "#e5e7eb";
-        circle.style.borderTopColor = "#991b1b";
+        if (!svg || !data.submission_trends) return;
 
-        if (percentage >= 50) {
-            circle.style.borderRightColor = "#991b1b";
-        } else {
-            circle.style.borderRightColor = "#e5e7eb";
-        }
+        svg.innerHTML = "";
 
-        if (percentage >= 75) {
-            circle.style.borderBottomColor = "#991b1b";
-        } else {
-            circle.style.borderBottomColor = "#e5e7eb";
-        }
-    }
-}
+        const values = data.submission_trends.map(item => Number(item.count) || 0);
 
-function updatePendingReview(data) {
-    const body = document.getElementById(
-        "pending-review-body"
-    );
+        if (!values.length) return;
 
-    if (!body) {
-        return;
-    }
+        const width = 500;
+        const height = 200;
+        const padding = 20;
 
-    body.innerHTML = "";
+        const max = Math.max(...values, 1);
+        const step = values.length > 1 ? (width - padding * 2) / (values.length - 1) : 0;
 
-    if (
-        !data.pending_review ||
-        data.pending_review.length === 0
-    ) {
-        body.innerHTML = `
-            <tr>
-                <td colspan="4" class="empty-row">
-                    No pending reviews.
-                </td>
-            </tr>
-        `;
+        const points = values.map((value, index) => {
+            const x = padding + index * step;
+            const y = height - padding - (value / max) * (height - padding * 2);
 
-        return;
+            return `${x},${y}`;
+        }).join(" ");
+
+        const polyline = document.createElementNS("http://www.w3.org/2000/svg", "polyline");
+
+        polyline.setAttribute("points", points);
+        svg.appendChild(polyline);
+
+        values.forEach((value, index) => {
+            const x = padding + index * step;
+            const y = height - padding - (value / max) * (height - padding * 2);
+
+            const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+
+            circle.setAttribute("cx", x);
+            circle.setAttribute("cy", y);
+            circle.setAttribute("r", 4);
+
+            svg.appendChild(circle);
+        });
     }
 
-    data.pending_review.forEach(submission => {
-        const row = document.createElement("tr");
 
-        row.innerHTML = `
-            <td>${ submission.faculty.employee_ID }</td>
-            <td>${submission.faculty}</td>
-            <td>${submission.document}</td>
-            <td>${submission.date}</td>
-        `;
+    document.addEventListener("admin-dashboard-update", refreshAdminDashboard);
 
-        body.appendChild(row);
-    });
-}
-
-function updateSubmissionTrends(data) {
-    const svg = document.getElementById("trend-line");
-
-    if (!svg || !data.submission_trends) {
-        return;
-    }
-
-    svg.innerHTML = "";
-
-    const values = data.submission_trends.map(
-        item => Number(item.count) || 0
-    );
-
-    if (!values.length) {
-        return;
-    }
-
-    const width = 500;
-    const height = 200;
-    const padding = 20;
-
-    const max = Math.max(...values, 1);
-    const step = values.length > 1
-        ? (width - padding * 2) / (values.length - 1)
-        : 0;
-
-    const points = values.map((value, index) => {
-        const x = padding + index * step;
-        const y =
-            height -
-            padding -
-            (value / max) * (height - padding * 2);
-
-        return `${x},${y}`;
-    }).join(" ");
-
-    const polyline = document.createElementNS(
-        "http://www.w3.org/2000/svg",
-        "polyline"
-    );
-
-    polyline.setAttribute("points", points);
-    svg.appendChild(polyline);
-
-    values.forEach((value, index) => {
-        const x = padding + index * step;
-        const y =
-            height -
-            padding -
-            (value / max) * (height - padding * 2);
-
-        const circle = document.createElementNS(
-            "http://www.w3.org/2000/svg",
-            "circle"
-        );
-
-        circle.setAttribute("cx", x);
-        circle.setAttribute("cy", y);
-        circle.setAttribute("r", 4);
-
-        svg.appendChild(circle);
-    });
-}
-
-document.addEventListener(
-    "admin-dashboard-update",
-    refreshAdminDashboard
-);
+    refreshAdminDashboard();
 </script>
-
 {% endblock %}
