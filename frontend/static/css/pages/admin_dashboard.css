@@ -158,20 +158,36 @@
 }
 
 .compliance-circle {
-	width: 120px;
-	height: 120px;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	border: 9px solid #991b1b;
-	border-left-color: #e5e7eb;
-	border-radius: 50%;
+    width: 120px;
+    height: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    border: none;
+    border-radius: 50%;
+    background: conic-gradient(
+        #991b1b 0% 0%,
+        #e6e600 0% 0%,
+        #bdbdbd 0% 100%
+    );
+}
+
+.compliance-circle::before {
+    content: "";
+    position: absolute;
+    width: 102px;
+    height: 102px;
+    border-radius: 50%;
+    background: #fff;
 }
 
 .compliance-circle span {
-	font-size: 24px;
-	font-weight: 700;
-	color: #991b1b;
+    position: relative;
+    z-index: 1;
+    font-size: 24px;
+    font-weight: 700;
+    color: #991b1b;
 }
 
 .compliance-legend {

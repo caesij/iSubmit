@@ -35,94 +35,87 @@ Overview of system activities and updates
     <!-- Stat cards -->
     <div class="stats-grid">
 
-        <!-- Assigned Submissions -->
-        <div class="stat-card">
+        <div class="stat-card faculty-card">
             <div class="stat-icon">
                 <img
                     src="{% static 'images/Icon - Total Faculty Member.svg' %}"
-                    alt="Assigned submissions"
+                    alt="Total faculty members"
                 >
             </div>
-
-            <div>
-                <span
-                    class="stat-number"
-                    id="stat-assigned"
-                >
-                    {{ assigned_count }}
+            <div class="stat-content">
+                <span class="stat-number" id="stat-faculty">
+                    {{ faculty_count }}
                 </span>
-
                 <span class="stat-label">
-                    Assigned Submissions
+                    Total Faculty Members
                 </span>
             </div>
         </div>
 
-        <!-- Under Review -->
-        <div class="stat-card">
+        <div class="stat-card completed-card">
+            <div class="stat-icon">
+                <img
+                    src="{% static 'images/Icon - Approved Documents.svg' %}"
+                    alt="Completed reviews"
+                >
+            </div>
+            <div class="stat-content">
+                <span class="stat-number" id="stat-completed-reviews">
+                    {{ completed_reviews_count }}
+                </span>
+                <span class="stat-label">
+                    Completed Reviews
+                </span>
+            </div>
+        </div>
+
+        <div class="stat-card submitted-card">
+            <div class="stat-icon">
+                <img
+                    src="{% static 'images/Icon Submitted Documents.svg' %}"
+                    alt="Submitted documents"
+                >
+            </div>
+            <div class="stat-content">
+                <span class="stat-number" id="stat-submitted">
+                    {{ submitted_count }}
+                </span>
+                <span class="stat-label">
+                    Submitted Documents
+                </span>
+            </div>
+        </div>
+
+        <div class="stat-card review-card">
             <div class="stat-icon">
                 <img
                     src="{% static 'images/Icon - Pending Review.svg' %}"
                     alt="Under review"
                 >
             </div>
-
-            <div>
-                <span
-                    class="stat-number"
-                    id="stat-under-review"
-                >
+            <div class="stat-content">
+                <span class="stat-number" id="stat-under-review">
                     {{ under_review_count }}
                 </span>
-
                 <span class="stat-label">
                     Under Review
                 </span>
             </div>
         </div>
 
-        <!-- Returned for Revisions -->
-        <div class="stat-card">
+        <div class="stat-card returned-card">
             <div class="stat-icon">
                 <img
                     src="{% static 'images/Icon - Pending Review.svg' %}"
-                    alt="Returned for revisions"
+                    alt="Returned for revision"
                 >
             </div>
-
-            <div>
-                <span
-                    class="stat-number"
-                    id="stat-returned"
-                >
+            <div class="stat-content">
+                <span class="stat-number" id="stat-returned">
                     {{ returned_count }}
                 </span>
-
                 <span class="stat-label">
-                    Returned for Revisions
-                </span>
-            </div>
-        </div>
-
-        <!-- Reviewed / Completed Reviews -->
-        <div class="stat-card">
-            <div class="stat-icon">
-                <img
-                    src="{% static 'images/Icon - Approved Documents.svg' %}"
-                    alt="Reviewed submissions"
-                >
-            </div>
-
-            <div>
-                <span
-                    class="stat-number"
-                    id="stat-completed-reviews"
-                >
-                    {{ completed_reviews_count }}
-                </span>
-
-                <span class="stat-label">
-                    Reviewed / Completed Reviews
+                    Returned for Revision
                 </span>
             </div>
         </div>
@@ -175,18 +168,6 @@ Overview of system activities and updates
                                 {{ pending_review_progress }}% ({{ pending_review_count }})
                             </small>
                         </div>
-                    </div>
-                </div>
-
-                <div class="compliance-legend">
-                    <div>
-                        <span class="legend-dot complete"></span>
-                        Reviewed
-                    </div>
-
-                    <div>
-                        <span class="legend-dot progress"></span>
-                        Pending Review
                     </div>
                 </div>
 
@@ -656,6 +637,7 @@ async function refreshStaffDashboard() {
 
         updateStats(data);
         updateReviewProgress(data);
+        updateSubmissionTrends(data);
         updateReviewQueue(data);
 
     } catch (error) {
@@ -668,18 +650,15 @@ async function refreshStaffDashboard() {
 
 function updateStats(data) {
     const stats = {
-        "stat-assigned": data.assigned_count,
+        "stat-faculty": data.faculty_count,
+        "stat-completed-reviews": data.completed_reviews_count,
+        "stat-submitted": data.submitted_count,
         "stat-under-review": data.under_review_count,
-        "stat-returned": data.returned_count,
-        "stat-completed-reviews":
-            data.completed_reviews_count,
-        "stat-progress":
-            `${data.review_progress}%`
+        "stat-returned": data.returned_count
     };
 
     Object.entries(stats).forEach(([id, value]) => {
-        const element =
-            document.getElementById(id);
+        const element = document.getElementById(id);
 
         if (element) {
             element.textContent = value;
@@ -795,10 +774,82 @@ function updateReviewQueue(data) {
     });
 }
 
-document.addEventListener(
-    "staff-dashboard-update",
-    refreshStaffDashboard
-);
+function updateSubmissionTrends(data) {
+    const svg = document.getElementById("trend-line");
+
+    if (!svg || !data.submission_trends) {
+        return;
+    }
+
+    svg.innerHTML = "";
+
+    const values = data.submission_trends.map(
+        item => Number(item.count) || 0
+    );
+
+    if (!values.length) {
+        return;
+    }
+
+    const width = 500;
+    const height = 200;
+    const padding = 20;
+
+    const max = Math.max(...values, 1);
+
+    const step = values.length > 1
+        ? (width - padding * 2) / (values.length - 1)
+        : 0;
+
+    const points = values.map((value, index) => {
+        const x = padding + index * step;
+
+        const y =
+            height -
+            padding -
+            (value / max) *
+            (height - padding * 2);
+
+        return `${x},${y}`;
+    }).join(" ");
+
+    const polyline = document.createElementNS(
+        "http://www.w3.org/2000/svg",
+        "polyline"
+    );
+
+    polyline.setAttribute(
+        "points",
+        points
+    );
+
+    svg.appendChild(polyline);
+
+    values.forEach((value, index) => {
+        const x = padding + index * step;
+
+        const y =
+            height -
+            padding -
+            (value / max) *
+            (height - padding * 2);
+
+        const circle = document.createElementNS(
+            "http://www.w3.org/2000/svg",
+            "circle"
+        );
+
+        circle.setAttribute("cx", x);
+        circle.setAttribute("cy", y);
+        circle.setAttribute("r", 4);
+
+        svg.appendChild(circle);
+    });
+}
+
+document.addEventListener("staff-dashboard-update", refreshStaffDashboard);
+
+refreshStaffDashboard();
 </script>
 
 {% endblock %}

@@ -14,8 +14,7 @@ from notifications.models import NotificationPreference
 PERMISSION_FIELDS = [
     ('review_faculty_submissions', 'Review Faculty Submissions', 'Review submitted documents from faculty.'),
     ('return_for_revisions', 'Return for Revisions', 'Return submissions to faculty for revisions.'),
-    ('create_submission_bins', 'Create Submission Bins', 'Create new submission bins for documents.'),
-    ('edit_submission_bin', 'Edit Submission Bin', 'Edit details and settings for submission bins.'),
+    ('manage_submission_bins', 'Manage Submission Bins', 'Create, edit, and delete submission bins.'),
     ('view_approved_documents', 'View Approved Documents', 'View documents that have been approved.'),
     ('add_faculty_users', 'Add Faculty Users', 'Add new faculty users to the system.'),
 ]

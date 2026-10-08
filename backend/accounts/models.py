@@ -152,8 +152,7 @@ class StaffAccount(User):
 class StaffPermission(models.Model):
     review_faculty_submissions = models.BooleanField(default=True)
     return_for_revisions = models.BooleanField(default=True)
-    create_submission_bins = models.BooleanField(default=True)
-    edit_submission_bin = models.BooleanField(default=True)
+    manage_submission_bins = models.BooleanField(default=True)
     view_approved_documents = models.BooleanField(default=True)
     add_faculty_users = models.BooleanField(default=False)
 

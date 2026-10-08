@@ -2,28 +2,40 @@
     <td class="font-bold">{{ req.requirement_title }}</td>
     <td>{{ req.category }}</td>
     <td>{{ req.get_assigned_to_display }}</td>
-    <td>{{ req.academic_term }}</td>
+    <td>{{ req.academic_term }} - {{ req.get_semester_display }}</td>
+
     <td>
         <div>{{ req.deadline|date:"F d, Y" }}</div>
         <div class="text-sub">{{ req.deadline|date:"h:i A" }}</div>
     </td>
+
     <td>
         <div class="progress-wrap">
             <span>{{ req.completion_progress }}%</span>
         </div>
     </td>
+
     <td>
         <span class="status-badge {% if req.status == 'ACTIVE' %}status-active{% else %}status-inactive{% endif %}">
             {{ req.get_status_display }}
         </span>
     </td>
+
+    <td>{% if req.ocr_enabled %}Enabled{% else %}Disabled{% endif %}</td>
+
     <td class="action-cell">
         <div class="dropdown">
             <button type="button" class="btn-icon" aria-label="Actions" aria-expanded="false">⋮</button>
+
             <div class="dropdown-menu">
                 <a href="{% url 'admin_staff_portal:edit_requirement' req.id %}">Edit Bin</a>
-                <form action="{% url 'admin_staff_portal:toggle_requirement_status' req.id %}" method="POST">
+
+                <form
+                    action="{% url 'admin_staff_portal:toggle_requirement_status' req.id %}"
+                    method="POST"
+                >
                     {% csrf_token %}
+
                     <button type="submit">
                         {% if req.status == 'ACTIVE' %}Deactivate{% else %}Activate{% endif %}
                     </button>

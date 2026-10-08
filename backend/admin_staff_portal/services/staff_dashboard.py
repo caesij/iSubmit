@@ -1,10 +1,27 @@
+from collections import OrderedDict
+from datetime import timedelta
+
+from django.contrib.auth import get_user_model
+from django.utils import timezone
+
 from submissions.models import DocumentSubmission
+
+User = get_user_model()
 
 
 def get_staff_dashboard_data():
+    faculty_count = User.objects.filter(role=User.Role.FACULTY).count()
+
     submissions = DocumentSubmission.objects.select_related('faculty', 'requirement')
 
-    assigned_count = submissions.count()
+    completed_reviews_count = submissions.filter(
+        status__in=[
+            DocumentSubmission.SubmissionStatus.PENDING_APPROVAL,
+            DocumentSubmission.SubmissionStatus.APPROVED,
+        ]
+    ).count()
+
+    submitted_count = submissions.count()
 
     under_review_count = submissions.filter(
         status=DocumentSubmission.SubmissionStatus.UNDER_REVIEW
@@ -14,38 +31,17 @@ def get_staff_dashboard_data():
         status=DocumentSubmission.SubmissionStatus.NEEDS_REVISION
     ).count()
 
-    completed_reviews_count = submissions.filter(
-        status__in=[
-            DocumentSubmission.SubmissionStatus.NEEDS_REVISION,
-            DocumentSubmission.SubmissionStatus.PENDING_APPROVAL,
-            DocumentSubmission.SubmissionStatus.APPROVED,
-        ]
-    ).count()
-
     pending_review_count = submissions.filter(
         status__in=[
             DocumentSubmission.SubmissionStatus.SUBMITTED,
             DocumentSubmission.SubmissionStatus.RESUBMITTED,
-            DocumentSubmission.SubmissionStatus.UNDER_REVIEW,
         ]
     ).count()
 
-    review_total = (
-        completed_reviews_count
-        + pending_review_count
-    )
+    review_total = completed_reviews_count + pending_review_count
 
-    review_progress = (
-        round((completed_reviews_count / review_total) * 100)
-        if review_total
-        else 0
-    )
-
-    pending_review_progress = (
-        100 - review_progress
-        if review_total
-        else 0
-    )
+    review_progress = round((completed_reviews_count / review_total) * 100) if review_total else 0
+    pending_review_progress = 100 - review_progress if review_total else 0
 
     review_queue = (
         submissions
@@ -53,19 +49,49 @@ def get_staff_dashboard_data():
             status__in=[
                 DocumentSubmission.SubmissionStatus.SUBMITTED,
                 DocumentSubmission.SubmissionStatus.RESUBMITTED,
-                DocumentSubmission.SubmissionStatus.UNDER_REVIEW,
             ]
         )
         .order_by('-initially_submitted_at')[:5]
     )
 
+    trends = get_submission_trends(submissions)
+
     return {
-        'assigned_count': assigned_count,
+        'faculty_count': faculty_count,
+        'completed_reviews_count': completed_reviews_count,
+        'submitted_count': submitted_count,
         'under_review_count': under_review_count,
         'returned_count': returned_count,
-        'completed_reviews_count': completed_reviews_count,
         'pending_review_count': pending_review_count,
         'review_progress': review_progress,
         'pending_review_progress': pending_review_progress,
         'review_queue': review_queue,
+        'submission_trends': trends,
     }
+
+
+def get_submission_trends(submissions):
+    today = timezone.localdate()
+    months = []
+
+    for index in range(5, -1, -1):
+        month_date = today.replace(day=1)
+
+        for _ in range(index):
+            month_date = (month_date - timedelta(days=1)).replace(day=1)
+
+        months.append(month_date)
+
+    results = OrderedDict()
+
+    for month in months:
+        next_month = (month.replace(day=28) + timedelta(days=4)).replace(day=1)
+
+        count = submissions.filter(
+            initially_submitted_at__gte=month,
+            initially_submitted_at__lt=next_month,
+        ).count()
+
+        results[month.strftime('%b')] = count
+
+    return [{'month': month, 'count': count} for month, count in results.items()]

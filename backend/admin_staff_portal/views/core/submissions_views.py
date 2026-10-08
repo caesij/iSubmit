@@ -39,9 +39,10 @@ from accounts.models import StaffPermission
 
 User = get_user_model()
 
+
 # Submission Bin Views
 @role_required('ADMIN', 'STAFF')
-@staff_permission_required('create_submission_bins')
+@staff_permission_required('manage_submission_bins')
 @require_http_methods(['GET'])
 def bulk_requirements_view(request):
     bulk_requirements = request.session.get('bulk_requirements', [])
@@ -99,7 +100,7 @@ def bulk_requirements_view(request):
 
 
 @role_required('ADMIN', 'STAFF')
-@staff_permission_required('create_submission_bins')
+@staff_permission_required('manage_submission_bins')
 @require_http_methods(['GET', 'POST'])
 def add_requirement_to_bulk(request):
     if request.method == 'POST':
@@ -161,8 +162,9 @@ def add_requirement_to_bulk(request):
         context
     )
 
+
 @role_required('ADMIN', 'STAFF')
-@staff_permission_required('create_submission_bins')
+@staff_permission_required('manage_submission_bins')
 @require_http_methods(['POST'])
 def delete_bulk_requirement(request, index):
     bulk_requirements = request.session.get('bulk_requirements', [])
@@ -176,7 +178,7 @@ def delete_bulk_requirement(request, index):
 
 
 @role_required('ADMIN', 'STAFF')
-@staff_permission_required('create_submission_bins')
+@staff_permission_required('manage_submission_bins')
 @require_http_methods(['POST'])
 def post_bulk_requirements(request):
     bulk_requirements = request.session.get('bulk_requirements', [])
@@ -287,8 +289,9 @@ def post_bulk_requirements(request):
 
         return redirect('admin_staff_portal:bulk_requirements')
 
+
 @role_required('ADMIN', 'STAFF')
-@staff_permission_required('edit_submission_bin')
+@staff_permission_required('manage_submission_bins')
 @require_http_methods(['GET', 'POST'])
 def edit_requirement(request, requirement_id):
     requirement = get_object_or_404(Requirement, pk=requirement_id)
@@ -321,6 +324,7 @@ def edit_requirement(request, requirement_id):
         'admin_staff_portal/core/submissions/submission_bin/requirement_forms.html',
         context
     )
+
 
 @role_required('ADMIN', 'STAFF')
 @require_http_methods(['GET'])
@@ -367,8 +371,9 @@ def requirements_list(request):
         context
     )
 
+
 @role_required('ADMIN', 'STAFF')
-@staff_permission_required('edit_submission_bin')
+@staff_permission_required('manage_submission_bins')
 @require_http_methods(['POST'])
 def toggle_requirement_status(request, requirement_id):
     requirement = get_object_or_404(
@@ -396,6 +401,8 @@ def toggle_requirement_status(request, requirement_id):
     messages.success(request, 'Requirement status updated.')
 
     return redirect('admin_staff_portal:requirements_list')
+
+
 
 # Faculty Submission Views
 @role_required('ADMIN', 'STAFF')
@@ -445,6 +452,7 @@ def faculty_submissions_list(request):
         'admin_staff_portal/core/submissions/faculty_submission/faculty_list.html',
         context
     )
+
 
 @role_required('ADMIN', 'STAFF')
 @require_http_methods(['GET'])
@@ -501,6 +509,7 @@ def faculty_submission_bins_view(request, faculty_id):
         context
     )
     
+    
 @role_required('ADMIN', 'STAFF')
 @staff_permission_required('review_faculty_submissions')
 @require_http_methods(['GET'])
@@ -523,6 +532,7 @@ def review_submission(request, submission_id):
         'admin_staff_portal/core/submissions/faculty_submission/review_submission.html',
         context
     )
+    
     
 @role_required('ADMIN', 'STAFF')
 @staff_permission_required('review_faculty_submissions')
@@ -563,6 +573,7 @@ def mark_under_review_view(request, submission_id):
 
     return redirect('admin_staff_portal:review_submission', submission_id=submission.id)
 
+
 @role_required('ADMIN', 'STAFF')
 @staff_permission_required('review_faculty_submissions')
 @require_http_methods(['POST'])
@@ -600,6 +611,7 @@ def mark_reviewed_view(request, submission_id):
         )
 
     return redirect('admin_staff_portal:review_submission', submission_id=submission.id)
+
 
 @role_required('ADMIN', 'STAFF')
 @staff_permission_required('return_for_revisions')
@@ -666,6 +678,7 @@ def mark_needs_revision_view(request, submission_id):
     messages.success(request, 'Submission marked as needing revision.')
 
     return redirect('admin_staff_portal:review_submission', submission_id=submission.id)
+
 
 @admin
 @require_http_methods(['POST'])
