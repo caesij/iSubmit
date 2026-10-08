@@ -114,6 +114,7 @@
 
             {% if request.GET.q or request.GET.category or request.GET.assigned_to or request.GET.semester or request.GET.academic_year %}
                 <a href="{% url 'admin_staff_portal:requirements_list' %}" class="btn-clear">
+                    <img src="{% static 'images/Clear Filters.svg' %}" alt="">
                     Clear Filters
                 </a>
             {% endif %}
@@ -131,10 +132,13 @@
 
 
     <!-- Requirements table -->
-    <div class="table-card">
+    <div class="table-card requirements-table-card">
         <table class="data-table">
             <thead>
                 <tr>
+                    <th class="select-column">
+                        <input type="checkbox" aria-label="Select all requirement bins">
+                    </th>
                     <th>Bin Title</th>
                     <th>Category</th>
                     <th>Assigned To</th>
@@ -152,46 +156,47 @@
                     {% include 'admin_staff_portal/core/submissions/submission_bin/_requirement_row.html' %}
                 {% empty %}
                     <tr>
-                        <td colspan="9" class="text-center py-4">No requirement bins found.</td>
+                        <td colspan="10" class="text-center py-4">No requirement bins found.</td>
                     </tr>
                 {% endfor %}
             </tbody>
         </table>
 
 
-        <!-- Pagination -->
-        {% if is_paginated or page_obj %}
-            <div class="pagination-footer">
-                <span class="pagination-info">
-                    Showing {{ page_obj.start_index }} to {{ page_obj.end_index }}
-                    of {{ page_obj.paginator.count }} documents
-                </span>
-
-                <div class="pagination-controls">
-                    {% if page_obj.has_previous %}
-                        <a href="?page={{ page_obj.previous_page_number }}" class="page-btn">&lt;</a>
-                    {% else %}
-                        <span class="page-btn page-btn-disabled" aria-disabled="true">&lt;</span>
-                    {% endif %}
-
-                    {% for page_num in page_obj.paginator.page_range %}
-                        <a
-                            href="?page={{ page_num }}"
-                            class="page-btn {% if page_obj.number == page_num %}active{% endif %}"
-                        >
-                            {{ page_num }}
-                        </a>
-                    {% endfor %}
-
-                    {% if page_obj.has_next %}
-                        <a href="?page={{ page_obj.next_page_number }}" class="page-btn">&gt;</a>
-                    {% else %}
-                        <span class="page-btn page-btn-disabled" aria-disabled="true">&gt;</span>
-                    {% endif %}
-                </div>
-            </div>
-        {% endif %}
     </div>
+
+    <!-- Pagination -->
+    {% if is_paginated or page_obj %}
+        <div class="pagination-footer requirements-pagination">
+            <span class="pagination-info">
+                Showing {{ page_obj.start_index }} to {{ page_obj.end_index }}
+                of {{ page_obj.paginator.count }} documents
+            </span>
+
+            <div class="pagination-controls">
+                {% if page_obj.has_previous %}
+                    <a href="?page={{ page_obj.previous_page_number }}" class="page-btn">&lt;</a>
+                {% else %}
+                    <span class="page-btn page-btn-disabled" aria-disabled="true">&lt;</span>
+                {% endif %}
+
+                {% for page_num in page_obj.paginator.page_range %}
+                    <a
+                        href="?page={{ page_num }}"
+                        class="page-btn {% if page_obj.number == page_num %}active{% endif %}"
+                    >
+                        {{ page_num }}
+                    </a>
+                {% endfor %}
+
+                {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}" class="page-btn">&gt;</a>
+                {% else %}
+                    <span class="page-btn page-btn-disabled" aria-disabled="true">&gt;</span>
+                {% endif %}
+            </div>
+        </div>
+    {% endif %}
 
 </div>
 

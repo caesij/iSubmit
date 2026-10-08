@@ -2,10 +2,10 @@
 {% load static %}
 
 {% block title %}Create Submission Requirements - iSubmit{% endblock %}
-{% block heading %}Create Submission Requirements{% endblock %}
+{% block heading %}Submissions{% endblock %}
 
 {% block subtitle %}
-Add multiple requirement bins before posting them to faculty.
+Supports document submission and monitoring of review status.
 {% endblock %}
 
 {% block extra_css %}
@@ -17,7 +17,10 @@ Add multiple requirement bins before posting them to faculty.
 
     <!-- Tabs -->
     <div class="tab-nav">
-        <a href="{% url 'admin_staff_portal:requirements_list' %}" class="tab-link">
+        <a
+            href="{% url 'admin_staff_portal:requirements_list' %}"
+            class="tab-link active"
+        >
             Submission Bin
         </a>
 
@@ -27,8 +30,19 @@ Add multiple requirement bins before posting them to faculty.
     </div>
 
 
-    <!-- Add requirement -->
-    <div class="submission-actions">
+    <a href="{% url 'admin_staff_portal:requirements_list' %}" class="bulk-back-link">
+        <img src="{% static 'images/Back Arrow Left.svg' %}" alt="">
+        Back
+    </a>
+
+    <div class="bulk-breadcrumb">
+        <span>Submission Bin</span>
+        <span aria-hidden="true">&rsaquo;</span>
+        <span>Add Bin</span>
+    </div>
+
+    <div class="bulk-page-heading">
+        <h1>Create Submission Requirement</h1>
         <a href="{% url 'admin_staff_portal:add_requirement' %}" class="btn-add-bin">
             <span class="plus-icon">+</span>
             Add Requirement
@@ -37,10 +51,13 @@ Add multiple requirement bins before posting them to faculty.
 
 
     <!-- Staged requirements -->
-    <div class="table-card">
+    <div class="table-card bulk-requirements-table-card">
         <table class="data-table">
             <thead>
                 <tr>
+                    <th class="select-column">
+                        <input type="checkbox" aria-label="Select all staged requirements">
+                    </th>
                     <th>Bin Title</th>
                     <th>Category</th>
                     <th>Assigned To</th>
@@ -55,6 +72,10 @@ Add multiple requirement bins before posting them to faculty.
             <tbody>
                 {% for requirement in bulk_requirements %}
                     <tr>
+                        <td class="select-column">
+                            <input type="checkbox" aria-label="Select {{ requirement.requirement_title }}">
+                        </td>
+
                         <td class="font-bold">
                             {{ forloop.counter }}. {{ requirement.requirement_title }}
                         </td>
@@ -72,10 +93,14 @@ Add multiple requirement bins before posting them to faculty.
                             <div class="text-sub">{{ requirement.deadline_time }}</div>
                         </td>
 
-                        <td>{{ requirement.status_display }}</td>
+                        <td>
+                            <span class="status-badge status-active">{{ requirement.status_display }}</span>
+                        </td>
 
                         <td>
-                            {% if requirement.ocr_enabled %}Enabled{% else %}Disabled{% endif %}
+                            <span class="ocr-badge {% if requirement.ocr_enabled %}ocr-enabled{% else %}ocr-disabled{% endif %}">
+                                {% if requirement.ocr_enabled %}Enabled{% else %}Disabled{% endif %}
+                            </span>
                         </td>
 
                         <td class="action-cell">
@@ -84,13 +109,17 @@ Add multiple requirement bins before posting them to faculty.
                                 action="{% url 'admin_staff_portal:delete_bulk_requirement' forloop.counter0 %}"
                             >
                                 {% csrf_token %}
-                                <button type="submit" class="btn-remove">Delete</button>
+                                <button
+                                    type="submit"
+                                    class="bulk-delete-button"
+                                    aria-label="Delete {{ requirement.requirement_title }}"
+                                >&vellip;</button>
                             </form>
                         </td>
                     </tr>
                 {% empty %}
                     <tr>
-                        <td colspan="8" class="text-center py-4">
+                        <td colspan="9" class="text-center py-4">
                             No requirements added yet.
                             Click + Add Requirement to begin.
                         </td>
@@ -102,13 +131,13 @@ Add multiple requirement bins before posting them to faculty.
 
 
     <!-- Cancel / post -->
-    <div class="submission-actions">
-        <a href="{% url 'admin_staff_portal:requirements_list' %}" class="btn-clear">Cancel</a>
+    <div class="bulk-form-actions">
+        <a href="{% url 'admin_staff_portal:requirements_list' %}" class="bulk-cancel-link">Cancel</a>
 
         {% if bulk_requirements %}
             <form method="post" action="{% url 'admin_staff_portal:post_bulk_requirements' %}">
                 {% csrf_token %}
-                <button type="submit" class="btn-add-bin">Post Requirements</button>
+                <button type="submit" class="bulk-post-button">Post Requirements</button>
             </form>
         {% endif %}
     </div>

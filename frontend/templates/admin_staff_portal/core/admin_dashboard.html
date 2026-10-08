@@ -173,7 +173,13 @@
                 </div>
             </div>
 
-            <a href="{% url 'admin_staff_portal:faculty_submissions_list' %}">View all &rsaquo;</a>
+                <a
+                    href="{% url 'admin_staff_portal:faculty_submissions_list' %}"
+                    class="documents-overview-link"
+                >
+                    View All
+                    <img src="{% static 'images/Arrow Right.svg' %}" alt="">
+                </a>
         </div>
 
         <div class="table-container">
@@ -192,7 +198,11 @@
                     {% for submission in documents_overview %}
                         <tr>
                             <td>{{ submission.faculty.get_full_name }}</td>
-                            <td>{{ submission.faculty.get_faculty_type_display }}</td>
+                            <td>
+                                <span class="faculty-type-badge">
+                                    {{ submission.faculty.get_faculty_type_display }}
+                                </span>
+                            </td>
                             <td>{{ submission.requirement.requirement_title }}</td>
                             <td>
                                 {% if submission.status == 'RESUBMITTED' and submission.resubmitted_at %}
@@ -202,8 +212,12 @@
                                 {% endif %}
                             </td>
                             <td>
-                                <a href="{% url 'admin_staff_portal:faculty_submission_bins_view' submission.faculty.id %}">
-                                    View Bins &rsaquo;
+                                <a
+                                    href="{% url 'admin_staff_portal:faculty_submission_bins_view' submission.faculty.id %}"
+                                    class="view-bins-link"
+                                >
+                                    View Bins
+                                    <img src="{% static 'images/Arrow Right.svg' %}" alt="">
                                 </a>
                             </td>
                         </tr>
@@ -346,12 +360,13 @@
 
             row.innerHTML = `
                 <td>${submission.faculty}</td>
-                <td>${submission.faculty_type}</td>
+                <td><span class="faculty-type-badge">${submission.faculty_type}</span></td>
                 <td>${submission.bin_title}</td>
                 <td>${submission.latest_submission_date}</td>
                 <td>
-                    <a href="${submission.faculty_bins_url}">
-                        View Bins &rsaquo;
+                    <a href="${submission.faculty_bins_url}" class="view-bins-link">
+                        View Bins
+                        <img src="{% static 'images/Arrow Right.svg' %}" alt="">
                     </a>
                 </td>
             `;

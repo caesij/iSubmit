@@ -112,7 +112,10 @@
                     </select>
                 </div>
 
-                <a href="{% url 'admin_staff_portal:faculty_submission_bins_view' faculty_member.id %}" class="btn-clear">Clear Filters</a>
+                <a href="{% url 'admin_staff_portal:faculty_submission_bins_view' faculty_member.id %}" class="btn-clear">
+                    <img src="{% static 'images/Clear Filters.svg' %}" alt="">
+                    Clear Filters
+                </a>
             </div>
         </form>
     </div>

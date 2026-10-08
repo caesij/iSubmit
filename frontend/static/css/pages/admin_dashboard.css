@@ -69,7 +69,7 @@
 
 .stats-grid {
 	display: grid;
-	grid-template-columns: repeat(6, minmax(0, 1fr));
+	grid-template-columns: repeat(5, minmax(0, 1fr));
 	gap: 10px;
 	margin-bottom: 14px;
 }
@@ -88,12 +88,7 @@
 }
 
 .stat-icon {
-	width: 49px;
-	height: 49px;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	flex-shrink: 0;
+	display: none;
 }
 
 .stat-icon img {
@@ -103,20 +98,69 @@
 	object-fit: contain;
 }
 
+.stat-content {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	min-width: 0;
+}
+
 .stat-number {
-	display: block;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 50px;
+	height: 40px;
+	flex: 0 0 50px;
+	border-radius: 8px;
 	font-size: 22px;
 	font-weight: 700;
-	color: #A60700;
 }
 
 .stat-label {
 	display: block;
-	margin-top: 2px;
-	color: #A60700;
+	margin-top: 0;
 	font-size: 11px;
 	font-weight: 700;
 	line-height: 1.15;
+}
+
+.faculty-card .stat-number,
+.requirements-card .stat-number {
+	background: #F6E6E6;
+	color: #A60700;
+}
+
+.faculty-card .stat-label,
+.requirements-card .stat-label {
+	color: #A60700;
+}
+
+.approved-card .stat-number {
+	background: #E6F6ED;
+	color: #03A846;
+}
+
+.approved-card .stat-label {
+	color: #03A846;
+}
+
+.submitted-card .stat-number {
+	background: #FCFCE6;
+	color: #E5E200;
+}
+
+.submitted-card .stat-label {
+	color: #E5E200;
+}
+
+.pending-approval-card .stat-number {
+	background: #E6EDFD;
+	color: #054FE8;
+}
+
+.pending-approval-card .stat-label {
+	color: #054FE8;
 }
 
 .dashboard-grid {
@@ -275,6 +319,51 @@
 	margin-bottom: 20px;
 }
 
+.pending-card .card-header {
+	align-items: flex-start;
+	margin-bottom: 12px;
+}
+
+.document-tabs {
+	display: flex;
+	gap: 18px;
+	margin-top: 7px;
+	border-bottom: 1px solid #c7c7c7;
+}
+
+.document-tab {
+	padding: 0 0 8px;
+	border: 0;
+	border-bottom: 2px solid transparent;
+	background: transparent;
+	color: #777;
+	cursor: pointer;
+	font-size: 12px;
+}
+
+.document-tab.active {
+	border-bottom-color: #A60700;
+	color: #A60700;
+	font-weight: 700;
+}
+
+.documents-overview-link {
+	display: inline-flex;
+	align-items: center;
+	gap: 5px;
+	margin-top: 3px;
+	color: #A60700;
+	font-size: 11px;
+	font-weight: 700;
+	text-decoration: none;
+}
+
+.documents-overview-link img,
+.view-bins-link img {
+	width: 13px;
+	height: 13px;
+}
+
 .table-container {
 	overflow-x: auto;
 }
@@ -286,17 +375,38 @@
 }
 
 .pending-card th {
-	padding: 9px 8px;
-	background: #fef2f2;
-	color: #555;
+	padding: 8px 12px;
+	background: #F6E6E6;
+	color: #000000;
 	text-align: left;
-	font-weight: 600;
+	font-size: 13px;
+	font-weight: 500;
 }
 
 .pending-card td {
-	padding: 9px 8px;
+	padding: 9px 12px;
 	border-top: 1px solid #eee;
-	color: #444;
+	color: #000000;
+	font-size: 11px;
+}
+
+.faculty-type-badge {
+	display: inline-block;
+	padding: 4px 18px;
+	border-radius: 4px;
+	background: #e8e8e8;
+	color: #555;
+	font-size: 9px;
+}
+
+.view-bins-link {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	color: #A60700;
+	font-size: 10px;
+	font-weight: 700;
+	text-decoration: none;
 }
 
 .empty-row {
