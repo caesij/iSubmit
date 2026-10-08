@@ -24,12 +24,28 @@
         background: #fff;
         border: 1px solid #e5e7eb;
         border-radius: 10px;
-        padding: 20px;
+        box-shadow: 0 1px 5px rgba(0, 0, 0, .12);
+        padding: 18px 16px 16px;
         margin-bottom: 16px;
     }
-    .welcome-label { font-size: 13px; color: #6b7280; font-weight: 600; margin-bottom: 2px; }
-    .welcome-name { font-size: 18px; font-weight: 700; color: #1a1a1a; }
-    .welcome-type { font-size: 12.5px; color: #7f1d1d; font-weight: 600; margin: 2px 0 16px; }
+    .welcome-label { font-size: 16px; color: #171717; font-weight: 700; margin-bottom: 2px; }
+    .welcome-name { font-size: 21px; font-weight: 400; color: #171717; }
+    .welcome-type { font-size: 12px; color: #b91c1c; font-weight: 600; margin: 2px 0 11px; }
+    .welcome-meta { display: flex; flex-wrap: wrap; gap: 9px; margin-bottom: 21px; }
+    .meta-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        min-height: 25px;
+        padding: 3px 13px;
+        border: 1px solid #e5e7eb;
+        border-radius: 999px;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, .12);
+        color: #171717;
+        font-size: 11px;
+        font-weight: 600;
+    }
+    .meta-chip-icon { color: #b91c1c; font-size: 14px; line-height: 1; }
 
     /* ---------- Stat cards ---------- */
     .stat-row {
@@ -38,27 +54,69 @@
         gap: 8px;
         margin-bottom: 16px;
     }
-    .stat-card { border-radius: 9px; padding: 11px 10px; min-width: 0; transition: background-color .3s; }
+    .stat-card {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        min-width: 0;
+        min-height: 59px;
+        padding: 10px 14px;
+        background: #fff;
+        border: 1px solid #e5e7eb;
+        border-radius: 9px;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, .12);
+        transition: background-color .3s;
+    }
+    .stat-icon {
+        display: grid;
+        flex: 0 0 40px;
+        place-items: center;
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+        font-size: 18px;
+        font-weight: 700;
+    }
+    .stat-content {  
+        min-width: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+    }
+
     .stat-card .stat-num { font-size: 18px; font-weight: 700; display: block; }
-    .stat-card .stat-label { font-size: 10px; font-weight: 600; margin-top: 3px; white-space: nowrap; }
+    .stat-card .stat-label { 
+        display: block; 
+        font-size: 11px; 
+        font-weight: 700; 
+        margin-top: 0; 
+        line-height: 1.1; 
+    }
 
-    .stat-total { background: #fef2f2; }
-    .stat-total .stat-num, .stat-total .stat-label { color: #7f1d1d; }
+    .stat-total .stat-icon { background: #F2DAD9; }
+    .stat-total .stat-icon { color: #A60700; }
+    .stat-total .stat-num, .stat-total .stat-label { color: #A60700; }
 
-    .stat-approved { background: #f0fdf4; }
-    .stat-approved .stat-num, .stat-approved .stat-label { color: #15803d; }
+    .stat-approved .stat-icon { background: #D9F2E3; }
+    .stat-approved .stat-icon { color: #03A846; }
+    .stat-approved .stat-num, .stat-approved .stat-label { color: #03A846; }
 
-    .stat-submitted { background: #f0f9ff; }
-    .stat-submitted .stat-num, .stat-submitted .stat-label { color: #0369a1; }
+    .stat-submitted .stat-icon { background: #FBFBD9; }
+    .stat-submitted .stat-icon { color: #E5E200; }
+    .stat-submitted .stat-num, .stat-submitted .stat-label { color: #E5E200; }
 
-    .stat-under-review { background: #f5f3ff; }
-    .stat-under-review .stat-num, .stat-under-review .stat-label { color: #6d28d9; }
+    .stat-under-review .stat-icon { background: #DAE5FC; }
+    .stat-under-review .stat-icon { color: #054FE8; }
+    .stat-under-review .stat-num, .stat-under-review .stat-label { color: #054FE8; }
 
-    .stat-pending-approval { background: #fffbeb; }
-    .stat-pending-approval .stat-num, .stat-pending-approval .stat-label { color: #b45309; }
+    .stat-pending-approval .stat-icon { background: #FDF0DA; }
+    .stat-pending-approval .stat-icon { color: #F09805; }
+    .stat-pending-approval .stat-num, .stat-pending-approval .stat-label { color: #F09805; }
 
-    .stat-returned { background: #fef2f2; }
-    .stat-returned .stat-num, .stat-returned .stat-label { color: #b91c1c; }
+    .stat-returned .stat-icon { background: #F2DAD9; }
+    .stat-returned .stat-icon { color: #A60700; }
+    .stat-returned .stat-num, .stat-returned .stat-label { color: #A60700; }
 
     /* Flash animation when a stat changes */
     .stat-flash { animation: flash 0.6s ease; }
@@ -69,32 +127,48 @@
     }
 
     /* ---------- Action buttons ---------- */
-    .action-row { display: flex; gap: 10px; }
-    .btn-primary {
-        padding: 9px 16px;
+    .action-row { display: flex; gap: 18px; }
+    .action-row .btn-primary,
+    .action-row .btn-outline {
+        box-sizing: border-box;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 182px;
+        height: 28px;
+        padding: 0 12px;
+        gap: 6px;
+        border-radius: 4px;
+        font-size: 13px;
+        font-weight: 700;
+        line-height: 1;
+        text-decoration: none;
+        white-space: nowrap;
+    }
+    .action-row .btn-primary {
         background: #7f1d1d;
         color: #fff;
         border: none;
-        border-radius: 8px;
-        font-size: 13px;
-        font-weight: 700;
-        text-decoration: none;
     }
-    .btn-outline {
-        padding: 9px 16px;
+    .action-row .btn-outline {
         background: #fff;
         color: #7f1d1d;
         border: 1px solid #7f1d1d;
-        border-radius: 8px;
-        font-size: 13px;
-        font-weight: 700;
-        text-decoration: none;
+    }
+    .action-row .btn-icon {
+        width: 16px;
+        height: 16px;
+        flex: 0 0 16px;
+        object-fit: contain;
+    }
+    .action-row .btn-outline .btn-icon {
+        filter: brightness(0) saturate(100%) invert(17%) sepia(38%) saturate(2270%) hue-rotate(326deg) brightness(83%) contrast(104%);
     }
 
     /* ---------- Lower dashboard ---------- */
     .dash-lower {
         display: grid;
-        grid-template-columns: 1fr 300px;
+        grid-template-columns: 1.5fr 1fr;
         gap: 16px;
         margin-top: 16px;
         align-items: start;
@@ -164,54 +238,79 @@
         display: flex;
         align-items: center;
         justify-content: space-between;
-        padding: 10px 0;
-        border-top: 1px solid #f3f4f6;
+        min-height: 72px;
+        box-sizing: border-box;
+        padding: 11px 16px;
+        margin-bottom: 10px;
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
     }
-    .overview-row:first-of-type { border-top: none; }
-    .overview-file { display: flex; align-items: center; gap: 10px; }
+    .overview-row:last-child { margin-bottom: 0; }
+    .overview-file { display: flex; align-items: center; gap: 15px; min-width: 0; }
     .overview-icon {
-        width: 30px;
-        height: 30px;
-        border-radius: 6px;
-        background: #fef2f2;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 14px;
+        width: 45px;
+        height: 45px;
+        flex: 0 0 45px;
+        object-fit: contain;
     }
     .overview-name { font-weight: 600; font-size: 13.5px; color: #1a1a1a; }
     .overview-when { font-size: 11.5px; color: #9ca3af; }
 
     /* ---------- Status pills ---------- */
-    .pill { padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 700; white-space: nowrap; }
-    .pill-approved { background: #dcfce7; color: #15803d; border: 1px solid #86efac; }
-    .pill-submitted { background: #e0f2fe; color: #0369a1; border: 1px solid #7dd3fc; }
-    .pill-under-review { background: #ede9fe; color: #6d28d9; border: 1px solid #c4b5fd; }
-    .pill-pending-approval { background: #fef3c7; color: #b45309; border: 1px solid #fcd34d; }
-    .pill-returned { background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5; }
+    .pill {
+        min-width: 121px;
+        box-sizing: border-box;
+        padding: 4px 10px;
+        border-radius: 4px;
+        font-size: 11px;
+        font-weight: 700;
+        text-align: center;
+        white-space: nowrap;
+    }
+    .pill-approved { background: #fff; color: #03a846; border: 1px solid #03a846; }
+    .pill-submitted { background: #fff; color: #054fe8; border: 1px solid #054fe8; }
+    .pill-under-review { background: #fff; color: #6d28d9; border: 1px solid #6d28d9; }
+    .pill-pending-approval { background: #fff; color: #f09805; border: 1px solid #f09805; }
+    .pill-returned { background: #fff; color: #a60700; border: 1px solid #a60700; }
 
     /* ---------- Deadlines ---------- */
     .deadline-row {
         display: flex;
         align-items: center;
         gap: 10px;
-        padding: 10px 0;
-        border-top: 1px solid #f3f4f6;
+        min-height: 84px;
+        box-sizing: border-box;
+        padding: 12px 18px;
+        margin-bottom: 12px;
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
     }
-    .deadline-row:first-of-type { border-top: none; }
+    .deadline-row:last-child { margin-bottom: 0; }
     .deadline-icon {
-        width: 30px;
-        height: 30px;
-        border-radius: 6px;
-        background: #fef2f2;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 14px;
-        flex-shrink: 0;
+        width: 43px;
+        height: 43px;
+        flex: 0 0 43px;
+        object-fit: contain;
     }
     .deadline-title { font-weight: 600; font-size: 13px; color: #1a1a1a; }
     .deadline-date { font-size: 11.5px; color: #9ca3af; margin-left: auto; }
+    .deadline-upload {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 7px;
+        width: 100%;
+        box-sizing: border-box;
+        margin-top: 12px;
+        padding: 10px 14px;
+        background: #a60700;
+        color: #fff;
+        border-radius: 4px;
+        font-size: 13px;
+        font-weight: 700;
+        text-decoration: none;
+    }
+    .deadline-upload .btn-icon { width: 15px; height: 15px; }
 
     /* ---------- Live indicator ---------- */
     .live-dot {
@@ -247,52 +346,58 @@
     <!-- Stat cards -->
     <div class="stat-row">
         <div class="stat-card stat-total">
-            <span class="stat-num" id="stat-total">
-                {{ total_requirements }}
-            </span>
-            <span class="stat-label">Total Requirements</span>
+            <span class="stat-icon" id="stat-total">{{ total_requirements }}</span>
+            <div class="stat-content">
+                <span class="stat-label">Total Requirements</span>
+            </div>
         </div>
 
         <div class="stat-card stat-approved">
-            <span class="stat-num" id="stat-approved">
-                {{ approved_count }}
-            </span>
-            <span class="stat-label">Approved</span>
+            <span class="stat-icon" id="stat-approved">{{ approved_count }}</span>
+            <div class="stat-content">
+                <span class="stat-label">Approved</span>
+            </div>
         </div>
 
         <div class="stat-card stat-submitted">
-            <span class="stat-num" id="stat-submitted">
-                {{ total_submitted_count }}
-            </span>
-            <span class="stat-label">Submitted</span>
+            <span class="stat-icon" id="stat-submitted">{{ total_submitted_count }}</span>
+            <div class="stat-content">
+                <span class="stat-label">Submitted</span>
+            </div>
         </div>
 
         <div class="stat-card stat-under-review">
-            <span class="stat-num" id="stat-under-review">
-                {{ under_review_count }}
-            </span>
-            <span class="stat-label">Under Review</span>
+            <span class="stat-icon" id="stat-under-review">{{ under_review_count }}</span>
+            <div class="stat-content">
+                <span class="stat-label">Under Review</span>
+            </div>
         </div>
 
         <div class="stat-card stat-pending-approval">
-            <span class="stat-num" id="stat-pending-approval">
-                {{ pending_approval_count }}
-            </span>
-            <span class="stat-label">Pending Approval</span>
+            <span class="stat-icon" id="stat-pending-approval">{{ pending_approval_count }}</span>
+            <div class="stat-content">
+                <span class="stat-label">Pending Approval</span>
+            </div>
         </div>
 
         <div class="stat-card stat-returned">
-            <span class="stat-num" id="stat-returned">
-                {{ returned_count }}
-            </span>
-            <span class="stat-label">Returned</span>
+            <span class="stat-icon" id="stat-returned">{{ returned_count }}</span>
+            <div class="stat-content">
+                <span class="stat-label">Returned</span>
+            </div>
         </div>
     </div>
 
     <!-- Action buttons -->
     <div class="action-row">
-        <a href="{% url 'faculty_portal:upload_files' %}" class="btn-primary">↑ Upload Documents</a>
-        <a href="{% url 'faculty_portal:all_documents' %}" class="btn-outline">📄 View Documents</a>
+        <a href="{% url 'faculty_portal:upload_files' %}" class="btn-primary">
+            <img src="{% static 'images/upload.svg' %}" alt="" class="btn-icon">Upload Documents
+        </a>
+
+        <a href="{% url 'faculty_portal:all_documents' %}" class="btn-outline">
+            <img src="{% static 'images/documents.svg' %}" alt="" class="btn-icon">View Documents
+        </a>
+
     </div>
 </div>
 
@@ -383,7 +488,11 @@
                 {% for sub in overview_submissions %}
                     <div class="overview-row">
                         <div class="overview-file">
-                            <span class="overview-icon">📄</span>
+                            <img
+                                src="{% static 'images/Submission Overview Documents.svg' %}"
+                                alt=""
+                                class="overview-icon"
+                            >
                             <div>
                                 <div class="overview-name">{{ sub.requirement.requirement_title }}</div>
                                 <div class="overview-when">
@@ -423,7 +532,11 @@
         <div id="upcoming-deadlines">
             {% for req in upcoming_deadlines %}
                 <div class="deadline-row">
-                    <span class="deadline-icon">📄</span>
+                    <img
+                        src="{% static 'images/Upcoming Deadline Documents.svg' %}"
+                        alt=""
+                        class="deadline-icon"
+                    >
                     <div class="deadline-title">{{ req.requirement_title }}</div>
                     <div class="deadline-date">{{ req.deadline }}</div>
                 </div>
@@ -439,10 +552,10 @@
 
         <a
             href="{% url 'faculty_portal:upload_files' %}"
-            class="btn-primary"
-            style="display:block; text-align:center; margin-top:14px;"
+            class="deadline-upload"
         >
-            ↑ Upload Documents
+            <img src="{% static 'images/upload.svg' %}" alt="" class="btn-icon">
+            Upload Documents
         </a>
     </div>
 </div>
@@ -504,7 +617,7 @@
 
                         row.innerHTML = `
                             <div class="overview-file">
-                                <span class="overview-icon">📄</span>
+                                <img src="{% static 'images/Submission Overview Documents.svg' %}" alt="" class="overview-icon">
                                 <div>
                                     <div class="overview-name">${sub.title}</div>
                                     <div class="overview-when">${sub.date} • ${sub.time}</div>
@@ -581,9 +694,10 @@
                         const row = document.createElement("div");
                         row.className = "deadline-row";
 
-                        const icon = document.createElement("span");
+                        const icon = document.createElement("img");
                         icon.className = "deadline-icon";
-                        icon.textContent = "📄";
+                        icon.src = "{% static 'images/Upcoming Deadline Documents.svg' %}";
+                        icon.alt = "";
 
                         const title = document.createElement("div");
                         title.className = "deadline-title";

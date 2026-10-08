@@ -125,7 +125,7 @@
 
                     <li class="nav-item">
                         <a
-                            class="nav-link {% if request.resolver_match.url_name in 'requirements_list,add_requirement,edit_requirement,faculty_submissions_list,faculty_submission_bins_view,review_submission' %}active{% endif %}"
+                            class="nav-link {% if request.resolver_match.url_name in 'requirements_list,bulk_requirements,add_requirement,edit_requirement,faculty_submissions_list,faculty_submission_bins_view,review_submission' %}active{% endif %}"
                             href="{% url 'admin_staff_portal:requirements_list' %}"
                         >
                             <span class="icon">
@@ -253,7 +253,7 @@
                                 >
                             </span>
 
-                        {% elif request.resolver_match.url_name in 'requirements_list,add_requirement,edit_requirement,faculty_submissions_list,faculty_submission_bins_view,review_submission' %}
+                        {% elif request.resolver_match.url_name in 'requirements_list,bulk_requirements,add_requirement,edit_requirement,faculty_submissions_list,faculty_submission_bins_view,review_submission' %}
                             <span class="page-icon">
                                 <img
                                     src="{% static 'images/submissions.svg' %}"

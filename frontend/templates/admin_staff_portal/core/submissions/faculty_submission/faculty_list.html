@@ -51,7 +51,10 @@
             </div>
 
             {% if request.GET.faculty_type or request.GET.category or request.GET.review_stage or request.GET.status or request.GET.q %}
-                <a href="{% url 'admin_staff_portal:faculty_submissions_list' %}" class="btn-clear">Clear Filters</a>
+                <a href="{% url 'admin_staff_portal:faculty_submissions_list' %}" class="btn-clear">
+                    <img src="{% static 'images/Clear Filters.svg' %}" alt="">
+                    Clear Filters
+                </a>
             {% endif %}
         </form>
     </div>
