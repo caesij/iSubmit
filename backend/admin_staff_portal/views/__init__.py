@@ -26,6 +26,7 @@ from admin_staff_portal.views.core.submissions_views import (
     mark_under_review_view,
     mark_needs_revision_view,
     mark_reviewed_view,
+    toggle_approval_view,
     approve_all_submissions_view,
 )
 

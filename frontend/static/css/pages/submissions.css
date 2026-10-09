@@ -881,6 +881,134 @@ select {
   cursor: pointer;
 }
 
+.faculty-list-filters .filter-form {
+  align-items: flex-end;
+}
+
+.faculty-list-filters .faculty-search {
+  flex: 1 1 310px;
+}
+
+.faculty-list-filters .btn-search {
+  min-height: 35px;
+  margin-right: auto;
+}
+
+.faculty-list-filters .select-wrap {
+  flex: 0 1 120px;
+  min-width: 120px;
+}
+
+.faculty-list-filters .select-wrap label {
+  font-size: 10px;
+  color: var(--submissions-muted);
+}
+
+.faculty-list-filters .select-wrap select {
+  min-height: 35px;
+  padding: 7px 10px;
+  font-size: 12px;
+}
+
+.faculty-list-filters .btn-clear {
+  align-self: flex-end;
+  width: 120px;
+  min-width: 120px;
+  height: 35px;
+  min-height: 35px;
+  margin-left: 0;
+  padding: 0 10px;
+  font-size: 12px;
+}
+
+.faculty-list-filters + .table-card .data-table th:nth-child(1) {
+  width: 28%;
+}
+
+.faculty-list-filters + .table-card .data-table th:nth-child(2) {
+  width: 18%;
+}
+
+.faculty-list-filters + .table-card .data-table th:nth-child(3) {
+  width: 16%;
+}
+
+.faculty-list-filters + .table-card .data-table th:nth-child(4) {
+  width: 16%;
+}
+
+.faculty-list-filters + .table-card .data-table th:nth-child(5) {
+  width: 14%;
+}
+
+.faculty-list-filters + .table-card .data-table th:nth-child(6) {
+  width: 14%;
+}
+
+.faculty-list-filters + .table-card .data-table td {
+  padding-top: 18px;
+  padding-bottom: 18px;
+}
+
+.faculty-type-badge,
+.faculty-status {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 4px 10px;
+  border-radius: 5px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.faculty-type-badge {
+  background: #e5e5e5;
+  color: #4b4b4b;
+}
+
+.faculty-status {
+  justify-content: center;
+  min-width: 104px;
+  border: 1px solid #9ca3af;
+  background: #fff;
+  color: #374151;
+}
+
+.faculty-status.status-under-review {
+  border-color: transparent;
+  background: #dbeafe;
+  color: #2563eb;
+}
+
+.faculty-status.status-approved {
+  border-color: transparent;
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.faculty-status.status-pending {
+  border-color: transparent;
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.faculty-status.status-no-file {
+  min-width: 104px;
+}
+
+.view-bins-link {
+  color: var(--submissions-red-700);
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.view-bins-link:hover {
+  text-decoration: underline;
+}
+
 .tab-nav {
   display: flex;
   gap: 24px;
@@ -914,7 +1042,7 @@ select {
 
 .filter-card {
   background: var(--submissions-surface);
-  border: 1px solid var(--submissions-border);
+
   border-radius: 8px;
   padding: 12px 8px 10px;
   margin-bottom: 24px;
@@ -1352,8 +1480,6 @@ select {
   grid-template-columns: 1fr auto 1fr;
   align-items: center;
   padding: 16px 20px;
-  border-top: 1px solid var(--submissions-border);
-  background: #fafafa;
   gap: 16px;
 }
 
@@ -1730,7 +1856,7 @@ select {
   display: block;
   margin-bottom: 6px;
   color: #171717;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 700;
 }
 
@@ -1743,7 +1869,7 @@ select {
   border-radius: 6px;
   background: #fff;
   color: #374151;
-  font-size: 16px;
+  font-size: 13px;
 }
 
 .requirement-editor-card .requirement-field input[type="datetime-local"] {
@@ -1751,14 +1877,14 @@ select {
 }
 
 .requirement-editor-side .requirement-field label {
-  font-size: 11px;
+  font-size: 13px;
 }
 
 .requirement-editor-side .requirement-field input:not([type="checkbox"]),
 .requirement-editor-side .requirement-field select {
   min-height: 38px;
   padding: 8px 10px;
-  font-size: 11px;
+  font-size: 13px;
 }
 
 .requirement-editor-card .ocr-field {
@@ -1768,29 +1894,61 @@ select {
   min-height: 38px;
 }
 
-.requirement-editor-card .ocr-field label {
+.requirement-editor-card .ocr-field .ocr-label {
   width: 68px;
   margin: 0;
   line-height: 1.05;
   text-align: right;
 }
 
-.requirement-editor-card .ocr-field input[type="checkbox"] {
-  appearance: none !important;
-  width: 70px !important;
-  height: 32px !important;
-  flex: 0 0 70px;
+.requirement-editor-card .ocr-field .ocr-switch {
+  position: relative;
+  display: block;
+  width: 58px;
+  height: 28px;
+  flex: 0 0 58px;
   margin: 0;
-  border: 1px solid #c7c7c7;
-  border-radius: 999px;
-  background: radial-gradient(circle at 16px 16px, #fff 0 10px, transparent 11px), #d1d5db;
   cursor: pointer;
+}
+
+.requirement-editor-card .ocr-switch input[type="checkbox"] {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+.requirement-editor-card .ocr-slider {
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  background: #d1d5db;
   transition: background 0.2s ease;
 }
 
-.requirement-editor-card .ocr-field input[type="checkbox"]:checked {
-  border-color: #A60700;
-  background: radial-gradient(circle at 54px 16px, #fff 0 10px, transparent 11px), #A60700;
+.requirement-editor-card .ocr-slider::before {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #fff;
+  content: "";
+  transition: transform 0.2s ease;
+}
+
+.requirement-editor-card .ocr-switch input[type="checkbox"]:checked + .ocr-slider {
+  background: #b40000;
+}
+
+.requirement-editor-card .ocr-switch input[type="checkbox"]:checked + .ocr-slider::before {
+  transform: translateX(30px);
+}
+
+.requirement-editor-card .ocr-switch input[type="checkbox"]:focus-visible + .ocr-slider {
+  outline: 2px solid #b40000;
+  outline-offset: 2px;
 }
 
 .requirement-side-row {
@@ -1806,7 +1964,6 @@ select {
   gap: 12px;
   grid-column: 1 / -1;
   max-width: none;
-  margin: 4px -24px -20px;
   padding-top: 12px;
   padding-right: 24px;
   border-top: 1px solid #e5e7eb;

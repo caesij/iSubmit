@@ -60,8 +60,11 @@
                 </div>
 
                 <div class="requirement-field ocr-field{% if form.ocr_enabled.errors %} has-error{% endif %}">
-                    <label for="{{ form.ocr_enabled.id_for_label }}">Enable OCR?</label>
-                    {{ form.ocr_enabled }}
+                    <label class="ocr-label" for="{{ form.ocr_enabled.id_for_label }}">Enable OCR?</label>
+                    <label class="ocr-switch" aria-label="Enable OCR">
+                        {{ form.ocr_enabled }}
+                        <span class="ocr-slider" aria-hidden="true"></span>
+                    </label>
                     {% for error in form.ocr_enabled.errors %}<span class="field-error">{{ error }}</span>{% endfor %}
                 </div>
             </section>
