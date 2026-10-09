@@ -190,6 +190,7 @@
     .progress-seg-submitted { background: #0ea5e9; transition: width .3s; }
     .progress-seg-under-review { background: #7c3aed; transition: width .3s; }
     .progress-seg-pending-approval { background: #f59e0b; transition: width .3s; }
+    .progress-seg_returned { background: #ef4444; transition: width .3s; }
 
     .progress-legend {
         display: flex;
@@ -341,7 +342,7 @@
 <div class="welcome-card">
     <div class="welcome-label">Welcome,</div>
     <div class="welcome-name">{{ request.user.get_full_name }}</div>
-    <div class="welcome-type">{{ request.user.get_faculty_type_display }} Faculty</div>
+    <div class="welcome-type">{{ request.user.get_faculty_type_display }}</div>
 
     <!-- Stat cards -->
     <div class="stat-row">
@@ -431,6 +432,11 @@
                     id="seg-pending-approval"
                     style="width: {{ pending_approval_pct }}%;"
                 ></div>
+                <div
+                    class="progress-seg_returned"
+                    id="seg_returned"
+                    style="width: {{ returned_pct }}%;"
+                ></div>
             </div>
 
             <div class="progress-legend">
@@ -438,6 +444,7 @@
                 <span><span class="dot" style="background:#0ea5e9;"></span> Submitted</span>
                 <span><span class="dot" style="background:#7c3aed;"></span> Under Review</span>
                 <span><span class="dot" style="background:#f59e0b;"></span> Pending Approval</span>
+                <span><span class="dot" style="background:#ef4444;"></span> Returned</span>
                 <span>
                     <span class="dot" style="background:#f0f0f0; border:1px solid #d1d5db;"></span>
                     Unsubmitted
@@ -457,31 +464,42 @@
 
             <!-- Tabs -->
             <div class="overview-tabs">
-                <a
-                    href="?tab=all"
-                    class="overview-tab {% if selected_tab == 'all' %}active{% endif %}"
-                >All</a>
-                <a
-                    href="?tab=approved"
-                    class="overview-tab {% if selected_tab == 'approved' %}active{% endif %}"
-                >Approved</a>
-                <a
-                    href="?tab=submitted"
-                    class="overview-tab {% if selected_tab == 'submitted' %}active{% endif %}"
-                >Submitted</a>
-                <a
-                    href="?tab=under_review"
-                    class="overview-tab {% if selected_tab == 'under_review' %}active{% endif %}"
-                >Under Review</a>
-                <a
-                    href="?tab=pending_approval"
-                    class="overview-tab {% if selected_tab == 'pending_approval' %}active{% endif %}"
-                >Pending Approval</a>
-                <a
-                    href="?tab=returned"
-                    class="overview-tab {% if selected_tab == 'returned' %}active{% endif %}"
-                >Returned</a>
-            </div>
+            <a
+                href="?tab=all"
+                data-tab="all"
+                class="overview-tab {% if selected_tab == 'all' %}active{% endif %}"
+            >All</a>
+
+            <a
+                href="?tab=approved"
+                data-tab="approved"
+                class="overview-tab {% if selected_tab == 'approved' %}active{% endif %}"
+            >Approved</a>
+
+            <a
+                href="?tab=submitted"
+                data-tab="submitted"
+                class="overview-tab {% if selected_tab == 'submitted' %}active{% endif %}"
+            >Submitted</a>
+
+            <a
+                href="?tab=under_review"
+                data-tab="under_review"
+                class="overview-tab {% if selected_tab == 'under_review' %}active{% endif %}"
+            >Under Review</a>
+
+            <a
+                href="?tab=pending_approval"
+                data-tab="pending_approval"
+                class="overview-tab {% if selected_tab == 'pending_approval' %}active{% endif %}"
+            >Pending Approval</a>
+
+            <a
+                href="?tab=returned"
+                data-tab="returned"
+                class="overview-tab {% if selected_tab == 'returned' %}active{% endif %}"
+            >Returned</a>
+        </div>
 
             <!-- Submission list -->
             <div id="submission-overview-list">
@@ -562,19 +580,30 @@
 
 
 <!-- Real-time dashboard updates -->
-<script>
-    document.addEventListener("dashboard-update", async function () {
-        try {
-            const activeTab = "{{ selected_tab }}";
 
-            const response = await fetch(
-                "{% url 'faculty_portal:dashboard_data' %}?tab=" + encodeURIComponent(activeTab),
-                {
-                    method: "GET",
-                    credentials: "same-origin",
-                    headers: { "X-Requested-With": "XMLHttpRequest" }
-                }
+<script>
+    let selectedOverviewTab = "{{ selected_tab|escapejs }}";
+
+    async function refreshFacultyDashboard(overviewOnly = false) {
+        try {
+            const dataUrl = new URL(
+                "{% url 'faculty_portal:dashboard_data' %}",
+                window.location.origin
             );
+
+            dataUrl.searchParams.set("tab", selectedOverviewTab);
+
+            if (overviewOnly) {
+                dataUrl.searchParams.set("overview_only", "1");
+            }
+
+            const response = await fetch(dataUrl.toString(), {
+                method: "GET",
+                credentials: "same-origin",
+                headers: {
+                    "X-Requested-With": "XMLHttpRequest"
+                }
+            });
 
             if (!response.ok) {
                 console.error("Failed to fetch dashboard data.");
@@ -583,14 +612,18 @@
 
             const data = await response.json();
 
-
             /* ---------- Submission overview ---------- */
-            const overviewContainer = document.getElementById("submission-overview-list");
+            const overviewContainer = document.getElementById(
+                "submission-overview-list"
+            );
 
             if (overviewContainer) {
                 overviewContainer.innerHTML = "";
 
-                if (!data.overview_submissions || data.overview_submissions.length === 0) {
+                if (
+                    !data.overview_submissions ||
+                    data.overview_submissions.length === 0
+                ) {
                     overviewContainer.innerHTML = `
                         <div style="text-align:center; padding:20px; color:#9ca3af; font-size:13px;">
                             No submissions yet.
@@ -604,20 +637,32 @@
                         let statusHtml = "";
 
                         if (sub.status === "APPROVED") {
-                            statusHtml = `<span class="pill pill-approved">Approved</span>`;
-                        } else if (sub.status === "SUBMITTED" || sub.status === "RESUBMITTED") {
-                            statusHtml = `<span class="pill pill-submitted">Submitted</span>`;
+                            statusHtml =
+                                `<span class="pill pill-approved">Approved</span>`;
+                        } else if (
+                            sub.status === "SUBMITTED" ||
+                            sub.status === "RESUBMITTED"
+                        ) {
+                            statusHtml =
+                                `<span class="pill pill-submitted">Submitted</span>`;
                         } else if (sub.status === "UNDER_REVIEW") {
-                            statusHtml = `<span class="pill pill-under-review">Under Review</span>`;
+                            statusHtml =
+                                `<span class="pill pill-under-review">Under Review</span>`;
                         } else if (sub.status === "PENDING_APPROVAL") {
-                            statusHtml = `<span class="pill pill-pending-approval">Pending Approval</span>`;
+                            statusHtml =
+                                `<span class="pill pill-pending-approval">Pending Approval</span>`;
                         } else if (sub.status === "NEEDS_REVISION") {
-                            statusHtml = `<span class="pill pill-returned">Returned</span>`;
+                            statusHtml =
+                                `<span class="pill pill-returned">Returned</span>`;
                         }
 
                         row.innerHTML = `
                             <div class="overview-file">
-                                <img src="{% static 'images/Submission Overview Documents.svg' %}" alt="" class="overview-icon">
+                                <img
+                                    src="{% static 'images/Submission Overview Documents.svg' %}"
+                                    alt=""
+                                    class="overview-icon"
+                                >
                                 <div>
                                     <div class="overview-name">${sub.title}</div>
                                     <div class="overview-when">${sub.date} • ${sub.time}</div>
@@ -631,6 +676,7 @@
                 }
             }
 
+            if (overviewOnly) return;
 
             /* ---------- Statistics ---------- */
             function setStat(id, value) {
@@ -642,7 +688,6 @@
                     element.textContent = value;
 
                     const card = element.parentElement;
-
                     card.classList.remove("stat-flash");
                     void card.offsetWidth;
                     card.classList.add("stat-flash");
@@ -656,31 +701,39 @@
             setStat("stat-pending-approval", data.pending_approval_count);
             setStat("stat-returned", data.returned_count);
 
-
             /* ---------- Progress bar ---------- */
             const segments = {
                 "seg-approved": data.approved_pct,
                 "seg-submitted": data.submitted_pct,
                 "seg-under-review": data.under_review_pct,
-                "seg-pending-approval": data.pending_approval_pct
+                "seg-pending-approval": data.pending_approval_pct,
+                "seg_returned": data.returned_pct
             };
 
             Object.entries(segments).forEach(function ([id, percentage]) {
                 const element = document.getElementById(id);
 
-                if (!element) return;
+                if (!element) {
+                    console.warn(`Progress bar segment not found: ${id}`);
+                    return;
+                }
 
-                element.style.width = percentage + "%";
+                element.style.width = `${Number(percentage) || 0}%`;
             });
 
 
             /* ---------- Upcoming deadlines ---------- */
-            const deadlineContainer = document.getElementById("upcoming-deadlines");
+            const deadlineContainer = document.getElementById(
+                "upcoming-deadlines"
+            );
 
             if (deadlineContainer) {
                 deadlineContainer.innerHTML = "";
 
-                if (!data.upcoming_deadlines || data.upcoming_deadlines.length === 0) {
+                if (
+                    !data.upcoming_deadlines ||
+                    data.upcoming_deadlines.length === 0
+                ) {
                     deadlineContainer.innerHTML = `
                         <div
                             class="no-upcoming-deadlines"
@@ -696,7 +749,8 @@
 
                         const icon = document.createElement("img");
                         icon.className = "deadline-icon";
-                        icon.src = "{% static 'images/Upcoming Deadline Documents.svg' %}";
+                        icon.src =
+                            "{% static 'images/Upcoming Deadline Documents.svg' %}";
                         icon.alt = "";
 
                         const title = document.createElement("div");
@@ -716,8 +770,39 @@
                 }
             }
         } catch (error) {
-            console.error("Dashboard realtime update failed:", error);
+            console.error(
+                "Dashboard realtime update failed:",
+                error
+            );
         }
+    }
+
+    /* ---------- Tab filtering without page reload ---------- */
+    document.querySelectorAll(".overview-tab").forEach(function (tab) {
+        tab.addEventListener("click", function (event) {
+            event.preventDefault();
+
+            selectedOverviewTab = this.dataset.tab || "all";
+
+            document.querySelectorAll(".overview-tab").forEach(function (item) {
+                item.classList.remove("active");
+            });
+
+            this.classList.add("active");
+
+            const currentUrl = new URL(window.location.href);
+            currentUrl.searchParams.set("tab", selectedOverviewTab);
+            window.history.replaceState({}, "", currentUrl);
+
+            refreshFacultyDashboard(true);
+        });
     });
+
+    /* ---------- Realtime dashboard updates ---------- */
+    document.addEventListener("dashboard-update", () => {
+        refreshFacultyDashboard(false);
+    });
+
+    refreshFacultyDashboard(false);
 </script>
 {% endblock %}

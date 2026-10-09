@@ -4,87 +4,47 @@ from django.http import JsonResponse
 
 from accounts.decorators import faculty
 from faculty_portal.services.faculty_dashboard import get_dashboard_data
-from submissions.models import DocumentSubmission
+
+from faculty_portal.helpers.faculty_dashboard import (
+    get_overview_queryset,
+    serialize_overview_submissions
+)
+
 
 @faculty
 @require_http_methods(['GET'])
 def dashboard_data_view(request):
-    data = get_dashboard_data(request.user)
-
     tab = request.GET.get('tab', 'all')
 
-    overview_qs = (
-        DocumentSubmission.objects
-        .filter(faculty=request.user)
-        .select_related('requirement')
-        .order_by('-initially_submitted_at')
+    if request.GET.get('overview_only') == '1':
+        return JsonResponse({
+            'overview_submissions': serialize_overview_submissions(
+                get_overview_queryset(request.user, tab)
+            )
+        })
+
+    data = get_dashboard_data(request.user)
+    data['overview_submissions'] = serialize_overview_submissions(
+        get_overview_queryset(request.user, tab)
     )
 
-    if tab == 'approved':
-        overview_qs = overview_qs.filter(
-            status=DocumentSubmission.SubmissionStatus.APPROVED
-        )
-    elif tab == 'submitted':
-        overview_qs = overview_qs.filter(
-            status__in=[
-                DocumentSubmission.SubmissionStatus.SUBMITTED,
-                DocumentSubmission.SubmissionStatus.RESUBMITTED,
-            ]
-        )
-    elif tab == 'under_review':
-        overview_qs = overview_qs.filter(
-            status=DocumentSubmission.SubmissionStatus.UNDER_REVIEW
-        )
-    elif tab == 'pending_approval':
-        overview_qs = overview_qs.filter(
-            status=DocumentSubmission.SubmissionStatus.PENDING_APPROVAL
-        )
-    elif tab == 'returned':
-        overview_qs = overview_qs.filter(
-            status=DocumentSubmission.SubmissionStatus.NEEDS_REVISION
-        )
-
-    data['overview_submissions'] = [
-        {
-            'title': submission.requirement.requirement_title,
-            'date': submission.initially_submitted_at.strftime('%b %d, %Y').replace(' 0', ' '),
-            'time': submission.initially_submitted_at.strftime('%I:%M %p').lstrip('0'),
-            'status': submission.status,
-        }
-        for submission in overview_qs[:5]
-    ]
-
     return JsonResponse(data)
+
 
 @faculty
 @require_http_methods(['GET'])
 def dashboard_view(request):
-    data = get_dashboard_data(request.user)
-
     tab = request.GET.get('tab', 'all')
-    overview_qs = DocumentSubmission.objects.filter(
-        faculty=request.user
-    ).select_related('requirement').order_by('-initially_submitted_at')
-
-    if tab == 'approved':
-        overview_qs = overview_qs.filter(status=DocumentSubmission.SubmissionStatus.APPROVED)
-    elif tab == 'submitted':
-        overview_qs = overview_qs.filter(
-            status__in=[
-                DocumentSubmission.SubmissionStatus.SUBMITTED,
-                DocumentSubmission.SubmissionStatus.RESUBMITTED,
-            ]
-        )
-    elif tab == 'under_review':
-        overview_qs = overview_qs.filter(status=DocumentSubmission.SubmissionStatus.UNDER_REVIEW)
-    elif tab == 'pending_approval':
-        overview_qs = overview_qs.filter(status=DocumentSubmission.SubmissionStatus.PENDING_APPROVAL)
-    elif tab == 'returned':
-        overview_qs = overview_qs.filter(status=DocumentSubmission.SubmissionStatus.NEEDS_REVISION)
+    data = get_dashboard_data(request.user)
 
     context = {
         **data,
-        'overview_submissions': overview_qs[:5],
-        'selected_tab': tab,
+        'overview_submissions': get_overview_queryset(request.user, tab)[:5],
+        'selected_tab': tab
     }
-    return render(request, 'faculty_portal/core/dashboard.html', context)
+
+    return render(
+        request,
+        'faculty_portal/core/dashboard.html',
+        context
+    )

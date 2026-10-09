@@ -116,6 +116,7 @@ def get_admin_dashboard_data():
             status__in=[
                 DocumentSubmission.SubmissionStatus.APPROVED,
                 DocumentSubmission.SubmissionStatus.SUBMITTED,
+                DocumentSubmission.SubmissionStatus.RESUBMITTED,
                 DocumentSubmission.SubmissionStatus.PENDING_APPROVAL
             ]
         )
