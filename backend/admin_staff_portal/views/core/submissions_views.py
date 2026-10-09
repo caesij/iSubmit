@@ -408,32 +408,54 @@ def toggle_requirement_status(request, requirement_id):
 @role_required('ADMIN', 'STAFF')
 @require_http_methods(['GET'])
 def faculty_submissions_list(request):
-    submissions = DocumentSubmission.objects.filter(
-        requirement__status=Requirement.ReqStatus.ACTIVE,
-        faculty__role=User.Role.FACULTY,
-    ).select_related('faculty', 'requirement').order_by(
-        '-initially_submitted_at'
-    )
-
     query = request.GET.get('q')
     faculty_type = request.GET.get('faculty_type')
     category = request.GET.get('category')
     status = request.GET.get('status')
 
+    faculty_members = User.objects.filter(
+        role=User.Role.FACULTY,
+        is_active=True,
+    ).order_by('last_name', 'first_name')
+
     if query:
-        submissions = submissions.filter(
-            Q(faculty__first_name__icontains=query) |
-            Q(faculty__last_name__icontains=query) |
-            Q(requirement__requirement_title__icontains=query)
+        faculty_members = faculty_members.filter(
+            Q(first_name__icontains=query) |
+            Q(last_name__icontains=query) |
+            Q(email__icontains=query) |
+            Q(submissions__requirement__requirement_title__icontains=query)
         )
     if faculty_type:
-        submissions = submissions.filter(faculty__faculty_type=faculty_type)
-    if category:
-        submissions = submissions.filter(requirement__category=category)
-    if status:
-        submissions = submissions.filter(status=status)
+        faculty_members = faculty_members.filter(faculty_type=faculty_type)
 
-    paginator = Paginator(submissions, 7)
+    faculty_rows = []
+    active_requirements = Requirement.objects.filter(status=Requirement.ReqStatus.ACTIVE)
+    for faculty_member in faculty_members.distinct():
+        assigned_requirements = active_requirements.filter(
+            Q(assigned_to=Requirement.AssignedFacultyType.ALL)
+            | Q(assigned_to=faculty_member.faculty_type)
+        )
+        faculty_submissions = DocumentSubmission.objects.filter(
+            faculty=faculty_member,
+            requirement__status=Requirement.ReqStatus.ACTIVE,
+        ).select_related('requirement').order_by('-initially_submitted_at')
+
+        if category:
+            faculty_submissions = faculty_submissions.filter(
+                requirement__category=category
+            )
+        if status:
+            faculty_submissions = faculty_submissions.filter(status=status)
+
+        latest_submission = faculty_submissions.first()
+        faculty_rows.append({
+            'faculty': faculty_member,
+            'submitted_count': faculty_submissions.count(),
+            'total_count': assigned_requirements.count(),
+            'latest_submission': latest_submission,
+        })
+
+    paginator = Paginator(faculty_rows, 7)
     page_obj = paginator.get_page(request.GET.get('page'))
 
     context = {
@@ -611,6 +633,37 @@ def mark_reviewed_view(request, submission_id):
         )
 
     return redirect('admin_staff_portal:review_submission', submission_id=submission.id)
+
+
+@admin
+@require_http_methods(['POST'])
+def toggle_approval_view(request, submission_id):
+    submission = get_object_or_404(
+        DocumentSubmission,
+        pk=submission_id,
+        status__in=[
+            DocumentSubmission.SubmissionStatus.PENDING_APPROVAL,
+            DocumentSubmission.SubmissionStatus.APPROVED,
+        ],
+    )
+
+    if submission.status == DocumentSubmission.SubmissionStatus.APPROVED:
+        submission.status = DocumentSubmission.SubmissionStatus.PENDING_APPROVAL
+        submission.approved_by = None
+        submission.approved_at = None
+        message = 'Submission marked as unapproved.'
+    else:
+        submission.status = DocumentSubmission.SubmissionStatus.APPROVED
+        submission.approved_by = request.user
+        submission.approved_at = timezone.now()
+        message = 'Submission approved.'
+
+    submission.save(update_fields=['status', 'approved_by', 'approved_at'])
+    messages.success(request, message)
+    return redirect(
+        'admin_staff_portal:faculty_submission_bins_view',
+        faculty_id=submission.faculty_id,
+    )
 
 
 @role_required('ADMIN', 'STAFF')

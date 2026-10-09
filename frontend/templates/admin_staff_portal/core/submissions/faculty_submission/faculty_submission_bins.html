@@ -10,26 +10,30 @@
 <style>
 .submissions-container { padding: 0; }
 
-.faculty-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 20px; }
+.faculty-header { display: flex; align-items: center; gap: 24px; min-height: 64px; padding: 10px 18px; margin-bottom: 16px; border: 1px solid #e5e7eb; border-radius: 10px; background: #fff; box-shadow: 0 1px 4px rgba(28, 28, 28, 0.06); }
 .faculty-header-left { display: flex; align-items: center; gap: 12px; }
 .faculty-avatar { width: 40px; height: 40px; border-radius: 50%; background: #7f1d1d; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 15px; }
 .faculty-name { font-size: 16px; font-weight: 700; color: #1a1a1a; }
 .faculty-role { font-size: 12px; color: #6b7280; }
-.back-link { font-size: 13px; color: #7f1d1d; text-decoration: none; font-weight: 600; margin-bottom: 16px; display: inline-block; }
+.back-link { display: inline-flex; align-items: center; gap: 6px; padding: 8px 18px; margin-bottom: 16px; border-radius: 6px; background: #b40000; color: #fff; text-decoration: none; font-size: 13px; font-weight: 600; }
 
-.approve-all-wrap { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
-.btn-approve-all { padding: 9px 18px; background: #166534; color: #fff; border: none; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; }
+.approve-all-wrap { margin-left: auto; }
+.btn-approve-all { padding: 8px 16px; background: #07883f; color: #fff; border: none; border-radius: 5px; font-size: 12px; font-weight: 700; cursor: pointer; }
 .btn-approve-all:disabled { background: #d1d5db; color: #6b7280; cursor: not-allowed; }
-.approve-all-hint { font-size: 11px; color: #9ca3af; text-align: right; max-width: 220px; }
+.approve-all-hint { display: none; }
 
-.filter-card { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 16px; flex-wrap: wrap; }
+.filter-card { display: flex; align-items: center; flex: 0 0 auto; margin: 0 0 0 auto; }
 .filter-form { display: flex; }
-.filter-inputs { display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; }
+.filter-inputs { display: flex; gap: 12px; align-items: flex-end; flex-wrap: nowrap; }
 .select-wrap label { display: block; font-size: 11px; color: #6b7280; margin-bottom: 4px; }
-.select-wrap select { padding: 7px 10px; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 13px; min-width: 130px; }
-.btn-clear { font-size: 12px; color: #6b7280; text-decoration: underline; white-space: nowrap; align-self: center; }
+.select-wrap select { width: 134px; padding: 7px 10px; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 13px; }
+.btn-clear { display: inline-flex; align-items: center; justify-content: center; width: 108px; height: 34px; font-size: 12px; color: #6b7280; text-decoration: none; white-space: nowrap; align-self: flex-end; }
+.btn-clear img { width: 14px; height: 14px; margin-right: 4px; }
 
 .table-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; overflow: hidden; }
+.faculty-submission-table-card { overflow: visible; }
+.faculty-submission-table-card .dropdown-menu { top: auto; bottom: 100%; margin-top: 0; margin-bottom: 4px; }
+.faculty-submission-table-card .dropdown-menu form { margin: 0; }
 .data-table { width: 100%; border-collapse: collapse; font-size: 13px; }
 .data-table thead tr { background: #fbe4e4; }
 .data-table th { text-align: left; padding: 12px 16px; font-weight: 700; color: #374151; font-size: 12px; }
@@ -44,19 +48,23 @@
 .pill-under-review { background: #dbeafe; color: #1d4ed8; }
 .pill-pending-approval { background: #ede9fe; color: #6d28d9; }
 
-.action-cell { text-align: left; white-space: nowrap; }
+.action-cell { text-align: center; white-space: nowrap; }
 .btn-icon { border: none; background: none; cursor: pointer; font-size: 16px; color: #6b7280; text-decoration: none; }
 .btn-start-review { padding: 6px 12px; background: #7f1d1d; color: #fff; border: none; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer; }
 .btn-view-doc { padding: 6px 12px; background: #fff; color: #7f1d1d; border: 1px solid #7f1d1d; border-radius: 6px; font-size: 12px; font-weight: 700; text-decoration: none; display: inline-block; }
 
-.pagination-footer { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-top: 1px solid #f0f0f0; font-size: 12px; color: #6b7280; }
-.pagination-controls { display: flex; gap: 6px; }
-.page-btn { width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border: 1px solid #e5e7eb; border-radius: 6px; text-decoration: none; color: #374151; font-size: 12px; }
-.page-btn.active { background: #7f1d1d; color: #fff; border-color: #7f1d1d; }
+.faculty-breadcrumb { margin: 0 0 12px; color: #777; font-size: 12px; }
+.faculty-breadcrumb span { margin: 0 6px; color: #aaa; }
+
+.pagination-footer { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; padding: 12px 2px; font-size: 12px; color: #6b7280; }
+.pagination-controls { display: flex; grid-column: 2; gap: 8px; align-items: center; }
+.page-btn { display: flex; width: 28px; height: 28px; align-items: center; justify-content: center; border: none; border-radius: 4px; text-decoration: none; color: #6b7280; font-size: 18px; }
+.page-btn.active { background: #8f1010; color: #fff; font-size: 14px; font-weight: 700; }
 </style>
 
 <div class="submissions-container">
-    <a href="{% url 'admin_staff_portal:faculty_submissions_list' %}" class="back-link">&larr; Back to Faculty List</a>
+    <a href="{% url 'admin_staff_portal:faculty_submissions_list' %}" class="back-link">&larr; Back</a>
+    <div class="faculty-breadcrumb">Faculty Submission <span aria-hidden="true">&rsaquo;</span> {{ faculty_member.get_full_name }}</div>
 
     <div class="faculty-header">
         <div class="faculty-header-left">
@@ -65,6 +73,37 @@
                 <div class="faculty-name">{{ faculty_member.get_full_name }}</div>
                 <div class="faculty-role">{{ faculty_member.get_faculty_type_display }}</div>
             </div>
+        </div>
+
+        <div class="filter-card">
+            <form method="GET" action="{% url 'admin_staff_portal:faculty_submission_bins_view' faculty_member.id %}" class="filter-form">
+                <div class="filter-inputs">
+                    <div class="select-wrap">
+                        <label>Category</label>
+                        <select name="category" onchange="this.form.submit()">
+                            <option value="">All Category</option>
+                            {% for cat in categories %}
+                                <option value="{{ cat }}" {% if request.GET.category == cat %}selected{% endif %}>{{ cat }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="select-wrap">
+                        <label>Status</label>
+                        <select name="status" onchange="this.form.submit()">
+                            <option value="">All Status</option>
+                            {% for value, label in status_choices %}
+                                <option value="{{ value }}" {% if request.GET.status == value %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <a href="{% url 'admin_staff_portal:faculty_submission_bins_view' faculty_member.id %}" class="btn-clear">
+                        <img src="{% static 'images/Clear Filters.svg' %}" alt="">
+                        Clear Filters
+                    </a>
+                </div>
+            </form>
         </div>
 
         {% if request.user.role == 'ADMIN' %}
@@ -88,46 +127,17 @@
         {% endif %}
     </div>
 
-    <!-- Filters -->
-    <div class="filter-card">
-        <form method="GET" action="{% url 'admin_staff_portal:faculty_submission_bins_view' faculty_member.id %}" class="filter-form">
-            <div class="filter-inputs">
-                <div class="select-wrap">
-                    <label>Category</label>
-                    <select name="category" onchange="this.form.submit()">
-                        <option value="">All Category</option>
-                        {% for cat in categories %}
-                            <option value="{{ cat }}" {% if request.GET.category == cat %}selected{% endif %}>{{ cat }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-
-                <div class="select-wrap">
-                    <label>Status</label>
-                    <select name="status" onchange="this.form.submit()">
-                        <option value="">All Status</option>
-                        {% for value, label in status_choices %}
-                            <option value="{{ value }}" {% if request.GET.status == value %}selected{% endif %}>{{ label }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-
-                <a href="{% url 'admin_staff_portal:faculty_submission_bins_view' faculty_member.id %}" class="btn-clear">
-                    <img src="{% static 'images/Clear Filters.svg' %}" alt="">
-                    Clear Filters
-                </a>
-            </div>
-        </form>
-    </div>
-
     <!-- Table -->
-    <div class="table-card">
+    <div class="table-card faculty-submission-table-card">
         <table class="data-table">
             <thead>
                 <tr>
+                    <th class="select-column">
+                        <input type="checkbox" aria-label="Select all submissions">
+                    </th>
                     <th>Bin Title</th>
                     <th>Category</th>
-                    <th>Academic Year</th>
+                    <th>Academic Term</th>
                     <th>Date Uploaded</th>
                     <th>Deadline</th>
                     <th>Status</th>
@@ -138,9 +148,15 @@
             <tbody>
                 {% for sub in submissions %}
                     <tr>
+                        <td class="select-column">
+                            <input type="checkbox" aria-label="Select {{ sub.requirement.requirement_title }}">
+                        </td>
                         <td class="font-bold">{{ sub.requirement.requirement_title }}</td>
                         <td>{{ sub.requirement.category }}</td>
-                        <td>{{ sub.requirement.academic_term }}</td>
+                        <td>
+                            <div>{{ sub.requirement.get_semester_display }}</div>
+                            <div class="text-sub">{{ sub.requirement.academic_term }}</div>
+                        </td>
                         <td>
                             <div>{{ sub.initially_submitted_at|date:"F j, Y" }}</div>
                             <div class="text-sub">{{ sub.initially_submitted_at|date:"g:i A" }}</div>
@@ -167,40 +183,73 @@
                             {% endif %}
                         </td>
                         <td class="action-cell">
-                            {% if sub.status == 'SUBMITTED' or sub.status == 'RESUBMITTED' %}
-                                <form method="post" action="{% url 'admin_staff_portal:mark_under_review' sub.id %}">
-                                    {% csrf_token %}
-                                    <button type="submit" class="btn-start-review">Start Review</button>
-                                </form>
-                            {% else %}
-                                <a href="{% url 'admin_staff_portal:review_submission' sub.id %}" class="btn-view-doc">View</a>
-                            {% endif %}
+                            <div class="dropdown">
+                                <button type="button" class="btn-icon" aria-label="Actions" aria-expanded="false">⋮</button>
+                                <div class="dropdown-menu">
+                                    {% if sub.status == 'SUBMITTED' or sub.status == 'RESUBMITTED' %}
+                                        <form method="post" action="{% url 'admin_staff_portal:mark_under_review' sub.id %}">
+                                            {% csrf_token %}
+                                            <button type="submit">Start Review</button>
+                                        </form>
+                                    {% endif %}
+                                    {% if sub.status == 'UNDER_REVIEW' %}
+                                        <a href="{% url 'admin_staff_portal:review_submission' sub.id %}">View File</a>
+                                    {% endif %}
+                                    {% if request.user.role == 'ADMIN' %}
+                                        {% if sub.status == 'PENDING_APPROVAL' or sub.status == 'APPROVED' %}
+                                            <form method="post" action="{% url 'admin_staff_portal:toggle_approval' sub.id %}">
+                                                {% csrf_token %}
+                                                <button type="submit">{% if sub.status == 'APPROVED' %}Unapproved{% else %}Approved{% endif %}</button>
+                                            </form>
+                                        {% endif %}
+                                    {% endif %}
+                                </div>
+                            </div>
                         </td>
                     </tr>
                 {% empty %}
                     <tr>
-                        <td colspan="8" style="text-align: center; padding: 20px;">No submissions from this faculty member yet.</td>
+                        <td colspan="9" style="text-align: center; padding: 20px;">No submissions from this faculty member yet.</td>
                     </tr>
                 {% endfor %}
             </tbody>
         </table>
+    </div>
 
         {% if is_paginated or page_obj %}
         <div class="pagination-footer">
             <span>Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }} documents</span>
             <div class="pagination-controls">
                 {% if page_obj.has_previous %}
-                    <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}" class="page-btn">&lt;</a>
+                    <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}" class="page-btn" aria-label="Previous page">&lsaquo;</a>
                 {% endif %}
                 {% for page_num in page_obj.paginator.page_range %}
                     <a href="?page={{ page_num }}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}" class="page-btn {% if page_obj.number == page_num %}active{% endif %}">{{ page_num }}</a>
                 {% endfor %}
                 {% if page_obj.has_next %}
-                    <a href="?page={{ page_obj.next_page_number }}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}" class="page-btn">&gt;</a>
+                    <a href="?page={{ page_obj.next_page_number }}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}" class="page-btn" aria-label="Next page">&rsaquo;</a>
                 {% endif %}
             </div>
         </div>
         {% endif %}
-    </div>
 </div>
+<script>
+document.addEventListener("click", function (event) {
+    const trigger = event.target.closest(".dropdown .btn-icon");
+    document.querySelectorAll(".dropdown-menu.show").forEach(function (menu) {
+        if (!trigger || !trigger.closest(".dropdown").contains(menu)) {
+            menu.classList.remove("show");
+            menu.previousElementSibling.setAttribute("aria-expanded", "false");
+        }
+    });
+
+    if (!trigger) {
+        return;
+    }
+
+    const menu = trigger.closest(".dropdown").querySelector(".dropdown-menu");
+    const isOpen = menu.classList.toggle("show");
+    trigger.setAttribute("aria-expanded", isOpen ? "true" : "false");
+});
+</script>
 {% endblock %}

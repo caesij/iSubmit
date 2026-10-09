@@ -2,6 +2,8 @@
 {% load static %}
 
 {% block title %}Review Submission{% endblock %}
+{% block heading %}Submissions{% endblock %}
+{% block subtitle %}Supports document submission and monitoring of review status.{% endblock %}
 {% block extra_css %}<link rel="stylesheet" href="{% static 'css/pages/submissions.css' %}">{% endblock %}
 
 {% block content %}
@@ -18,8 +20,12 @@
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     color: var(--ink);
     background: var(--bg);
-    padding: 28px 32px;
+    padding: 0;
   }
+
+  .rs-tabs { display: flex; gap: 24px; border-bottom: 2px solid var(--line); margin-bottom: 14px; }
+  .rs-tabs a { padding: 10px 0; color: var(--ink); text-decoration: none; font-size: 14px; }
+  .rs-tabs a.active { font-weight: 700; border-bottom: 3px solid var(--maroon); }
 
   .rs-crumbs {
     font-size: 13px;
@@ -33,12 +39,12 @@
 
   .rs-header {
     display: flex;
-    align-items: flex-end;
+    align-items: flex-start;
     justify-content: space-between;
-    margin-bottom: 20px;
+    margin-bottom: 14px;
   }
   .rs-header h1 {
-    font-size: 24px;
+    font-size: 20px;
     font-weight: 700;
     margin: 0;
     letter-spacing: -0.01em;
@@ -55,9 +61,9 @@
     gap: 6px;
     font-size: 13px;
     font-weight: 600;
-    color: var(--maroon);
-    background: var(--card);
-    border: 1px solid var(--line);
+    color: #fff;
+    background: #b40000;
+    border: 1px solid #b40000;
     border-radius: 8px;
     padding: 8px 14px;
     text-decoration: none;
@@ -67,8 +73,8 @@
 
   .rs-grid {
     display: grid;
-    grid-template-columns: 1fr 340px;
-    gap: 24px;
+    grid-template-columns: minmax(0, 1fr) 260px;
+    gap: 18px;
     align-items: start;
   }
 
@@ -94,7 +100,7 @@
   }
   .rs-viewer-body {
     background: #efeae6;
-    min-height: 520px;
+    min-height: 480px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -102,7 +108,7 @@
   .rs-viewer-body embed,
   .rs-viewer-body iframe {
     width: 100%;
-    height: 640px;
+    height: 520px;
     border: none;
     background: #fff;
   }
@@ -117,7 +123,7 @@
     background: var(--card);
     border: 1px solid var(--line);
     border-radius: 12px;
-    padding: 18px 18px 20px;
+    padding: 14px 16px 16px;
   }
   .rs-card h2 {
     font-size: 12px;
@@ -234,6 +240,13 @@
 
 <div class="rs-wrap">
 
+  <div class="rs-tabs">
+    <a href="{% url 'admin_staff_portal:requirements_list' %}">Submission Bin</a>
+    <a href="{% url 'admin_staff_portal:faculty_submissions_list' %}" class="active">Faculty Submission</a>
+  </div>
+
+  <a href="{% url 'admin_staff_portal:faculty_submission_bins_view' submission.faculty.id %}" class="rs-back">← Back</a>
+
   <div class="rs-crumbs">
     <a href="{% url 'admin_staff_portal:faculty_submissions_list' %}">Faculty Submissions</a>
     <span class="sep">›</span>
@@ -245,9 +258,8 @@
   <div class="rs-header">
     <div>
       <h1>{{ submission.requirement.requirement_title }}</h1>
-      <div class="rs-sub">Submitted by {{ submission.faculty.get_full_name }}</div>
+      <div class="rs-sub">Uploaded by {{ submission.faculty.get_full_name }}</div>
     </div>
-    <a href="{% url 'admin_staff_portal:faculty_submission_bins_view' submission.faculty.id %}" class="rs-back">← Back</a>
   </div>
 
   <div class="rs-grid">
@@ -265,6 +277,14 @@
 
     <!-- Side panel -->
     <div class="rs-panel-live" data-live-panel="review-panel-{{ submission.id }}">
+
+      <div class="rs-card">
+        <h2>Document Details</h2>
+        <div class="rs-detail-row"><div><span class="label">File Name</span><span class="value">{{ submission.document_file.name|cut:"submissions/" }}</span></div></div>
+        <div class="rs-detail-row"><div><span class="label">Academic Term</span><span class="value">{{ submission.requirement.get_semester_display }}, {{ submission.requirement.academic_term }}</span></div></div>
+        <div class="rs-detail-row"><div><span class="label">Category</span><span class="value">{{ submission.requirement.category }}</span></div></div>
+        <div class="rs-detail-row"><div><span class="label">Deadline</span><span class="value">{{ submission.requirement.deadline|date:"F j, Y, g:i A" }}</span></div></div>
+      </div>
 
       <div class="rs-card">
         <h2>Document Status</h2>

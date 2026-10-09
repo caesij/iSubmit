@@ -31,6 +31,7 @@ urlpatterns = [
     path('faculty-submissions/<uuid:submission_id>/mark-under-review/', views.mark_under_review_view, name='mark_under_review'),
     path('faculty-submissions/<uuid:submission_id>/mark-needs-revision/', views.mark_needs_revision_view, name='mark_needs_revision'),
     path('faculty-submissions/<uuid:submission_id>/mark-reviewed/', views.mark_reviewed_view, name='mark_reviewed'),
+    path('faculty-submissions/<uuid:submission_id>/toggle-approval/', views.toggle_approval_view, name='toggle_approval'),
     path('faculty-submissions/<uuid:faculty_id>/approve-all/', views.approve_all_submissions_view, name='approve_all_submissions'),
     
     # User Management URLs
