@@ -7,7 +7,6 @@ from django.http import JsonResponse
 from accounts.decorators import role_required
 from admin_staff_portal.services.admin_dashboard import get_admin_dashboard_data
 from admin_staff_portal.services.staff_dashboard import get_staff_dashboard_data
-from submissions.models import DocumentSubmission
 
 @role_required('ADMIN')
 @require_http_methods(['GET'])
@@ -17,11 +16,7 @@ def admin_dashboard_data_view(request):
     documents_overview = []
 
     for submission in data['documents_overview']:
-        latest_submission_date = (
-            submission.resubmitted_at
-            if submission.status == DocumentSubmission.SubmissionStatus.RESUBMITTED
-            else submission.initially_submitted_at
-        )
+        latest_submission_date = (submission.resubmitted_at or submission.initially_submitted_at)
 
         documents_overview.append({
             'faculty_id': submission.faculty.id,
@@ -80,11 +75,7 @@ def staff_dashboard_data_view(request):
     documents_overview = []
     
     for submission in data['documents_overview']:
-        latest_submission_date = (
-            submission.resubmitted_at
-            if submission.status == DocumentSubmission.SubmissionStatus.RESUBMITTED
-            else submission.initially_submitted_at
-        )
+        latest_submission_date = (submission.resubmitted_at or submission.initially_submitted_at)
 
         documents_overview.append({
             'faculty_id': submission.faculty.id,

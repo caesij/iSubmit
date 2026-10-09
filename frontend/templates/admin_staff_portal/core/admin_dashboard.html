@@ -428,14 +428,17 @@
         );
 
         rows.forEach(row => {
-            if (
+            const status = row.dataset.status;
+
+            const matchesStatus =
                 !selectedDocumentsStatus ||
-                row.dataset.status === selectedDocumentsStatus
-            ) {
-                row.style.display = "";
-            } else {
-                row.style.display = "none";
-            }
+                status === selectedDocumentsStatus ||
+                (
+                    selectedDocumentsStatus === "SUBMITTED" &&
+                    status === "RESUBMITTED"
+                );
+
+            row.style.display = matchesStatus ? "" : "none";
         });
     }
 

@@ -49,6 +49,7 @@ def get_staff_dashboard_data():
             status__in=[
                 DocumentSubmission.SubmissionStatus.PENDING_APPROVAL,
                 DocumentSubmission.SubmissionStatus.SUBMITTED,
+                DocumentSubmission.SubmissionStatus.RESUBMITTED,
                 DocumentSubmission.SubmissionStatus.NEEDS_REVISION
             ]
         )
