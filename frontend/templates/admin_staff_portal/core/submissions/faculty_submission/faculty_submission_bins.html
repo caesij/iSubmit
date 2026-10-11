@@ -63,6 +63,11 @@
 </style>
 
 <div class="submissions-container">
+    <div class="tab-nav">
+        <a href="{% url 'admin_staff_portal:requirements_list' %}" class="tab-link">Submission Bin</a>
+        <a href="{% url 'admin_staff_portal:faculty_submissions_list' %}" class="tab-link active">Faculty Submission</a>
+    </div>
+
     <a href="{% url 'admin_staff_portal:faculty_submissions_list' %}" class="back-link">&larr; Back</a>
     <div class="faculty-breadcrumb">Faculty Submission <span aria-hidden="true">&rsaquo;</span> {{ faculty_member.get_full_name }}</div>
 
@@ -108,21 +113,12 @@
 
         {% if request.user.role == 'ADMIN' %}
         <div class="approve-all-wrap">
-            <form method="post" action="{% url 'admin_staff_portal:approve_all_submissions' faculty_member.id %}">
+            <form id="approval-form" method="post" action="{% url 'admin_staff_portal:approve_selected_submissions' faculty_member.id %}">
                 {% csrf_token %}
-                <button type="submit" class="btn-approve-all" {% if not can_approve_all %}disabled{% endif %}>
+                <button id="approve-selected-button" type="submit" class="btn-approve-all" disabled>
                     Approve All{% if pending_approval_count %} ({{ pending_approval_count }}){% endif %}
                 </button>
             </form>
-            {% if not can_approve_all %}
-                <div class="approve-all-hint">
-                    {% if not_ready_count %}
-                        {{ not_ready_count }} document(s) still need review before you can approve all.
-                    {% else %}
-                        No documents are pending approval yet.
-                    {% endif %}
-                </div>
-            {% endif %}
         </div>
         {% endif %}
     </div>
@@ -133,7 +129,7 @@
             <thead>
                 <tr>
                     <th class="select-column">
-                        <input type="checkbox" aria-label="Select all submissions">
+                        <input id="select-all-submissions" type="checkbox" aria-label="Select all submissions">
                     </th>
                     <th>Bin Title</th>
                     <th>Category</th>
@@ -149,7 +145,12 @@
                 {% for sub in submissions %}
                     <tr>
                         <td class="select-column">
-                            <input type="checkbox" aria-label="Select {{ sub.requirement.requirement_title }}">
+                            <input
+                                class="submission-checkbox"
+                                type="checkbox"
+                                value="{{ sub.id }}"
+                                aria-label="Select {{ sub.requirement.requirement_title }}"
+                            >
                         </td>
                         <td class="font-bold">{{ sub.requirement.requirement_title }}</td>
                         <td>{{ sub.requirement.category }}</td>
@@ -192,17 +193,7 @@
                                             <button type="submit">Start Review</button>
                                         </form>
                                     {% endif %}
-                                    {% if sub.status == 'UNDER_REVIEW' %}
-                                        <a href="{% url 'admin_staff_portal:review_submission' sub.id %}">View File</a>
-                                    {% endif %}
-                                    {% if request.user.role == 'ADMIN' %}
-                                        {% if sub.status == 'PENDING_APPROVAL' or sub.status == 'APPROVED' %}
-                                            <form method="post" action="{% url 'admin_staff_portal:toggle_approval' sub.id %}">
-                                                {% csrf_token %}
-                                                <button type="submit">{% if sub.status == 'APPROVED' %}Unapproved{% else %}Approved{% endif %}</button>
-                                            </form>
-                                        {% endif %}
-                                    {% endif %}
+                                    <a href="{% url 'admin_staff_portal:review_submission' sub.id %}">View File</a>
                                 </div>
                             </div>
                         </td>
@@ -234,6 +225,58 @@
         {% endif %}
 </div>
 <script>
+const approvalForm = document.getElementById("approval-form");
+const approveSelectedButton = document.getElementById("approve-selected-button");
+const selectAllSubmissions = document.getElementById("select-all-submissions");
+const submissionCheckboxes = Array.from(document.querySelectorAll(".submission-checkbox"));
+
+function updateApprovalSelection() {
+    if (!approvalForm || !approveSelectedButton) {
+        return;
+    }
+
+    approvalForm.querySelectorAll("input[name='submission_ids']").forEach(function (input) {
+        input.remove();
+    });
+
+    const selectedSubmissions = submissionCheckboxes.filter(function (checkbox) {
+        return checkbox.checked;
+    });
+
+    selectedSubmissions.forEach(function (checkbox) {
+        const input = document.createElement("input");
+        input.type = "hidden";
+        input.name = "submission_ids";
+        input.value = checkbox.value;
+        approvalForm.appendChild(input);
+    });
+
+    approveSelectedButton.disabled = selectedSubmissions.length === 0;
+    if (selectAllSubmissions) {
+        selectAllSubmissions.checked = (
+            submissionCheckboxes.length > 0
+            && selectedSubmissions.length === submissionCheckboxes.length
+        );
+        selectAllSubmissions.indeterminate = (
+            selectedSubmissions.length > 0
+            && selectedSubmissions.length < submissionCheckboxes.length
+        );
+    }
+}
+
+if (selectAllSubmissions) {
+    selectAllSubmissions.addEventListener("change", function () {
+        submissionCheckboxes.forEach(function (checkbox) {
+            checkbox.checked = selectAllSubmissions.checked;
+        });
+        updateApprovalSelection();
+    });
+}
+
+submissionCheckboxes.forEach(function (checkbox) {
+    checkbox.addEventListener("change", updateApprovalSelection);
+});
+
 document.addEventListener("click", function (event) {
     const trigger = event.target.closest(".dropdown .btn-icon");
     document.querySelectorAll(".dropdown-menu.show").forEach(function (menu) {
