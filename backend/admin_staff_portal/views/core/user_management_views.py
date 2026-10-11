@@ -95,7 +95,7 @@ def user_create_view(request):
                     message=message,
                     from_email=settings.DEFAULT_FROM_EMAIL,
                     recipient_list=[user.email],
-                    fail_silently=False,
+                    fail_silently=False
                 )
                 messages.success(request, f'Account created for {user.email}. Password email sent successfully.')
             except Exception:

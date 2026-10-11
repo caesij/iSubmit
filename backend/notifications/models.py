@@ -1,7 +1,6 @@
 from django.db import models
 from django.conf import settings
 
-
 class NotificationPreference(models.Model):
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -10,45 +9,52 @@ class NotificationPreference(models.Model):
     )
     
     class NotificationType(models.TextChoices):
-        SYSTEM_ANNOUNCEMENT = 'SYSTEM_ANNOUNCEMENT', 'System Announcement'
-        DOCUMENT_UPDATES = 'DOCUMENT_UPDATES', 'Document Updates'
-        SUBMISSION_UPDATES = 'SUBMISSION_UPDATES', 'Submission Updates'
-        SUBMISSION_REMINDERS = 'SUBMISSION_REMINDERS', 'Submission Reminders'
-        APPROVAL_REJECTIONS = 'APPROVAL_REJECTIONS', 'Approval and Rejections'
-        SECURITY_ALERTS = 'SECURITY_ALERTS', 'Security Alerts'
+        SYSTEM_NOTIFICATIONS = 'SYSTEM_NOTIFICATIONS', 'System Notifications'
+        SUBMISSION_NOTIFICATIONS = 'SUBMISSION_NOTIFICATIONS', 'Submission Notifications'
+        SECURITY_NOTIFICATIONS = 'SECURITY_NOTIFICATIONS', 'Security Notifications'
 
     DESCRIPTIONS = {
-        NotificationType.SYSTEM_ANNOUNCEMENT: 'Receive alerts about important system announcement and updates.',
-        NotificationType.DOCUMENT_UPDATES: 'Updates about your submitted documents.',
-        NotificationType.SUBMISSION_UPDATES: 'Get notified on submissions status.',
-        NotificationType.SUBMISSION_REMINDERS: 'Reminders for pending submission and deadlines.',
-        NotificationType.APPROVAL_REJECTIONS: 'Notifications about documents approvals or rejections.',
-        NotificationType.SECURITY_ALERTS: 'Login alerts and security-related notifications.',
+        'FACULTY': {
+            NotificationType.SYSTEM_NOTIFICATIONS:
+                'Receive notifications about requirement assignments, announcements, and scheduled maintenance.',
+            NotificationType.SUBMISSION_NOTIFICATIONS:
+                'Receive notifications about document submissions, review results, and submission deadlines.',
+            NotificationType.SECURITY_NOTIFICATIONS:
+                'Receive notifications about account logins and other security-related activities.',
+        },
+        'ADMIN': {
+            NotificationType.SUBMISSION_NOTIFICATIONS:
+                'Receive notifications when faculty members submit or resubmit required documents.',
+            NotificationType.SECURITY_NOTIFICATIONS:
+                'Receive notifications about account logins and other security-related activities.',
+        },
+        'STAFF': {
+            NotificationType.SUBMISSION_NOTIFICATIONS:
+                'Receive notifications when faculty members submit or resubmit required documents.',
+            NotificationType.SECURITY_NOTIFICATIONS:
+                'Receive notifications about account logins and other security-related activities.',
+        }
     }
 
     ROLE_TYPES = {
         'FACULTY': [
-            NotificationType.SYSTEM_ANNOUNCEMENT,
-            NotificationType.DOCUMENT_UPDATES,
-            NotificationType.SUBMISSION_REMINDERS,
-            NotificationType.APPROVAL_REJECTIONS,
-            NotificationType.SECURITY_ALERTS,
+            NotificationType.SYSTEM_NOTIFICATIONS,
+            NotificationType.SUBMISSION_NOTIFICATIONS,
+            NotificationType.SECURITY_NOTIFICATIONS
         ],
         'ADMIN': [
-            NotificationType.SYSTEM_ANNOUNCEMENT,
-            NotificationType.SUBMISSION_UPDATES,
-            NotificationType.SECURITY_ALERTS,
+            NotificationType.SUBMISSION_NOTIFICATIONS,
+            NotificationType.SECURITY_NOTIFICATIONS
         ],
         'STAFF': [
-            NotificationType.SYSTEM_ANNOUNCEMENT,
-            NotificationType.SUBMISSION_UPDATES,
-            NotificationType.SECURITY_ALERTS,
+            NotificationType.SUBMISSION_NOTIFICATIONS,
+            NotificationType.SECURITY_NOTIFICATIONS
         ],
     }
     
     notification_type = models.CharField(
         max_length=30,
-        choices=NotificationType.choices,
+        choices=NotificationType.choices
     )
 
     enabled = models.BooleanField(default=True)
@@ -65,7 +71,9 @@ class NotificationPreference(models.Model):
 
     @property
     def description(self):
-        return self.DESCRIPTIONS.get(self.notification_type, '')
+        role = self.user.role
+        role_descriptions = self.DESCRIPTIONS.get(role, {})
+        return role_descriptions.get(self.notification_type, '')
 
     def __str__(self):
         return f'{self.user.email} - {self.get_notification_type_display()}'

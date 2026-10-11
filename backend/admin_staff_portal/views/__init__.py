@@ -26,8 +26,7 @@ from admin_staff_portal.views.core.submissions_views import (
     mark_under_review_view,
     mark_needs_revision_view,
     mark_reviewed_view,
-    toggle_approval_view,
-    approve_all_submissions_view,
+    approve_selected_submissions_view,
 )
 
 from admin_staff_portal.views.core.user_management_views import (
@@ -70,7 +69,7 @@ __all__ = [
     'mark_under_review_view',
     'mark_needs_revision_view',
     'mark_reviewed_view',
-    'approve_all_submissions_view',
+    'approve_selected_submissions_view'
     
     'user_list_view',
     'user_create_view',
