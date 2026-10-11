@@ -23,7 +23,7 @@ urlpatterns = [
     path('submissions/submission_bins/bulk/post/', views.post_bulk_requirements, name='post_bulk_requirements'),
     path('submissions/submission_bins/<int:requirement_id>/edit/', views.edit_requirement, name='edit_requirement'),
     path('submissions/submission_bins/<int:requirement_id>/toggle-status/', views.toggle_requirement_status, name='toggle_requirement_status'),
- 
+
     # Faculty Submission URLs
     path('submissions/faculty_submissions/faculty_submissions_list/', views.faculty_submissions_list, name='faculty_submissions_list'),
     path('submissions/faculty_submissions/faculty_submission_bins/<uuid:faculty_id>/', views.faculty_submission_bins_view, name='faculty_submission_bins_view'),

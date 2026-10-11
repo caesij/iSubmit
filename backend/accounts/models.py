@@ -1,12 +1,14 @@
 import uuid
 from django.db import models
-from django.conf import settings
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
+from django.utils import timezone
+from django.conf import settings
 
-from .managers import UserManager, FacultyManager, StaffManager
+from accounts.managers import UserManager, FacultyManager, StaffManager
 
 def profile_picture_path(instance, filename):
     return f'profile_pictures/user_{instance.id}/{filename}'
+
 
 class User(AbstractBaseUser, PermissionsMixin):
     # User Preferences
@@ -135,19 +137,22 @@ class User(AbstractBaseUser, PermissionsMixin):
     def is_faculty(self):
         return self.role == self.Role.FACULTY
 
+
 class FacultyAccount(User):
     objects = FacultyManager()
     class Meta:
         proxy = True
-        verbose_name = "Faculty Account"
-        verbose_name_plural = "Faculty Accounts"
+        verbose_name = 'Faculty Account'
+        verbose_name_plural = 'Faculty Accounts'
+
 
 class StaffAccount(User):
     objects = StaffManager()
     class Meta:
         proxy = True
-        verbose_name = "Staff Account"
-        verbose_name_plural = "Staff Accounts"
+        verbose_name = 'Staff Account'
+        verbose_name_plural = 'Staff Accounts'
+
 
 class StaffPermission(models.Model):
     review_faculty_submissions = models.BooleanField(default=True)
@@ -194,3 +199,37 @@ class StaffPermission(models.Model):
 
     def delete(self, *args, **kwargs):
         pass
+
+
+class SecurityLoginRecord(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='security_login_records'
+    )
+
+    device_token_hash = models.CharField(max_length=64)
+
+    ip_address = models.CharField(max_length=45, default='unknown')
+    user_agent = models.CharField(max_length=255, blank=True)
+
+    first_seen = models.DateTimeField(auto_now_add=True)
+    last_seen = models.DateTimeField(default=timezone.now)
+    expires_at = models.DateTimeField(db_index=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user', 'device_token_hash', 'ip_address'],
+                name='uniq_user_device_ip_30d',
+            )
+        ]
+        indexes = [
+            models.Index(
+                fields=['user', 'expires_at'],
+                name='acct_sec_login_exp_idx',
+            )
+        ]
+
+    def __str__(self):
+        return f'{self.user} - {self.ip_address}'

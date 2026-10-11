@@ -64,6 +64,7 @@ def notification_list_data_view(request):
         'unread_count': unread_count,
     })
 
+
 @login_required
 @require_http_methods(['GET'])
 def notification_list_view(request):
@@ -109,6 +110,7 @@ def notification_list_view(request):
 
     return render(request, template, context)
 
+
 @login_required
 @require_http_methods(['GET'])
 def notification_dropdown_view(request):
@@ -141,6 +143,7 @@ def notification_dropdown_view(request):
         'html': html,
         'unread_count': unread_count,
     })
+
 
 @login_required
 @require_http_methods(['POST'])
