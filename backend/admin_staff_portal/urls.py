@@ -23,7 +23,7 @@ urlpatterns = [
     path('submissions/submission_bins/bulk/post/', views.post_bulk_requirements, name='post_bulk_requirements'),
     path('submissions/submission_bins/<int:requirement_id>/edit/', views.edit_requirement, name='edit_requirement'),
     path('submissions/submission_bins/<int:requirement_id>/toggle-status/', views.toggle_requirement_status, name='toggle_requirement_status'),
- 
+
     # Faculty Submission URLs
     path('submissions/faculty_submissions/faculty_submissions_list/', views.faculty_submissions_list, name='faculty_submissions_list'),
     path('submissions/faculty_submissions/faculty_submission_bins/<uuid:faculty_id>/', views.faculty_submission_bins_view, name='faculty_submission_bins_view'),
@@ -31,8 +31,7 @@ urlpatterns = [
     path('faculty-submissions/<uuid:submission_id>/mark-under-review/', views.mark_under_review_view, name='mark_under_review'),
     path('faculty-submissions/<uuid:submission_id>/mark-needs-revision/', views.mark_needs_revision_view, name='mark_needs_revision'),
     path('faculty-submissions/<uuid:submission_id>/mark-reviewed/', views.mark_reviewed_view, name='mark_reviewed'),
-    path('faculty-submissions/<uuid:submission_id>/toggle-approval/', views.toggle_approval_view, name='toggle_approval'),
-    path('faculty-submissions/<uuid:faculty_id>/approve-all/', views.approve_all_submissions_view, name='approve_all_submissions'),
+    path('faculty-submissions/<uuid:faculty_id>/approve-selected/', views.approve_selected_submissions_view, name='approve_selected_submissions'),
     
     # User Management URLs
     path('users/', views.user_list_view, name='user_list'),

@@ -242,14 +242,19 @@ def post_bulk_requirements(request):
                         refresh_faculty_submission_bin(faculty_member)
 
                         titles = '\n'.join(
-                            f'• {requirement.requirement_title}'
-                            for requirement
-                            in matching_requirements
+                            (
+                                f"• {requirement.requirement_title} — "
+                                f"Deadline: "
+                                f"{date_format(timezone.localtime(requirement.deadline), 'M j, Y')}"
+                                if requirement.deadline
+                                else f"• {requirement.requirement_title} — No deadline set"
+                            )
+                            for requirement in matching_requirements
                         )
 
                         create_notif(
                             user=faculty_member,
-                            notification_type=(NotificationPreference.NotificationType.SYSTEM_ANNOUNCEMENT),
+                            notification_type=(NotificationPreference.NotificationType.SYSTEM_NOTIFICATIONS),
                             title='New Submission Requirements',
                             message=(
                                 f'{len(matching_requirements)} new '
@@ -263,17 +268,14 @@ def post_bulk_requirements(request):
                 except Exception as e:
                     print('BULK REQUIREMENT REALTIME ERROR:', repr(e))
 
-            transaction.on_commit(
-                publish_bulk_updates
-            )
+            transaction.on_commit(publish_bulk_updates)
 
         request.session.pop('bulk_requirements', None)
         request.session.modified = True
 
         messages.success(
             request,
-            f'{len(created_requirements)} requirement(s) '
-            f'posted successfully.'
+            f'{len(created_requirements)} requirement(s) posted successfully.'
         )
 
         return redirect('admin_staff_portal:requirements_list')
@@ -283,8 +285,7 @@ def post_bulk_requirements(request):
 
         messages.error(
             request,
-            f'An error occurred while posting the requirements. '
-            f'Please review the staged requirements and try again.'
+            f'An error occurred while posting the requirements. Please review the staged requirements and try again.'
         )
 
         return redirect('admin_staff_portal:bulk_requirements')
@@ -582,7 +583,7 @@ def mark_under_review_view(request, submission_id):
                     
                     create_notif(
                         user=submission.faculty,
-                        notification_type=NotificationPreference.NotificationType.SUBMISSION_UPDATES,
+                        notification_type=NotificationPreference.NotificationType.SUBMISSION_NOTIFICATIONS,
                         title='Document Submission Under Review',
                         message=(
                             f'Your submission for {submission.requirement.requirement_title} '
@@ -621,7 +622,7 @@ def mark_reviewed_view(request, submission_id):
                     
                     create_notif(
                         user=submission.faculty,
-                        notification_type=NotificationPreference.NotificationType.SUBMISSION_UPDATES,
+                        notification_type=NotificationPreference.NotificationType.SUBMISSION_NOTIFICATIONS,
                         title='Document Submission Reviewed',
                         message=(
                             f'Your submission for {submission.requirement.requirement_title} '
@@ -633,37 +634,6 @@ def mark_reviewed_view(request, submission_id):
         )
 
     return redirect('admin_staff_portal:review_submission', submission_id=submission.id)
-
-
-@admin
-@require_http_methods(['POST'])
-def toggle_approval_view(request, submission_id):
-    submission = get_object_or_404(
-        DocumentSubmission,
-        pk=submission_id,
-        status__in=[
-            DocumentSubmission.SubmissionStatus.PENDING_APPROVAL,
-            DocumentSubmission.SubmissionStatus.APPROVED,
-        ],
-    )
-
-    if submission.status == DocumentSubmission.SubmissionStatus.APPROVED:
-        submission.status = DocumentSubmission.SubmissionStatus.PENDING_APPROVAL
-        submission.approved_by = None
-        submission.approved_at = None
-        message = 'Submission marked as unapproved.'
-    else:
-        submission.status = DocumentSubmission.SubmissionStatus.APPROVED
-        submission.approved_by = request.user
-        submission.approved_at = timezone.now()
-        message = 'Submission approved.'
-
-    submission.save(update_fields=['status', 'approved_by', 'approved_at'])
-    messages.success(request, message)
-    return redirect(
-        'admin_staff_portal:faculty_submission_bins_view',
-        faculty_id=submission.faculty_id,
-    )
 
 
 @role_required('ADMIN', 'STAFF')
@@ -717,7 +687,7 @@ def mark_needs_revision_view(request, submission_id):
                             
                         create_notif(
                             user=submission.faculty,
-                            notification_type=NotificationPreference.NotificationType.SUBMISSION_UPDATES,
+                            notification_type=NotificationPreference.NotificationType.SUBMISSION_NOTIFICATIONS,
                             title='Document Submission Needs Revision',
                             message=(
                                 f'Your submission for {submission.requirement.requirement_title} '
@@ -735,55 +705,101 @@ def mark_needs_revision_view(request, submission_id):
 
 @admin
 @require_http_methods(['POST'])
-def approve_all_submissions_view(request, faculty_id):
+def approve_selected_submissions_view(request, faculty_id):
     faculty_member = get_object_or_404(
         User,
         pk=faculty_id,
         role=User.Role.FACULTY
     )
 
-    submissions_qs = DocumentSubmission.objects.filter(faculty=faculty_member)
+    selected_ids = {
+        int(value)
+        for value in request.POST.getlist('submission_ids')
+        if value.isdecimal()
+    }
 
-    not_ready = submissions_qs.exclude(
-        status__in=[
-            DocumentSubmission.SubmissionStatus.PENDING_APPROVAL,
-            DocumentSubmission.SubmissionStatus.APPROVED,
-        ]
-    ).exists()
-
-    if not_ready:
+    if not selected_ids:
         messages.error(
             request,
-            'All documents must be reviewed and pending approval before you can approve them all.'
+            'Please select at least one document to approve.',
         )
-        return redirect('admin_staff_portal:faculty_submission_bins_view', faculty_id=faculty_member.id)
+        return redirect(
+            'admin_staff_portal:faculty_submission_bins_view',
+            faculty_id=faculty_member.id
+        )
 
-    now = timezone.now()
+    pending_status = DocumentSubmission.SubmissionStatus.PENDING_APPROVAL
+    approved_status = DocumentSubmission.SubmissionStatus.APPROVED
 
     with transaction.atomic():
-        approved_count = submissions_qs.filter(
-            status=DocumentSubmission.SubmissionStatus.PENDING_APPROVAL
-        ).update(
-            status=DocumentSubmission.SubmissionStatus.APPROVED,
-            approved_by=request.user,
-            approved_at=now,
-        )
-        
-        transaction.on_commit(
-            lambda: (
-                    refresh_staff_dashboard(),
-                    refresh_faculty_dashboard(faculty_member),
-                    refresh_faculty_my_submissions(faculty_member),
-                    
-                    create_notif(
-                        user=faculty_member,
-                        notification_type=NotificationPreference.NotificationType.SUBMISSION_UPDATES,
-                        title='All Document Submissions Approved',
-                        message=(f'All your document submissions have been approved.'),
-                        link=''
-                    )
+        eligible_ids = list(
+            DocumentSubmission.objects
+            .select_for_update()
+            .filter(
+                pk__in=selected_ids,
+                faculty=faculty_member,
+                requirement__status=Requirement.ReqStatus.ACTIVE,
+                status=pending_status
             )
+            .values_list('pk', flat=True)
         )
 
-    messages.success(request, f'{approved_count} document(s) approved.')
-    return redirect('admin_staff_portal:faculty_submission_bins_view', faculty_id=faculty_member.id)
+        if not eligible_ids:
+            messages.error(
+                request,
+                'None of the selected documents are currently marked as reviewed/pending approval.',
+            )
+            return redirect(
+                'admin_staff_portal:faculty_submission_bins_view',
+                faculty_id=faculty_member.id,
+            )
+
+        approved_count = DocumentSubmission.objects.filter(
+            pk__in=eligible_ids,
+            faculty=faculty_member,
+            requirement__status=Requirement.ReqStatus.ACTIVE,
+            status=pending_status
+        ).update(
+            status=approved_status,
+            approved_by=request.user,
+            approved_at=timezone.now()
+        )
+
+        if approved_count:
+            def publish_approval_updates():
+                refresh_admin_dashboard()
+                refresh_staff_dashboard()
+                refresh_faculty_dashboard(faculty_member)
+                refresh_faculty_submission_bin(faculty_member)
+                refresh_faculty_my_submissions(faculty_member)
+
+                create_notif(
+                    user=faculty_member,
+                    notification_type=(
+                        NotificationPreference.NotificationType.SUBMISSION_NOTIFICATIONS
+                    ),
+                    title='Selected Document Submissions Approved',
+                    message=(
+                        f'{approved_count} selected document(s) '
+                        f'have been approved.'
+                    ),
+                    link=''
+                )
+
+            transaction.on_commit(publish_approval_updates)
+
+    if approved_count:
+        messages.success(
+            request,
+            f'{approved_count} selected document(s) approved successfully.'
+        )
+    else:
+        messages.error(
+            request,
+            'No selected documents were approved. Please refresh and try again.'
+        )
+
+    return redirect(
+        'admin_staff_portal:faculty_submission_bins_view',
+        faculty_id=faculty_member.id
+    )

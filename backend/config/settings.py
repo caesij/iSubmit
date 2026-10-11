@@ -25,7 +25,7 @@ INSTALLED_APPS = [
     'axes',
     'accounts',
     'submissions',
-    'notifications',
+    'notifications.apps.NotificationsConfig',
     'admin_staff_portal',
     'faculty_portal',
 ]
@@ -152,6 +152,7 @@ AXES_LOCKOUT_PARAMETERS = [['username', 'ip_address']]
 AXES_USERNAME_FORM_FIELD = 'username'
 AXES_LOCKOUT_CALLABLE = 'accounts.axes_handlers.lockout_response'
 AXES_RESET_ON_SUCCESS = True
+AXES_DISABLE_ACCESS_LOG = False
 
 
 # Email

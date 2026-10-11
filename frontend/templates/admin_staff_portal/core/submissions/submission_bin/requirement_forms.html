@@ -7,7 +7,75 @@
 
 {% block heading %}Submissions{% endblock %}
 {% block subtitle %}Supports document submission and monitoring of review status.{% endblock %}
-{% block extra_css %}<link rel="stylesheet" href="{% static 'css/pages/submissions.css' %}">{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/pages/submissions.css' %}">
+
+<style>
+    /* OCR toggle — scoped to this page */
+    .requirement-editor .ocr-control {
+        display: inline-flex;
+        align-items: center;
+    }
+
+    .requirement-editor .ocr-checkbox {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        opacity: 0;
+    }
+
+    .requirement-editor .ocr-switch {
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        cursor: pointer;
+        user-select: none;
+    }
+
+    .requirement-editor .ocr-slider {
+        position: relative;
+        display: inline-block;
+        flex-shrink: 0;
+        width: 56px;
+        height: 30px;
+        border-radius: 30px;
+        background: #ccc;
+        transition: background-color 0.2s ease;
+    }
+
+    .requirement-editor .ocr-slider::before {
+        content: "";
+        position: absolute;
+        top: 4px;
+        left: 4px;
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        background: #fff;
+        box-shadow: 0 1px 3px rgb(0 0 0 / 20%);
+        transition: transform 0.2s ease;
+    }
+
+    .requirement-editor .ocr-checkbox:checked + .ocr-switch .ocr-slider {
+        background: #b10e0e;
+    }
+
+    .requirement-editor .ocr-checkbox:checked + .ocr-switch .ocr-slider::before {
+        transform: translateX(26px);
+    }
+
+    .requirement-editor .ocr-checkbox:focus-visible + .ocr-switch .ocr-slider {
+        outline: 2px solid #2563eb;
+        outline-offset: 3px;
+    }
+
+    .requirement-editor .ocr-checkbox:disabled + .ocr-switch {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+</style>
+{% endblock %}
 
 {% block content %}
 <div class="submissions-container requirement-editor">
@@ -16,7 +84,7 @@
         <a href="{% url 'admin_staff_portal:faculty_submissions_list' %}" class="tab-link">Faculty Submission</a>
     </div>
 
-    <a href="{% url 'admin_staff_portal:requirements_list' %}" class="bulk-back-link">
+    <a href="{% url 'admin_staff_portal:bulk_requirements' %}" class="bulk-back-link">
         <img src="{% static 'images/Back Arrow Left.svg' %}" alt="">
         Back
     </a>
@@ -59,13 +127,19 @@
                     {% for error in form.assigned_to.errors %}<span class="field-error">{{ error }}</span>{% endfor %}
                 </div>
 
+                
                 <div class="requirement-field ocr-field{% if form.ocr_enabled.errors %} has-error{% endif %}">
-                    <label class="ocr-label" for="{{ form.ocr_enabled.id_for_label }}">Enable OCR?</label>
-                    <label class="ocr-switch" aria-label="Enable OCR">
+                    <div class="ocr-control">
                         {{ form.ocr_enabled }}
-                        <span class="ocr-slider" aria-hidden="true"></span>
-                    </label>
-                    {% for error in form.ocr_enabled.errors %}<span class="field-error">{{ error }}</span>{% endfor %}
+                        <label class="ocr-switch" for="{{ form.ocr_enabled.id_for_label }}">
+                            <span class="ocr-label">Enable OCR?</span>
+                            <span class="ocr-slider" aria-hidden="true"></span>
+                        </label>
+                    </div>
+
+                    {% for error in form.ocr_enabled.errors %}
+                        <span class="field-error">{{ error }}</span>
+                    {% endfor %}
                 </div>
             </section>
 

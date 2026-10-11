@@ -186,7 +186,7 @@ def process_submission(request, requirements, drafts_by_requirement):
                     for submission in completed_submissions:
                         notify_roles(
                             roles=[User.Role.ADMIN, User.Role.STAFF],
-                            notification_type=(NotificationPreference.NotificationType.SUBMISSION_UPDATES),
+                            notification_type=(NotificationPreference.NotificationType.SUBMISSION_NOTIFICATIONS),
                             title='New Document Submission',
                             message=(
                                 f'{request.user.get_full_name()} submitted '
