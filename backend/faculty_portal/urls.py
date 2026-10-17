@@ -8,14 +8,14 @@ urlpatterns = [
     path('dashboard/data/', views.dashboard_data_view, name='dashboard_data'),
     
     # Submission Bin URLs
-    path('submission_bin/upload_files/', views.upload_files_view, name='upload_files'),
+    path('submission_bin/upload_files/', views.submission_bins_view, name='upload_files'),
     path('submission_bin/data/', views.submission_bin_data_view, name='submission_bin_data'),
-    path('submission_bin/attach/<int:requirement_id>/', views.attach_document_view, name='attach_document'),
-    path('submission_bin/resubmit/<uuid:submission_id>/', views.resubmit_document_view, name='resubmit_document'),
-    path('submission_bin/replace/<uuid:document_id>/', views.replace_document_view, name='replace_document'),
-    path('submission_bin/remove/<uuid:document_id>/', views.remove_document_view, name='remove_document'),
-    path('submission_bin/view/<uuid:document_id>/', views.view_uploaded_document, name='view_uploaded_document'),
+    path('submission_bin/attach/<int:requirement_id>/', views.attach_document, name='attach_document'),
+    path('submission_bin/replace/<uuid:document_id>/', views.replace_document, name='replace_document'),
+    path('submission_bin/remove/<uuid:document_id>/', views.remove_document, name='remove_document'),
+    path('submission_bin/resubmit/<uuid:submission_id>/', views.resubmit_document, name='resubmit_document'),
     path('submission_bin/submission_complete/', views.submission_complete, name='submission_complete'),
+    path('submission_bin/view/<uuid:document_id>/', views.view_document, name='view_uploaded_document'),
     
     # My Submissions URLs
     path('my_submissions/submissions/', views.submissions_list, name='my_submissions'),

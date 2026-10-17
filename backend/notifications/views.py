@@ -5,9 +5,7 @@ from django.template.loader import render_to_string
 from django.core.paginator import Paginator
 from django.http import JsonResponse
 
-
 from notifications.models import Notification, NotificationPreference
-
 
 @login_required
 @require_http_methods(['GET'])

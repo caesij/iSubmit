@@ -78,7 +78,7 @@ def send_login_security_alert(user, login_info):
 
     return create_notif(
         user=user,
-        notification_type=(NotificationPreference.NotificationType.SECURITY_ALERTS),
+        notification_type=(NotificationPreference.NotificationType.SECURITY_NOTIFICATIONS),
         title="New login to your iSubmit account",
         message=(
             "A browser/IP combination not seen together on your "

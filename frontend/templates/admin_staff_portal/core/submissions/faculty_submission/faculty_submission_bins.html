@@ -116,7 +116,7 @@
             <form id="approval-form" method="post" action="{% url 'admin_staff_portal:approve_selected_submissions' faculty_member.id %}">
                 {% csrf_token %}
                 <button id="approve-selected-button" type="submit" class="btn-approve-all" disabled>
-                    Approve All{% if pending_approval_count %} ({{ pending_approval_count }}){% endif %}
+                    Approve{% if pending_approval_count %} ({{ pending_approval_count }}){% endif %}
                 </button>
             </form>
         </div>

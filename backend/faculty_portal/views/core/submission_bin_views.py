@@ -1,180 +1,132 @@
-from django.shortcuts import render, redirect, get_object_or_404
-from django.views.decorators.http import require_http_methods
 from django.contrib import messages
+from django.db import transaction
 from django.http import HttpResponseForbidden
+from django.shortcuts import get_object_or_404, redirect, render
+from django.views.decorators.http import require_http_methods
 
 from accounts.decorators import faculty
-from admin_staff_portal.realtime import refresh_admin_dashboard
-from admin_staff_portal.realtime import refresh_staff_dashboard
 
 from faculty_portal.helpers.submission_bin import (
-    get_available_requirements,
-    get_drafts_by_requirement,
-    get_needs_revision_by_requirement,
-    build_upload_rows,
+    UPLOAD_PAGE,
+    delete_file_after_commit,
+    load_upload_rows,
     process_submission,
-    save_draft_form,
+    save_draft_form
 )
 
 from submissions.models import (
-    Requirement,
-    DraftUpload,
+    DocumentMetadata,
     DocumentSubmission,
+    DraftUpload,
+    Requirement
 )
 
-@faculty
-@require_http_methods(['GET', 'POST'])
-def upload_files_view(request):
-    requirements = get_available_requirements(request.user)
-    drafts_by_requirement = get_drafts_by_requirement(request.user, requirements)
-
-    if (request.method == 'POST' and request.POST.get('action') == 'submit'):
-        return process_submission(request, requirements, drafts_by_requirement)
-
-    needs_revision_by_requirement = (get_needs_revision_by_requirement(request.user,requirements))
-
-    rows = build_upload_rows(
-            requirements,
-            drafts_by_requirement,
-            needs_revision_by_requirement
-    )
-
-    context = {'rows': rows}
-
-    return render(
-        request,
-        'faculty_portal/core/submission_bin/upload_files.html',
-        context
-    )
-
+TEMPLATE_DIR = 'faculty_portal/core/submission_bin'
 
 @faculty
 @require_http_methods(['GET'])
 def submission_bin_data_view(request):
-    requirements = get_available_requirements(request.user)
-    drafts_by_requirement = get_drafts_by_requirement(request.user, requirements)
-    needs_revision_by_requirement = get_needs_revision_by_requirement(request.user, requirements)
-    
-    rows = build_upload_rows(
-        requirements,
-        drafts_by_requirement,
-        needs_revision_by_requirement
-    )
-    
     response = render(
         request,
-        'faculty_portal/core/submission_bin/_upload_rows.html',
-        {'rows': rows}
+        f'{TEMPLATE_DIR}/_upload_rows.html',
+        {'rows': load_upload_rows(request.user)},
     )
-    
     response['Cache-Control'] = 'no-store'
     return response
 
 
 @faculty
+@require_http_methods(['GET', 'POST'])
+def submission_bins_view(request):
+    if request.method == 'POST' and request.POST.get('action') == 'submit':
+        return process_submission(request)
+
+    return render(
+        request,
+        f'{TEMPLATE_DIR}/upload_files.html',
+        {'rows': load_upload_rows(request.user)}
+    )
+
+
+@faculty
 @require_http_methods(['POST'])
-def attach_document_view(request, requirement_id):
+def attach_document(request, requirement_id):
     requirement = get_object_or_404(
         Requirement,
         pk=requirement_id,
         status=Requirement.ReqStatus.ACTIVE,
     )
 
-    if requirement.assigned_to not in (
-        Requirement.AssignedFacultyType.ALL,
-        request.user.faculty_type,
-    ):
-        return HttpResponseForbidden(
-            'You are not assigned to this requirement.'
-        )
+    allowed_types = (Requirement.AssignedFacultyType.ALL, request.user.faculty_type)
+    if requirement.assigned_to not in allowed_types:
+        return HttpResponseForbidden('You are not assigned to this requirement.')
 
-    draft, _ = DraftUpload.objects.get_or_create(
+    draft, _ = DraftUpload.objects.select_related('requirement').get_or_create(
         faculty=request.user,
-        requirement=requirement,
+        requirement=requirement
     )
 
     return save_draft_form(
         request,
         draft,
         success_message='File attached successfully.',
-        error_message='Failed to upload file. Please check the format and size.',
+        error_message='Failed to upload file. Please check the format and size.'
     )
 
 
 @faculty
 @require_http_methods(['POST'])
-def replace_document_view(request, document_id):
+def replace_document(request, document_id):
     draft = get_object_or_404(
-        DraftUpload,
+        DraftUpload.objects.select_related('requirement'),
         pk=document_id,
-        faculty=request.user
+        faculty=request.user,
     )
 
     return save_draft_form(
         request,
         draft,
         success_message='File replaced successfully.',
-        error_message='Failed to replace file.'
-    )
-
-
-@faculty
-@require_http_methods(['GET'])
-def submission_complete(request):
-    submitted_ids = request.session.pop('recently_submitted_ids', [])
-
-    submitted_documents = (
-        DocumentSubmission.objects
-        .filter(faculty=request.user, id__in=submitted_ids)
-        .select_related('requirement')
-        .order_by('-initially_submitted_at')
-    )
-
-    if not submitted_documents.exists():
-        messages.info(request, 'No recent submission to show.')
-        return redirect('faculty_portal:upload_files')
-    
-    refresh_admin_dashboard()
-    refresh_staff_dashboard()
-
-    context = {'submitted_documents': submitted_documents}
-
-    return render(
-        request,
-        'faculty_portal/core/submission_bin/submission_complete.html',
-        context
-    )
-
-
-@faculty
-@require_http_methods(['GET'])
-def view_uploaded_document(request, document_id):
-    uploaded_document = get_object_or_404(
-        DraftUpload,
-        pk=document_id,
-        faculty=request.user,
-    )
-
-    context = {'uploaded_document': uploaded_document}
-
-    return render(
-        request,
-        'faculty_portal/core/submission_bin/view_uploaded_document.html',
-        context
+        error_message='Failed to replace file.',
     )
 
 
 @faculty
 @require_http_methods(['POST'])
-def resubmit_document_view(request, submission_id):
+def remove_document(request, document_id):
+    draft = get_object_or_404(DraftUpload, pk=document_id, faculty=request.user)
+
+    if not draft.draft_file:
+        messages.info(request, 'There is no file to remove.')
+        return redirect(UPLOAD_PAGE)
+
+    old_file_name = draft.draft_file.name
+    old_storage = draft.draft_file.storage
+
+    with transaction.atomic():
+        draft.draft_file = ''
+        draft.save(update_fields=['draft_file', 'draft_updated_at'])
+        DocumentMetadata.objects.filter(draft=draft).delete()
+        delete_file_after_commit(old_storage, old_file_name)
+
+    messages.success(request, 'File removed successfully.')
+    return redirect(UPLOAD_PAGE)
+
+
+@faculty
+@require_http_methods(['POST'])
+def resubmit_document(request, submission_id):
     submission = get_object_or_404(
-        DocumentSubmission,
+        DocumentSubmission.objects.select_related('requirement'),
         pk=submission_id,
         faculty=request.user,
         status=DocumentSubmission.SubmissionStatus.NEEDS_REVISION
     )
 
-    draft, _ = DraftUpload.objects.get_or_create(faculty=request.user, requirement=submission.requirement)
+    draft, _ = DraftUpload.objects.select_related('requirement').get_or_create(
+        faculty=request.user,
+        requirement=submission.requirement
+    )
 
     return save_draft_form(
         request,
@@ -185,20 +137,35 @@ def resubmit_document_view(request, submission_id):
 
 
 @faculty
-@require_http_methods(['POST'])
-def remove_document_view(request, document_id):
-    draft = get_object_or_404(
-        DraftUpload,
-        pk=document_id,
-        faculty=request.user
+@require_http_methods(['GET'])
+def submission_complete(request):
+    submitted_ids = request.session.pop('recently_submitted_ids', [])
+
+    submitted_documents = list(
+        DocumentSubmission.objects
+        .filter(faculty=request.user, id__in=submitted_ids)
+        .select_related('requirement')
+        .order_by('-initially_submitted_at')
     )
 
-    if draft.draft_file:
-        draft.draft_file.delete(save=False)
-        draft.draft_file = ''
-        draft.save(update_fields=['draft_file', 'draft_updated_at'])
-        messages.success(request, 'File removed successfully.')
-    else:
-        messages.info(request, 'There is no file to remove.')
+    if not submitted_documents:
+        messages.info(request, 'No recent submission to show.')
+        return redirect(UPLOAD_PAGE)
 
-    return redirect('faculty_portal:upload_files')
+    return render(
+        request,
+        f'{TEMPLATE_DIR}/submission_complete.html',
+        {'submitted_documents': submitted_documents}
+    )
+
+
+@faculty
+@require_http_methods(['GET'])
+def view_document(request, document_id):
+    uploaded_document = get_object_or_404(DraftUpload, pk=document_id, faculty=request.user)
+
+    return render(
+        request,
+        f'{TEMPLATE_DIR}/view_uploaded_document.html',
+        {'uploaded_document': uploaded_document}
+    )
