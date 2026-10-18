@@ -1,0 +1,153 @@
+{% extends 'admin_staff_portal/base.html' %}
+
+{% block title %}Create Notification - iSubmit{% endblock %}
+{% block heading %}Create Notification{% endblock %}
+{% block subtitle %}Send a system notification to faculty members.{% endblock %}
+
+{% block content %}
+<style>
+.notification-form-page {
+    max-width: 760px;
+    margin: 24px auto;
+    padding: 24px 32px;
+    color: #1a1a1a;
+    font-family: 'Segoe UI', Arial, sans-serif;
+}
+
+.notification-form-card {
+    padding: 24px;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    background: #fff;
+}
+
+.notification-form-card h2 {
+    margin: 0 0 8px;
+    font-size: 20px;
+}
+
+.notification-form-description {
+    margin: 0 0 24px;
+    color: #6b7280;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.notification-form-field {
+    margin-bottom: 18px;
+}
+
+.notification-form-field label {
+    display: block;
+    margin-bottom: 6px;
+    color: #374151;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.notification-form-field input,
+.notification-form-field textarea {
+    box-sizing: border-box;
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    color: #1a1a1a;
+    font: inherit;
+    font-size: 14px;
+}
+
+.notification-form-field textarea {
+    resize: vertical;
+}
+
+.notification-form-field input:focus,
+.notification-form-field textarea:focus {
+    border-color: #7f1d1d;
+    outline: 2px solid rgb(127 29 29 / 15%);
+}
+
+.notification-field-errors {
+    margin: 6px 0 0;
+    color: #b91c1c;
+    font-size: 12px;
+}
+
+.notification-form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 24px;
+}
+
+.notification-form-actions a,
+.notification-form-actions button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 9px 14px;
+    border: 1px solid #7f1d1d;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.notification-form-actions a {
+    background: #fff;
+    color: #7f1d1d;
+}
+
+.notification-form-actions button {
+    background: #7f1d1d;
+    color: #fff;
+}
+
+@media (max-width: 600px) {
+    .notification-form-page {
+        padding: 16px;
+    }
+}
+</style>
+
+<div class="notification-form-page">
+    <section class="notification-form-card">
+        <h2>Faculty System Notification</h2>
+        <p class="notification-form-description">
+            This notification is classified as a system notification and will
+            be sent to active faculty accounts according to their notification
+            preferences.
+        </p>
+
+        <form method="post">
+            {% csrf_token %}
+
+            <div class="notification-form-field">
+                <label for="{{ form.title.id_for_label }}">Title</label>
+                {{ form.title }}
+                {% for error in form.title.errors %}
+                    <p class="notification-field-errors">{{ error }}</p>
+                {% endfor %}
+            </div>
+
+            <div class="notification-form-field">
+                <label for="{{ form.message.id_for_label }}">Message</label>
+                {{ form.message }}
+                {% for error in form.message.errors %}
+                    <p class="notification-field-errors">{{ error }}</p>
+                {% endfor %}
+            </div>
+
+            {% for error in form.non_field_errors %}
+                <p class="notification-field-errors">{{ error }}</p>
+            {% endfor %}
+
+            <div class="notification-form-actions">
+                <a href="{% url 'notifications:notification_list' %}">Cancel</a>
+                <button type="submit">Send Notification</button>
+            </div>
+        </form>
+    </section>
+</div>
+{% endblock %}

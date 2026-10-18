@@ -1,5 +1,6 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth import login, logout
+from django.conf import settings
 from django.contrib import messages
 
 from accounts.forms import CustomLoginForm
@@ -71,6 +72,18 @@ def login_view(request):
                 messages.error(request, error)
             if not form.non_field_errors():
                 messages.error(request, 'Invalid email or password.')
+
+            failed_attempts = getattr(request, 'axes_failures_since_start', None)
+            if failed_attempts is not None:
+                attempts_remaining = max(
+                    settings.AXES_FAILURE_LIMIT - failed_attempts,
+                    0,
+                )
+                if attempts_remaining:
+                    messages.warning(
+                        request,
+                        f"You have {attempts_remaining} login attempt{'s' if attempts_remaining != 1 else ''} remaining.",
+                    )
     else:
         form = CustomLoginForm()
         

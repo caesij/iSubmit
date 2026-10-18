@@ -5,6 +5,7 @@ from django.db.models import Q
 from django.contrib.auth import get_user_model
 from django.contrib import messages
 from django.core.mail import send_mail
+from django.core.paginator import Paginator
 from django.conf import settings
 import secrets
 import string
@@ -48,10 +49,19 @@ def user_list_view(request):
     elif status_param == 'inactive':
         users = users.filter(is_active=False)
 
+    users = users.order_by('last_name', 'first_name', 'pk')
+    page_obj = Paginator(users, 7).get_page(request.GET.get('page'))
+    pagination_params = request.GET.copy()
+    pagination_params.pop('page', None)
+    pagination_params['role'] = target_role
+
     form_class = get_form_class(target_role)
 
     context = {
-        'users': users,
+        'users': page_obj,
+        'page_obj': page_obj,
+        'is_paginated': page_obj.has_other_pages(),
+        'pagination_query': pagination_params.urlencode(),
         'target_role': target_role,
         'current_role': target_role,
         'page_title': get_page_title(target_role),
