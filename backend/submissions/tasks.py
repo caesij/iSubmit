@@ -8,10 +8,10 @@ from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.utils import timezone
 
+from core.post_correction import correct_lines
 from submissions.models import DocumentMetadata
 
 logger = logging.getLogger(__name__)
-
 
 def _refresh_faculty_submission_bin(faculty_id):
     try:
@@ -37,6 +37,19 @@ def _metadata_is_current(metadata, request_id, draft_id, file_name):
         return bool(metadata.draft and metadata.draft.draft_file.name == file_name)
     except Exception:
         return False
+
+
+def _known_names():
+    names = get_user_model().objects.values_list('first_name', 'last_name')
+    return {word for full_name in names for word in ' '.join(full_name).split()}
+
+
+def _post_correct(lines, scores):
+    try:
+        return correct_lines(lines, scores, _known_names())
+    except Exception:
+        logger.exception('Post-correction failed. Saving the plain OCR text.')
+        return '\n'.join(lines)
 
 
 @shared_task(bind=True, name='submissions.process_document_ocr', acks_late=True)
@@ -102,8 +115,10 @@ def process_document_ocr(self, metadata_id, request_id):
                 with local_pdf.open('wb') as local_file:
                     shutil.copyfileobj(remote_file, local_file)
 
-            from core.ocr import extract_text_and_page_count_from_pdf
-            extracted_text, page_count = extract_text_and_page_count_from_pdf(local_pdf)
+            from core.ocr import extract_lines_and_page_count_from_pdf
+            lines, scores, page_count = extract_lines_and_page_count_from_pdf(local_pdf)
+
+        extracted_text = _post_correct(lines, scores)
 
         with transaction.atomic():
             current = (
@@ -117,14 +132,14 @@ def process_document_ocr(self, metadata_id, request_id):
             if current.ocr_status != DocumentMetadata.OCRStatus.PROCESSING:
                 return {'status': 'state_changed'}
 
-            current.ocr_text = extracted_text.strip()
+            current.extracted_text = extracted_text
             current.page_count = page_count
             current.ocr_status = DocumentMetadata.OCRStatus.COMPLETED
             current.ocr_error = ''
             current.ocr_completed_at = timezone.now()
             current.save(
                 update_fields=[
-                    'ocr_text', 'page_count', 'ocr_status', 'ocr_error',
+                    'extracted_text', 'page_count', 'ocr_status', 'ocr_error',
                     'ocr_completed_at', 'updated_at'
                 ]
             )

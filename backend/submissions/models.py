@@ -296,7 +296,7 @@ class DocumentMetadata(models.Model):
         default=OCRStatus.NOT_REQUIRED,
         db_index=True,
     )
-    ocr_text = models.TextField(blank=True)
+    extracted_text = models.TextField(blank=True)
     ocr_error = models.TextField(blank=True)
     ocr_request_id = models.PositiveIntegerField(
         default=1,

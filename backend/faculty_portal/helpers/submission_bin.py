@@ -95,7 +95,7 @@ def _build_metadata_values(draft, uploaded_file=None):
         'file_size': file_size,
         'page_count': None,
         'ocr_status': ocr_status,
-        'ocr_text': '',
+        'extracted_text': '',
         'ocr_error': ocr_error,
         'ocr_completed_at': None,
         'nlp_status': NLP.PENDING if requirement.nlp_enabled else NLP.NOT_REQUIRED,

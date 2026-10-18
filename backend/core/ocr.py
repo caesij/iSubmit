@@ -31,13 +31,14 @@ def _get_ocr_engine():
     return ocr
 
 
-def extract_text_and_page_count_from_pdf(pdf_path):
+def extract_lines_and_page_count_from_pdf(pdf_path):
     pdf_path = Path(pdf_path)
     if pdf_path.suffix.lower() != '.pdf':
         raise ValueError('OCR is only supported for PDF files.')
 
     document = pymupdf.open(pdf_path)
-    texts = []
+    lines = []
+    scores = []
     page_count = len(document)
     engine = _get_ocr_engine()
 
@@ -60,18 +61,22 @@ def extract_text_and_page_count_from_pdf(pdf_path):
 
                 results = engine.predict(str(processed_path))
                 for result in results:
-                    data = result.json
-                    page_text = data.get('res', {}).get('rec_texts', [])
-                    texts.extend(str(text) for text in page_text if text)
+                    data = result.json.get('res', {})
+                    page_scores = data.get('rec_scores', [])
+                    for index, text in enumerate(data.get('rec_texts', [])):
+                        line = str(text).strip()
+                        if line:
+                            lines.append(line)
+                            scores.append(page_scores[index] if index < len(page_scores) else None)
 
                 del results, processed, image, pixmap
                 gc.collect()
         finally:
             document.close()
 
-    return '\n'.join(texts), page_count
+    return lines, scores, page_count
 
 
 def extract_text_from_pdf(pdf_path):
-    text, _page_count = extract_text_and_page_count_from_pdf(pdf_path)
-    return text
+    lines, _scores, _page_count = extract_lines_and_page_count_from_pdf(pdf_path)
+    return '\n'.join(lines)
