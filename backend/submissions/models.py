@@ -2,12 +2,15 @@ from django.db import models
 from django.db.models import Q
 import uuid
 from django.conf import settings
+from django.contrib.postgres.indexes import GinIndex
+from django.contrib.postgres.search import SearchVector
 
 def draft_upload_path(instance, filename):
     return f'drafts/user_{instance.faculty.id}/{filename}'
 
 def submission_upload_path(instance, filename):
     return f'submissions/user_{instance.faculty.id}/{filename}'
+
 
 class Requirement(models.Model):
     class ReqStatus(models.TextChoices):
@@ -61,6 +64,14 @@ class Requirement(models.Model):
                 name='unique_requirement_per_term_semester'
             )
         ]
+        
+        indexes = [
+            GinIndex(
+                fields=['requirement_title'],
+                opclasses=['gin_trgm_ops'],
+                name='req_title_trgm'
+            )
+        ]
 
     @property
     def completion_progress(self):
@@ -83,6 +94,7 @@ class Requirement(models.Model):
     
     def __str__(self):
         return self.requirement_title
+    
     
 class DraftUpload(models.Model):
     class DraftStatus(models.TextChoices):
@@ -122,6 +134,7 @@ class DraftUpload(models.Model):
 
     def __str__(self):
         return f'Draft: {self.requirement.requirement_title} by {self.faculty.username}'
+
 
 class DocumentSubmission(models.Model):
     class SubmissionStatus(models.TextChoices):
@@ -185,6 +198,7 @@ class DocumentSubmission(models.Model):
     def __str__(self):
         return f'Submission: {self.requirement.requirement_title} by {self.faculty.username}'
 
+
 class DocumentRevision(models.Model):
     id = models.UUIDField(
         primary_key=True,
@@ -217,6 +231,7 @@ class DocumentRevision(models.Model):
             f'- Revision {self.version_number}'
         )
 
+
 class DocumentReview(models.Model):
     revision = models.ForeignKey(
         DocumentRevision,
@@ -239,6 +254,7 @@ class DocumentReview(models.Model):
         reviewer = self.reviewed_by.username if self.reviewed_by else 'Unknown'
         return f'Review for {self.revision.submission.requirement.requirement_title} - Revision {self.revision.version_number} by {reviewer}'
 
+
 class DocumentMetadata(models.Model):
     class OCRStatus(models.TextChoices):
         NOT_REQUIRED = 'NOT_REQUIRED', 'Not Required'
@@ -259,12 +275,12 @@ class DocumentMetadata(models.Model):
     faculty = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name='document_metadata_records',
+        related_name='document_metadata_records'
     )
     requirement = models.ForeignKey(
         Requirement,
         on_delete=models.CASCADE,
-        related_name='document_metadata_records',
+        related_name='document_metadata_records'
     )
 
     draft = models.OneToOneField(
@@ -272,7 +288,7 @@ class DocumentMetadata(models.Model):
         null=True,
         blank=True,
         on_delete=models.CASCADE,
-        related_name='document_metadata',
+        related_name='document_metadata'
     )
     
     submission = models.ForeignKey(
@@ -280,7 +296,7 @@ class DocumentMetadata(models.Model):
         null=True,
         blank=True,
         on_delete=models.CASCADE,
-        related_name='metadata_versions',
+        related_name='metadata_versions'
     )
     version_number = models.PositiveIntegerField(default=1)
 
@@ -294,14 +310,14 @@ class DocumentMetadata(models.Model):
         max_length=20,
         choices=OCRStatus.choices,
         default=OCRStatus.NOT_REQUIRED,
-        db_index=True,
+        db_index=True
     )
     extracted_text = models.TextField(blank=True)
     ocr_error = models.TextField(blank=True)
     ocr_request_id = models.PositiveIntegerField(
         default=1,
         editable=False,
-        db_index=True,
+        db_index=True
     )
     ocr_completed_at = models.DateTimeField(null=True, blank=True)
 
@@ -309,7 +325,7 @@ class DocumentMetadata(models.Model):
         max_length=20,
         choices=NLPStatus.choices,
         default=NLPStatus.NOT_REQUIRED,
-        db_index=True,
+        db_index=True
     )
     
     nlp_result = models.JSONField(default=dict, blank=True)
@@ -327,12 +343,24 @@ class DocumentMetadata(models.Model):
                     Q(draft__isnull=False, submission__isnull=True)
                     | Q(draft__isnull=True, submission__isnull=False)
                 ),
-                name='document_metadata_has_draft_or_submission',
+                name='document_metadata_has_draft_or_submission'
             ),
             models.UniqueConstraint(
                 fields=['submission', 'version_number'],
                 condition=Q(submission__isnull=False),
-                name='unique_document_metadata_submission_version',
+                name='unique_document_metadata_submission_version'
+            )
+        ]
+        
+        indexes = [
+            GinIndex(
+                SearchVector('extracted_text', config='english'),
+                name='dm_extracted_fts_gin'
+            ),
+            GinIndex(
+                fields=['extracted_text'],
+                opclasses=['gin_trgm_ops'],
+                name='dm_extracted_trgm'
             )
         ]
 

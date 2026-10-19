@@ -214,13 +214,15 @@ def run_ocr_if_enabled(draft):
 # Loading data for the Submission Bin page
 # ---------------------------------------------------------------------------
 
-def get_available_requirements(user):
+
+def get_available_requirements(user, requirement_ids=None):
     submitted_ids = (
         DocumentSubmission.objects
         .filter(faculty=user)
         .exclude(status=DocumentSubmission.SubmissionStatus.NEEDS_REVISION)
         .values_list('requirement_id', flat=True)
     )
+
     requirements = (
         Requirement.objects
         .filter(status=Requirement.ReqStatus.ACTIVE)
@@ -229,9 +231,13 @@ def get_available_requirements(user):
             | Q(assigned_to=user.faculty_type)
         )
         .exclude(id__in=submitted_ids)
-        .order_by('deadline')
     )
-    return list(requirements)
+
+    if requirement_ids is not None:
+        requirements = requirements.filter(id__in=requirement_ids)
+
+    return list(requirements.order_by('deadline'))
+
 
 
 def _load_drafts_with_metadata(user, requirements):

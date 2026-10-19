@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.decorators.http import require_http_methods
 from django.core.paginator import Paginator
@@ -332,11 +334,23 @@ def approve_selected_submissions_view(request, faculty_id):
         role=User.Role.FACULTY
     )
 
-    selected_ids = {
-        int(value)
-        for value in request.POST.getlist('submission_ids')
-        if value.isdecimal()
-    }
+    selected_ids = set()
+    invalid_selection = False
+    for value in request.POST.getlist('submission_ids'):
+        try:
+            selected_ids.add(UUID(value))
+        except ValueError:
+            invalid_selection = True
+
+    if invalid_selection:
+        messages.error(
+            request,
+            'The selected document IDs are invalid. Please refresh the page and try again.',
+        )
+        return redirect(
+            'admin_staff_portal:faculty_submission_bins_view',
+            faculty_id=faculty_member.id
+        )
 
     if not selected_ids:
         messages.error(

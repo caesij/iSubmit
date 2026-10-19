@@ -21,6 +21,15 @@
 
 .filter-panel { background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 16px; }
 .filter-group { margin-bottom: 16px; }
+.search-group { flex: 1 1 260px; min-width: 220px; }
+.search-group label, .search-help { display: block; font-size: 11px; color: #6b7280; margin-bottom: 4px; }
+.search-controls { display: flex; gap: 8px; flex-wrap: wrap; }
+.search-controls input, .search-controls select { box-sizing: border-box; min-width: 0; padding: 8px 10px; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 13px; }
+.search-controls input { flex: 1 1 180px; }
+.search-controls select { flex: 0 1 175px; }
+.btn-search { padding: 8px 14px; border: 1px solid #7f1d1d; color: #fff; background: #7f1d1d; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; }
+.search-help { margin-top: 5px; margin-bottom: 0; line-height: 1.4; }
+
 .filter-group label { display: block; font-size: 12px; font-weight: 600; color: #374151; margin-bottom: 6px; }
 .filter-group select { width: 100%; padding: 8px 10px; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 13px; box-sizing: border-box; }
 .btn-reset { display: block; width: 100%; text-align: center; padding: 9px; border: 1px solid #7f1d1d; color: #7f1d1d; background: #fff; border-radius: 8px; font-size: 13px; font-weight: 700; text-decoration: none; box-sizing: border-box; }
@@ -60,6 +69,17 @@
 
 <div class="docs-layout">
     <form method="GET" action="{% url 'faculty_portal:pinned_documents' %}" class="filter-panel">
+        <div class="search-group" style="margin-bottom:16px;">
+            <label for="repo-search">Search documents</label>
+            <div class="search-controls" style="flex-direction:column;">
+                <input id="repo-search" type="search" name="q" value="{{ search_query }}" placeholder="Enter words to search...">
+                <select name="search_mode" aria-label="Search method">
+                    {% for value, label in search_modes %}<option value="{{ value }}" {% if selected_search_mode == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+                </select>
+                <button type="submit" class="btn-search">Search</button>
+            </div>
+            <p class="search-help">Full-text searches wording, fuzzy search tolerates OCR mistakes, and title search checks requirement titles.</p>
+        </div>
         <div class="filter-group">
             <label>Academic Term</label>
             <select name="academic_term" onchange="this.form.submit()">
@@ -154,13 +174,13 @@
         <span class="pagination-info">Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }} documents</span>
         <div class="pagination-controls">
             {% if page_obj.has_previous %}
-                <a href="?page={{ page_obj.previous_page_number }}{% if selected_academic_term %}&academic_term={{ selected_academic_term }}{% endif %}{% if selected_document_type %}&document_type={{ selected_document_type }}{% endif %}{% if selected_sort_by %}&sort_by={{ selected_sort_by }}{% endif %}" class="page-btn">&lt;</a>
+                <a href="?page={{ page_obj.previous_page_number }}{% if selected_academic_term %}&academic_term={{ selected_academic_term }}{% endif %}{% if selected_document_type %}&document_type={{ selected_document_type }}{% endif %}{% if selected_sort_by %}&sort_by={{ selected_sort_by }}{% endif %}{% if search_query %}&q={{ search_query|urlencode }}{% endif %}&search_mode={{ selected_search_mode|urlencode }}" class="page-btn">&lt;</a>
             {% endif %}
             {% for page_num in page_obj.paginator.page_range %}
-                <a href="?page={{ page_num }}{% if selected_academic_term %}&academic_term={{ selected_academic_term }}{% endif %}{% if selected_document_type %}&document_type={{ selected_document_type }}{% endif %}{% if selected_sort_by %}&sort_by={{ selected_sort_by }}{% endif %}" class="page-btn {% if page_obj.number == page_num %}active{% endif %}">{{ page_num }}</a>
+                <a href="?page={{ page_num }}{% if selected_academic_term %}&academic_term={{ selected_academic_term }}{% endif %}{% if selected_document_type %}&document_type={{ selected_document_type }}{% endif %}{% if selected_sort_by %}&sort_by={{ selected_sort_by }}{% endif %}{% if search_query %}&q={{ search_query|urlencode }}{% endif %}&search_mode={{ selected_search_mode|urlencode }}" class="page-btn {% if page_obj.number == page_num %}active{% endif %}">{{ page_num }}</a>
             {% endfor %}
             {% if page_obj.has_next %}
-                <a href="?page={{ page_obj.next_page_number }}{% if selected_academic_term %}&academic_term={{ selected_academic_term }}{% endif %}{% if selected_document_type %}&document_type={{ selected_document_type }}{% endif %}{% if selected_sort_by %}&sort_by={{ selected_sort_by }}{% endif %}" class="page-btn">&gt;</a>
+                <a href="?page={{ page_obj.next_page_number }}{% if selected_academic_term %}&academic_term={{ selected_academic_term }}{% endif %}{% if selected_document_type %}&document_type={{ selected_document_type }}{% endif %}{% if selected_sort_by %}&sort_by={{ selected_sort_by }}{% endif %}{% if search_query %}&q={{ search_query|urlencode }}{% endif %}&search_mode={{ selected_search_mode|urlencode }}" class="page-btn">&gt;</a>
             {% endif %}
         </div>
     </div>
