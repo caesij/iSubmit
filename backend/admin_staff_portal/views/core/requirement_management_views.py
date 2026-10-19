@@ -7,9 +7,9 @@ from django.contrib import messages
 from django.db import transaction
 from django.urls import reverse
 from django.utils.dateparse import parse_datetime
-from django.utils.formats import date_format
 
 from accounts.decorators import role_required, staff_permission_required
+from core.date_formatting import format_display_date, format_display_time
 from admin_staff_portal.realtime import refresh_admin_dashboard
 from admin_staff_portal.realtime import refresh_staff_dashboard
 from admin_staff_portal.realtime import refresh_submission_pages
@@ -49,8 +49,8 @@ def bulk_requirements_view(request):
         deadline = parse_datetime(item.get('deadline', ''))
 
         if deadline:
-            display_item['deadline_date'] = date_format(deadline, 'F j, Y')
-            display_item['deadline_time'] = date_format(deadline, 'g:i A')
+            display_item['deadline_date'] = format_display_date(deadline)
+            display_item['deadline_time'] = format_display_time(deadline)
         else:
             display_item['deadline_date'] = ''
             display_item['deadline_time'] = ''
@@ -238,7 +238,7 @@ def post_bulk_requirements(request):
                             (
                                 f"• {requirement.requirement_title} — "
                                 f"Deadline: "
-                                f"{date_format(timezone.localtime(requirement.deadline), 'M j, Y')}"
+                                f"{format_display_date(requirement.deadline)}"
                                 if requirement.deadline
                                 else f"• {requirement.requirement_title} — No deadline set"
                             )

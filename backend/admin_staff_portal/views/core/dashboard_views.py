@@ -1,12 +1,12 @@
 from django.shortcuts import render
 from django.views.decorators.http import require_http_methods
 from django.urls import reverse
-from django.utils import timezone
 from django.http import JsonResponse
 
 from accounts.decorators import role_required
 from admin_staff_portal.services.admin_dashboard import get_admin_dashboard_data
 from admin_staff_portal.services.staff_dashboard import get_staff_dashboard_data
+from core.date_formatting import format_display_date
 
 @role_required('ADMIN')
 @require_http_methods(['GET'])
@@ -23,11 +23,7 @@ def admin_dashboard_data_view(request):
             'faculty': submission.faculty.get_full_name(),
             'faculty_type': submission.faculty.get_faculty_type_display(),
             'bin_title': submission.requirement.requirement_title,
-            'latest_submission_date': (
-                timezone.localtime(latest_submission_date).strftime('%b %d, %Y').replace(' 0', ' ')
-                if latest_submission_date
-                else ''
-            ),
+            'latest_submission_date': format_display_date(latest_submission_date),
             'status': submission.status,
             'faculty_bins_url': reverse(
                 'admin_staff_portal:faculty_submission_bins_view',
@@ -82,11 +78,7 @@ def staff_dashboard_data_view(request):
             'faculty': submission.faculty.get_full_name(),
             'faculty_type': submission.faculty.get_faculty_type_display(),
             'bin_title': submission.requirement.requirement_title,
-            'latest_submission_date': (
-                timezone.localtime(latest_submission_date).strftime('%b %d, %Y').replace(' 0', ' ')
-                if latest_submission_date
-                else ''
-            ),
+            'latest_submission_date': format_display_date(latest_submission_date),
             'status': submission.status,
             'faculty_bins_url': reverse(
                 'admin_staff_portal:faculty_submission_bins_view',

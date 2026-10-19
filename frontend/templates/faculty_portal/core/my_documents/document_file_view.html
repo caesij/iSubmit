@@ -1,5 +1,5 @@
 {% extends 'faculty_portal/base.html' %}
-{% load static %}
+{% load static core_extras %}
 
 {% block title %}{{ document.requirement.requirement_title }} - iSubmit{% endblock %}
 {% block heading %}My Documents{% endblock %}
@@ -178,7 +178,7 @@
           <span class="dot"></span>
           <div>
             <span class="label">Uploaded on</span>
-            <span class="value">{{ document.initially_submitted_at|date:"M j, Y g:i A" }}</span>
+            <span class="value">            {{ document.initially_submitted_at|display_date }} {{ document.initially_submitted_at|display_time }}</span>
           </div>
         </div>
         <div class="dfv-detail-row">
@@ -227,13 +227,13 @@
         {% if document.reviewed_by %}
           <div class="dfv-review-item">
             <div class="who">Reviewed by {{ document.reviewed_by.get_full_name }}</div>
-            <div class="when">{{ document.reviewed_at|date:"M j, Y g:i A" }}</div>
+            <div class="when">            {{ document.reviewed_at|display_date }} {{ document.reviewed_at|display_time }}</div>
           </div>
         {% endif %}
         {% if document.approved_by %}
           <div class="dfv-review-item">
             <div class="who">Approved by {{ document.approved_by.get_full_name }}</div>
-            <div class="when">{{ document.approved_at|date:"M j, Y g:i A" }}</div>
+            <div class="when">            {{ document.approved_at|display_date }} {{ document.approved_at|display_time }}</div>
           </div>
         {% endif %}
         {% if not document.reviewed_by and not document.approved_by %}

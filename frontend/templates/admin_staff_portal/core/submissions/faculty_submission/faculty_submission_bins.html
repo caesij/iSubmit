@@ -1,5 +1,5 @@
 {% extends 'admin_staff_portal/base.html' %}
-{% load static %}
+{% load static core_extras %}
 
 {% block title %}{{ faculty_member.get_full_name }}'s Submissions - iSubmit{% endblock %}
 {% block heading %}Submissions{% endblock %}
@@ -187,12 +187,12 @@
                             <div class="text-sub">{{ sub.requirement.academic_term }}</div>
                         </td>
                         <td>
-                            <div>{{ sub.initially_submitted_at|date:"F j, Y" }}</div>
-                            <div class="text-sub">{{ sub.initially_submitted_at|date:"g:i A" }}</div>
+                            <div>                            {{ sub.initially_submitted_at|display_date }}</div>
+                            <div class="text-sub">                            {{ sub.initially_submitted_at|display_time }}</div>
                         </td>
                         <td>
-                            <div>{{ sub.requirement.deadline|date:"F j, Y" }}</div>
-                            <div class="text-sub">{{ sub.requirement.deadline|date:"g:i A" }}</div>
+                            <div>                            {{ sub.requirement.deadline|display_date }}</div>
+                            <div class="text-sub">                            {{ sub.requirement.deadline|display_time }}</div>
                         </td>
                         <td>
                             <span class="pill

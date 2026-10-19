@@ -1,4 +1,5 @@
 {% extends 'faculty_portal/base.html' %}
+{% load core_extras %}
 
 {% block title %}Account &amp; Security - iSubmit{% endblock %}
 
@@ -62,8 +63,8 @@
                     <tr>
                         <td><input type="checkbox" class="session-checkbox" value="{{ activity.record.id }}" {% if activity.is_current %}disabled{% endif %} aria-label="Select {{ activity.device }} to log out"></td>
                         <td class="activity-device">{{ activity.device }}{% if activity.is_current %}<span class="current">Current</span>{% endif %}</td>
-                        <td>{{ activity.record.first_seen|date:"M j, Y g:i A" }}</td>
-                        <td>{{ activity.record.last_seen|date:"M j, Y g:i A" }}</td>
+                        <td>{{ activity.record.first_seen|display_date }} {{ activity.record.first_seen|display_time }}</td>
+                        <td>{{ activity.record.last_seen|display_date }} {{ activity.record.last_seen|display_time }}</td>
                         <td>{% if activity.is_current %}Active{% else %}Other session{% endif %}</td>
                         <td><form method="POST" action="{% url 'accounts:revoke_session' activity.record.id %}">{% csrf_token %}<button class="activity-action" type="submit">Log out</button></form></td>
                     </tr>

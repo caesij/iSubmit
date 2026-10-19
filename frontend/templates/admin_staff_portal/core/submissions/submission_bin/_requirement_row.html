@@ -1,3 +1,4 @@
+{% load core_extras %}
 <tr data-row-id="{{ req.id }}">
     <td class="select-column">
         <input type="checkbox" aria-label="Select {{ req.requirement_title }}">
@@ -8,8 +9,8 @@
     <td>{{ req.academic_term }} - {{ req.get_semester_display }}</td>
 
     <td>
-        <div>{{ req.deadline|date:"F d, Y" }}</div>
-        <div class="text-sub">{{ req.deadline|date:"h:i A" }}</div>
+        <div>{{ req.deadline|display_date }}</div>
+        <div class="text-sub">{{ req.deadline|display_time }}</div>
     </td>
 
     <td>

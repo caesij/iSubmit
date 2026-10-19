@@ -1,5 +1,5 @@
 {% extends 'admin_staff_portal/base.html' %}
-{% load static %}
+{% load static core_extras %}
 
 {% block title %}Faculty Submissions - iSubmit{% endblock %}
 {% block heading %}Submissions{% endblock %}
@@ -102,8 +102,8 @@
                         </td>
                         <td>
                             {% if row.latest_submission %}
-                                <div>{{ row.latest_submission.initially_submitted_at|date:"F d, Y" }}</div>
-                                <div class="text-sub">{{ row.latest_submission.initially_submitted_at|date:"g:i A" }}</div>
+                                <div>                                {{ row.latest_submission.initially_submitted_at|display_date }}</div>
+                                <div class="text-sub">                                {{ row.latest_submission.initially_submitted_at|display_time }}</div>
                             {% else %}
                                 <span class="text-sub">No Submissions</span>
                             {% endif %}

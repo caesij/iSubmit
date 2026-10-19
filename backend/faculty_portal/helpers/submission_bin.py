@@ -8,6 +8,7 @@ from django.core.files import File
 from django.db import transaction
 from django.db.models import Max, Q
 from django.shortcuts import redirect
+from django.urls import reverse
 from django.utils import timezone
 
 from admin_staff_portal.realtime import (
@@ -432,14 +433,19 @@ def _send_submission_updates(user, submissions):
         refresh_faculty_submission_bin(user)
 
         full_name = user.get_full_name()
+        
         for submission in submissions:
             notify_roles(
                 roles=[User.Role.ADMIN, User.Role.STAFF],
                 notification_type=NotificationPreference.NotificationType.SUBMISSION_NOTIFICATIONS,
                 title='New Document Submission',
                 message=f'{full_name} submitted {submission.requirement.requirement_title}.',
-                link='',
+                link=reverse(
+                    'admin_staff_portal:review_submission',
+                    args=[submission.id]
+                )
             )
+            
     except Exception:
         logger.exception('Submission realtime/notification update failed.')
 

@@ -1,5 +1,5 @@
 {% extends 'faculty_portal/base.html' %}
-{% load static %}
+{% load static core_extras %}
 
 {% block title %}Pinned Documents - iSubmit{% endblock %}
 {% block heading %}My Documents{% endblock %}
@@ -136,13 +136,13 @@
                             <div class="text-sub">SY {{ sub.requirement.academic_term|cut:"A.Y. " }}</div>
                         </td>
                         <td>
-                            <div>{{ sub.initially_submitted_at|date:"F j, Y" }}</div>
-                            <div class="text-sub">{{ sub.initially_submitted_at|date:"g:i A" }}</div>
+                            <div>                            {{ sub.initially_submitted_at|display_date }}</div>
+                            <div class="text-sub">                            {{ sub.initially_submitted_at|display_time }}</div>
                         </td>
                         <td>
                             {% if sub.approved_at %}
-                                <div>{{ sub.approved_at|date:"F j, Y" }}</div>
-                                <div class="text-sub">{{ sub.approved_at|date:"g:i A" }}</div>
+                                <div>                                {{ sub.approved_at|display_date }}</div>
+                                <div class="text-sub">                                {{ sub.approved_at|display_time }}</div>
                             {% else %}
                                 <span class="text-sub">&mdash;</span>
                             {% endif %}

@@ -1,3 +1,4 @@
+{% load core_extras %}
 <style>
 .notif-dropdown-header {
     display: flex;
@@ -121,7 +122,7 @@
                 </p>
 
                 <small>
-                    {{ notification.created_at|date:"M j, Y g:i A" }}
+                    {{ notification.created_at|display_date }} {{ notification.created_at|display_time }}
                 </small>
 
             </button>

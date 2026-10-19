@@ -94,7 +94,7 @@ def account_and_security_view(request):
         'form': form,
         'login_activity': get_login_activity(
             request.user,
-            request.session.session_key,
+            request.session.session_key
         )
     }
 

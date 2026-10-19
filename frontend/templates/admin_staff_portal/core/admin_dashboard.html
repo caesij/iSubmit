@@ -1,5 +1,5 @@
 {% extends 'admin_staff_portal/base.html' %}
-{% load static %}
+{% load static core_extras %}
 
 {% block title %}Dashboard - iSubmit{% endblock %}
 {% block heading %}Dashboard{% endblock %}
@@ -206,9 +206,9 @@
                             <td>{{ submission.requirement.requirement_title }}</td>
                             <td>
                                 {% if submission.status == 'RESUBMITTED' and submission.resubmitted_at %}
-                                    {{ submission.resubmitted_at|date:"M j, Y" }}
+                                    {{ submission.resubmitted_at|display_date }}
                                 {% else %}
-                                    {{ submission.initially_submitted_at|date:"M j, Y" }}
+                                    {{ submission.initially_submitted_at|display_date }}
                                 {% endif %}
                             </td>
                             <td>

@@ -8,6 +8,7 @@ from django.db.models import Q
 from django.utils import timezone
 from django.contrib import messages
 from django.db import transaction
+from django.urls import reverse
 
 from accounts.decorators import admin, role_required, staff_permission_required
 from admin_staff_portal.realtime import refresh_admin_dashboard
@@ -230,7 +231,7 @@ def mark_under_review_view(request, submission_id):
                         f'Your submission for {submission.requirement.requirement_title} '
                         f'is now under review.'
                     ),
-                    link=''
+                    link=reverse('faculty_portal:view_my_submitted_document', args=[submission.id])
                 )
             )
         )
@@ -275,7 +276,7 @@ def mark_reviewed_view(request, submission_id):
                         f'Your submission for {submission.requirement.requirement_title} '
                         f'has been reviewed and is now pending approval.'
                     ),
-                    link=''
+                    link=reverse('faculty_portal:view_my_submitted_document', args=[submission.id])
                 )
             )
         )
@@ -344,7 +345,7 @@ def mark_needs_revision_view(request, submission_id):
                         f'Your submission for {submission.requirement.requirement_title} '
                         f'needs revision. Please check the remarks provided by the reviewer.'
                     ),
-                    link=''
+                    link=reverse('faculty_portal:view_my_submitted_document', args=[submission.id])
                 )
             )
         )
@@ -443,11 +444,8 @@ def approve_selected_submissions_view(request, faculty_id):
                         NotificationPreference.NotificationType.SUBMISSION_NOTIFICATIONS
                     ),
                     title='Selected Document Submissions Approved',
-                    message=(
-                        f'{approved_count} selected document(s) '
-                        f'have been approved.'
-                    ),
-                    link=''
+                    message=(f'{approved_count} selected document(s) have been approved.'),
+                    link=reverse('faculty_portal:my_submissions')
                 )
 
             transaction.on_commit(publish_approval_updates)

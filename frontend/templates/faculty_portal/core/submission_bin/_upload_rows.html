@@ -1,4 +1,4 @@
-{% load static %}
+{% load static core_extras %}
 {% for row in rows %}
     <tr>
         <td>
@@ -52,10 +52,10 @@
 
         <td>
             <div>
-                {{ row.requirement.deadline|date:"F j, Y" }}
+                {{ row.requirement.deadline|display_date }}
             </div>
             <div class="text-sub">
-                {{ row.requirement.deadline|date:"g:i A" }}
+                {{ row.requirement.deadline|display_time }}
             </div>
         </td>
 

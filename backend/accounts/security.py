@@ -10,6 +10,7 @@ from django.utils import timezone
 
 from accounts.models import SecurityLoginRecord
 from core.realtime import send_to_session, send_to_user
+from core.date_formatting import format_display_date, format_display_time
 from notifications.models import NotificationPreference
 from notifications.services import create_notif
 
@@ -138,8 +139,8 @@ def assess_login_security(request, user):
     return {
         'device_token': device_token,
         'user_agent': user_agent,
-        'login_time': timezone.localtime(now).strftime(
-            '%b %d, %Y at %I:%M %p'
+        'login_time': (
+            f'{format_display_date(now)} at {format_display_time(now)}'
         ),
         'should_alert': should_alert
     }
@@ -161,5 +162,5 @@ def send_login_security_alert(user, login_info):
             "If you do not recognize this login, change your password "
             "and contact your system administrator."
         ),
-        link=reverse("notifications:notification_list")
+        link=reverse('faculty_portal:account_security' if user.is_faculty else 'admin_staff_portal:account_security')
     )

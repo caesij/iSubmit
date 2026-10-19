@@ -1,5 +1,5 @@
 {% extends 'admin_staff_portal/base.html' %}
-{% load static %}
+{% load static core_extras %}
 
 {% block title %}{{ page_title }} - iSubmit{% endblock %}
 {% block extra_css %}<link rel="stylesheet" href="{% static 'css/pages/user-management.css' %}">{% endblock %}
@@ -73,8 +73,8 @@
                 </td>
                 <td class="last-active">
                     {% if managed_user.last_login %}
-                    <div>{{ managed_user.last_login|date:"F j, Y" }}</div>
-                    <div class="last-active-time">{{ managed_user.last_login|date:"g:i A" }}</div>
+                    <div>{{ managed_user.last_login|display_date }}</div>
+                    <div class="last-active-time">{{ managed_user.last_login|display_time }}</div>
                     {% else %}
                     Never
                     {% endif %}

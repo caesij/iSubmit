@@ -1,5 +1,5 @@
 {% extends 'admin_staff_portal/base.html' %}
-{% load static %}
+{% load static core_extras %}
 
 {% block title %}Settings - iSubmit{% endblock %}
 {% block heading %}Settings{% endblock %}
@@ -162,8 +162,8 @@
                             {{ activity.device }}
                             {% if activity.is_current %}<span class="activity-current">Current</span>{% endif %}
                         </td>
-                        <td>{{ activity.record.first_seen|date:"M j, Y g:i A" }}</td>
-                        <td>{{ activity.record.last_seen|date:"M j, Y g:i A" }}</td>
+                        <td>{{ activity.record.first_seen|display_date }} {{ activity.record.first_seen|display_time }}</td>
+                        <td>{{ activity.record.last_seen|display_date }} {{ activity.record.last_seen|display_time }}</td>
                         <td>{% if activity.is_current %}Active{% else %}Other session{% endif %}</td>
                         <td>
                             <form method="POST" action="{% url 'accounts:revoke_session' activity.record.id %}">
