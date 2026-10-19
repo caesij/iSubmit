@@ -10,11 +10,17 @@ from django.db.models import Max, Q
 from django.shortcuts import redirect
 from django.utils import timezone
 
-from admin_staff_portal.realtime import refresh_admin_dashboard, refresh_staff_dashboard
+from admin_staff_portal.realtime import (
+    refresh_admin_dashboard,
+    refresh_staff_dashboard,
+    refresh_submission_pages
+)
+
 from faculty_portal.realtime import refresh_faculty_dashboard, refresh_faculty_submission_bin
 from notifications.models import NotificationPreference
 from notifications.services import notify_roles
 from submissions.forms import DraftUploadForm
+
 from submissions.models import (
     DocumentMetadata,
     DocumentRevision,
@@ -421,6 +427,7 @@ def _send_submission_updates(user, submissions):
     try:
         refresh_admin_dashboard()
         refresh_staff_dashboard()
+        refresh_submission_pages()
         refresh_faculty_dashboard(user)
         refresh_faculty_submission_bin(user)
 

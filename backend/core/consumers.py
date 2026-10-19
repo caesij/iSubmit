@@ -24,6 +24,12 @@ class RealtimeConsumer(AsyncJsonWebsocketConsumer):
         if self.is_staff_user:
             await self.channel_layer.group_add('staff_dashboard',self.channel_name)
 
+        if self.is_admin_user or self.is_staff_user:
+            await self.channel_layer.group_add(
+                'admin_staff_submissions',
+                self.channel_name,
+            )
+
         await self.accept()
 
     async def disconnect(self, close_code):
@@ -38,6 +44,12 @@ class RealtimeConsumer(AsyncJsonWebsocketConsumer):
 
         if getattr(self, 'is_admin_user', False):
             await self.channel_layer.group_discard('admin_dashboard', self.channel_name)
+
+        if getattr(self, 'is_admin_user', False) or getattr(self, 'is_staff_user', False):
+            await self.channel_layer.group_discard(
+                'admin_staff_submissions',
+                self.channel_name,
+            )
 
     async def realtime_event(self, event):
         await self.send_json({

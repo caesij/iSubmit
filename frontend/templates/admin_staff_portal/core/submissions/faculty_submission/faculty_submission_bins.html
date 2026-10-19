@@ -160,7 +160,7 @@
                     <th>Action</th>
                 </tr>
             </thead>
-            <tbody>
+            <tbody data-live-container="faculty-submissions-table">
                 {% for sub in submissions %}
                     <tr>
                         <td class="select-column">
@@ -236,7 +236,7 @@
     </div>
 
         {% if is_paginated or page_obj %}
-        <div class="pagination-footer">
+        <div class="pagination-footer" data-live-container="faculty-submissions-pagination">
             <span>Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }} documents</span>
             <div class="pagination-controls">
                 {% if page_obj.has_previous %}
@@ -253,10 +253,10 @@
         {% endif %}
 </div>
 <script>
-const approvalForm = document.getElementById("approval-form");
-const approveSelectedButton = document.getElementById("approve-selected-button");
-const selectAllSubmissions = document.getElementById("select-all-submissions");
-const submissionCheckboxes = Array.from(document.querySelectorAll(".submission-checkbox:not(:disabled)"));
+let approvalForm;
+let approveSelectedButton;
+let selectAllSubmissions;
+let submissionCheckboxes;
 
 function updateApprovalSelection() {
     if (!approvalForm || !approveSelectedButton) {
@@ -292,18 +292,29 @@ function updateApprovalSelection() {
     }
 }
 
-if (selectAllSubmissions) {
-    selectAllSubmissions.addEventListener("change", function () {
-        submissionCheckboxes.forEach(function (checkbox) {
-            checkbox.checked = selectAllSubmissions.checked;
-        });
-        updateApprovalSelection();
+function bindApprovalSelection() {
+    approvalForm = document.getElementById("approval-form");
+    approveSelectedButton = document.getElementById("approve-selected-button");
+    selectAllSubmissions = document.getElementById("select-all-submissions");
+    submissionCheckboxes = Array.from(
+        document.querySelectorAll(".submission-checkbox:not(:disabled)")
+    );
+    if (selectAllSubmissions) {
+        selectAllSubmissions.onchange = function () {
+            submissionCheckboxes.forEach(function (checkbox) {
+                checkbox.checked = selectAllSubmissions.checked;
+            });
+            updateApprovalSelection();
+        };
+    }
+    submissionCheckboxes.forEach(function (checkbox) {
+        checkbox.onchange = updateApprovalSelection;
     });
+    updateApprovalSelection();
 }
 
-submissionCheckboxes.forEach(function (checkbox) {
-    checkbox.addEventListener("change", updateApprovalSelection);
-});
+bindApprovalSelection();
+document.addEventListener("submissions-refreshed", bindApprovalSelection);
 
 document.addEventListener("click", function (event) {
     const trigger = event.target.closest(".dropdown .btn-icon");

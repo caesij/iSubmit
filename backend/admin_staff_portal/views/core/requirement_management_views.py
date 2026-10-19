@@ -12,6 +12,7 @@ from django.utils.formats import date_format
 from accounts.decorators import role_required, staff_permission_required
 from admin_staff_portal.realtime import refresh_admin_dashboard
 from admin_staff_portal.realtime import refresh_staff_dashboard
+from admin_staff_portal.realtime import refresh_submission_pages
 from admin_staff_portal.helpers.submissions import refresh_requirement_faculty_dashboards
 from notifications.services import create_notif
 from notifications.models import NotificationPreference
@@ -210,6 +211,7 @@ def post_bulk_requirements(request):
                 try:
                     refresh_admin_dashboard()
                     refresh_staff_dashboard()
+                    refresh_submission_pages()
 
                     if not active_requirements:
                         return
@@ -298,6 +300,7 @@ def edit_requirement(request, requirement_id):
 
             refresh_admin_dashboard()
             refresh_staff_dashboard()
+            refresh_submission_pages()
             refresh_all_faculty_submission_bins()
 
             refresh_requirement_faculty_dashboards(old_assigned_to, requirement.assigned_to)
@@ -368,27 +371,31 @@ def requirements_list(request):
 @staff_permission_required('manage_submission_bins')
 @require_http_methods(['POST'])
 def toggle_requirement_status(request, requirement_id):
-    requirement = get_object_or_404(
-        Requirement,
-        pk=requirement_id
-    )
+    with transaction.atomic():
+        requirement = get_object_or_404(
+            Requirement.objects.select_for_update(),
+            pk=requirement_id,
+        )
+        requirement.status = (
+            Requirement.ReqStatus.INACTIVE
+            if requirement.status == Requirement.ReqStatus.ACTIVE
+            else Requirement.ReqStatus.ACTIVE
+        )
+        requirement.save(update_fields=['status', 'updated_at'])
 
-    requirement.status = (
-        Requirement.ReqStatus.INACTIVE
-        if requirement.status == Requirement.ReqStatus.ACTIVE
-        else Requirement.ReqStatus.ACTIVE
-    )
+        faculty_qs = User.objects.filter(role=User.Role.FACULTY)
+        if requirement.assigned_to != Requirement.AssignedFacultyType.ALL:
+            faculty_qs = faculty_qs.filter(faculty_type=requirement.assigned_to)
 
-    requirement.save()
-    refresh_all_faculty_submission_bins()
+        def publish_requirement_updates():
+            refresh_admin_dashboard()
+            refresh_staff_dashboard()
+            refresh_submission_pages({'requirement_id': str(requirement.id)})
+            refresh_all_faculty_submission_bins()
+            for faculty_member in faculty_qs:
+                refresh_faculty_dashboard(faculty_member)
 
-    faculty_qs = User.objects.filter(role=User.Role.FACULTY)
-
-    if requirement.assigned_to != Requirement.AssignedFacultyType.ALL:
-        faculty_qs = faculty_qs.filter(faculty_type=requirement.assigned_to)
-
-    for faculty_member in faculty_qs:
-        refresh_faculty_dashboard(faculty_member)
+        transaction.on_commit(publish_requirement_updates)
 
     messages.success(request, 'Requirement status updated.')
 

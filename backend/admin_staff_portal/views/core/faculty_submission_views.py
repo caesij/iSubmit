@@ -12,6 +12,7 @@ from django.db import transaction
 from accounts.decorators import admin, role_required, staff_permission_required
 from admin_staff_portal.realtime import refresh_admin_dashboard
 from admin_staff_portal.realtime import refresh_staff_dashboard
+from admin_staff_portal.realtime import refresh_submission_pages
 from notifications.services import create_notif
 from notifications.models import NotificationPreference
 from submissions.models import DocumentSubmission, DocumentRevision, Requirement
@@ -62,6 +63,11 @@ def faculty_submissions_list(request):
             faculty=faculty_member,
             requirement__status=Requirement.ReqStatus.ACTIVE,
         ).select_related('requirement').order_by('-initially_submitted_at')
+        total_count = assigned_requirements.count()
+        submitted_count = faculty_submissions.values('requirement_id').distinct().count()
+        approved_count = faculty_submissions.filter(
+            status=DocumentSubmission.SubmissionStatus.APPROVED
+        ).values('requirement_id').distinct().count()
 
         if category:
             faculty_submissions = faculty_submissions.filter(
@@ -74,7 +80,14 @@ def faculty_submissions_list(request):
         faculty_rows.append({
             'faculty': faculty_member,
             'submitted_count': faculty_submissions.count(),
-            'total_count': assigned_requirements.count(),
+            'total_count': total_count,
+            'compliance_status': (
+                'approved'
+                if total_count and approved_count == total_count
+                else 'complete'
+                if total_count and submitted_count == total_count
+                else 'incomplete'
+            ),
             'latest_submission': latest_submission,
         })
 
@@ -183,37 +196,43 @@ def review_submission(request, submission_id):
 @staff_permission_required('review_faculty_submissions')
 @require_http_methods(['POST'])
 def mark_under_review_view(request, submission_id):
-    submission = get_object_or_404(DocumentSubmission, pk=submission_id)
-
-    if submission.status not in (
-        DocumentSubmission.SubmissionStatus.SUBMITTED,
-        DocumentSubmission.SubmissionStatus.RESUBMITTED,
-    ):
-        messages.info(request, 'This submission was already updated by someone else.')
-        return redirect('admin_staff_portal:review_submission', submission_id=submission.id)
-
     with transaction.atomic():
+        submission = get_object_or_404(
+            DocumentSubmission.objects.select_for_update(),
+            pk=submission_id,
+        )
+
+        if submission.status not in (
+            DocumentSubmission.SubmissionStatus.SUBMITTED,
+            DocumentSubmission.SubmissionStatus.RESUBMITTED,
+        ):
+            messages.info(request, 'This submission was already updated by someone else.')
+            return redirect(
+                'admin_staff_portal:review_submission',
+                submission_id=submission.id,
+            )
+
         submission.status = DocumentSubmission.SubmissionStatus.UNDER_REVIEW
         submission.save(update_fields=['status'])
 
         transaction.on_commit(
-                lambda: (
-                    refresh_admin_dashboard(),
-                    refresh_staff_dashboard(),
-                    refresh_faculty_dashboard(submission.faculty),
-                    refresh_faculty_my_submissions(submission.faculty),
-                    
-                    create_notif(
-                        user=submission.faculty,
-                        notification_type=NotificationPreference.NotificationType.SUBMISSION_NOTIFICATIONS,
-                        title='Document Submission Under Review',
-                        message=(
-                            f'Your submission for {submission.requirement.requirement_title} '
-                            f'is now under review.'
-                        ),
-                        link=''
-                    )
+            lambda: (
+                refresh_admin_dashboard(),
+                refresh_staff_dashboard(),
+                refresh_submission_pages({'submission_id': str(submission.id)}),
+                refresh_faculty_dashboard(submission.faculty),
+                refresh_faculty_my_submissions(submission.faculty),
+                create_notif(
+                    user=submission.faculty,
+                    notification_type=NotificationPreference.NotificationType.SUBMISSION_NOTIFICATIONS,
+                    title='Document Submission Under Review',
+                    message=(
+                        f'Your submission for {submission.requirement.requirement_title} '
+                        f'is now under review.'
+                    ),
+                    link=''
                 )
+            )
         )
 
     return redirect('admin_staff_portal:review_submission', submission_id=submission.id)
@@ -223,36 +242,42 @@ def mark_under_review_view(request, submission_id):
 @staff_permission_required('review_faculty_submissions')
 @require_http_methods(['POST'])
 def mark_reviewed_view(request, submission_id):
-    submission = get_object_or_404(
-        DocumentSubmission,
-        pk=submission_id,
-        status=DocumentSubmission.SubmissionStatus.UNDER_REVIEW
-    )
-    
     with transaction.atomic():
+        submission = get_object_or_404(
+            DocumentSubmission.objects.select_for_update(),
+            pk=submission_id,
+        )
+
+        if submission.status != DocumentSubmission.SubmissionStatus.UNDER_REVIEW:
+            messages.info(request, 'This submission was already updated by someone else.')
+            return redirect(
+                'admin_staff_portal:review_submission',
+                submission_id=submission.id,
+            )
+
         submission.status = DocumentSubmission.SubmissionStatus.PENDING_APPROVAL
         submission.reviewed_by = request.user
         submission.reviewed_at = timezone.now()
         submission.save(update_fields=['status', 'reviewed_by', 'reviewed_at'])
 
         transaction.on_commit(
-                lambda: (
-                    refresh_admin_dashboard(),
-                    refresh_staff_dashboard(),
-                    refresh_faculty_dashboard(submission.faculty),
-                    refresh_faculty_my_submissions(submission.faculty),
-                    
-                    create_notif(
-                        user=submission.faculty,
-                        notification_type=NotificationPreference.NotificationType.SUBMISSION_NOTIFICATIONS,
-                        title='Document Submission Reviewed',
-                        message=(
-                            f'Your submission for {submission.requirement.requirement_title} '
-                            f'has been reviewed and is now pending approval.'
-                        ),
-                        link=''
-                    )
+            lambda: (
+                refresh_admin_dashboard(),
+                refresh_staff_dashboard(),
+                refresh_submission_pages({'submission_id': str(submission.id)}),
+                refresh_faculty_dashboard(submission.faculty),
+                refresh_faculty_my_submissions(submission.faculty),
+                create_notif(
+                    user=submission.faculty,
+                    notification_type=NotificationPreference.NotificationType.SUBMISSION_NOTIFICATIONS,
+                    title='Document Submission Reviewed',
+                    message=(
+                        f'Your submission for {submission.requirement.requirement_title} '
+                        f'has been reviewed and is now pending approval.'
+                    ),
+                    link=''
                 )
+            )
         )
 
     return redirect('admin_staff_portal:review_submission', submission_id=submission.id)
@@ -262,62 +287,66 @@ def mark_reviewed_view(request, submission_id):
 @staff_permission_required('return_for_revisions')
 @require_http_methods(['POST'])
 def mark_needs_revision_view(request, submission_id):
-    submission = get_object_or_404(
-        DocumentSubmission,
-        pk=submission_id,
-        status__in=[DocumentSubmission.SubmissionStatus.UNDER_REVIEW]
-    )
-
-    last_version = (
-        submission.revisions
-        .order_by('-version_number')
-        .values_list('version_number', flat=True)
-        .first()
-    )
-
-    next_version = (last_version or 0) + 1
-
-    latest_revision = DocumentRevision.objects.create(submission=submission, version_number=next_version)
-
-    form = DocumentReviewForm(
-        request.POST,
-        reviewer=request.user,
-        revision=latest_revision
-    )
-
-    if not form.is_valid() or not form.cleaned_data.get('remarks'):
-        messages.error(request, 'Please provide remarks explaining what needs revision.')
-        latest_revision.delete()
-
-        return redirect('admin_staff_portal:review_submission', submission_id=submission_id)
-
-    form.save()
-
     with transaction.atomic():
-            submission.status = (DocumentSubmission.SubmissionStatus.NEEDS_REVISION)
-            submission.reviewed_by = request.user
-            submission.reviewed_at = timezone.now()
-            submission.save(update_fields=['status', 'reviewed_by', 'reviewed_at'])
+        submission = get_object_or_404(
+            DocumentSubmission.objects.select_for_update(),
+            pk=submission_id,
+        )
 
-            transaction.on_commit(
-                    lambda: (      
-                            refresh_admin_dashboard(),
-                            refresh_staff_dashboard(),
-                            refresh_faculty_dashboard(submission.faculty),
-                            refresh_faculty_submission_bin(submission.faculty),
-                            refresh_faculty_my_submissions(submission.faculty),
-                            
-                        create_notif(
-                            user=submission.faculty,
-                            notification_type=NotificationPreference.NotificationType.SUBMISSION_NOTIFICATIONS,
-                            title='Document Submission Needs Revision',
-                            message=(
-                                f'Your submission for {submission.requirement.requirement_title} '
-                                f'needs revision. Please check the remarks provided by the reviewer.'
-                            ),
-                            link=''
-                        )
-                    )
+        if submission.status != DocumentSubmission.SubmissionStatus.UNDER_REVIEW:
+            messages.info(request, 'This submission was already updated by someone else.')
+            return redirect(
+                'admin_staff_portal:review_submission',
+                submission_id=submission.id,
+            )
+
+        last_version = submission.revisions.order_by('-version_number').values_list(
+            'version_number',
+            flat=True,
+        ).first()
+        latest_revision = DocumentRevision.objects.create(
+            submission=submission,
+            version_number=(last_version or 0) + 1,
+        )
+        form = DocumentReviewForm(
+            request.POST,
+            reviewer=request.user,
+            revision=latest_revision,
+        )
+
+        if not form.is_valid() or not form.cleaned_data.get('remarks'):
+            messages.error(request, 'Please provide remarks explaining what needs revision.')
+            latest_revision.delete()
+            return redirect(
+                'admin_staff_portal:review_submission',
+                submission_id=submission_id,
+            )
+
+        form.save()
+        submission.status = DocumentSubmission.SubmissionStatus.NEEDS_REVISION
+        submission.reviewed_by = request.user
+        submission.reviewed_at = timezone.now()
+        submission.save(update_fields=['status', 'reviewed_by', 'reviewed_at'])
+
+        transaction.on_commit(
+            lambda: (
+                refresh_admin_dashboard(),
+                refresh_staff_dashboard(),
+                refresh_submission_pages({'submission_id': str(submission.id)}),
+                refresh_faculty_dashboard(submission.faculty),
+                refresh_faculty_submission_bin(submission.faculty),
+                refresh_faculty_my_submissions(submission.faculty),
+                create_notif(
+                    user=submission.faculty,
+                    notification_type=NotificationPreference.NotificationType.SUBMISSION_NOTIFICATIONS,
+                    title='Document Submission Needs Revision',
+                    message=(
+                        f'Your submission for {submission.requirement.requirement_title} '
+                        f'needs revision. Please check the remarks provided by the reviewer.'
+                    ),
+                    link=''
+                )
+            )
         )
 
     messages.success(request, 'Submission marked as needing revision.')
@@ -403,6 +432,7 @@ def approve_selected_submissions_view(request, faculty_id):
             def publish_approval_updates():
                 refresh_admin_dashboard()
                 refresh_staff_dashboard()
+                refresh_submission_pages({'faculty_id': str(faculty_member.id)})
                 refresh_faculty_dashboard(faculty_member)
                 refresh_faculty_submission_bin(faculty_member)
                 refresh_faculty_my_submissions(faculty_member)

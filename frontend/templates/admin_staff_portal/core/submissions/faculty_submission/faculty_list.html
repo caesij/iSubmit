@@ -68,12 +68,12 @@
                     <th>Faculty Member</th>
                     <th>Faculty Type</th>
                     <th>Submissions</th>
-                    <th>Status</th>
+                    <th>Compliance Status</th>
                     <th>Latest Submission</th>
                     <th>Action</th>
                 </tr>
             </thead>
-            <tbody>
+            <tbody data-live-container="faculty-overview-table">
                 {% for row in submissions %}
                     <tr>
                         <td>
@@ -92,14 +92,12 @@
                             {{ row.submitted_count }} of {{ row.total_count }} Documents
                         </td>
                         <td>
-                            {% if not row.latest_submission %}
-                                <span class="faculty-status status-no-file">No file uploaded</span>
-                            {% elif row.latest_submission.status == 'UNDER_REVIEW' %}
-                                <span class="faculty-status status-under-review">Under Review</span>
-                            {% elif row.latest_submission.status == 'APPROVED' %}
+                            {% if row.compliance_status == 'approved' %}
                                 <span class="faculty-status status-approved">Approved</span>
+                            {% elif row.compliance_status == 'complete' %}
+                                <span class="faculty-status status-complete">Complete</span>
                             {% else %}
-                                <span class="faculty-status status-pending">Pending</span>
+                                <span class="faculty-status status-incomplete">Incomplete</span>
                             {% endif %}
                         </td>
                         <td>
@@ -123,7 +121,7 @@
         </table>
 
         {% if is_paginated or page_obj %}
-        <div class="pagination-footer">
+        <div class="pagination-footer" data-live-container="faculty-overview-pagination">
             <span class="pagination-info">Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }} faculty members</span>
             <div class="pagination-controls">
                 {% if page_obj.has_previous %}

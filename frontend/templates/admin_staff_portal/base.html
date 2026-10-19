@@ -411,53 +411,97 @@
     <!-- Realtime WebSocket -->
     <script>
     (function () {
-        const protocol =
-            window.location.protocol === "https:"
-                ? "wss:"
-                : "ws:";
+        const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+        const refreshableContainers = [
+            "[data-live-container='requirements-table']",
+            "[data-live-container='requirements-pagination']",
+            "[data-live-container='faculty-submissions-table']",
+            "[data-live-container='faculty-submissions-pagination']",
+            "[data-live-container='faculty-overview-table']",
+            "[data-live-container='faculty-overview-pagination']",
+            "[data-live-panel]"
+        ];
+        let socket;
+        let reconnectAttempt = 0;
+        let refreshInProgress = false;
+        let refreshTimer;
 
-        const socket = new WebSocket(
-            `${protocol}//${window.location.host}/ws/realtime/`
-        );
-
-        socket.addEventListener("open", function () {
-            console.log("Realtime connected");
-        });
-
-        socket.addEventListener("message", function (event) {
-            const message = JSON.parse(event.data);
-
-            if (message.event === "admin-dashboard.update") {
-                document.dispatchEvent(
-                    new CustomEvent("admin-dashboard-update")
-                );
+        function refreshCurrentPage() {
+            if (refreshInProgress || !refreshableContainers.some(function (selector) {
+                return document.querySelector(selector);
+            })) {
+                return;
             }
 
-            if (message.event === "staff-dashboard.update") {
-                document.dispatchEvent(
-                    new CustomEvent("staff-dashboard-update")
-                );
+            if (document.activeElement && document.activeElement.closest("form")) {
+                clearTimeout(refreshTimer);
+                refreshTimer = setTimeout(refreshCurrentPage, 3000);
+                return;
             }
 
-            if (message.event === "notification.new") {
-                document.dispatchEvent(
-                    new CustomEvent("notification-new", {
-                        detail: message.data
-                    })
-                );
+            refreshInProgress = true;
+            fetch(window.location.href, {
+                headers: {"X-Requested-With": "XMLHttpRequest"},
+                cache: "no-store"
+            })
+                .then(function (response) {
+                    if (!response.ok) {
+                        throw new Error("Realtime refresh failed.");
+                    }
+                    return response.text();
+                })
+                .then(function (html) {
+                    const parsed = new DOMParser().parseFromString(html, "text/html");
+                    refreshableContainers.forEach(function (selector) {
+                        const current = document.querySelector(selector);
+                        const updated = parsed.querySelector(selector);
+                        if (current && updated) {
+                            current.replaceWith(updated);
+                        }
+                    });
+                    document.dispatchEvent(new CustomEvent("submissions-refreshed"));
+                })
+                .catch(function (error) {
+                    console.error("Realtime page refresh failed:", error);
+                })
+                .finally(function () {
+                    refreshInProgress = false;
+                });
+        }
+
+        function connect() {
+            socket = new WebSocket(`${protocol}//${window.location.host}/ws/realtime/`);
+            socket.addEventListener("open", function () {
+                reconnectAttempt = 0;
+            });
+            socket.addEventListener("message", function (event) {
+                const message = JSON.parse(event.data);
+                if (message.event === "submissions.update") {
+                    refreshCurrentPage();
+                }
+                if (message.event === "admin-dashboard.update") {
+                    document.dispatchEvent(new CustomEvent("admin-dashboard-update"));
+                }
+                if (message.event === "staff-dashboard.update") {
+                    document.dispatchEvent(new CustomEvent("staff-dashboard-update"));
+                }
+                if (message.event === "notification.new") {
+                    document.dispatchEvent(new CustomEvent("notification-new", {detail: message.data}));
+                }
+            });
+            socket.addEventListener("close", function () {
+                const delay = Math.min(30000, 1000 * (2 ** reconnectAttempt));
+                reconnectAttempt += 1;
+                setTimeout(connect, delay);
+            });
+        }
+
+        connect();
+        setInterval(function () {
+            if (document.visibilityState === "visible" && (!socket || socket.readyState !== WebSocket.OPEN)) {
+                refreshCurrentPage();
             }
-        });
-
-        socket.addEventListener("close", function () {
-            console.log("Realtime disconnected");
-        });
-
-        socket.addEventListener("error", function (error) {
-            console.error(
-                "Realtime WebSocket error:",
-                error
-            );
-        });
+        }, 30000);
     })();
     </script>
 
