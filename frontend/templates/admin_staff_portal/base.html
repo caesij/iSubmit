@@ -485,6 +485,18 @@
                 if (message.event === "staff-dashboard.update") {
                     document.dispatchEvent(new CustomEvent("staff-dashboard-update"));
                 }
+                if (message.event === "security.activity-updated") {
+                    document.dispatchEvent(new CustomEvent("security-activity-updated"));
+                }
+                if (message.event === "security.session-revoked") {
+                    const notice = document.createElement("div");
+                    notice.textContent = "This browser session was logged out from another browser.";
+                    notice.style.cssText = "position:fixed;top:20px;right:20px;z-index:9999;background:#7f1d1d;color:#fff;padding:12px 16px;border-radius:8px;font:13px sans-serif;";
+                    document.body.appendChild(notice);
+                    setTimeout(function () {
+                        window.location.href = "{% url 'accounts:login' %}";
+                    }, 1200);
+                }
                 if (message.event === "notification.new") {
                     document.dispatchEvent(new CustomEvent("notification-new", {detail: message.data}));
                 }

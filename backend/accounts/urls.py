@@ -8,6 +8,9 @@ urlpatterns = [
     # Authentication URLs
     path('login/', views.login_view, name='login'),
     path('logout/', views.logout_view, name='logout'),
+    path('security/sessions/<int:record_id>/revoke/', views.revoke_session_view, name='revoke_session'),
+    path('security/sessions/revoke-others/', views.revoke_other_sessions_view, name='revoke_other_sessions'),
+    path('security/sessions/revoke-selected/', views.revoke_selected_sessions_view, name='revoke_selected_sessions'),
 
     # Password Reset URLs
     path('reset_password/',

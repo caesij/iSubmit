@@ -209,8 +209,7 @@ class SecurityLoginRecord(models.Model):
     )
 
     device_token_hash = models.CharField(max_length=64)
-
-    ip_address = models.CharField(max_length=45, default='unknown')
+    session_key = models.CharField(max_length=40, null=True, blank=True)
     user_agent = models.CharField(max_length=255, blank=True)
 
     first_seen = models.DateTimeField(auto_now_add=True)
@@ -220,16 +219,17 @@ class SecurityLoginRecord(models.Model):
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=['user', 'device_token_hash', 'ip_address'],
-                name='uniq_user_device_ip_30d',
+                fields=['user', 'device_token_hash', 'session_key'],
+                name='uniq_user_device_session'
             )
         ]
+
         indexes = [
             models.Index(
                 fields=['user', 'expires_at'],
-                name='acct_sec_login_exp_idx',
+                name='acct_sec_login_exp_idx'
             )
         ]
 
     def __str__(self):
-        return f'{self.user} - {self.ip_address}'
+        return f'{self.user} - {self.user_agent}'

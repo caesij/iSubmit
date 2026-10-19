@@ -43,6 +43,19 @@
 
 .settings-actions { margin-top: 18px; text-align: right; }
 .btn-save { padding: 9px 20px; background: #7f1d1d; color: #fff; border: none; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; }
+.activity-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
+.activity-table { width: 100%; border-collapse: collapse; margin-top: 16px; font-size: 12px; }
+.activity-table th, .activity-table td { padding: 10px 8px; border-bottom: 1px solid #e5e7eb; text-align: left; }
+.activity-table th { color: #374151; font-size: 11px; }
+.activity-table td { color: #4b5563; }
+.activity-device { color: #1f2937; font-weight: 600; }
+.activity-current { color: #15803d; font-size: 10px; font-weight: 700; margin-left: 5px; }
+.activity-action { border: 0; background: none; color: #b91c1c; cursor: pointer; font-size: 11px; font-weight: 700; padding: 0; }
+.activity-empty { color: #6b7280; font-size: 12px; margin: 16px 0 0; }
+.btn-logout-all { border: 1px solid #b91c1c; background: #fff; color: #b91c1c; border-radius: 7px; padding: 8px 12px; font-size: 11px; font-weight: 700; cursor: pointer; }
+.activity-selection { display: flex; justify-content: space-between; align-items: center; margin-top: 14px; }
+.activity-selection button { border: 0; background: none; color: #b91c1c; cursor: pointer; font-size: 11px; font-weight: 700; }
+.activity-selection button:disabled { color: #9ca3af; cursor: not-allowed; }
 </style>
 
 <div class="settings-tabs">
@@ -102,10 +115,108 @@
     </div>
 </form>
 
+<div class="section-card" data-login-activity>
+    <div class="activity-head">
+        <div class="section-head" style="margin-bottom:0;">
+            <div class="section-icon icon-blue">🖥️</div>
+            <div>
+                <div class="section-title">Login Activity</div>
+            </div>
+        </div>
+        {% if login_activity|length > 1 %}
+            <form method="POST" action="{% url 'accounts:revoke_other_sessions' %}">
+                {% csrf_token %}
+                <button type="submit" class="btn-logout-all">Log out all other sessions</button>
+            </form>
+        {% endif %}
+    </div>
+
+    {% if login_activity %}
+        <form id="session-selection-form" method="POST" action="{% url 'accounts:revoke_selected_sessions' %}">
+            {% csrf_token %}
+        </form>
+        <table class="activity-table">
+            <thead>
+                <tr>
+                    <th></th>
+                    <th>Device / Browser</th>
+                    <th>First Seen</th>
+                    <th>Last Active</th>
+                    <th>Session</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for activity in login_activity %}
+                    <tr>
+                        <td>
+                            <input
+                                type="checkbox"
+                                class="session-checkbox"
+                                value="{{ activity.record.id }}"
+                                {% if activity.is_current %}disabled{% endif %}
+                                aria-label="Select {{ activity.device }} to log out"
+                            >
+                        </td>
+                        <td class="activity-device">
+                            {{ activity.device }}
+                            {% if activity.is_current %}<span class="activity-current">Current</span>{% endif %}
+                        </td>
+                        <td>{{ activity.record.first_seen|date:"M j, Y g:i A" }}</td>
+                        <td>{{ activity.record.last_seen|date:"M j, Y g:i A" }}</td>
+                        <td>{% if activity.is_current %}Active{% else %}Other session{% endif %}</td>
+                        <td>
+                            <form method="POST" action="{% url 'accounts:revoke_session' activity.record.id %}">
+                                {% csrf_token %}
+                                <button type="submit" class="activity-action">
+                                    {% if activity.is_current %}Log out{% else %}Log out{% endif %}
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <div class="activity-selection">
+            <span>Log out selected sessions</span>
+            <button type="submit" form="session-selection-form" id="logout-selected" disabled>Log out selected sessions</button>
+        </div>
+    {% else %}
+        <p class="activity-empty">No active login sessions were found.</p>
+    {% endif %}
+</div>
+
 <script>
 function togglePw(btn) {
     const input = btn.previousElementSibling;
     input.type = input.type === 'password' ? 'text' : 'password';
 }
+
+function bindSessionSelection() {
+    const form = document.getElementById('session-selection-form');
+    const button = document.getElementById('logout-selected');
+    if (!form || !button) return;
+    const checkboxes = Array.from(document.querySelectorAll('.session-checkbox:not(:disabled)'));
+    checkboxes.forEach(function (checkbox) {
+        checkbox.onchange = function () {
+            form.querySelectorAll('input[name="record_ids"]').forEach(function (input) {
+                input.remove();
+            });
+            checkboxes.filter(function (item) { return item.checked; }).forEach(function (item) {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'record_ids';
+                input.value = item.value;
+                form.appendChild(input);
+            });
+            button.disabled = !checkboxes.some(function (item) { return item.checked; });
+        };
+    });
+}
+
+bindSessionSelection();
+document.addEventListener('security-activity-updated', function () {
+    window.location.reload();
+});
 </script>
 {% endblock %}

@@ -10,6 +10,15 @@ class RealtimeConsumer(AsyncJsonWebsocketConsumer):
 
         self.group_name = f'user_{user.pk}'
         await self.channel_layer.group_add(self.group_name, self.channel_name)
+        self.session_group_name = None
+        session = self.scope.get('session')
+        session_key = session.session_key if session else None
+        if session_key:
+            self.session_group_name = f'session_{session_key}'
+            await self.channel_layer.group_add(
+                self.session_group_name,
+                self.channel_name,
+            )
 
         self.is_faculty_user = user.is_faculty
         self.is_staff_user = user.is_staff_role
@@ -35,6 +44,11 @@ class RealtimeConsumer(AsyncJsonWebsocketConsumer):
     async def disconnect(self, close_code):
         if hasattr(self, 'group_name'):
             await self.channel_layer.group_discard(self.group_name, self.channel_name)
+        if self.session_group_name:
+            await self.channel_layer.group_discard(
+                self.session_group_name,
+                self.channel_name,
+            )
 
         if getattr(self, 'is_faculty_user', False):
             await self.channel_layer.group_discard('faculty_submission_bins', self.channel_name)

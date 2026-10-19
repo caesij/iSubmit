@@ -1,0 +1,109 @@
+{% extends 'faculty_portal/base.html' %}
+
+{% block title %}Account &amp; Security - iSubmit{% endblock %}
+
+{% block content %}
+<style>
+.security-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 20px 22px; margin-bottom: 16px; }
+.security-card h2 { font-size: 16px; margin: 0 0 4px; }
+.security-card p { color: #6b7280; font-size: 12px; }
+.security-fields { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.security-fields label { display: block; font-size: 12px; font-weight: 700; margin-bottom: 5px; }
+.security-fields input { width: 100%; box-sizing: border-box; padding: 9px; border: 1px solid #e5e7eb; border-radius: 7px; }
+.security-actions { text-align: right; margin-top: 16px; }
+.security-actions button, .logout-all { border: 0; border-radius: 7px; padding: 9px 14px; background: #7f1d1d; color: #fff; font-weight: 700; cursor: pointer; }
+.activity-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 14px; }
+.activity-table th, .activity-table td { text-align: left; padding: 9px 7px; border-bottom: 1px solid #e5e7eb; }
+.activity-table th { font-size: 11px; }
+.activity-device { font-weight: 700; }
+.current { color: #15803d; font-size: 10px; margin-left: 5px; }
+.activity-action { border: 0; background: none; color: #b91c1c; font-weight: 700; cursor: pointer; }
+.activity-heading { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.activity-selection { display: flex; justify-content: space-between; align-items: center; margin-top: 14px; }
+.activity-selection button { border: 0; background: none; color: #b91c1c; cursor: pointer; font-size: 11px; font-weight: 700; }
+.activity-selection button:disabled { color: #9ca3af; cursor: not-allowed; }
+</style>
+
+<div class="security-card" data-login-activity>
+    <h2>Account &amp; Security</h2>
+    <p>Manage your password and active sessions without collecting your location.</p>
+</div>
+
+<form method="POST" class="security-card">
+    {% csrf_token %}
+    <h2>Change Password</h2>
+    <p>Update your password to keep your account secure.</p>
+    <div class="security-fields">
+        <label>Current Password {{ form.old_password }}</label>
+        <label>New Password {{ form.new_password1 }}</label>
+        <label>Confirm New Password {{ form.new_password2 }}</label>
+    </div>
+    <div class="security-actions"><button type="submit">Update Password</button></div>
+</form>
+
+<div class="security-card">
+    <div class="activity-heading">
+        <div>
+            <h2>Login Activity</h2>
+        </div>
+        {% if login_activity|length > 1 %}
+            <form method="POST" action="{% url 'accounts:revoke_other_sessions' %}">
+                {% csrf_token %}
+                <button type="submit" class="logout-all">Log out all other sessions</button>
+            </form>
+        {% endif %}
+    </div>
+    {% if login_activity %}
+        <form id="session-selection-form" method="POST" action="{% url 'accounts:revoke_selected_sessions' %}">{% csrf_token %}</form>
+        <table class="activity-table">
+            <thead><tr><th></th><th>Device / Browser</th><th>First Seen</th><th>Last Active</th><th>Session</th><th></th></tr></thead>
+            <tbody>
+                {% for activity in login_activity %}
+                    <tr>
+                        <td><input type="checkbox" class="session-checkbox" value="{{ activity.record.id }}" {% if activity.is_current %}disabled{% endif %} aria-label="Select {{ activity.device }} to log out"></td>
+                        <td class="activity-device">{{ activity.device }}{% if activity.is_current %}<span class="current">Current</span>{% endif %}</td>
+                        <td>{{ activity.record.first_seen|date:"M j, Y g:i A" }}</td>
+                        <td>{{ activity.record.last_seen|date:"M j, Y g:i A" }}</td>
+                        <td>{% if activity.is_current %}Active{% else %}Other session{% endif %}</td>
+                        <td><form method="POST" action="{% url 'accounts:revoke_session' activity.record.id %}">{% csrf_token %}<button class="activity-action" type="submit">Log out</button></form></td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <div class="activity-selection">
+            <span>Log out selected sessions</span>
+            <button type="submit" form="session-selection-form" id="logout-selected" disabled>Log out selected sessions</button>
+        </div>
+    {% else %}
+        <p>No active login sessions were found.</p>
+    {% endif %}
+</div>
+    <script>
+    function bindSessionSelection() {
+        const form = document.getElementById('session-selection-form');
+        const button = document.getElementById('logout-selected');
+        if (!form || !button) return;
+        const checkboxes = Array.from(document.querySelectorAll('.session-checkbox:not(:disabled)'));
+        checkboxes.forEach(function (checkbox) {
+            checkbox.onchange = function () {
+                form.querySelectorAll('input[name="record_ids"]').forEach(function (input) {
+                    input.remove();
+                });
+                checkboxes.filter(function (item) { return item.checked; }).forEach(function (item) {
+                    const input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = 'record_ids';
+                    input.value = item.value;
+                    form.appendChild(input);
+                });
+                button.disabled = !checkboxes.some(function (item) { return item.checked; });
+            };
+        });
+    }
+
+    bindSessionSelection();
+    document.addEventListener('security-activity-updated', function () {
+        window.location.reload();
+    });
+    </script>
+    {% endblock %}

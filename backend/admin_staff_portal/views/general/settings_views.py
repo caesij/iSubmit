@@ -10,6 +10,7 @@ from accounts.utils import get_or_create_preferences
 from accounts.forms import PreferencesForm
 from accounts.models import StaffPermission
 from notifications.models import NotificationPreference
+from accounts.security import get_login_activity
 
 PERMISSION_FIELDS = [
     ('review_faculty_submissions', 'Review Faculty Submissions', 'Review submitted documents from faculty.'),
@@ -81,7 +82,13 @@ def account_and_security_view(request):
     else:
         form = PasswordChangeForm(request.user)
         
-    context = {'form': form}
+    context = {
+        'form': form,
+        'login_activity': get_login_activity(
+            request.user,
+            request.session.session_key,
+        ),
+    }
 
     return render(
         request,
