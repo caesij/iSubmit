@@ -514,8 +514,8 @@
                             <div>
                                 <div class="overview-name">{{ sub.requirement.requirement_title }}</div>
                                 <div class="overview-when">
-                                    {{ sub.initially_submitted_at|display_date }} •
-                                    {{ sub.initially_submitted_at|display_time }}
+                                    {{ sub.initially_submitted_at|display_date:request.user }} •
+                                    {{ sub.initially_submitted_at|display_time:request.user }}
                                 </div>
                             </div>
                         </div>

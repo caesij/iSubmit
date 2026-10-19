@@ -122,7 +122,7 @@
                 </p>
 
                 <small>
-                    {{ notification.created_at|display_date }} {{ notification.created_at|display_time }}
+                    {{ notification.created_at|display_date:request.user }} {{ notification.created_at|display_time:request.user }}
                 </small>
 
             </button>

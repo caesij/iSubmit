@@ -10,10 +10,10 @@ def get_attr(obj, attr_name):
 
 
 @register.filter
-def display_date(value):
-    return format_display_date(value)
+def display_date(value, user=None):
+    return format_display_date(value, user)
 
 
 @register.filter
-def display_time(value):
-    return format_display_time(value)
+def display_time(value, user=None):
+    return format_display_time(value, user)

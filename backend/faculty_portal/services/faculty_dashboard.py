@@ -89,7 +89,7 @@ def get_dashboard_data(user):
     upcoming_deadlines = [
         {
             'requirement_title': requirement.requirement_title,
-            'deadline': format_display_date(requirement.deadline),
+            'deadline': format_display_date(requirement.deadline, user),
         }
         for requirement in deadline_queryset
     ]

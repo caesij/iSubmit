@@ -25,16 +25,16 @@
         <td>{{ doc.requirement.category }}</td>
         <td>
             {% if doc.status == 'RESUBMITTED' and doc.resubmitted_at %}
-                <div>                {{ doc.resubmitted_at|display_date }}</div>
-                <div class="text-sub">                {{ doc.resubmitted_at|display_time }}</div>
+                <div>                                {{ doc.resubmitted_at|display_date:request.user }}</div>
+                <div class="text-sub">                                {{ doc.resubmitted_at|display_time:request.user }}</div>
             {% else %}
-                <div>                {{ doc.initially_submitted_at|display_date }}</div>
-                <div class="text-sub">                {{ doc.initially_submitted_at|display_time }}</div>
+                <div>                                {{ doc.initially_submitted_at|display_date:request.user }}</div>
+                <div class="text-sub">                                {{ doc.initially_submitted_at|display_time:request.user }}</div>
             {% endif %}
         </td>
         <td>
-            <div>            {{ doc.requirement.deadline|display_date }}</div>
-            <div class="text-sub">            {{ doc.requirement.deadline|display_time }}</div>
+            <div>                        {{ doc.requirement.deadline|display_date:request.user }}</div>
+            <div class="text-sub">                        {{ doc.requirement.deadline|display_time:request.user }}</div>
         </td>
         <td>
             {% if doc.status == 'APPROVED' %}

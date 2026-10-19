@@ -13,7 +13,7 @@ def profile_picture_path(instance, filename):
 class User(AbstractBaseUser, PermissionsMixin):
     # User Preferences
     class DateFormatChoice(models.TextChoices):
-        LONG = 'F j, Y', 'Month DD, YYYY (June 1, 2026)'
+        LONG = 'F j, Y', 'MMMM DD, YYYY (June 1, 2026)'
         SHORT = 'm/d/Y', 'MM/DD/YYYY'
         ISO = 'Y-m-d', 'YYYY-MM-DD'
 
@@ -21,7 +21,6 @@ class User(AbstractBaseUser, PermissionsMixin):
         TWELVE = '12', '12-hour (AM/PM)'
         TWENTY_FOUR = '24', '24-hour'
     
-    language = models.CharField(max_length=10, default='en')
     timezone = models.CharField(max_length=50, default='Asia/Manila')
     
     date_format = models.CharField(

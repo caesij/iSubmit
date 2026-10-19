@@ -13,18 +13,24 @@ def _localize(value):
     return value
 
 
-def format_display_date(value):
+def format_display_date(value, user=None):
     if not value:
         return ''
 
-    return date_format(_localize(value), 'M j, Y')
+    date_format_value = getattr(user, 'date_format', 'F j, Y')
+    return date_format(_localize(value), date_format_value)
 
 
-def format_display_time(value):
+def format_display_time(value, user=None):
     if not value:
         return ''
 
     if isinstance(value, date) and not isinstance(value, datetime):
         return ''
 
-    return date_format(_localize(value), 'g:i A')
+    time_format_value = (
+        'H:i'
+        if getattr(user, 'time_format', '12') == '24'
+        else 'g:i A'
+    )
+    return date_format(_localize(value), time_format_value)

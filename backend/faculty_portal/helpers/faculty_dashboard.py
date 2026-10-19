@@ -40,12 +40,12 @@ def get_overview_queryset(user, tab='all'):
     return overview_qs
 
 
-def serialize_overview_submissions(overview_qs):
+def serialize_overview_submissions(overview_qs, user):
     return [
         {
             'title': submission.requirement.requirement_title,
-            'date': format_display_date(submission.initially_submitted_at),
-            'time': format_display_time(submission.initially_submitted_at),
+            'date': format_display_date(submission.initially_submitted_at, user),
+            'time': format_display_time(submission.initially_submitted_at, user),
             'status': submission.status,
         }
         for submission in overview_qs[:5]

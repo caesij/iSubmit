@@ -19,13 +19,15 @@ def dashboard_data_view(request):
     if request.GET.get('overview_only') == '1':
         return JsonResponse({
             'overview_submissions': serialize_overview_submissions(
-                get_overview_queryset(request.user, tab)
+                get_overview_queryset(request.user, tab),
+                request.user,
             )
         })
 
     data = get_dashboard_data(request.user)
     data['overview_submissions'] = serialize_overview_submissions(
-        get_overview_queryset(request.user, tab)
+        get_overview_queryset(request.user, tab),
+        request.user,
     )
 
     return JsonResponse(data)

@@ -73,8 +73,8 @@
                 </td>
                 <td class="last-active">
                     {% if managed_user.last_login %}
-                    <div>{{ managed_user.last_login|display_date }}</div>
-                    <div class="last-active-time">{{ managed_user.last_login|display_time }}</div>
+                    <div>                    {{ managed_user.last_login|display_date:request.user }}</div>
+                    <div class="last-active-time">                    {{ managed_user.last_login|display_time:request.user }}</div>
                     {% else %}
                     Never
                     {% endif %}

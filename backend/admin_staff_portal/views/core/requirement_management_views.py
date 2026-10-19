@@ -49,8 +49,8 @@ def bulk_requirements_view(request):
         deadline = parse_datetime(item.get('deadline', ''))
 
         if deadline:
-            display_item['deadline_date'] = format_display_date(deadline)
-            display_item['deadline_time'] = format_display_time(deadline)
+            display_item['deadline_date'] = format_display_date(deadline, request.user)
+            display_item['deadline_time'] = format_display_time(deadline, request.user)
         else:
             display_item['deadline_date'] = ''
             display_item['deadline_time'] = ''
@@ -238,7 +238,7 @@ def post_bulk_requirements(request):
                             (
                                 f"• {requirement.requirement_title} — "
                                 f"Deadline: "
-                                f"{format_display_date(requirement.deadline)}"
+                                f"{format_display_date(requirement.deadline, faculty_member)}"
                                 if requirement.deadline
                                 else f"• {requirement.requirement_title} — No deadline set"
                             )

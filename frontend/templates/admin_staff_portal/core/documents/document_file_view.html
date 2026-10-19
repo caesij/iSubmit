@@ -186,7 +186,7 @@
           <span class="dot"></span>
           <div>
             <span class="label">Submitted on</span>
-            <span class="value">            {{ document.initially_submitted_at|display_date }} {{ document.initially_submitted_at|display_time }}</span>
+            <span class="value">                        {{ document.initially_submitted_at|display_date:request.user }} {{ document.initially_submitted_at|display_time:request.user }}</span>
           </div>
         </div>
         <div class="adf-row">
@@ -218,13 +218,13 @@
         {% if document.reviewed_by %}
           <div class="adf-review-item">
             <div class="who">Reviewed by {{ document.reviewed_by.get_full_name }}</div>
-            <div class="when">            {{ document.reviewed_at|display_date }} {{ document.reviewed_at|display_time }}</div>
+            <div class="when">                        {{ document.reviewed_at|display_date:request.user }} {{ document.reviewed_at|display_time:request.user }}</div>
           </div>
         {% endif %}
         {% if document.approved_by %}
           <div class="adf-review-item">
             <div class="who">Approved by {{ document.approved_by.get_full_name }}</div>
-            <div class="when">            {{ document.approved_at|display_date }} {{ document.approved_at|display_time }}</div>
+            <div class="when">                        {{ document.approved_at|display_date:request.user }} {{ document.approved_at|display_time:request.user }}</div>
           </div>
         {% endif %}
       </div>

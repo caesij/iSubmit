@@ -205,11 +205,11 @@ Upload and manage academic documents
                         <td>
 
                             <div>
-                                {{ doc.requirement.deadline|display_date }}
+                                {{ doc.requirement.deadline|display_date:request.user }}
                             </div>
 
                             <div class="text-sub">
-                                {{ doc.requirement.deadline|display_time }}
+                                {{ doc.requirement.deadline|display_time:request.user }}
                             </div>
 
                         </td>
@@ -219,21 +219,21 @@ Upload and manage academic documents
                             {% if doc.status == 'RESUBMITTED' and doc.resubmitted_at %}
 
                                 <div>
-                                    {{ doc.resubmitted_at|display_date }}
+                                    {{ doc.resubmitted_at|display_date:request.user }}
                                 </div>
 
                                 <div class="text-sub">
-                                    {{ doc.resubmitted_at|display_time }}
+                                    {{ doc.resubmitted_at|display_time:request.user }}
                                 </div>
 
                             {% elif doc.initially_submitted_at %}
 
                                 <div>
-                                    {{ doc.initially_submitted_at|display_date }}
+                                    {{ doc.initially_submitted_at|display_date:request.user }}
                                 </div>
 
                                 <div class="text-sub">
-                                    {{ doc.initially_submitted_at|display_time }}
+                                    {{ doc.initially_submitted_at|display_time:request.user }}
                                 </div>
 
                             {% else %}

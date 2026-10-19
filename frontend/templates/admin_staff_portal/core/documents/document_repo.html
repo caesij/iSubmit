@@ -116,8 +116,8 @@
                         <td>{{ sub.requirement.academic_term|cut:"A.Y. " }}</td>
                         <td>
                             {% if sub.approved_at %}
-                                <div>                                {{ sub.approved_at|display_date }}</div>
-                                <div class="text-sub">                                {{ sub.approved_at|display_time }}</div>
+                                <div>                                                                {{ sub.approved_at|display_date:request.user }}</div>
+                                <div class="text-sub">                                                                {{ sub.approved_at|display_time:request.user }}</div>
                             {% else %}
                                 <span class="text-sub">&mdash;</span>
                             {% endif %}

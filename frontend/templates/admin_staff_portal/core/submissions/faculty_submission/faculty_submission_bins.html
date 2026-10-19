@@ -187,12 +187,12 @@
                             <div class="text-sub">{{ sub.requirement.academic_term }}</div>
                         </td>
                         <td>
-                            <div>                            {{ sub.initially_submitted_at|display_date }}</div>
-                            <div class="text-sub">                            {{ sub.initially_submitted_at|display_time }}</div>
+                            <div>                                                        {{ sub.initially_submitted_at|display_date:request.user }}</div>
+                            <div class="text-sub">                                                        {{ sub.initially_submitted_at|display_time:request.user }}</div>
                         </td>
                         <td>
-                            <div>                            {{ sub.requirement.deadline|display_date }}</div>
-                            <div class="text-sub">                            {{ sub.requirement.deadline|display_time }}</div>
+                            <div>                                                        {{ sub.requirement.deadline|display_date:request.user }}</div>
+                            <div class="text-sub">                                                        {{ sub.requirement.deadline|display_time:request.user }}</div>
                         </td>
                         <td>
                             <span class="pill

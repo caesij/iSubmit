@@ -9,8 +9,8 @@
     <td>{{ req.academic_term }} - {{ req.get_semester_display }}</td>
 
     <td>
-        <div>{{ req.deadline|display_date }}</div>
-        <div class="text-sub">{{ req.deadline|display_time }}</div>
+        <div>        {{ req.deadline|display_date:request.user }}</div>
+        <div class="text-sub">        {{ req.deadline|display_time:request.user }}</div>
     </td>
 
     <td>

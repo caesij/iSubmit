@@ -10,7 +10,7 @@
                 <div class="notification-meta">
                     {{ notification.get_notification_type_display }}
                     ·
-                    {{ notification.created_at|display_date }} {{ notification.created_at|display_time }}
+                    {{ notification.created_at|display_date:request.user }} {{ notification.created_at|display_time:request.user }}
 
                     {% if not notification.is_read %}
                         · Unread

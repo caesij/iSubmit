@@ -140,7 +140,7 @@ def assess_login_security(request, user):
         'device_token': device_token,
         'user_agent': user_agent,
         'login_time': (
-            f'{format_display_date(now)} at {format_display_time(now)}'
+            f'{format_display_date(now, user)} at {format_display_time(now, user)}'
         ),
         'should_alert': should_alert
     }
@@ -162,5 +162,9 @@ def send_login_security_alert(user, login_info):
             "If you do not recognize this login, change your password "
             "and contact your system administrator."
         ),
-        link=reverse('faculty_portal:account_security' if user.is_faculty else 'admin_staff_portal:account_security')
+        link=reverse(
+            'faculty_portal:account_and_security'
+            if user.is_faculty
+            else 'admin_staff_portal:account_and_security'
+        )
     )

@@ -206,9 +206,9 @@
                             <td>{{ submission.requirement.requirement_title }}</td>
                             <td>
                                 {% if submission.status == 'RESUBMITTED' and submission.resubmitted_at %}
-                                    {{ submission.resubmitted_at|display_date }}
+                                    {{ submission.resubmitted_at|display_date:request.user }}
                                 {% else %}
-                                    {{ submission.initially_submitted_at|display_date }}
+                                    {{ submission.initially_submitted_at|display_date:request.user }}
                                 {% endif %}
                             </td>
                             <td>

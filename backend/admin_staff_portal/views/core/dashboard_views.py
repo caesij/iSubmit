@@ -23,7 +23,10 @@ def admin_dashboard_data_view(request):
             'faculty': submission.faculty.get_full_name(),
             'faculty_type': submission.faculty.get_faculty_type_display(),
             'bin_title': submission.requirement.requirement_title,
-            'latest_submission_date': format_display_date(latest_submission_date),
+            'latest_submission_date': format_display_date(
+                latest_submission_date,
+                request.user,
+            ),
             'status': submission.status,
             'faculty_bins_url': reverse(
                 'admin_staff_portal:faculty_submission_bins_view',
@@ -78,7 +81,10 @@ def staff_dashboard_data_view(request):
             'faculty': submission.faculty.get_full_name(),
             'faculty_type': submission.faculty.get_faculty_type_display(),
             'bin_title': submission.requirement.requirement_title,
-            'latest_submission_date': format_display_date(latest_submission_date),
+            'latest_submission_date': format_display_date(
+                latest_submission_date,
+                request.user,
+            ),
             'status': submission.status,
             'faculty_bins_url': reverse(
                 'admin_staff_portal:faculty_submission_bins_view',

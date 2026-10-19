@@ -40,14 +40,9 @@
 <form method="POST" class="settings-card">
     {% csrf_token %}
     <h2>Preferences</h2>
-    <p class="card-sub">Set your language, time, and other application preferences.</p>
+    <p class="card-sub">Set your date, time, and other application preferences.</p>
 
     <div class="pref-grid">
-        <div class="pref-field">
-            <label>Language</label>
-            <div class="field-note">Choose your preferred language.</div>
-            {{ form.language }}
-        </div>
         <div class="pref-field">
             <label>Date Format</label>
             <div class="field-note">Choose how date are displayed.</div>

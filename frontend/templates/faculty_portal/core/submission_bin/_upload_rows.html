@@ -52,10 +52,10 @@
 
         <td>
             <div>
-                {{ row.requirement.deadline|display_date }}
+                {{ row.requirement.deadline|display_date:request.user }}
             </div>
             <div class="text-sub">
-                {{ row.requirement.deadline|display_time }}
+                {{ row.requirement.deadline|display_time:request.user }}
             </div>
         </td>
 

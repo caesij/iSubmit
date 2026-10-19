@@ -77,7 +77,7 @@ class AdminStaffProfileForm(forms.ModelForm):
 class PreferencesForm(forms.ModelForm):
     class Meta:
         model = User
-        fields = ['language', 'timezone', 'date_format', 'time_format']
+        fields = ['timezone', 'date_format', 'time_format']
         widgets = {
             'timezone': forms.Select(choices=[
                 ('Asia/Manila', '(GMT +08:00) Manila, Philippines'),
