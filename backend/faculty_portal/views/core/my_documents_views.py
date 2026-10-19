@@ -5,12 +5,11 @@ from django.views.decorators.http import require_http_methods
 
 from accounts.decorators import faculty
 from submissions.models import DocumentSubmission, Requirement
-from submissions.doc_search import SEARCH_MODES, search_documents
+from submissions.doc_search import search_documents
 
 
 def _render_repository(request, submissions, template_name, academic_term, document_type):
     search_query = request.GET.get('q', '').strip()
-    search_mode = request.GET.get('search_mode', 'full_text')
     sort_by = request.GET.get('sort_by', 'newest')
 
     if academic_term:
@@ -20,11 +19,11 @@ def _render_repository(request, submissions, template_name, academic_term, docum
             document_file__iendswith=f'.{document_type.lower()}'
         )
     if search_query:
-        submissions = search_documents(submissions, search_query, search_mode)
-
-    submissions = submissions.order_by(
-        'initially_submitted_at' if sort_by == 'oldest' else '-initially_submitted_at'
-    )
+        submissions = search_documents(submissions, search_query, sort_by)
+    else:
+        submissions = submissions.order_by(
+            'initially_submitted_at' if sort_by == 'oldest' else '-initially_submitted_at'
+        )
     
     if not submissions.exists():
         messages.info(request, "No documents match your filters.")
@@ -42,8 +41,6 @@ def _render_repository(request, submissions, template_name, academic_term, docum
         'selected_document_type': document_type,
         'selected_sort_by': sort_by,
         'search_query': search_query,
-        'selected_search_mode': search_mode if search_mode in dict(SEARCH_MODES) else 'full_text',
-        'search_modes': SEARCH_MODES,
     })
 
 

@@ -5,7 +5,7 @@ from django.views.decorators.http import require_http_methods
 
 from accounts.decorators import role_required
 from submissions.models import DocumentSubmission, Requirement
-from submissions.doc_search import SEARCH_MODES, search_documents
+from submissions.doc_search import search_documents
 
 
 @role_required('ADMIN', 'STAFF')
@@ -20,7 +20,6 @@ def document_repo_view(request):
     faculty_type = request.GET.get('faculty_type', '')
     sort_by = request.GET.get('sort_by', 'newest')
     search_query = request.GET.get('q', '').strip()
-    search_mode = request.GET.get('search_mode', 'full_text')
 
     if semester:
         submissions = submissions.filter(requirement__semester=semester)
@@ -29,11 +28,11 @@ def document_repo_view(request):
     if faculty_type:
         submissions = submissions.filter(faculty__faculty_type=faculty_type)
     if search_query:
-        submissions = search_documents(submissions, search_query, search_mode)
-
-    submissions = submissions.order_by(
-        'initially_submitted_at' if sort_by == 'oldest' else '-initially_submitted_at'
-    )
+        submissions = search_documents(submissions, search_query, sort_by)
+    else:
+        submissions = submissions.order_by(
+            'initially_submitted_at' if sort_by == 'oldest' else '-initially_submitted_at'
+        )
     
     if not submissions.exists():
         messages.info(request, "No approved documents match your filters.")
@@ -56,8 +55,6 @@ def document_repo_view(request):
         'selected_faculty_type': faculty_type,
         'selected_sort_by': sort_by,
         'search_query': search_query,
-        'selected_search_mode': search_mode if search_mode in dict(SEARCH_MODES) else "full_text",
-        'search_modes': SEARCH_MODES
     })
 
 
