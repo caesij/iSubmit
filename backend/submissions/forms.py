@@ -4,7 +4,7 @@ from django import forms
 from submissions.models import Requirement, DraftUpload, DocumentReview
 from django.core.exceptions import ValidationError
 
-ALLOWED_EXTENSIONS = {'.pdf', '.doc', '.docx', '.xlsx'}
+ALLOWED_EXTENSIONS = {'.pdf', '.docx', '.xlsx'}
 MAX_UPLOAD_SIZE = 10 * 1024 * 1024
 
 def _academic_year_choices():

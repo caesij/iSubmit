@@ -59,6 +59,10 @@ def _is_pdf(filename):
     return Path(filename).suffix.lower() == '.pdf'
 
 
+def _supports_direct_extraction(filename):
+    return Path(filename).suffix.lower() in {'.pdf', '.docx', '.xlsx'}
+
+
 def _stored_file_size(draft):
     try:
         return draft.draft_file.storage.size(draft.draft_file.name)
@@ -83,12 +87,24 @@ def _build_metadata_values(draft, uploaded_file=None):
         content_type = mimetypes.guess_type(filename)[0] or ''
         file_size = _stored_file_size(draft)
 
-    if not requirement.ocr_enabled:
-        ocr_status, ocr_error = OCR.NOT_REQUIRED, ''
-    elif not _is_pdf(filename):
-        ocr_status, ocr_error = OCR.FAILED, 'OCR supports PDF files only. Replace this file with a PDF.'
-    else:
+    if requirement.ocr_enabled:
+        ocr_status, ocr_error = (
+            (OCR.PENDING, '')
+            if _is_pdf(filename)
+            else (
+                OCR.FAILED,
+                'OCR supports PDF files only. Replace this file with a PDF.',
+            )
+        )
+    elif _supports_direct_extraction(filename):
         ocr_status, ocr_error = OCR.PENDING, ''
+    elif not _is_pdf(filename):
+        ocr_status, ocr_error = (
+            OCR.FAILED,
+            'This file type does not support text extraction.',
+        )
+    else:
+        ocr_status, ocr_error = OCR.FAILED, ''
 
     return {
         'faculty_id': draft.faculty_id,
@@ -116,8 +132,7 @@ def _needs_full_reset(draft, metadata):
     """True when the metadata no longer describes the draft's current file."""
     if metadata is None or metadata.storage_file_name != draft.draft_file.name:
         return True
-    # The requirement started requiring OCR after this file was uploaded.
-    return draft.requirement.ocr_enabled and metadata.ocr_status == OCR.NOT_REQUIRED
+    return metadata.ocr_status == OCR.NOT_REQUIRED
 
 
 def _needs_nlp_pending(draft, metadata):
@@ -167,7 +182,7 @@ def ensure_document_metadata(draft, uploaded_file=None, force_reset=False, metad
 
 
 # ---------------------------------------------------------------------------
-# OCR scheduling
+# Document extraction scheduling
 # ---------------------------------------------------------------------------
 
 def _mark_enqueue_failed(metadata_id, request_id):
@@ -182,8 +197,8 @@ def _mark_enqueue_failed(metadata_id, request_id):
 
     metadata.ocr_status = OCR.FAILED
     metadata.ocr_error = (
-        'OCR could not be queued. Check that the OCR worker and Redis are running, '
-        'then replace the PDF or contact support.'
+        'Document text extraction could not be queued. Check that the worker '
+        'and Redis are running, then replace the file or contact support.'
     )
     metadata.ocr_completed_at = timezone.now()
     metadata.save(update_fields=['ocr_status', 'ocr_error', 'ocr_completed_at', 'updated_at'])
@@ -194,26 +209,26 @@ def _mark_enqueue_failed(metadata_id, request_id):
         logger.exception('Could not refresh the faculty Submission Bin.')
 
 
-def _enqueue_ocr(metadata_id, request_id):
+def _enqueue_extraction(metadata_id, request_id):
     try:
-        from submissions.tasks import process_document_ocr
-        process_document_ocr.delay(str(metadata_id), str(request_id))
+        from submissions.tasks import process_document_extraction
+        process_document_extraction.delay(str(metadata_id), str(request_id))
     except Exception:
-        logger.exception('Could not queue OCR for metadata record %s.', metadata_id)
+        logger.exception('Could not queue document extraction for metadata record %s.', metadata_id)
         _mark_enqueue_failed(metadata_id, request_id)
 
 
-def schedule_ocr(metadata):
+def schedule_extraction(metadata):
     if not metadata or metadata.ocr_status != OCR.PENDING:
         return
     metadata_id, request_id = metadata.pk, metadata.ocr_request_id
-    transaction.on_commit(lambda: _enqueue_ocr(metadata_id, request_id))
+    transaction.on_commit(lambda: _enqueue_extraction(metadata_id, request_id))
 
 
-def run_ocr_if_enabled(draft):
+def run_extraction(draft):
     metadata, should_enqueue = ensure_document_metadata(draft)
     if should_enqueue:
-        schedule_ocr(metadata)
+        schedule_extraction(metadata)
     return metadata
 
 
@@ -268,7 +283,7 @@ def _load_drafts_with_metadata(user, requirements):
         metadata, should_enqueue = ensure_document_metadata(draft, metadata=metadata)
         metadata_by_draft[draft.pk] = metadata
         if should_enqueue:
-            schedule_ocr(metadata)
+            schedule_extraction(metadata)
 
     return {d.requirement_id: d for d in drafts}, metadata_by_draft
 
@@ -320,13 +335,17 @@ def _submission_block_reason(row):
     requirement = row['requirement']
     metadata = row['metadata']
 
-    if requirement.ocr_enabled:
-        if metadata is None:
-            return 'OCR metadata is missing. Replace the file to start OCR.'
-        if metadata.ocr_status in (OCR.PENDING, OCR.PROCESSING):
-            return 'OCR is still processing. Wait for OCR to finish before submitting.'
-        if metadata.ocr_status != OCR.COMPLETED:
-            return 'OCR did not complete successfully. Replace the PDF and try again.'
+    if metadata is None:
+        return 'Document text metadata is missing. Replace the file and try again.'
+
+    if metadata.ocr_status in (OCR.PENDING, OCR.PROCESSING):
+        return 'Document text extraction is still processing. Wait before submitting.'
+
+    if metadata.ocr_status != OCR.COMPLETED:
+        return metadata.ocr_error or (
+            'Document text extraction did not complete successfully. '
+            'Replace the file and try again.'
+        )
 
     if requirement.nlp_enabled:
         if metadata is None:
@@ -514,7 +533,7 @@ def save_draft_form(request, draft, success_message, error_message):
     if not uploaded_file:
         metadata, should_enqueue = ensure_document_metadata(saved_draft)
         if should_enqueue:
-            schedule_ocr(metadata)
+            schedule_extraction(metadata)
         messages.success(request, success_message)
         return redirect(UPLOAD_PAGE)
 
@@ -525,7 +544,7 @@ def save_draft_form(request, draft, success_message, error_message):
     if old_file_name and old_file_name != saved_draft.draft_file.name:
         delete_file_after_commit(old_storage, old_file_name)
     if should_enqueue:
-        schedule_ocr(metadata)
+        schedule_extraction(metadata)
 
     if ocr_enabled:
         success_message += (

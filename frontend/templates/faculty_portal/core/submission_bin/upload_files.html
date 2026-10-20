@@ -136,7 +136,7 @@
         <div class="info-note">
             <span class="info-icon">ⓘ</span>
             <p>
-                You can upload one or more documents. For requirements with OCR enabled, wait until OCR is complete before final submission. NLP validation can be added to the same readiness check later.
+                You can upload PDF, DOCX, or XLSX documents. Text extraction runs automatically; scanned PDFs require OCR to be enabled for the requirement.
             </p>
         </div>
 
@@ -182,12 +182,12 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     function isCheckboxReady(checkbox) {
-        const ocrRequired = checkbox.dataset.ocrRequired === "true";
-        const ocrStatus = checkbox.dataset.ocrStatus || "PENDING";
+        const textRequired = checkbox.dataset.textRequired === "true";
+        const textStatus = checkbox.dataset.ocrStatus || "PENDING";
         const nlpRequired = checkbox.dataset.nlpRequired === "true";
         const nlpStatus = checkbox.dataset.nlpStatus || "PENDING";
 
-        if (ocrRequired && ocrStatus !== "COMPLETED") {
+        if (textRequired && textStatus !== "COMPLETED") {
             return false;
         }
         if (nlpRequired && nlpStatus !== "PASSED") {
@@ -216,17 +216,17 @@ document.addEventListener("DOMContentLoaded", function () {
             return !isCheckboxReady(checkbox);
         });
         if (blocked) {
-            const ocrRequired = blocked.dataset.ocrRequired === "true";
-            const ocrStatus = blocked.dataset.ocrStatus || "PENDING";
+            const textRequired = blocked.dataset.textRequired === "true";
+            const textStatus = blocked.dataset.ocrStatus || "PENDING";
             const nlpRequired = blocked.dataset.nlpRequired === "true";
             const nlpStatus = blocked.dataset.nlpStatus || "PENDING";
 
-            if (ocrRequired && ["PENDING", "PROCESSING"].includes(ocrStatus)) {
+            if (textRequired && ["PENDING", "PROCESSING"].includes(textStatus)) {
                 readinessMessage.textContent =
-                    "Please wait. OCR is still processing for one or more selected documents.";
-            } else if (ocrRequired && ocrStatus !== "COMPLETED") {
+                    "Please wait. Text extraction is still processing for one or more selected documents.";
+            } else if (textRequired && textStatus !== "COMPLETED") {
                 readinessMessage.textContent =
-                    "A selected document's OCR failed. Replace the PDF before submitting.";
+                    "A selected document's text extraction failed. Check the requirement settings or replace the document before submitting.";
             } else if (nlpRequired && ["PENDING", "PROCESSING"].includes(nlpStatus)) {
                 readinessMessage.textContent =
                     "Please wait for document validation to finish before submitting.";

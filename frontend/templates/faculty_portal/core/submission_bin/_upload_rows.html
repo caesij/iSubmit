@@ -9,6 +9,7 @@
                     value="{{ row.requirement.id }}"
                     form="selection-form"
                     class="requirement-checkbox"
+                    data-text-required="true"
                     data-ocr-required="{% if row.requirement.ocr_enabled %}true{% else %}false{% endif %}"
                     data-ocr-status="{{ row.metadata.ocr_status|default:'PENDING' }}"
                     data-nlp-required="{% if row.requirement.nlp_enabled %}true{% else %}false{% endif %}"
@@ -27,6 +28,7 @@
                     value="{{ row.requirement.id }}"
                     form="selection-form"
                     class="requirement-checkbox"
+                    data-text-required="true"
                     data-ocr-required="{% if row.requirement.ocr_enabled %}true{% else %}false{% endif %}"
                     data-ocr-status="{{ row.metadata.ocr_status|default:'PENDING' }}"
                     data-nlp-required="{% if row.requirement.nlp_enabled %}true{% else %}false{% endif %}"
@@ -64,10 +66,11 @@
                 <span class="status-badge status-no-file">
                     Needs Revision
                 </span>
-                {% if row.draft and row.requirement.ocr_enabled %}
+                {% if row.draft and row.metadata %}
                     <div class="ocr-state">
                         <span class="status-badge ocr-status" data-status="{{ row.metadata.ocr_status|default:'PENDING' }}">
-                            OCR: {{ row.metadata.get_ocr_status_display|default:'Pending' }}
+                            {% if row.requirement.ocr_enabled %}OCR{% else %}Text extraction{% endif %}:
+                            {{ row.metadata.get_ocr_status_display|default:'Pending' }}
                         </span>
                         {% if row.metadata.ocr_error %}
                             <small class="ocr-error">{{ row.metadata.ocr_error }}</small>
@@ -164,10 +167,11 @@
                 <span class="status-badge status-attached">
                     Attached
                 </span>
-                {% if row.requirement.ocr_enabled %}
+                {% if row.metadata %}
                     <div class="ocr-state">
                         <span class="status-badge ocr-status" data-status="{{ row.metadata.ocr_status|default:'PENDING' }}">
-                            OCR: {{ row.metadata.get_ocr_status_display|default:'Pending' }}
+                            {% if row.requirement.ocr_enabled %}OCR{% else %}Text extraction{% endif %}:
+                            {{ row.metadata.get_ocr_status_display|default:'Pending' }}
                         </span>
                         {% if row.metadata.ocr_error %}
                             <small class="ocr-error">{{ row.metadata.ocr_error }}</small>

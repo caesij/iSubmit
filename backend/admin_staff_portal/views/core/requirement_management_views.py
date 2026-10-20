@@ -135,7 +135,6 @@ def add_requirement_to_bulk(request):
                     'status': form.cleaned_data['status'],
                     'deadline': deadline.strftime('%Y-%m-%dT%H:%M'),
                     'ocr_enabled': form.cleaned_data['ocr_enabled'],
-                    'post_correction_enabled': form.cleaned_data['post_correction_enabled'],
                 })
 
                 request.session['bulk_requirements'] = (bulk_requirements)
@@ -192,7 +191,6 @@ def post_bulk_requirements(request):
                     'status': item['status'],
                     'deadline': item['deadline'],
                     'ocr_enabled': item['ocr_enabled'],
-                    'post_correction_enabled': item['post_correction_enabled'],
                 })
 
                 if not form.is_valid():

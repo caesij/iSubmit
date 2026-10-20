@@ -366,15 +366,12 @@ class DocumentMetadata(models.Model):
 
     @property
     def is_ready_for_submission(self):
-        ocr_ready = (
-            not self.requirement.ocr_enabled
-            or self.ocr_status == self.OCRStatus.COMPLETED
-        )
+        text_extraction_ready = self.ocr_status == self.OCRStatus.COMPLETED
         nlp_ready = (
             not self.requirement.nlp_enabled
             or self.nlp_status == self.NLPStatus.PASSED
         )
-        return ocr_ready and nlp_ready
+        return text_extraction_ready and nlp_ready
 
     def __str__(self):
         return f'Metadata for {self.original_filename or self.requirement.requirement_title}'

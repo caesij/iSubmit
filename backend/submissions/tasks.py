@@ -8,6 +8,7 @@ from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.utils import timezone
 
+from backend.core.text_extraction_digi_docs import DocumentTextExtractionError, extract_text
 from core.post_correction import correct_lines
 from submissions.models import DocumentMetadata
 
@@ -21,7 +22,7 @@ def _refresh_faculty_submission_bin(faculty_id):
         from faculty_portal.realtime import refresh_faculty_submission_bin
         refresh_faculty_submission_bin(user)
     except Exception:
-        logger.exception('Could not publish the OCR completion update.')
+        logger.exception('Could not publish the document extraction update.')
 
 
 def _metadata_is_current(metadata, request_id, draft_id, file_name):
@@ -52,14 +53,14 @@ def _post_correct(lines, scores):
         return '\n'.join(lines)
 
 
-@shared_task(bind=True, name='submissions.process_document_ocr', acks_late=True)
-def process_document_ocr(self, metadata_id, request_id):
+@shared_task(bind=True, name='submissions.process_document_extraction', acks_late=True)
+def process_document_extraction(self, metadata_id, request_id):
     try:
         request_id = int(request_id)
         if request_id < 1:
-            raise ValueError('OCR request ID must be positive.')
+            raise ValueError('Extraction request ID must be positive.')
     except (TypeError, ValueError, OverflowError):
-        logger.warning('Ignoring OCR task with invalid request identifier.')
+        logger.warning('Ignoring extraction task with invalid request identifier.')
         return {'status': 'invalid_request'}
 
     with transaction.atomic():
@@ -79,12 +80,6 @@ def process_document_ocr(self, metadata_id, request_id):
             return {'status': 'not_pending'}
         if not metadata.draft_id or not metadata.draft or not metadata.draft.draft_file:
             return {'status': 'draft_missing'}
-        if not metadata.requirement.ocr_enabled:
-            metadata.ocr_status = DocumentMetadata.OCRStatus.NOT_REQUIRED
-            metadata.ocr_error = ''
-            metadata.save(update_fields=['ocr_status', 'ocr_error', 'updated_at'])
-            return {'status': 'not_required'}
-
         draft_id = metadata.draft_id
         file_name = metadata.draft.draft_file.name
         
@@ -93,9 +88,11 @@ def process_document_ocr(self, metadata_id, request_id):
         
         suffix = Path(metadata.original_filename or file_name).suffix.lower()
         
-        if suffix != '.pdf':
+        if metadata.requirement.ocr_enabled and suffix != '.pdf':
             metadata.ocr_status = DocumentMetadata.OCRStatus.FAILED
-            metadata.ocr_error = 'OCR supports PDF files only. Replace this file with a PDF.'
+            metadata.ocr_error = (
+                'This requirement requires OCR, so the document must be a PDF.'
+            )
             metadata.save(update_fields=['ocr_status', 'ocr_error', 'updated_at'])
             _refresh_faculty_submission_bin(metadata.faculty_id)
             return {'status': 'unsupported_file'}
@@ -109,16 +106,20 @@ def process_document_ocr(self, metadata_id, request_id):
     try:
         draft = metadata.draft
         storage = draft.draft_file.storage
-        with tempfile.TemporaryDirectory(prefix='isubmit-ocr-') as temp_dir:
-            local_pdf = Path(temp_dir) / 'document.pdf'
+        with tempfile.TemporaryDirectory(prefix='isubmit-extract-') as temp_dir:
+            local_document = Path(temp_dir) / f'document{suffix}'
             with storage.open(file_name, 'rb') as remote_file:
-                with local_pdf.open('wb') as local_file:
+                with local_document.open('wb') as local_file:
                     shutil.copyfileobj(remote_file, local_file)
 
-            from core.ocr import extract_lines_and_page_count_from_pdf
-            lines, scores, page_count = extract_lines_and_page_count_from_pdf(local_pdf)
-
-        extracted_text = _post_correct(lines, scores)
+            if metadata.requirement.ocr_enabled:
+                from core.ocr import extract_lines_and_page_count_from_pdf
+                lines, scores, page_count = (
+                    extract_lines_and_page_count_from_pdf(local_document)
+                )
+                extracted_text = _post_correct(lines, scores)
+            else:
+                extracted_text, page_count = extract_text(local_document)
 
         with transaction.atomic():
             current = (
@@ -147,7 +148,7 @@ def process_document_ocr(self, metadata_id, request_id):
         return {'status': 'completed', 'page_count': page_count}
 
     except Exception as exc:
-        logger.exception('OCR processing failed for metadata record %s.', metadata_id)
+        logger.exception('Document extraction failed for metadata record %s.', metadata_id)
         try:
             with transaction.atomic():
                 current = (
@@ -160,8 +161,12 @@ def process_document_ocr(self, metadata_id, request_id):
                     current.ocr_status = DocumentMetadata.OCRStatus.FAILED
                     
                     current.ocr_error = (
-                        f'OCR processing failed ({type(exc).__name__}). '
-                        'Please replace the PDF and try again, or contact support.'
+                        str(exc)
+                        if isinstance(exc, DocumentTextExtractionError)
+                        else (
+                            f'Document text extraction failed ({type(exc).__name__}). '
+                            'Please replace the file and try again, or contact support.'
+                        )
                     )
                     
                     current.ocr_completed_at = timezone.now()
