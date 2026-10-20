@@ -262,6 +262,16 @@ select {
   color: #6f6f6f;
 }
 
+.global-search-disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.global-search-disabled input {
+  cursor: not-allowed;
+  background: #eeeeee;
+}
+
 .global-search .icon {
   position: absolute;
   left: 12px;

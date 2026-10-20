@@ -273,17 +273,21 @@
                 </div>
 
                 <div class="topbar-controls">
-                    <form class="global-search" action="#" method="GET">
+                    <div
+                        class="global-search global-search-disabled"
+                        aria-label="Global search is not available yet"
+                    >
                         <span class="icon">
                             <img src="{% static 'images/search.svg' %}" alt="Search icon">
                         </span>
 
                         <input
                             type="text"
-                            name="global_search"
                             placeholder="Search requirements, documents, or submissions..."
+                            disabled
+                            aria-disabled="true"
                         >
-                    </form>
+                    </div>
 
                     <div
                         class="notification-wrap"
