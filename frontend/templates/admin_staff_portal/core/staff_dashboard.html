@@ -1,6 +1,6 @@
 {% extends 'admin_staff_portal/base.html' %}
 
-{% load static %}
+{% load static core_extras %}
 
 {% block title %}Dashboard - iSubmit{% endblock %}
 
@@ -267,9 +267,9 @@ Overview of system activities and updates
 
                             <td>
                                 {% if submission.status == 'RESUBMITTED' and submission.resubmitted_at %}
-                                    {{ submission.resubmitted_at|date:"M j, Y" }}
+                                    {{ submission.resubmitted_at|display_date:request.user }}
                                 {% else %}
-                                    {{ submission.initially_submitted_at|date:"M j, Y" }}
+                                    {{ submission.initially_submitted_at|display_date:request.user }}
                                 {% endif %}
                             </td>
                         </tr>

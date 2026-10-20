@@ -13,13 +13,19 @@ def get_staff_dashboard_data():
     faculty_count = User.objects.filter(role=User.Role.FACULTY).count()
 
     submissions = DocumentSubmission.objects.select_related('faculty', 'requirement')
+    
+    pending_review_statuses = [
+        DocumentSubmission.SubmissionStatus.SUBMITTED,
+        DocumentSubmission.SubmissionStatus.RESUBMITTED,
+        DocumentSubmission.SubmissionStatus.UNDER_REVIEW,
+    ]
+    
+    reviewed_statuses = [
+        DocumentSubmission.SubmissionStatus.PENDING_APPROVAL,
+        DocumentSubmission.SubmissionStatus.APPROVED,
+    ]
 
-    completed_reviews_count = submissions.filter(
-        status__in=[
-            DocumentSubmission.SubmissionStatus.PENDING_APPROVAL,
-            DocumentSubmission.SubmissionStatus.APPROVED,
-        ]
-    ).count()
+    completed_reviews_count = submissions.filter(status__in=reviewed_statuses).count()
 
     submitted_count = submissions.count()
 
@@ -32,10 +38,7 @@ def get_staff_dashboard_data():
     ).count()
 
     pending_review_count = submissions.filter(
-        status__in=[
-            DocumentSubmission.SubmissionStatus.SUBMITTED,
-            DocumentSubmission.SubmissionStatus.RESUBMITTED,
-        ]
+        status__in=pending_review_statuses
     ).count()
 
     review_total = completed_reviews_count + pending_review_count

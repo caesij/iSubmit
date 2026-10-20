@@ -1,13 +1,53 @@
 from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from django.core.exceptions import PermissionDenied
 from django.shortcuts import render, get_object_or_404, redirect
 from django.views.decorators.http import require_http_methods
 from django.template.loader import render_to_string
 from django.core.paginator import Paginator
 from django.http import JsonResponse
 
-
+from accounts.decorators import admin
+from accounts.models import User
+from notifications.forms import SystemNotificationForm
 from notifications.models import Notification, NotificationPreference
+from notifications.services import notify_roles
 
+
+@admin
+@require_http_methods(['GET', 'POST'])
+def create_system_notification_view(request):
+    if not request.user.is_superuser:
+        raise PermissionDenied('Only administrator superusers can create system notifications.')
+
+    if request.method == 'POST':
+        form = SystemNotificationForm(request.POST)
+        if form.is_valid():
+            notifications = notify_roles(
+                roles=[User.Role.FACULTY],
+                notification_type=NotificationPreference.NotificationType.SYSTEM_NOTIFICATIONS,
+                title=form.cleaned_data['title'],
+                message=form.cleaned_data['message'],
+            )
+            
+            count = len(notifications)
+            
+            messages.success(
+                request,
+                f'Created in-app system notifications for {count} '
+                f'faculty account{"s" if count != 1 else ""}.',
+            )
+            return redirect('notifications:notification_list')
+    else:
+        form = SystemNotificationForm()
+        
+    context = {'form': form}
+
+    return render(
+        request,
+        'admin_staff_portal/notifications/create_notification.html',
+        context
+    )
 
 @login_required
 @require_http_methods(['GET'])

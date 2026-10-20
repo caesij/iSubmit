@@ -2,227 +2,124 @@
 
 BSIT Capstone Project
 
----
-
-## Setup
-
-This project uses **Docker for Redis** and **Uvicorn for running the Django application**.
-
-You will need:
-
-* Python 3.12+
-* Docker Desktop
-* Git
+This guide will help you run the iSubmit website on your computer using Docker. You don't need to install Python or set up a virtual environment, since Docker handles everything.
 
 ---
 
-## Step 1: Install Docker
+## Setup (first time only)
 
-### Windows / macOS
+### Step 1: Install Docker
+
+**Windows / macOS**
 
 Install [Docker Desktop](https://www.docker.com/products/docker-desktop/).
 
-### Linux
+**Linux**
 
 Install Docker Engine using the [official Docker installation guide](https://docs.docker.com/engine/install/).
 
 ---
 
-## Step 2: Clone the Repository
-
-Clone the repository:
+### Step 2: Clone the Repository
 
 ```bash
 git clone <REPOSITORY_URL>
-```
-
-Then enter the project directory:
-
-```bash
 cd iSubmit
 ```
 
-You can also use GitHub Desktop.
+You can also use GitHub Desktop to clone the repository.
 
 ---
 
-## Step 3: Set Up Environment Variables
+### Step 3: Set Up Environment Variables
 
 1. Copy `.env.example`.
 2. Rename the copy to `.env`.
-3. Fill in the required credentials.
-
-Example:
+3. Fill in the required values.
 
 ```text
 .env.example → .env
 ```
 
-Ask a team member for the required environment variable values.
+Ask teammates for the required environment variable values.
 
 > Do not commit `.env` to Git.
 
 ---
 
-## Step 4: Create a Virtual Environment
+### Step 4: Start the Website
 
-Create a Python virtual environment from the project root:
-
-### Windows
-
-```powershell
-py -m venv .venv
-```
-
-Activate it:
-
-```powershell
-.venv\Scripts\activate
-```
-
-### macOS / Linux
+From the **project root** (the folder with `docker-compose.yml`), run:
 
 ```bash
-python3 -m venv .venv
+docker compose up -d --build
 ```
 
-Activate it:
+The first run can take a few minutes because Docker has to download and build everything. Later runs are much faster.
+
+---
+
+### Step 5: Set Up the Database (first time only)
+
+Once the containers are running, run:
 
 ```bash
-source .venv/bin/activate
+docker compose exec web python manage.py migrate
 ```
 
 ---
 
-## Step 5: Install Dependencies
+### Step 6: Open the Website
 
-With the virtual environment activated:
-
-```bash
-pip install -r requirements.txt
-```
-
----
-
-## Step 6: Start Redis
-
-Redis is required for the application's real-time functionality.
-
-From the **project root**, run:
-
-```bash
-docker compose up -d redis
-```
-
-Check that Redis is running:
-
-```bash
-docker compose ps
-```
-
-You should see the Redis container running.
-
----
-
-## Step 7: Run Database Migrations
-
-Move into the backend directory:
-
-```bash
-cd backend
-```
-
-Run:
-
-```bash
-python manage.py migrate
-```
-
----
-
-## Step 8: Start the Application
-
-The application uses **Uvicorn** to run the Django ASGI application.
-
-From the `backend` directory, run:
-
-```bash
-uvicorn config.asgi:application --host 127.0.0.1 --port 8000
-```
-
-Once the server starts, open:
-
-**http://127.0.0.1:8000**
-
----
-# Daily Workflow
-
-Whenever you start working on the project:
-
-### Step 1 - Start Redis
-
-From the project root:
-
-```bash
-docker compose up -d redis
-```
-
-### Step 2 - Run Database Migrations
-
-From the `backend` directory:
-
-```bash
-cd backend
-python manage.py migrate
-```
-
-> **Note:** Always run migrations before starting the application. This helps ensure that your local database is up to date with the latest database changes made to the project.
-
-### Step 3 - Start Uvicorn
-
-From the `backend` directory:
-
-```bash
-uvicorn config.asgi:application --host 127.0.0.1 --port 8000
-```
-
-Then open:
+Go to:
 
 **http://127.0.0.1:8000**
 
 ---
 
-# Stopping the Application
+## Regular Usage
 
-To stop Uvicorn, press:
-
-```text
-Ctrl + C
-```
-
-To stop Redis:
+**Start the website**
 
 ```bash
-docker compose stop redis
+docker compose up -d
 ```
 
+Then open **http://127.0.0.1:8000**.
 
-> **Note:** Stop the application whenever a new change is made to the codebase. `Ctrl + C` to stop, then `uvicorn config.asgi:application --host 127.0.0.1 --port 8000` to run again.
+**Stop the website**
+
+```bash
+docker compose stop
+```
 
 ---
 
-# Restarting Redis
+## Getting the Latest Changes
 
-If Redis has already been created but is stopped:
+Whenever a teammate pushes updates, follow these steps.
 
-```bash
-docker compose start redis
-```
-
-Alternatively, this is also safe to use:
+**1. Pull the latest code**
 
 ```bash
-docker compose up -d redis
+git pull
 ```
 
----
+You can also use GitHub Desktop and click **Pull origin**.
+
+**2. Rebuild and restart the website**
+
+```bash
+docker compose up -d --build
+```
+
+**3. Update the database (if needed)**
+
+If the update includes database changes, run this after the website has started:
+
+```bash
+docker compose exec web python manage.py migrate
+```
+
+
+> Run the migrate command **after** rebuilding. The running container needs the new code before it can see the new migrations.

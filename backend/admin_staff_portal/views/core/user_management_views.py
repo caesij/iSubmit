@@ -5,6 +5,7 @@ from django.db.models import Q
 from django.contrib.auth import get_user_model
 from django.contrib import messages
 from django.core.mail import send_mail
+from django.core.paginator import Paginator
 from django.conf import settings
 import secrets
 import string
@@ -48,10 +49,19 @@ def user_list_view(request):
     elif status_param == 'inactive':
         users = users.filter(is_active=False)
 
+    users = users.order_by('last_name', 'first_name', 'pk')
+    page_obj = Paginator(users, 7).get_page(request.GET.get('page'))
+    pagination_params = request.GET.copy()
+    pagination_params.pop('page', None)
+    pagination_params['role'] = target_role
+
     form_class = get_form_class(target_role)
 
     context = {
-        'users': users,
+        'users': page_obj,
+        'page_obj': page_obj,
+        'is_paginated': page_obj.has_other_pages(),
+        'pagination_query': pagination_params.urlencode(),
         'target_role': target_role,
         'current_role': target_role,
         'page_title': get_page_title(target_role),
@@ -99,7 +109,11 @@ def user_create_view(request):
                 )
                 messages.success(request, f'Account created for {user.email}. Password email sent successfully.')
             except Exception:
-                messages.warning(request, f'Account created for {user.email}, but failed to send email.')
+                messages.warning(
+                    request,
+                    f'Account created for {user.email}, but the welcome email could not be sent. '
+                    'Please share the login details securely with the user.',
+                )
 
             url = reverse('admin_staff_portal:user_list')
             return redirect(f"{url}?role={target_role}")
@@ -163,11 +177,11 @@ def user_toggle_acc_status_view(request, pk):
     redirect_url = f"{reverse('admin_staff_portal:user_list')}?role={target_user.role}"
 
     if request.user.pk == target_user.pk:
-        messages.error(request, 'You cannot deactivate your own account.')
+        messages.error(request, 'You cannot deactivate your own account while signed in.')
         return redirect(redirect_url)
 
     if not can_manage_target(request.user, target_user):
-        messages.error(request, 'You do not have permission to edit this account status.')
+        messages.error(request, 'You do not have permission to change this account status.')
         return redirect(redirect_url)
 
     target_user.is_active = not target_user.is_active

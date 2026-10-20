@@ -1,5 +1,5 @@
 {% extends 'faculty_portal/base.html' %}
-{% load static %}
+{% load static core_extras %}
 
 {% block title %}Dashboard - iSubmit{% endblock %}
 {% block heading %}Dashboard{% endblock %}
@@ -514,8 +514,8 @@
                             <div>
                                 <div class="overview-name">{{ sub.requirement.requirement_title }}</div>
                                 <div class="overview-when">
-                                    {{ sub.initially_submitted_at|date:"M j, Y" }} •
-                                    {{ sub.initially_submitted_at|date:"g:i A" }}
+                                    {{ sub.initially_submitted_at|display_date:request.user }} •
+                                    {{ sub.initially_submitted_at|display_time:request.user }}
                                 </div>
                             </div>
                         </div>

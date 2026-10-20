@@ -1,4 +1,4 @@
-{% load static %}
+{% load static core_extras %}
 {% for row in rows %}
     <tr>
         <td>
@@ -9,6 +9,11 @@
                     value="{{ row.requirement.id }}"
                     form="selection-form"
                     class="requirement-checkbox"
+                    data-text-required="{% if row.requirement.text_processing_mode != 'NONE' %}true{% else %}false{% endif %}"
+                    data-processing-mode="{{ row.requirement.text_processing_mode }}"
+                    data-ocr-status="{{ row.metadata.ocr_status|default:'PENDING' }}"
+                    data-nlp-required="{% if row.requirement.nlp_enabled %}true{% else %}false{% endif %}"
+                    data-nlp-status="{{ row.metadata.nlp_status|default:'PENDING' }}"
                 >
             {% elif row.is_resubmission %}
                 <input
@@ -23,6 +28,11 @@
                     value="{{ row.requirement.id }}"
                     form="selection-form"
                     class="requirement-checkbox"
+                    data-text-required="{% if row.requirement.text_processing_mode != 'NONE' %}true{% else %}false{% endif %}"
+                    data-processing-mode="{{ row.requirement.text_processing_mode }}"
+                    data-ocr-status="{{ row.metadata.ocr_status|default:'PENDING' }}"
+                    data-nlp-required="{% if row.requirement.nlp_enabled %}true{% else %}false{% endif %}"
+                    data-nlp-status="{{ row.metadata.nlp_status|default:'PENDING' }}"
                 >
             {% else %}
                 <input
@@ -44,10 +54,10 @@
 
         <td>
             <div>
-                {{ row.requirement.deadline|date:"F j, Y" }}
+                {{ row.requirement.deadline|display_date:request.user }}
             </div>
             <div class="text-sub">
-                {{ row.requirement.deadline|date:"g:i A" }}
+                {{ row.requirement.deadline|display_time:request.user }}
             </div>
         </td>
 
@@ -56,6 +66,25 @@
                 <span class="status-badge status-no-file">
                     Needs Revision
                 </span>
+                {% if row.draft and row.metadata and row.requirement.text_processing_mode != 'NONE' %}
+                    <div class="ocr-state">
+                        <span class="status-badge ocr-status" data-status="{{ row.metadata.ocr_status|default:'PENDING' }}">
+                            {% if row.requirement.text_processing_mode == 'OCR' %}OCR{% else %}Text extraction{% endif %}:
+                            {{ row.metadata.get_ocr_status_display|default:'Pending' }}
+                        </span>
+                        {% if row.metadata.ocr_error %}
+                            <small class="ocr-error">{{ row.metadata.ocr_error }}</small>
+                        {% endif %}
+                    </div>
+                {% endif %}
+                {% if row.requirement.nlp_enabled and row.metadata %}
+                    <div class="ocr-state">
+                        <span class="status-badge nlp-status" data-status="{{ row.metadata.nlp_status }}">
+                            Validation: {{ row.metadata.get_nlp_status_display }}
+                        </span>
+                        {% if row.metadata.nlp_error %}<small class="ocr-error">{{ row.metadata.nlp_error }}</small>{% endif %}
+                    </div>
+                {% endif %}
             </td>
 
             <td>
@@ -138,6 +167,25 @@
                 <span class="status-badge status-attached">
                     Attached
                 </span>
+                {% if row.metadata and row.requirement.text_processing_mode != 'NONE' %}
+                    <div class="ocr-state">
+                        <span class="status-badge ocr-status" data-status="{{ row.metadata.ocr_status|default:'PENDING' }}">
+                            {% if row.requirement.text_processing_mode == 'OCR' %}OCR{% else %}Text extraction{% endif %}:
+                            {{ row.metadata.get_ocr_status_display|default:'Pending' }}
+                        </span>
+                        {% if row.metadata.ocr_error %}
+                            <small class="ocr-error">{{ row.metadata.ocr_error }}</small>
+                        {% endif %}
+                    </div>
+                {% endif %}
+                {% if row.requirement.nlp_enabled and row.metadata %}
+                    <div class="ocr-state">
+                        <span class="status-badge nlp-status" data-status="{{ row.metadata.nlp_status }}">
+                            Validation: {{ row.metadata.get_nlp_status_display }}
+                        </span>
+                        {% if row.metadata.nlp_error %}<small class="ocr-error">{{ row.metadata.nlp_error }}</small>{% endif %}
+                    </div>
+                {% endif %}
             </td>
 
             <td>

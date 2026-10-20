@@ -21,6 +21,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.postgres',
     'storages',
     'axes',
     'accounts',
@@ -47,16 +48,6 @@ ROOT_URLCONF = 'config.urls'
 
 WSGI_APPLICATION = 'config.wsgi.application'
 ASGI_APPLICATION = 'config.asgi.application'
-
-CHANNEL_LAYERS = {
-    'default': {
-        'BACKEND': 'channels_redis.core.RedisChannelLayer',
-        'CONFIG': {
-            'hosts': [('127.0.0.1', 6379)],
-        },
-    },
-}
-
 
 # Templates
 TEMPLATES = [
@@ -167,3 +158,25 @@ DEFAULT_FROM_EMAIL = os.environ.get('EMAIL_USER')
 
 # Security
 X_FRAME_OPTIONS = 'SAMEORIGIN'
+REDIS_HOST = os.getenv('REDIS_HOST', '127.0.0.1')
+REDIS_PORT = int(os.getenv('REDIS_PORT', '6379'))
+
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            'hosts': [(REDIS_HOST, REDIS_PORT)],
+        },
+    },
+}
+
+CELERY_BROKER_URL = os.getenv(
+    'CELERY_BROKER_URL',
+    f'redis://{REDIS_HOST}:{REDIS_PORT}/1',
+)
+CELERY_TASK_IGNORE_RESULT = True
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TIMEZONE = TIME_ZONE
+CELERY_TASK_TRACK_STARTED = True
+CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True

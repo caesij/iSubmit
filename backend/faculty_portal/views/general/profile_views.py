@@ -14,7 +14,7 @@ def profile_view(request):
             form.save()
             messages.success(request, 'Profile updated successfully.')
             return redirect('faculty_portal:profile')
-        messages.error(request, 'Please correct the errors below.')
+        messages.error(request, 'We could not save your profile. Please review the highlighted fields.')
     else:
         form = FacultyProfileForm(instance=request.user)
 

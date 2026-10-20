@@ -1,3 +1,4 @@
+{% load core_extras %}
 <div class="notification-list">
     {% for notification in notifications %}
         <div class="notification-card{% if not notification.is_read %} unread{% endif %}">
@@ -9,7 +10,7 @@
                 <div class="notification-meta">
                     {{ notification.get_notification_type_display }}
                     ·
-                    {{ notification.created_at|date:"F j, Y g:i A" }}
+                    {{ notification.created_at|display_date:request.user }} {{ notification.created_at|display_time:request.user }}
 
                     {% if not notification.is_read %}
                         · Unread
@@ -32,9 +33,15 @@
                 {% endif %}
 
                 {% if notification.link %}
-                    <a href="{{ notification.link }}">
-                        View
-                    </a>
+                    <form
+                        method="post"
+                        action="{% url 'notifications:mark_read' notification.id %}"
+                    >
+                        {% csrf_token %}
+                        <button type="submit" class="notification-view-button">
+                            View
+                        </button>
+                    </form>
                 {% endif %}
             </div>
         </div>

@@ -1,3 +1,4 @@
+{% load core_extras %}
 <div class="notif-dropdown-header">
     <strong>Notifications</strong>
 
@@ -28,7 +29,7 @@
                 </p>
 
                 <small>
-                    {{ notification.created_at|date:"M j, Y g:i A" }}
+                    {{ notification.created_at|display_date:request.user }} {{ notification.created_at|display_time:request.user }}
                 </small>
             </button>
         </form>

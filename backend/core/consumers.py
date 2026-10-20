@@ -10,6 +10,15 @@ class RealtimeConsumer(AsyncJsonWebsocketConsumer):
 
         self.group_name = f'user_{user.pk}'
         await self.channel_layer.group_add(self.group_name, self.channel_name)
+        self.session_group_name = None
+        session = self.scope.get('session')
+        session_key = session.session_key if session else None
+        if session_key:
+            self.session_group_name = f'session_{session_key}'
+            await self.channel_layer.group_add(
+                self.session_group_name,
+                self.channel_name,
+            )
 
         self.is_faculty_user = user.is_faculty
         self.is_staff_user = user.is_staff_role
@@ -24,11 +33,22 @@ class RealtimeConsumer(AsyncJsonWebsocketConsumer):
         if self.is_staff_user:
             await self.channel_layer.group_add('staff_dashboard',self.channel_name)
 
+        if self.is_admin_user or self.is_staff_user:
+            await self.channel_layer.group_add(
+                'admin_staff_submissions',
+                self.channel_name,
+            )
+
         await self.accept()
 
     async def disconnect(self, close_code):
         if hasattr(self, 'group_name'):
             await self.channel_layer.group_discard(self.group_name, self.channel_name)
+        if self.session_group_name:
+            await self.channel_layer.group_discard(
+                self.session_group_name,
+                self.channel_name,
+            )
 
         if getattr(self, 'is_faculty_user', False):
             await self.channel_layer.group_discard('faculty_submission_bins', self.channel_name)
@@ -38,6 +58,12 @@ class RealtimeConsumer(AsyncJsonWebsocketConsumer):
 
         if getattr(self, 'is_admin_user', False):
             await self.channel_layer.group_discard('admin_dashboard', self.channel_name)
+
+        if getattr(self, 'is_admin_user', False) or getattr(self, 'is_staff_user', False):
+            await self.channel_layer.group_discard(
+                'admin_staff_submissions',
+                self.channel_name,
+            )
 
     async def realtime_event(self, event):
         await self.send_json({

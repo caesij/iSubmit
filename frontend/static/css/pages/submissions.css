@@ -987,6 +987,18 @@ select {
   color: #15803d;
 }
 
+.faculty-status.status-complete {
+  border-color: transparent;
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.faculty-status.status-incomplete {
+  border-color: transparent;
+  background: #fef3c7;
+  color: #b45309;
+}
+
 .faculty-status.status-pending {
   border-color: transparent;
   background: #fef3c7;

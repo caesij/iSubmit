@@ -1,5 +1,5 @@
 {% extends 'admin_staff_portal/base.html' %}
-{% load static %}
+{% load static core_extras %}
 
 {% block title %}Review Submission{% endblock %}
 {% block heading %}Submissions{% endblock %}
@@ -268,7 +268,7 @@
     <div class="rs-viewer">
       <div class="rs-viewer-toolbar">
         <span class="fname">{{ submission.document_file.name|cut:"submissions/" }}</span>
-        <span>Uploaded {{ submission.initially_submitted_at|date:"M j, Y g:i A" }}</span>
+        <span>Uploaded                 {{ submission.initially_submitted_at|display_date:request.user }} {{ submission.initially_submitted_at|display_time:request.user }}</span>
       </div>
       <div class="rs-viewer-body">
         <embed src="{{ submission.document_file.url }}" type="application/pdf" />
@@ -283,7 +283,7 @@
         <div class="rs-detail-row"><div><span class="label">File Name</span><span class="value">{{ submission.document_file.name|cut:"submissions/" }}</span></div></div>
         <div class="rs-detail-row"><div><span class="label">Academic Term</span><span class="value">{{ submission.requirement.get_semester_display }}, {{ submission.requirement.academic_term }}</span></div></div>
         <div class="rs-detail-row"><div><span class="label">Category</span><span class="value">{{ submission.requirement.category }}</span></div></div>
-        <div class="rs-detail-row"><div><span class="label">Deadline</span><span class="value">{{ submission.requirement.deadline|date:"F j, Y, g:i A" }}</span></div></div>
+        <div class="rs-detail-row"><div><span class="label">Deadline</span><span class="value">                {{ submission.requirement.deadline|display_date:request.user }}, {{ submission.requirement.deadline|display_time:request.user }}</span></div></div>
       </div>
 
       <div class="rs-card">
@@ -316,13 +316,13 @@
         {% if submission.reviewed_by %}
           <div class="rs-review-item">
             <div class="who">Reviewed by {{ submission.reviewed_by.get_full_name }}</div>
-            <div class="when">{{ submission.reviewed_at|date:"M j, Y g:i A" }}</div>
+            <div class="when">                        {{ submission.reviewed_at|display_date:request.user }} {{ submission.reviewed_at|display_time:request.user }}</div>
           </div>
         {% endif %}
         {% if submission.approved_by %}
           <div class="rs-review-item">
             <div class="who">Approved by {{ submission.approved_by.get_full_name }}</div>
-            <div class="when">{{ submission.approved_at|date:"M j, Y g:i A" }}</div>
+            <div class="when">                        {{ submission.approved_at|display_date:request.user }} {{ submission.approved_at|display_time:request.user }}</div>
           </div>
         {% endif %}
         {% if not submission.reviewed_by and not submission.approved_by %}

@@ -11,7 +11,7 @@ from admin_staff_portal.views.core.document_repo_views import (
     document_file_view,
 )
 
-from admin_staff_portal.views.core.submissions_views import (
+from admin_staff_portal.views.core.requirement_management_views import (
     bulk_requirements_view,
     add_requirement_to_bulk,
     delete_bulk_requirement,
@@ -19,7 +19,9 @@ from admin_staff_portal.views.core.submissions_views import (
     edit_requirement,
     requirements_list,
     toggle_requirement_status,
-    
+)
+
+from admin_staff_portal.views.core.faculty_submission_views import (
     faculty_submissions_list,
     faculty_submission_bins_view,
     review_submission,
@@ -69,7 +71,7 @@ __all__ = [
     'mark_under_review_view',
     'mark_needs_revision_view',
     'mark_reviewed_view',
-    'approve_selected_submissions_view'
+    'approve_selected_submissions_view',
     
     'user_list_view',
     'user_create_view',

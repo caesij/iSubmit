@@ -9,6 +9,15 @@
 
 {% block extra_css %}
     <link rel="stylesheet" href="{% static 'css/pages/submissions.css' %}">
+    <style>
+        .ocr-state { margin-top: 0.35rem; display: flex; flex-direction: column; align-items: flex-start; gap: 0.2rem; }
+        .ocr-status[data-status="PENDING"], .ocr-status[data-status="PROCESSING"], .nlp-status[data-status="PENDING"], .nlp-status[data-status="PROCESSING"] { background: #fff4d6; color: #805b00; }
+        .ocr-status[data-status="COMPLETED"], .nlp-status[data-status="PASSED"] { background: #e0f5e8; color: #17663a; }
+        .ocr-status[data-status="FAILED"], .nlp-status[data-status="FAILED"] { background: #fde7e7; color: #9f2020; }
+        .ocr-error { max-width: 20rem; color: #9f2020; white-space: normal; }
+        .btn-continue:disabled { opacity: 0.55; cursor: not-allowed; }
+        .submission-readiness { margin-top: 0.5rem; font-size: 0.9rem; }
+    </style>
 {% endblock %}
 
 {% block content %}
@@ -127,17 +136,21 @@
         <div class="info-note">
             <span class="info-icon">ⓘ</span>
             <p>
-                You can upload one or more documents. Select the bins you want to submit.
+                You can upload PDF, DOCX, or XLSX documents. Text processing runs only when required by the submission bin; scanned PDFs require OCR mode.
             </p>
         </div>
 
         <button
             type="submit"
             form="selection-form"
+            id="submit-selected-documents"
             class="btn-continue"
         >
             Submit Selected Documents &rarr;
         </button>
+        <p class="submission-readiness" id="submission-readiness" aria-live="polite">
+            Select documents to check whether they are ready for final submission.
+        </p>
 
     </div>
 
@@ -155,7 +168,10 @@ document.addEventListener("DOMContentLoaded", function () {
     const selectAll = document.getElementById("select-all-requirements");
     const uploadLoading = document.getElementById("upload-loading");
     const tableBody = document.getElementById("submission-bin-body");
+    const submitButton = document.getElementById("submit-selected-documents");
+    const readinessMessage = document.getElementById("submission-readiness");
     let refreshController = null;
+    let pollTimer = null;
 
     function getCheckboxes() {
         return Array.from(
@@ -165,46 +181,115 @@ document.addEventListener("DOMContentLoaded", function () {
         );
     }
 
-    function syncSelectAll() {
-        if (!selectAll) {
+    function isCheckboxReady(checkbox) {
+        const textRequired = checkbox.dataset.textRequired === "true";
+        const textStatus = checkbox.dataset.ocrStatus || "PENDING";
+        const nlpRequired = checkbox.dataset.nlpRequired === "true";
+        const nlpStatus = checkbox.dataset.nlpStatus || "PENDING";
+
+        if (textRequired && textStatus !== "COMPLETED") {
+            return false;
+        }
+        if (nlpRequired && nlpStatus !== "PASSED") {
+            return false;
+        }
+
+        return true;
+    }
+
+    function updateSubmitButton() {
+        if (!submitButton) return;
+
+        const selected = getCheckboxes().filter(function (checkbox) {
+            return checkbox.checked;
+        });
+        const allReady = selected.length > 0 && selected.every(isCheckboxReady);
+        submitButton.disabled = !allReady;
+
+        if (!selected.length) {
+            readinessMessage.textContent =
+                "Select documents to check whether they are ready for final submission.";
             return;
         }
 
-        const checkboxes = getCheckboxes();
-        const selectedCount = checkboxes.filter(
-            function (checkbox) {
-                return checkbox.checked;
+        const blocked = selected.find(function (checkbox) {
+            return !isCheckboxReady(checkbox);
+        });
+        if (blocked) {
+            const textRequired = blocked.dataset.textRequired === "true";
+            const textStatus = blocked.dataset.ocrStatus || "PENDING";
+            const nlpRequired = blocked.dataset.nlpRequired === "true";
+            const nlpStatus = blocked.dataset.nlpStatus || "PENDING";
+
+            if (textRequired && ["PENDING", "PROCESSING"].includes(textStatus)) {
+                readinessMessage.textContent =
+                    "Please wait. Text extraction is still processing for one or more selected documents.";
+            } else if (textRequired && textStatus !== "COMPLETED") {
+                readinessMessage.textContent =
+                    "A selected document's text extraction failed. Check the requirement settings or replace the document before submitting.";
+            } else if (nlpRequired && ["PENDING", "PROCESSING"].includes(nlpStatus)) {
+                readinessMessage.textContent =
+                    "Please wait for document validation to finish before submitting.";
+            } else {
+                readinessMessage.textContent =
+                    "A selected document has not passed the required validation.";
             }
-        ).length;
+            return;
+        }
 
-        selectAll.checked =
-            checkboxes.length > 0 &&
-            selectedCount === checkboxes.length;
+        readinessMessage.textContent =
+            "All selected documents have completed their required checks and are ready to submit.";
+    }
 
-        selectAll.indeterminate =
-            selectedCount > 0 &&
-            selectedCount < checkboxes.length;
+    function syncSelectAll() {
+        if (selectAll) {
+            const checkboxes = getCheckboxes();
+            const selectedCount = checkboxes.filter(function (checkbox) {
+                return checkbox.checked;
+            }).length;
+
+            selectAll.checked = checkboxes.length > 0 && selectedCount === checkboxes.length;
+            selectAll.indeterminate = selectedCount > 0 && selectedCount < checkboxes.length;
+        }
+        updateSubmitButton();
+    }
+
+    function hasInProgressCheck() {
+        return getCheckboxes().some(function (checkbox) {
+            const textProcessingInProgress = checkbox.dataset.textRequired === "true" &&
+                ["PENDING", "PROCESSING"].includes(checkbox.dataset.ocrStatus || "PENDING");
+            const nlpInProgress = checkbox.dataset.nlpRequired === "true" &&
+                ["PENDING", "PROCESSING"].includes(
+                    checkbox.dataset.nlpStatus || "PENDING"
+                );
+            return textProcessingInProgress || nlpInProgress;
+        });
+    }
+
+    function scheduleStatusPolling() {
+        if (pollTimer) {
+            clearTimeout(pollTimer);
+            pollTimer = null;
+        }
+        if (!hasInProgressCheck()) return;
+
+        pollTimer = setTimeout(async function () {
+            pollTimer = null;
+            await refreshSubmissionBin();
+            scheduleStatusPolling();
+        }, 2500);
     }
 
     async function refreshSubmissionBin() {
-        if (!tableBody) {
-            return;
-        }
+        if (!tableBody) return;
 
         const selectedValues = new Set(
             getCheckboxes()
-                .filter(function (checkbox) {
-                    return checkbox.checked;
-                })
-                .map(function (checkbox) {
-                    return checkbox.value;
-                })
+                .filter(function (checkbox) { return checkbox.checked; })
+                .map(function (checkbox) { return checkbox.value; })
         );
 
-        if (refreshController) {
-            refreshController.abort();
-        }
-
+        if (refreshController) refreshController.abort();
         refreshController = new AbortController();
 
         try {
@@ -213,84 +298,56 @@ document.addEventListener("DOMContentLoaded", function () {
                 {
                     method: "GET",
                     cache: "no-store",
-                    headers: {
-                        "X-Requested-With": "XMLHttpRequest"
-                    },
+                    headers: { "X-Requested-With": "XMLHttpRequest" },
                     signal: refreshController.signal
                 }
             );
-
-            if (!response.ok) {
-                throw new Error(
-                    "Failed to refresh Submission Bin."
-                );
-            }
+            if (!response.ok) throw new Error("We couldn't refresh your submission list.");
 
             const html = await response.text();
-
             tableBody.innerHTML = html;
 
-            getCheckboxes().forEach(
-                function (checkbox) {
-                    checkbox.checked =
-                        selectedValues.has(checkbox.value);
-                }
-            );
-
+            getCheckboxes().forEach(function (checkbox) {
+                checkbox.checked = selectedValues.has(checkbox.value);
+            });
             syncSelectAll();
         } catch (error) {
             if (error.name !== "AbortError") {
-                console.error(
-                    "Submission Bin realtime update failed:",
-                    error
-                );
+                console.error("Submission Bin status refresh failed:", error);
             }
         }
     }
 
     document.addEventListener("change", function (event) {
-        const fileInput = event.target;
-
+        const target = event.target;
         if (
-            fileInput.matches('input[type="file"]') &&
-            fileInput.files.length > 0 &&
-            fileInput.form
+            target.matches('input[type="file"]') &&
+            target.files.length > 0 &&
+            target.form
         ) {
             uploadLoading.hidden = false;
         }
-
-        if (
-            fileInput.matches(
-                "#submission-bin-body .requirement-checkbox"
-            )
-        ) {
+        if (target.matches("#submission-bin-body .requirement-checkbox")) {
             syncSelectAll();
         }
     }, true);
 
     if (selectAll) {
-        selectAll.addEventListener(
-            "change",
-            function () {
-                getCheckboxes().forEach(
-                    function (checkbox) {
-                        checkbox.checked = selectAll.checked;
-                    }
-                );
-
-                selectAll.indeterminate = false;
-            }
-        );
+        selectAll.addEventListener("change", function () {
+            getCheckboxes().forEach(function (checkbox) {
+                checkbox.checked = selectAll.checked;
+            });
+            selectAll.indeterminate = false;
+            updateSubmitButton();
+        });
     }
 
-    document.addEventListener(
-        "submission-bin-update",
-        function () {
-            refreshSubmissionBin();
-        }
-    );
+    document.addEventListener("submission-bin-update", function () {
+        refreshSubmissionBin().then(scheduleStatusPolling);
+    });
 
     syncSelectAll();
+    scheduleStatusPolling();
 });
 </script>
 

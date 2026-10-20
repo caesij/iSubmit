@@ -1,7 +1,6 @@
 from django.db.models import Q, Count
 from django.utils import timezone
-from django.utils.formats import date_format
-
+from core.date_formatting import format_display_date
 from submissions.models import Requirement, DocumentSubmission
 
 
@@ -90,7 +89,7 @@ def get_dashboard_data(user):
     upcoming_deadlines = [
         {
             'requirement_title': requirement.requirement_title,
-            'deadline': date_format(requirement.deadline, 'M j, Y'),
+            'deadline': format_display_date(requirement.deadline, user),
         }
         for requirement in deadline_queryset
     ]

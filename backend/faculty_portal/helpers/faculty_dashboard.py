@@ -1,5 +1,4 @@
-from django.utils.formats import date_format
-
+from core.date_formatting import format_display_date, format_display_time
 from submissions.models import DocumentSubmission
 
 def get_overview_queryset(user, tab='all'):
@@ -41,16 +40,12 @@ def get_overview_queryset(user, tab='all'):
     return overview_qs
 
 
-def serialize_overview_submissions(overview_qs):
+def serialize_overview_submissions(overview_qs, user):
     return [
         {
             'title': submission.requirement.requirement_title,
-            'date': date_format(
-                submission.initially_submitted_at, 'M j, Y'
-            ),
-            'time': date_format(
-                submission.initially_submitted_at, 'g:i A'
-            ),
+            'date': format_display_date(submission.initially_submitted_at, user),
+            'time': format_display_time(submission.initially_submitted_at, user),
             'status': submission.status,
         }
         for submission in overview_qs[:5]

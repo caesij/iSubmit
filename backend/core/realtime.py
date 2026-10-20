@@ -24,3 +24,9 @@ def send_to_group(group_name, event, data=None):
             'data': data or {},
         },
     )
+
+
+def send_to_session(session_key, event, data=None):
+    if not session_key:
+        return
+    send_to_group(f'session_{session_key}', event, data)

@@ -2,6 +2,19 @@ from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 
 
+def refresh_submission_pages(data=None):
+    channel_layer = get_channel_layer()
+
+    async_to_sync(channel_layer.group_send)(
+        'admin_staff_submissions',
+        {
+            'type': 'realtime_event',
+            'event': 'submissions.update',
+            'data': data or {},
+        },
+    )
+
+
 def refresh_admin_dashboard():
     channel_layer = get_channel_layer()
     

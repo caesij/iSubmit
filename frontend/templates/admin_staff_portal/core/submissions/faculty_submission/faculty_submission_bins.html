@@ -1,5 +1,5 @@
 {% extends 'admin_staff_portal/base.html' %}
-{% load static %}
+{% load static core_extras %}
 
 {% block title %}{{ faculty_member.get_full_name }}'s Submissions - iSubmit{% endblock %}
 {% block heading %}Submissions{% endblock %}
@@ -20,7 +20,12 @@
 .approve-all-wrap { margin-left: auto; }
 .btn-approve-all { padding: 8px 16px; background: #07883f; color: #fff; border: none; border-radius: 5px; font-size: 12px; font-weight: 700; cursor: pointer; }
 .btn-approve-all:disabled { background: #d1d5db; color: #6b7280; cursor: not-allowed; }
-.approve-all-hint { display: none; }
+.approve-help { max-width: 220px; margin: 5px 0 0; color: #6b7280; font-size: 11px; line-height: 1.4; }
+.submission-message { margin: 0 0 14px; padding: 11px 14px; border: 1px solid; border-radius: 6px; font-size: 13px; }
+.submission-message-success { color: #166534; background: #f0fdf4; border-color: #bbf7d0; }
+.submission-message-error { color: #991b1b; background: #fef2f2; border-color: #fecaca; }
+.submission-message-warning { color: #92400e; background: #fffbeb; border-color: #fde68a; }
+.submission-message-info { color: #1e40af; background: #eff6ff; border-color: #bfdbfe; }
 
 .filter-card { display: flex; align-items: center; flex: 0 0 auto; margin: 0 0 0 auto; }
 .filter-form { display: flex; }
@@ -71,6 +76,17 @@
     <a href="{% url 'admin_staff_portal:faculty_submissions_list' %}" class="back-link">&larr; Back</a>
     <div class="faculty-breadcrumb">Faculty Submission <span aria-hidden="true">&rsaquo;</span> {{ faculty_member.get_full_name }}</div>
 
+    {% if messages %}
+        <div class="submission-messages" aria-live="polite">
+            {% for message in messages %}
+                <div
+                    class="submission-message submission-message-{% if message.tags == 'success' %}success{% elif message.tags == 'error' %}error{% elif message.tags == 'warning' %}warning{% else %}info{% endif %}"
+                    role="{% if message.tags == 'error' %}alert{% else %}status{% endif %}"
+                >{{ message }}</div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
     <div class="faculty-header">
         <div class="faculty-header-left">
             <div class="faculty-avatar">{{ faculty_member.first_name|first }}{{ faculty_member.last_name|first }}</div>
@@ -116,10 +132,13 @@
             <form id="approval-form" method="post" action="{% url 'admin_staff_portal:approve_selected_submissions' faculty_member.id %}">
                 {% csrf_token %}
                 <button id="approve-selected-button" type="submit" class="btn-approve-all" disabled>
-                    Approve All{% if pending_approval_count %} ({{ pending_approval_count }}){% endif %}
+                    Approve{% if pending_approval_count %} ({{ pending_approval_count }}){% endif %}
                 </button>
             </form>
+            <p class="approve-help">Only reviewed documents marked "Pending Approval" can be approved. Start review and mark other documents as reviewed first.</p>
         </div>
+        {% else %}
+        <p class="approve-help" role="status">Only administrators can approve documents. You can review submissions and mark them as pending approval.</p>
         {% endif %}
     </div>
 
@@ -141,16 +160,25 @@
                     <th>Action</th>
                 </tr>
             </thead>
-            <tbody>
+            <tbody data-live-container="faculty-submissions-table">
                 {% for sub in submissions %}
                     <tr>
                         <td class="select-column">
-                            <input
-                                class="submission-checkbox"
-                                type="checkbox"
-                                value="{{ sub.id }}"
-                                aria-label="Select {{ sub.requirement.requirement_title }}"
-                            >
+                            {% if sub.status == 'PENDING_APPROVAL' %}
+                                <input
+                                    class="submission-checkbox"
+                                    type="checkbox"
+                                    value="{{ sub.id }}"
+                                    aria-label="Select {{ sub.requirement.requirement_title }}"
+                                >
+                            {% else %}
+                                <input
+                                    type="checkbox"
+                                    disabled
+                                    aria-label="{{ sub.requirement.requirement_title }} is not pending approval"
+                                    title="This document must be reviewed before it can be approved."
+                                >
+                            {% endif %}
                         </td>
                         <td class="font-bold">{{ sub.requirement.requirement_title }}</td>
                         <td>{{ sub.requirement.category }}</td>
@@ -159,12 +187,12 @@
                             <div class="text-sub">{{ sub.requirement.academic_term }}</div>
                         </td>
                         <td>
-                            <div>{{ sub.initially_submitted_at|date:"F j, Y" }}</div>
-                            <div class="text-sub">{{ sub.initially_submitted_at|date:"g:i A" }}</div>
+                            <div>                                                        {{ sub.initially_submitted_at|display_date:request.user }}</div>
+                            <div class="text-sub">                                                        {{ sub.initially_submitted_at|display_time:request.user }}</div>
                         </td>
                         <td>
-                            <div>{{ sub.requirement.deadline|date:"F j, Y" }}</div>
-                            <div class="text-sub">{{ sub.requirement.deadline|date:"g:i A" }}</div>
+                            <div>                                                        {{ sub.requirement.deadline|display_date:request.user }}</div>
+                            <div class="text-sub">                                                        {{ sub.requirement.deadline|display_time:request.user }}</div>
                         </td>
                         <td>
                             <span class="pill
@@ -208,7 +236,7 @@
     </div>
 
         {% if is_paginated or page_obj %}
-        <div class="pagination-footer">
+        <div class="pagination-footer" data-live-container="faculty-submissions-pagination">
             <span>Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }} documents</span>
             <div class="pagination-controls">
                 {% if page_obj.has_previous %}
@@ -225,10 +253,10 @@
         {% endif %}
 </div>
 <script>
-const approvalForm = document.getElementById("approval-form");
-const approveSelectedButton = document.getElementById("approve-selected-button");
-const selectAllSubmissions = document.getElementById("select-all-submissions");
-const submissionCheckboxes = Array.from(document.querySelectorAll(".submission-checkbox"));
+let approvalForm;
+let approveSelectedButton;
+let selectAllSubmissions;
+let submissionCheckboxes;
 
 function updateApprovalSelection() {
     if (!approvalForm || !approveSelectedButton) {
@@ -264,18 +292,29 @@ function updateApprovalSelection() {
     }
 }
 
-if (selectAllSubmissions) {
-    selectAllSubmissions.addEventListener("change", function () {
-        submissionCheckboxes.forEach(function (checkbox) {
-            checkbox.checked = selectAllSubmissions.checked;
-        });
-        updateApprovalSelection();
+function bindApprovalSelection() {
+    approvalForm = document.getElementById("approval-form");
+    approveSelectedButton = document.getElementById("approve-selected-button");
+    selectAllSubmissions = document.getElementById("select-all-submissions");
+    submissionCheckboxes = Array.from(
+        document.querySelectorAll(".submission-checkbox:not(:disabled)")
+    );
+    if (selectAllSubmissions) {
+        selectAllSubmissions.onchange = function () {
+            submissionCheckboxes.forEach(function (checkbox) {
+                checkbox.checked = selectAllSubmissions.checked;
+            });
+            updateApprovalSelection();
+        };
+    }
+    submissionCheckboxes.forEach(function (checkbox) {
+        checkbox.onchange = updateApprovalSelection;
     });
+    updateApprovalSelection();
 }
 
-submissionCheckboxes.forEach(function (checkbox) {
-    checkbox.addEventListener("change", updateApprovalSelection);
-});
+bindApprovalSelection();
+document.addEventListener("submissions-refreshed", bindApprovalSelection);
 
 document.addEventListener("click", function (event) {
     const trigger = event.target.closest(".dropdown .btn-icon");

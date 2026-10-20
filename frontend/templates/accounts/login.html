@@ -22,6 +22,8 @@
         {# Filter to only display authentication error messages on the login page #}
         {% if message.tags == 'error' %}
             <li style="color: red;">{{ message }}</li>
+        {% elif message.tags == 'warning' %}
+            <li style="color: #b45309;">{{ message }}</li>
         {% endif %}
     {% endfor %}
 </ul>

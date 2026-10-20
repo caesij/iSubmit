@@ -146,7 +146,7 @@
                     <th>Deadline</th>
                     <th>Completion Progress</th>
                     <th>Status</th>
-                    <th>OCR Enabled</th>
+                    <th>Text Processing</th>
                     <th class="action-heading">Action</th>
                 </tr>
             </thead>
@@ -167,7 +167,7 @@
 
     <!-- Pagination -->
     {% if is_paginated or page_obj %}
-        <div class="pagination-footer requirements-pagination">
+        <div class="pagination-footer requirements-pagination" data-live-container="requirements-pagination">
             <span class="pagination-info">
                 Showing {{ page_obj.start_index }} to {{ page_obj.end_index }}
                 of {{ page_obj.paginator.count }} documents

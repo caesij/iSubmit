@@ -20,15 +20,15 @@ class CustomLoginForm(AuthenticationForm):
     def confirm_login_allowed(self, user):
         if user.is_locked_out:
             raise forms.ValidationError(
-                'Your account has been locked out due to 5 failed login attempts. '
-                'Please contact an administrator to unlock it.',
+                'Your account is temporarily locked after several unsuccessful sign-in attempts. '
+                'Please contact an administrator for help.',
                 code='locked_out',
             )
             
         if not user.is_active:
             raise forms.ValidationError(
-                    'Your account has been deactivated. '
-                    'Please contact an administrator.',
+                    'Your account is currently inactive. '
+                    'Please contact an administrator for help.',
                     code='inactive',
             )
             
@@ -43,14 +43,14 @@ class FacultyProfileForm(forms.ModelForm):
         if self.instance.pk:
             query = query.exclude(pk=self.instance.pk)
         if query.exists():
-            raise forms.ValidationError('A user with this email address already exists.')
+            raise forms.ValidationError('This email address is already in use.')
         return email
 
     def clean_profile_picture(self):
         photo = self.cleaned_data.get('profile_picture')
         if photo and hasattr(photo, 'size'):
             if photo.size > 10 * 1024 * 1024:
-                raise forms.ValidationError('Image must be smaller than 10MB.')
+                raise forms.ValidationError('Please choose an image smaller than 10 MB.')
         return photo
 
 class AdminStaffProfileForm(forms.ModelForm):
@@ -64,20 +64,20 @@ class AdminStaffProfileForm(forms.ModelForm):
         if self.instance.pk:
             query = query.exclude(pk=self.instance.pk)
         if query.exists():
-            raise forms.ValidationError('A user with this email address already exists.')
+            raise forms.ValidationError('This email address is already in use.')
         return email
 
     def clean_profile_picture(self):
         photo = self.cleaned_data.get('profile_picture')
         if photo and hasattr(photo, 'size'):
             if photo.size > 10 * 1024 * 1024:
-                raise forms.ValidationError('Image must be smaller than 10MB.')
+                raise forms.ValidationError('Please choose an image smaller than 10 MB.')
         return photo
     
 class PreferencesForm(forms.ModelForm):
     class Meta:
         model = User
-        fields = ['language', 'timezone', 'date_format', 'time_format']
+        fields = ['timezone', 'date_format', 'time_format']
         widgets = {
             'timezone': forms.Select(choices=[
                 ('Asia/Manila', '(GMT +08:00) Manila, Philippines'),
