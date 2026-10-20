@@ -36,6 +36,10 @@ User = get_user_model()
 UPLOAD_PAGE = 'faculty_portal:upload_files'
 OCR = DocumentMetadata.OCRStatus
 NLP = DocumentMetadata.NLPStatus
+TEXT_MODE = Requirement.TextProcessingMode
+QUEUE_FAILURE_ERROR = (
+    'We could not start preparing this document. Please try uploading it again.'
+)
 
 
 # ---------------------------------------------------------------------------
@@ -87,7 +91,7 @@ def _build_metadata_values(draft, uploaded_file=None):
         content_type = mimetypes.guess_type(filename)[0] or ''
         file_size = _stored_file_size(draft)
 
-    if requirement.ocr_enabled:
+    if requirement.text_processing_mode == TEXT_MODE.OCR:
         ocr_status, ocr_error = (
             (OCR.PENDING, '')
             if _is_pdf(filename)
@@ -96,8 +100,10 @@ def _build_metadata_values(draft, uploaded_file=None):
                 'OCR supports PDF files only. Replace this file with a PDF.',
             )
         )
-    elif _supports_direct_extraction(filename):
+    elif requirement.text_processing_mode == TEXT_MODE.DIGITAL and _supports_direct_extraction(filename):
         ocr_status, ocr_error = OCR.PENDING, ''
+    elif requirement.text_processing_mode == TEXT_MODE.NONE:
+        ocr_status, ocr_error = OCR.NOT_REQUIRED, ''
     elif not _is_pdf(filename):
         ocr_status, ocr_error = (
             OCR.FAILED,
@@ -132,7 +138,17 @@ def _needs_full_reset(draft, metadata):
     """True when the metadata no longer describes the draft's current file."""
     if metadata is None or metadata.storage_file_name != draft.draft_file.name:
         return True
-    return metadata.ocr_status == OCR.NOT_REQUIRED
+    requires_extraction = draft.requirement.text_processing_mode != TEXT_MODE.NONE
+    queue_failed = metadata.ocr_error in {
+        QUEUE_FAILURE_ERROR,
+        'Document text extraction could not be queued. Check that the worker '
+        'and Redis are running, then replace the file or contact support.',
+    }
+    return (
+        (requires_extraction and metadata.ocr_status == OCR.NOT_REQUIRED)
+        or (not requires_extraction and metadata.ocr_status != OCR.NOT_REQUIRED)
+        or (requires_extraction and metadata.ocr_status == OCR.FAILED and queue_failed)
+    )
 
 
 def _needs_nlp_pending(draft, metadata):
@@ -196,10 +212,7 @@ def _mark_enqueue_failed(metadata_id, request_id):
         return
 
     metadata.ocr_status = OCR.FAILED
-    metadata.ocr_error = (
-        'Document text extraction could not be queued. Check that the worker '
-        'and Redis are running, then replace the file or contact support.'
-    )
+    metadata.ocr_error = QUEUE_FAILURE_ERROR
     metadata.ocr_completed_at = timezone.now()
     metadata.save(update_fields=['ocr_status', 'ocr_error', 'ocr_completed_at', 'updated_at'])
 
@@ -335,25 +348,35 @@ def _submission_block_reason(row):
     requirement = row['requirement']
     metadata = row['metadata']
 
+    if requirement.text_processing_mode == TEXT_MODE.NONE:
+        if requirement.nlp_enabled and metadata is None:
+            return 'We could not finish checking this document. Please replace the file and try again.'
+        if requirement.nlp_enabled:
+            if metadata.nlp_status in (NLP.PENDING, NLP.PROCESSING):
+                return 'Document validation is still processing. Wait before submitting.'
+            if metadata.nlp_status != NLP.PASSED:
+                return 'Document validation did not pass. Review the result before submitting.'
+        return None
+
     if metadata is None:
-        return 'Document text metadata is missing. Replace the file and try again.'
+        return 'We could not finish preparing this document. Please replace the file and try again.'
 
     if metadata.ocr_status in (OCR.PENDING, OCR.PROCESSING):
-        return 'Document text extraction is still processing. Wait before submitting.'
+        return 'This document is still being prepared. Please wait a moment before submitting.'
 
     if metadata.ocr_status != OCR.COMPLETED:
         return metadata.ocr_error or (
-            'Document text extraction did not complete successfully. '
-            'Replace the file and try again.'
+            'This document could not be prepared for submission. '
+            'Please replace the file and try again.'
         )
 
     if requirement.nlp_enabled:
         if metadata is None:
-            return 'Document validation metadata is missing. Replace the file and try again.'
+            return 'We could not finish checking this document. Please replace the file and try again.'
         if metadata.nlp_status in (NLP.PENDING, NLP.PROCESSING):
-            return 'Document validation is still processing. Wait before submitting.'
+            return 'This document is still being checked. Please wait a moment before submitting.'
         if metadata.nlp_status != NLP.PASSED:
-            return 'Document validation did not pass. Review the result before submitting.'
+            return 'This document did not pass the required checks. Please review it before submitting.'
 
     return None
 
@@ -499,7 +522,10 @@ def process_submission(request):
         submissions = create_submissions(user, rows)
     except Exception:
         logger.exception('Submission failed during final processing.')
-        messages.error(request, 'An error occurred while processing your submission. Please try again.')
+        messages.error(
+            request,
+            'We could not submit your documents right now. Please try again.',
+        )
         return redirect(UPLOAD_PAGE)
 
     request.session['recently_submitted_ids'] = [str(s.id) for s in submissions]
@@ -520,10 +546,17 @@ def save_draft_form(request, draft, success_message, error_message):
         return redirect(UPLOAD_PAGE)
 
     uploaded_file = request.FILES.get('draft_file')
-    ocr_enabled = draft.requirement.ocr_enabled
+    processing_mode = draft.requirement.text_processing_mode
 
-    if uploaded_file and ocr_enabled and not _is_pdf(uploaded_file.name):
-        messages.error(request, 'This requirement requires OCR, so please upload a PDF file.')
+    if (
+        uploaded_file
+        and processing_mode == TEXT_MODE.OCR
+        and not _is_pdf(uploaded_file.name)
+    ):
+        messages.error(
+            request,
+            'This requirement uses OCR. Please upload a PDF file.',
+        )
         return redirect(UPLOAD_PAGE)
 
     old_file_name = draft.draft_file.name if draft.draft_file else ''
@@ -546,9 +579,9 @@ def save_draft_form(request, draft, success_message, error_message):
     if should_enqueue:
         schedule_extraction(metadata)
 
-    if ocr_enabled:
+    if processing_mode != TEXT_MODE.NONE:
         success_message += (
-            ' OCR status will appear below; final submission will be enabled '
+            ' Text processing status will appear below; final submission will be enabled '
             'after required checks finish.'
         )
     messages.success(request, success_message)

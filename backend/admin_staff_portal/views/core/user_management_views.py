@@ -109,7 +109,11 @@ def user_create_view(request):
                 )
                 messages.success(request, f'Account created for {user.email}. Password email sent successfully.')
             except Exception:
-                messages.warning(request, f'Account created for {user.email}, but failed to send email.')
+                messages.warning(
+                    request,
+                    f'Account created for {user.email}, but the welcome email could not be sent. '
+                    'Please share the login details securely with the user.',
+                )
 
             url = reverse('admin_staff_portal:user_list')
             return redirect(f"{url}?role={target_role}")
@@ -173,11 +177,11 @@ def user_toggle_acc_status_view(request, pk):
     redirect_url = f"{reverse('admin_staff_portal:user_list')}?role={target_user.role}"
 
     if request.user.pk == target_user.pk:
-        messages.error(request, 'You cannot deactivate your own account.')
+        messages.error(request, 'You cannot deactivate your own account while signed in.')
         return redirect(redirect_url)
 
     if not can_manage_target(request.user, target_user):
-        messages.error(request, 'You do not have permission to edit this account status.')
+        messages.error(request, 'You do not have permission to change this account status.')
         return redirect(redirect_url)
 
     target_user.is_active = not target_user.is_active

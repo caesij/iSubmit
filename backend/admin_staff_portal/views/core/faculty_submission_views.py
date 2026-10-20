@@ -14,7 +14,7 @@ from accounts.decorators import admin, role_required, staff_permission_required
 from admin_staff_portal.realtime import refresh_admin_dashboard
 from admin_staff_portal.realtime import refresh_staff_dashboard
 from admin_staff_portal.realtime import refresh_submission_pages
-from notifications.services import create_notif
+from notifications.services import build_approval_email, create_notif
 from notifications.models import NotificationPreference
 from submissions.models import DocumentSubmission, DocumentRevision, Requirement
 from submissions.forms import DocumentReviewForm
@@ -375,7 +375,7 @@ def approve_selected_submissions_view(request, faculty_id):
     if invalid_selection:
         messages.error(
             request,
-            'The selected document IDs are invalid. Please refresh the page and try again.',
+            'Some selected documents are no longer available. Please refresh the page and try again.',
         )
         return redirect(
             'admin_staff_portal:faculty_submission_bins_view',
@@ -394,6 +394,7 @@ def approve_selected_submissions_view(request, faculty_id):
 
     pending_status = DocumentSubmission.SubmissionStatus.PENDING_APPROVAL
     approved_status = DocumentSubmission.SubmissionStatus.APPROVED
+    approval_time = timezone.now()
 
     with transaction.atomic():
         eligible_ids = list(
@@ -426,7 +427,7 @@ def approve_selected_submissions_view(request, faculty_id):
         ).update(
             status=approved_status,
             approved_by=request.user,
-            approved_at=timezone.now()
+            approved_at=approval_time
         )
 
         if approved_count:
@@ -438,14 +439,33 @@ def approve_selected_submissions_view(request, faculty_id):
                 refresh_faculty_submission_bin(faculty_member)
                 refresh_faculty_my_submissions(faculty_member)
 
+                approved_submissions = (
+                    DocumentSubmission.objects
+                    .filter(pk__in=eligible_ids)
+                    .select_related('requirement')
+                )
+                email_subject, email_message = build_approval_email(
+                    recipient=faculty_member,
+                    document_names=(
+                        submission.requirement.requirement_title
+                        for submission in approved_submissions
+                    ),
+                    approved_by=request.user,
+                    approved_at=approval_time,
+                )
+
                 create_notif(
                     user=faculty_member,
                     notification_type=(
                         NotificationPreference.NotificationType.SUBMISSION_NOTIFICATIONS
                     ),
                     title='Selected Document Submissions Approved',
-                    message=(f'{approved_count} selected document(s) have been approved.'),
-                    link=reverse('faculty_portal:my_submissions')
+                    message=(
+                        f'{approved_count} selected document(s) have been approved.'
+                    ),
+                    link=reverse('faculty_portal:my_submissions'),
+                    email_subject=email_subject,
+                    email_message=email_message,
                 )
 
             transaction.on_commit(publish_approval_updates)

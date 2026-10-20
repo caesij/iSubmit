@@ -27,7 +27,7 @@ class RequirementForm(forms.ModelForm):
             'semester',
             'status', 
             'deadline',
-            'ocr_enabled',
+            'text_processing_mode',
         ]
         
         widgets = {
@@ -35,11 +35,7 @@ class RequirementForm(forms.ModelForm):
                 attrs={'type': 'datetime-local'},
                 format='%Y-%m-%dT%H:%M'
             ),
-            'ocr_enabled': forms.CheckboxInput(
-                attrs={
-                    'class': 'ocr-checkbox'
-                }
-            ),
+            'text_processing_mode': forms.RadioSelect,
         }
         
         error_messages = {
@@ -69,13 +65,13 @@ class RequirementForm(forms.ModelForm):
         title = self.cleaned_data.get('requirement_title', '').strip()
         
         if not title:
-            raise ValidationError('Requirement title is required.')
+            raise ValidationError('Please enter a requirement title.')
         return title
     
     def clean_category(self):
         category = self.cleaned_data.get('category', '').strip()
         if not category:
-            raise ValidationError('Category is required.')
+            raise ValidationError('Please enter a category.')
         return category
     
     def clean_academic_year(self):
@@ -84,10 +80,10 @@ class RequirementForm(forms.ModelForm):
             start_str, end_str = academic_year.split('-')
             start_year, end_year = int(start_str), int(end_str)
         except (ValueError, AttributeError):
-            raise ValidationError('Invalid academic year selected.')
+            raise ValidationError('Please select a valid academic year.')
 
         if end_year != start_year + 1:
-            raise ValidationError('Invalid academic year range.')
+            raise ValidationError('Please select an academic year with consecutive years.')
 
         return academic_year
 
@@ -116,9 +112,11 @@ class DraftUploadForm(forms.ModelForm):
         file = self.cleaned_data['draft_file']
         ext = os.path.splitext(file.name)[1].lower()
         if ext not in ALLOWED_EXTENSIONS:
-            raise ValidationError(f"Unsupported file type: {ext}")
+            raise ValidationError(
+                'This file type is not supported. Please upload a PDF, DOCX, or XLSX file.'
+            )
         if file.size > MAX_UPLOAD_SIZE:
-            raise ValidationError("File too large. Maximum size is 10MB.")
+            raise ValidationError("Please choose a file smaller than 10 MB.")
         return file
     
 class DocumentRevisionForm(forms.Form):
@@ -129,10 +127,12 @@ class DocumentRevisionForm(forms.Form):
         ext = os.path.splitext(file.name)[1].lower()
 
         if ext not in ALLOWED_EXTENSIONS:
-            raise ValidationError(f'Unsupported file type: {ext}')
+            raise ValidationError(
+                'This file type is not supported. Please upload a PDF, DOCX, or XLSX file.'
+            )
 
         if file.size > MAX_UPLOAD_SIZE:
-            raise ValidationError('File too large. Maximum size is 10MB.')
+            raise ValidationError('Please choose a file smaller than 10 MB.')
 
         return file
 

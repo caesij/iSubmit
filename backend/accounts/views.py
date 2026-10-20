@@ -75,7 +75,7 @@ def login_view(request):
 
         else:
             for error in form.non_field_errors():
-                messages.error(request, error)
+                messages.error(request, 'We could not sign you in. Please check your email and password.')
             if not form.non_field_errors():
                 messages.error(request, 'Invalid email or password.')
 
@@ -88,7 +88,8 @@ def login_view(request):
                 if attempts_remaining:
                     messages.warning(
                         request,
-                        f"You have {attempts_remaining} login attempt{'s' if attempts_remaining != 1 else ''} remaining.",
+                        f"You have {attempts_remaining} sign-in attempt"
+                        f"{'s' if attempts_remaining != 1 else ''} remaining.",
                     )
     else:
         form = CustomLoginForm()

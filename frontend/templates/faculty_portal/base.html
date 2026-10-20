@@ -474,7 +474,7 @@
 
                 if (!response.ok) {
                     throw new Error(
-                        "Failed to load notifications."
+                        "We couldn't load your notifications."
                     );
                 }
 
@@ -490,7 +490,7 @@
 
                 dropdown.innerHTML = `
                     <div class="notif-dropdown-empty">
-                        Failed to load notifications.
+                        We couldn't load your notifications. Please try again.
                     </div>
                 `;
             } finally {
@@ -520,7 +520,7 @@
 
                 if (!response.ok) {
                     throw new Error(
-                        "Failed to refresh notification list."
+                        "We couldn't refresh your notifications."
                     );
                 }
 

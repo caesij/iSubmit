@@ -64,7 +64,7 @@ Supports document submission and monitoring of review status.
                     <th>Academic Term</th>
                     <th>Deadline</th>
                     <th>Status</th>
-                    <th>OCR</th>
+                    <th>Text Processing</th>
                     <th class="action-heading">Action</th>
                 </tr>
             </thead>
@@ -98,8 +98,8 @@ Supports document submission and monitoring of review status.
                         </td>
 
                         <td>
-                            <span class="ocr-badge {% if requirement.ocr_enabled %}ocr-enabled{% else %}ocr-disabled{% endif %}">
-                                {% if requirement.ocr_enabled %}Enabled{% else %}Disabled{% endif %}
+                            <span class="ocr-badge {% if requirement.text_processing_mode == 'NONE' %}ocr-disabled{% else %}ocr-enabled{% endif %}">
+                                {{ requirement.text_processing_mode_display }}
                             </span>
                         </td>
 

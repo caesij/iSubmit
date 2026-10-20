@@ -59,18 +59,15 @@ def attach_document(request, requirement_id):
 
     allowed_types = (Requirement.AssignedFacultyType.ALL, request.user.faculty_type)
     if requirement.assigned_to not in allowed_types:
-        return HttpResponseForbidden('You are not assigned to this requirement.')
+        return HttpResponseForbidden('This requirement is not available for your account.')
 
-    draft, _ = DraftUpload.objects.select_related('requirement').get_or_create(
-        faculty=request.user,
-        requirement=requirement
-    )
+    draft, _ = DraftUpload.objects.select_related('requirement').get_or_create(faculty=request.user, requirement=requirement)
 
     return save_draft_form(
         request,
         draft,
         success_message='File attached successfully.',
-        error_message='Failed to upload file. Please check the format and size.'
+        error_message='We could not attach that file. Please check the file type and size, then try again.'
     )
 
 
@@ -87,7 +84,7 @@ def replace_document(request, document_id):
         request,
         draft,
         success_message='File replaced successfully.',
-        error_message='Failed to replace file.',
+        error_message='We could not replace that file. Please check the file type and size, then try again.',
     )
 
 
@@ -132,7 +129,7 @@ def resubmit_document(request, submission_id):
         request,
         draft,
         success_message='Replacement file uploaded. Select it and submit it when ready.',
-        error_message='Failed to replace the returned file. Please check the format and size.'
+        error_message='We could not replace that file. Please check the file type and size, then try again.'
     )
 
 

@@ -12,25 +12,29 @@
 <link rel="stylesheet" href="{% static 'css/pages/submissions.css' %}">
 
 <style>
-    /* OCR toggle — scoped to this page */
-    .requirement-editor .ocr-control {
-        display: inline-flex;
-        align-items: center;
+    .processing-options {
+        display: grid;
+        gap: 10px;
     }
 
-    .requirement-editor .ocr-checkbox {
-        position: absolute;
-        width: 1px;
-        height: 1px;
-        opacity: 0;
+    .processing-option {
+        display: flex;
+        gap: 9px;
+        align-items: flex-start;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 6px;
     }
 
-    .requirement-editor .ocr-switch {
-        display: inline-flex;
-        align-items: center;
-        gap: 12px;
+    .processing-option label {
+        display: grid;
+        gap: 2px;
         cursor: pointer;
-        user-select: none;
+    }
+
+    .processing-option small {
+        color: #666;
+        font-size: 0.75rem;
     }
 
     .requirement-editor .ocr-slider {
@@ -128,16 +132,27 @@
                 </div>
 
                 
-                <div class="requirement-field ocr-field{% if form.ocr_enabled.errors %} has-error{% endif %}">
-                    <div class="ocr-control">
-                        {{ form.ocr_enabled }}
-                        <label class="ocr-switch" for="{{ form.ocr_enabled.id_for_label }}">
-                            <span class="ocr-label">Enable OCR?</span>
-                            <span class="ocr-slider" aria-hidden="true"></span>
-                        </label>
+                <div class="requirement-field{% if form.text_processing_mode.errors %} has-error{% endif %}">
+                    <label>{{ form.text_processing_mode.label }}</label>
+                    <div class="processing-options">
+                        {% for radio in form.text_processing_mode %}
+                            <div class="processing-option">
+                                {{ radio.tag }}
+                                <label for="{{ radio.id_for_label }}">
+                                    <strong>{{ radio.choice_label }}</strong>
+                                    {% if forloop.first %}
+                                        <small>Accept documents normally.</small>
+                                    {% elif forloop.counter == 2 %}
+                                        <small>Require embedded text extraction from digital files.</small>
+                                    {% else %}
+                                        <small>Require OCR processing for PDF files.</small>
+                                    {% endif %}
+                                </label>
+                            </div>
+                        {% endfor %}
                     </div>
 
-                    {% for error in form.ocr_enabled.errors %}
+                    {% for error in form.text_processing_mode.errors %}
                         <span class="field-error">{{ error }}</span>
                     {% endfor %}
                 </div>

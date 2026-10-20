@@ -65,14 +65,14 @@ class User(AbstractBaseUser, PermissionsMixin):
         max_length=50,
         unique=True,
         error_messages={
-            'unique': 'A user with this employee ID already exists.'
+            'unique': 'This employee ID is already in use.'
         },
     )
 
     email = models.EmailField(
         unique=True, 
         error_messages={
-            'unique': 'A user with this email already exists.'
+            'unique': 'This email address is already in use.'
         },
     )
 

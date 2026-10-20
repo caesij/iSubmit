@@ -8,7 +8,7 @@ from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.utils import timezone
 
-from backend.core.text_extraction_digi_docs import DocumentTextExtractionError, extract_text
+from core.text_extraction_digi_docs import DocumentTextExtractionError, extract_text
 from core.post_correction import correct_lines
 from submissions.models import DocumentMetadata
 
@@ -80,6 +80,11 @@ def process_document_extraction(self, metadata_id, request_id):
             return {'status': 'not_pending'}
         if not metadata.draft_id or not metadata.draft or not metadata.draft.draft_file:
             return {'status': 'draft_missing'}
+        if metadata.requirement.text_processing_mode == metadata.requirement.TextProcessingMode.NONE:
+            metadata.ocr_status = DocumentMetadata.OCRStatus.NOT_REQUIRED
+            metadata.ocr_error = ''
+            metadata.save(update_fields=['ocr_status', 'ocr_error', 'updated_at'])
+            return {'status': 'not_required'}
         draft_id = metadata.draft_id
         file_name = metadata.draft.draft_file.name
         
@@ -88,7 +93,9 @@ def process_document_extraction(self, metadata_id, request_id):
         
         suffix = Path(metadata.original_filename or file_name).suffix.lower()
         
-        if metadata.requirement.ocr_enabled and suffix != '.pdf':
+        processing_mode = metadata.requirement.text_processing_mode
+
+        if processing_mode == metadata.requirement.TextProcessingMode.OCR and suffix != '.pdf':
             metadata.ocr_status = DocumentMetadata.OCRStatus.FAILED
             metadata.ocr_error = (
                 'This requirement requires OCR, so the document must be a PDF.'
@@ -112,7 +119,7 @@ def process_document_extraction(self, metadata_id, request_id):
                 with local_document.open('wb') as local_file:
                     shutil.copyfileobj(remote_file, local_file)
 
-            if metadata.requirement.ocr_enabled:
+            if processing_mode == metadata.requirement.TextProcessingMode.OCR:
                 from core.ocr import extract_lines_and_page_count_from_pdf
                 lines, scores, page_count = (
                     extract_lines_and_page_count_from_pdf(local_document)
@@ -164,7 +171,7 @@ def process_document_extraction(self, metadata_id, request_id):
                         str(exc)
                         if isinstance(exc, DocumentTextExtractionError)
                         else (
-                            f'Document text extraction failed ({type(exc).__name__}). '
+                            'We could not read the text from this document. '
                             'Please replace the file and try again, or contact support.'
                         )
                     )

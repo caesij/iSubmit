@@ -42,6 +42,7 @@ def bulk_requirements_view(request):
     assigned_labels = dict(Requirement.AssignedFacultyType.choices)
     semester_labels = dict(Requirement.Semester.choices)
     status_labels = dict(Requirement.ReqStatus.choices)
+    processing_mode_labels = dict(Requirement.TextProcessingMode.choices)
 
     for index, item in enumerate(bulk_requirements):
         display_item = item.copy()
@@ -74,6 +75,14 @@ def bulk_requirements_view(request):
                 item.get('status'),
                 item.get('status', '')
             )
+        )
+        display_item['text_processing_mode'] = item.get(
+            'text_processing_mode',
+            'OCR' if item.get('ocr_enabled') else 'NONE'
+        )
+        display_item['text_processing_mode_display'] = processing_mode_labels.get(
+            display_item['text_processing_mode'],
+            item.get('text_processing_mode', '')
         )
 
         display_item['index'] = index
@@ -134,7 +143,7 @@ def add_requirement_to_bulk(request):
                     'semester': semester,
                     'status': form.cleaned_data['status'],
                     'deadline': deadline.strftime('%Y-%m-%dT%H:%M'),
-                    'ocr_enabled': form.cleaned_data['ocr_enabled'],
+                    'text_processing_mode': form.cleaned_data['text_processing_mode'],
                 })
 
                 request.session['bulk_requirements'] = (bulk_requirements)
@@ -174,7 +183,7 @@ def post_bulk_requirements(request):
     bulk_requirements = request.session.get('bulk_requirements', [])
 
     if not bulk_requirements:
-        messages.error(request, 'There are no requirements to post.')
+        messages.error(request, 'There are no requirements waiting to be posted.')
         return redirect('admin_staff_portal:bulk_requirements')
 
     try:
@@ -190,7 +199,10 @@ def post_bulk_requirements(request):
                     'semester': item['semester'],
                     'status': item['status'],
                     'deadline': item['deadline'],
-                    'ocr_enabled': item['ocr_enabled'],
+                    'text_processing_mode': item.get(
+                        'text_processing_mode',
+                        'OCR' if item.get('ocr_enabled') else 'NONE'
+                    ),
                 })
 
                 if not form.is_valid():
@@ -276,7 +288,7 @@ def post_bulk_requirements(request):
 
         messages.error(
             request,
-            f'An error occurred while posting the requirements. Please review the staged requirements and try again.'
+            'We could not post these requirements. Please review the staged entries and try again.'
         )
 
         return redirect('admin_staff_portal:bulk_requirements')

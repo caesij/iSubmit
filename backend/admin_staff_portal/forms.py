@@ -65,14 +65,14 @@ class BaseUserManagementForm(forms.ModelForm):
         employee_id = self.cleaned_data.get('employee_ID', '').strip()
 
         if not employee_id:
-            raise ValidationError("Employee ID is required.")
+            raise ValidationError("Please enter an employee ID.")
 
         query = User.objects.filter(employee_ID__iexact=employee_id)
         if self.instance.pk:
             query = query.exclude(pk=self.instance.pk)
 
         if query.exists():
-            raise ValidationError("A user with this employee ID already exists.")
+            raise ValidationError("This employee ID is already in use.")
 
         return employee_id
 
@@ -83,7 +83,7 @@ class BaseUserManagementForm(forms.ModelForm):
         try:
             validate_email(email)
         except ValidationError:
-            raise ValidationError("Please enter a valid email address.")
+            raise ValidationError("Please enter a valid email address, such as name@example.com.")
 
         query = User.objects.filter(email__iexact=email)
         
@@ -91,7 +91,7 @@ class BaseUserManagementForm(forms.ModelForm):
             query = query.exclude(pk=self.instance.pk)
             
         if query.exists():
-            raise ValidationError("A user with this email address already exists.")
+            raise ValidationError("This email address is already in use.")
 
         return email
 
@@ -122,5 +122,5 @@ class FacultyManagementForm(BaseUserManagementForm):
     def clean_faculty_type(self):
         faculty_type = self.cleaned_data.get('faculty_type')
         if not faculty_type:
-            raise ValidationError('Faculty type is required for faculty accounts.')
+            raise ValidationError('Please select a faculty type.')
         return faculty_type

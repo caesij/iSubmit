@@ -30,7 +30,7 @@ def preferences_view(request):
             messages.success(request, 'Preferences updated successfully.')
             return redirect('admin_staff_portal:preferences')
         else:
-            messages.error(request, 'Invalid.')
+            messages.error(request, 'We could not save your preferences. Please review the highlighted fields.')
     else:
         form = PreferencesForm(instance=request.user)
 
@@ -78,7 +78,7 @@ def account_and_security_view(request):
             messages.success(request, 'Your password was successfully updated!')
             return redirect('admin_staff_portal:account_and_security')
         else:
-            messages.error(request, 'Please correct the error below.')
+            messages.error(request, 'We could not update your password. Please review the highlighted fields.')
     else:
         form = PasswordChangeForm(request.user)
         

@@ -26,7 +26,10 @@ def _extract_pdf(file_path):
     with fitz.open(file_path) as document:
         text = '\n'.join(page.get_text('text') for page in document).strip()
         if not text:
-            raise DocumentTextExtractionError('No embedded text was found. Enable OCR for scanned documents.')
+            raise DocumentTextExtractionError(
+                'We could not find selectable text in this PDF. '
+                'Please upload a digital PDF or ask an administrator to enable OCR.'
+            )
         return text, len(document)
 
 
@@ -53,7 +56,9 @@ def _extract_docx(file_path):
             lines.append(line)
 
     if not lines:
-        raise DocumentTextExtractionError('No text was found in the DOCX document.')
+        raise DocumentTextExtractionError(
+            'We could not find readable text in this Word document.'
+        )
 
     return '\n'.join(lines), None
 
@@ -95,6 +100,8 @@ def _extract_xlsx(file_path):
                     lines.append(' | '.join(values))
 
     if not lines:
-        raise DocumentTextExtractionError('No text was found in the XLSX workbook.')
+        raise DocumentTextExtractionError(
+            'We could not find readable text in this spreadsheet.'
+        )
 
     return '\n'.join(lines), None

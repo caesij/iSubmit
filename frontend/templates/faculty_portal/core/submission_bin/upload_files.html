@@ -136,7 +136,7 @@
         <div class="info-note">
             <span class="info-icon">ⓘ</span>
             <p>
-                You can upload PDF, DOCX, or XLSX documents. Text extraction runs automatically; scanned PDFs require OCR to be enabled for the requirement.
+                You can upload PDF, DOCX, or XLSX documents. Text processing runs only when required by the submission bin; scanned PDFs require OCR mode.
             </p>
         </div>
 
@@ -256,13 +256,13 @@ document.addEventListener("DOMContentLoaded", function () {
 
     function hasInProgressCheck() {
         return getCheckboxes().some(function (checkbox) {
-            const ocrInProgress = checkbox.dataset.ocrRequired === "true" &&
+            const textProcessingInProgress = checkbox.dataset.textRequired === "true" &&
                 ["PENDING", "PROCESSING"].includes(checkbox.dataset.ocrStatus || "PENDING");
             const nlpInProgress = checkbox.dataset.nlpRequired === "true" &&
                 ["PENDING", "PROCESSING"].includes(
                     checkbox.dataset.nlpStatus || "PENDING"
                 );
-            return ocrInProgress || nlpInProgress;
+            return textProcessingInProgress || nlpInProgress;
         });
     }
 
@@ -302,7 +302,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     signal: refreshController.signal
                 }
             );
-            if (!response.ok) throw new Error("Failed to refresh Submission Bin.");
+            if (!response.ok) throw new Error("We couldn't refresh your submission list.");
 
             const html = await response.text();
             tableBody.innerHTML = html;

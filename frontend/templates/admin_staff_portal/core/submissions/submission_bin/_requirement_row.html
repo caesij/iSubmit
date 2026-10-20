@@ -26,8 +26,8 @@
     </td>
 
     <td>
-        <span class="ocr-badge {% if req.ocr_enabled %}ocr-enabled{% else %}ocr-disabled{% endif %}">
-            {% if req.ocr_enabled %}Enabled{% else %}Disabled{% endif %}
+        <span class="ocr-badge {% if req.text_processing_mode == 'NONE' %}ocr-disabled{% else %}ocr-enabled{% endif %}">
+            {{ req.get_text_processing_mode_display }}
         </span>
     </td>
 

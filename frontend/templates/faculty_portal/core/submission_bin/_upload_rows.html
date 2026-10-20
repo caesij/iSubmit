@@ -9,8 +9,8 @@
                     value="{{ row.requirement.id }}"
                     form="selection-form"
                     class="requirement-checkbox"
-                    data-text-required="true"
-                    data-ocr-required="{% if row.requirement.ocr_enabled %}true{% else %}false{% endif %}"
+                    data-text-required="{% if row.requirement.text_processing_mode != 'NONE' %}true{% else %}false{% endif %}"
+                    data-processing-mode="{{ row.requirement.text_processing_mode }}"
                     data-ocr-status="{{ row.metadata.ocr_status|default:'PENDING' }}"
                     data-nlp-required="{% if row.requirement.nlp_enabled %}true{% else %}false{% endif %}"
                     data-nlp-status="{{ row.metadata.nlp_status|default:'PENDING' }}"
@@ -28,8 +28,8 @@
                     value="{{ row.requirement.id }}"
                     form="selection-form"
                     class="requirement-checkbox"
-                    data-text-required="true"
-                    data-ocr-required="{% if row.requirement.ocr_enabled %}true{% else %}false{% endif %}"
+                    data-text-required="{% if row.requirement.text_processing_mode != 'NONE' %}true{% else %}false{% endif %}"
+                    data-processing-mode="{{ row.requirement.text_processing_mode }}"
                     data-ocr-status="{{ row.metadata.ocr_status|default:'PENDING' }}"
                     data-nlp-required="{% if row.requirement.nlp_enabled %}true{% else %}false{% endif %}"
                     data-nlp-status="{{ row.metadata.nlp_status|default:'PENDING' }}"
@@ -66,10 +66,10 @@
                 <span class="status-badge status-no-file">
                     Needs Revision
                 </span>
-                {% if row.draft and row.metadata %}
+                {% if row.draft and row.metadata and row.requirement.text_processing_mode != 'NONE' %}
                     <div class="ocr-state">
                         <span class="status-badge ocr-status" data-status="{{ row.metadata.ocr_status|default:'PENDING' }}">
-                            {% if row.requirement.ocr_enabled %}OCR{% else %}Text extraction{% endif %}:
+                            {% if row.requirement.text_processing_mode == 'OCR' %}OCR{% else %}Text extraction{% endif %}:
                             {{ row.metadata.get_ocr_status_display|default:'Pending' }}
                         </span>
                         {% if row.metadata.ocr_error %}
@@ -167,10 +167,10 @@
                 <span class="status-badge status-attached">
                     Attached
                 </span>
-                {% if row.metadata %}
+                {% if row.metadata and row.requirement.text_processing_mode != 'NONE' %}
                     <div class="ocr-state">
                         <span class="status-badge ocr-status" data-status="{{ row.metadata.ocr_status|default:'PENDING' }}">
-                            {% if row.requirement.ocr_enabled %}OCR{% else %}Text extraction{% endif %}:
+                            {% if row.requirement.text_processing_mode == 'OCR' %}OCR{% else %}Text extraction{% endif %}:
                             {{ row.metadata.get_ocr_status_display|default:'Pending' }}
                         </span>
                         {% if row.metadata.ocr_error %}

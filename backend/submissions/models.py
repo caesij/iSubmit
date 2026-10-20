@@ -39,7 +39,16 @@ class Requirement(models.Model):
     )
     
     deadline = models.DateTimeField()
-    ocr_enabled = models.BooleanField(default=False)
+    class TextProcessingMode(models.TextChoices):
+        NONE = 'NONE', 'No text processing'
+        DIGITAL = 'DIGITAL', 'Extract digital text'
+        OCR = 'OCR', 'Extract text with OCR'
+
+    text_processing_mode = models.CharField(
+        max_length=10,
+        choices=TextProcessingMode.choices,
+        default=TextProcessingMode.NONE
+    )
     nlp_enabled = models.BooleanField(default=False)
     
     assigned_to = models.CharField(
@@ -366,7 +375,10 @@ class DocumentMetadata(models.Model):
 
     @property
     def is_ready_for_submission(self):
-        text_extraction_ready = self.ocr_status == self.OCRStatus.COMPLETED
+        text_extraction_ready = (
+            self.requirement.text_processing_mode == Requirement.TextProcessingMode.NONE
+            or self.ocr_status == self.OCRStatus.COMPLETED
+        )
         nlp_ready = (
             not self.requirement.nlp_enabled
             or self.nlp_status == self.NLPStatus.PASSED
