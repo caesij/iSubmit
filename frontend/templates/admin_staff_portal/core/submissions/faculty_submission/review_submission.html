@@ -281,7 +281,7 @@
       <div class="rs-card">
         <h2>Document Details</h2>
         <div class="rs-detail-row"><div><span class="label">File Name</span><span class="value">{{ submission.document_file.name|cut:"submissions/" }}</span></div></div>
-        <div class="rs-detail-row"><div><span class="label">Academic Term</span><span class="value">{{ submission.requirement.get_semester_display }}, {{ submission.requirement.academic_term }}</span></div></div>
+        <div class="rs-detail-row"><div><span class="label">Academic Year</span><span class="value">{{ submission.requirement.get_semester_display }}, {{ submission.requirement.academic_year }}</span></div></div>
         <div class="rs-detail-row"><div><span class="label">Category</span><span class="value">{{ submission.requirement.category }}</span></div></div>
         <div class="rs-detail-row"><div><span class="label">Deadline</span><span class="value">                {{ submission.requirement.deadline|display_date:request.user }}, {{ submission.requirement.deadline|display_time:request.user }}</span></div></div>
       </div>

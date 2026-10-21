@@ -67,10 +67,10 @@
 
             <div class="select-wrap">
                 <label>Academic Year</label>
-                <select name="academic_term" onchange="this.form.submit()">
-                    <option value="">All Terms</option>
-                    {% for term in academic_terms %}
-                        <option value="{{ term }}" {% if selected_academic_term == term %}selected{% endif %}>{{ term|cut:"A.Y. " }}</option>
+                <select name="academic_year" onchange="this.form.submit()">
+                    <option value="">All Years</option>
+                    {% for year in academic_years %}
+                        <option value="{{ year|cut:'A.Y. ' }}" {% if selected_academic_year == year|cut:'A.Y. ' %}selected{% endif %}>{{ year|cut:"A.Y. " }}</option>
                     {% endfor %}
                 </select>
             </div>
@@ -113,7 +113,7 @@
                         <td>{{ sub.faculty.get_full_name }}</td>
                         <td>{{ sub.requirement.category }}</td>
                         <td>{{ sub.requirement.get_semester_display }}</td>
-                        <td>{{ sub.requirement.academic_term|cut:"A.Y. " }}</td>
+                        <td>{{ sub.requirement.academic_year|cut:"A.Y. " }}</td>
                         <td>
                             {% if sub.approved_at %}
                                 <div>                                                                {{ sub.approved_at|display_date:request.user }}</div>
@@ -139,13 +139,13 @@
             <span>Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }} documents</span>
             <div class="pagination-controls">
                 {% if page_obj.has_previous %}
-                    <a href="?page={{ page_obj.previous_page_number }}{% if selected_semester %}&semester={{ selected_semester|urlencode }}{% endif %}{% if selected_academic_term %}&academic_term={{ selected_academic_term|urlencode }}{% endif %}{% if selected_faculty_type %}&faculty_type={{ selected_faculty_type|urlencode }}{% endif %}{% if search_query %}&q={{ search_query|urlencode }}{% endif %}" class="page-btn">&lt;</a>
+                    <a href="?page={{ page_obj.previous_page_number }}{% if selected_semester %}&semester={{ selected_semester|urlencode }}{% endif %}{% if selected_academic_year %}&academic_year={{ selected_academic_year|urlencode }}{% endif %}{% if selected_faculty_type %}&faculty_type={{ selected_faculty_type|urlencode }}{% endif %}{% if search_query %}&q={{ search_query|urlencode }}{% endif %}" class="page-btn">&lt;</a>
                 {% endif %}
                 {% for page_num in page_obj.paginator.page_range %}
-                    <a href="?page={{ page_num }}{% if selected_semester %}&semester={{ selected_semester|urlencode }}{% endif %}{% if selected_academic_term %}&academic_term={{ selected_academic_term|urlencode }}{% endif %}{% if selected_faculty_type %}&faculty_type={{ selected_faculty_type|urlencode }}{% endif %}{% if search_query %}&q={{ search_query|urlencode }}{% endif %}" class="page-btn {% if page_obj.number == page_num %}active{% endif %}">{{ page_num }}</a>
+                    <a href="?page={{ page_num }}{% if selected_semester %}&semester={{ selected_semester|urlencode }}{% endif %}{% if selected_academic_year %}&academic_year={{ selected_academic_year|urlencode }}{% endif %}{% if selected_faculty_type %}&faculty_type={{ selected_faculty_type|urlencode }}{% endif %}{% if search_query %}&q={{ search_query|urlencode }}{% endif %}" class="page-btn {% if page_obj.number == page_num %}active{% endif %}">{{ page_num }}</a>
                 {% endfor %}
                 {% if page_obj.has_next %}
-                    <a href="?page={{ page_obj.next_page_number }}{% if selected_semester %}&semester={{ selected_semester|urlencode }}{% endif %}{% if selected_academic_term %}&academic_term={{ selected_academic_term|urlencode }}{% endif %}{% if selected_faculty_type %}&faculty_type={{ selected_faculty_type|urlencode }}{% endif %}{% if search_query %}&q={{ search_query|urlencode }}{% endif %}" class="page-btn">&gt;</a>
+                    <a href="?page={{ page_obj.next_page_number }}{% if selected_semester %}&semester={{ selected_semester|urlencode }}{% endif %}{% if selected_academic_year %}&academic_year={{ selected_academic_year|urlencode }}{% endif %}{% if selected_faculty_type %}&faculty_type={{ selected_faculty_type|urlencode }}{% endif %}{% if search_query %}&q={{ search_query|urlencode }}{% endif %}" class="page-btn">&gt;</a>
                 {% endif %}
             </div>
         </div>

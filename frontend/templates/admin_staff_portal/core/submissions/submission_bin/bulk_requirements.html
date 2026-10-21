@@ -85,7 +85,7 @@ Supports document submission and monitoring of review status.
 
                         <td>
                             <div>{{ requirement.semester_display }}</div>
-                            <div class="text-sub">A.Y. {{ requirement.academic_year }}</div>
+                            <div class="text-sub">A.Y. {{ requirement.academic_year|cut:"A.Y. " }}</div>
                         </td>
 
                         <td>

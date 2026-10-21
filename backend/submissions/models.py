@@ -16,12 +16,12 @@ class Requirement(models.Model):
     class ReqStatus(models.TextChoices):
         ACTIVE = 'ACTIVE', 'Active'
         INACTIVE = 'INACTIVE', 'Inactive'
-    
+
     class AssignedFacultyType(models.TextChoices):
         ALL = 'ALL', 'All Faculty'
         FULL_TIME = 'FULL_TIME', 'Full-Time Faculty'
         PART_TIME = 'PART_TIME', 'Part-Time Faculty'
-        
+
     class Semester(models.TextChoices):
         FIRST_SEM = 'FIRST_SEM', '1st Semester'
         SECOND_SEM = 'SECOND_SEM', '2nd Semester'
@@ -29,15 +29,15 @@ class Requirement(models.Model):
 
     requirement_title = models.CharField(max_length=255)
     category = models.CharField(max_length=255)
-    
-    academic_term = models.CharField(max_length=255)
-    
+
+    academic_year = models.CharField(max_length=255)
+
     semester = models.CharField(
         max_length=10,
         choices=Semester.choices,
         default=Semester.FIRST_SEM
     )
-    
+
     deadline = models.DateTimeField()
     class TextProcessingMode(models.TextChoices):
         NONE = 'NONE', 'No text processing'
@@ -49,14 +49,17 @@ class Requirement(models.Model):
         choices=TextProcessingMode.choices,
         default=TextProcessingMode.NONE
     )
+
+    instructions = models.TextField(blank=True)
+
     nlp_enabled = models.BooleanField(default=False)
-    
+
     assigned_to = models.CharField(
         max_length=20,
         choices=AssignedFacultyType.choices,
         default=AssignedFacultyType.ALL
     )
-    
+
     status = models.CharField(
         max_length=20,
         choices=ReqStatus.choices,
@@ -65,15 +68,15 @@ class Requirement(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
+
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=['requirement_title', 'academic_term', 'semester'],
-                name='unique_requirement_per_term_semester'
+                fields=['requirement_title', 'academic_year', 'semester'],
+                name='unique_requirement_per_academic_year_semester'
             )
         ]
-        
+
         indexes = [
             GinIndex(
                 fields=['requirement_title'],
@@ -100,11 +103,11 @@ class Requirement(models.Model):
         ).values('faculty_id').distinct().count()
 
         return round((submitted_count / total_faculty) * 100)
-    
+
     def __str__(self):
         return self.requirement_title
-    
-    
+
+
 class DraftUpload(models.Model):
     class DraftStatus(models.TextChoices):
         NO_FILE = 'NO_FILE', 'No File Yet'
@@ -165,21 +168,21 @@ class DocumentSubmission(models.Model):
         on_delete=models.CASCADE,
         related_name='submissions'
     )
-    
+
     requirement = models.ForeignKey(
         Requirement,
         on_delete=models.CASCADE,
         related_name='submissions'
     )
-    
+
     status = models.CharField(
         max_length=30,
         choices=SubmissionStatus.choices,
         default=SubmissionStatus.SUBMITTED
     )
-    
+
     document_file = models.FileField(upload_to=submission_upload_path)
-    
+
     is_pinned = models.BooleanField(default=False)
 
     initially_submitted_at = models.DateTimeField(auto_now_add=True)
@@ -203,6 +206,14 @@ class DocumentSubmission(models.Model):
         blank=True,
         related_name='approved_submissions'
     )
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['faculty', 'requirement'],
+                name='unique_faculty_requirement_submission'
+            )
+        ]
 
     def __str__(self):
         return f'Submission: {self.requirement.requirement_title} by {self.faculty.username}'
@@ -265,7 +276,7 @@ class DocumentReview(models.Model):
 
 
 class DocumentMetadata(models.Model):
-    class OCRStatus(models.TextChoices):
+    class TextExtractionStatus(models.TextChoices):
         NOT_REQUIRED = 'NOT_REQUIRED', 'Not Required'
         PENDING = 'PENDING', 'Pending'
         PROCESSING = 'PROCESSING', 'Processing'
@@ -299,7 +310,7 @@ class DocumentMetadata(models.Model):
         on_delete=models.CASCADE,
         related_name='document_metadata'
     )
-    
+
     submission = models.ForeignKey(
         DocumentSubmission,
         null=True,
@@ -315,20 +326,23 @@ class DocumentMetadata(models.Model):
     file_size = models.PositiveBigIntegerField(null=True, blank=True)
     page_count = models.PositiveIntegerField(null=True, blank=True)
 
-    ocr_status = models.CharField(
+    text_extraction_status = models.CharField(
         max_length=20,
-        choices=OCRStatus.choices,
-        default=OCRStatus.NOT_REQUIRED,
+        choices=TextExtractionStatus.choices,
+        default=TextExtractionStatus.NOT_REQUIRED,
         db_index=True
     )
+
     extracted_text = models.TextField(blank=True)
-    ocr_error = models.TextField(blank=True)
-    ocr_request_id = models.PositiveIntegerField(
+    text_extraction_error = models.TextField(blank=True)
+
+    text_extraction_request_id = models.PositiveIntegerField(
         default=1,
         editable=False,
         db_index=True
     )
-    ocr_completed_at = models.DateTimeField(null=True, blank=True)
+
+    text_extraction_completed_at = models.DateTimeField(null=True, blank=True)
 
     nlp_status = models.CharField(
         max_length=20,
@@ -336,7 +350,7 @@ class DocumentMetadata(models.Model):
         default=NLPStatus.NOT_REQUIRED,
         db_index=True
     )
-    
+
     nlp_result = models.JSONField(default=dict, blank=True)
     nlp_error = models.TextField(blank=True)
     nlp_completed_at = models.DateTimeField(null=True, blank=True)
@@ -360,7 +374,7 @@ class DocumentMetadata(models.Model):
                 name='unique_document_metadata_submission_version'
             )
         ]
-        
+
         indexes = [
             GinIndex(
                 SearchVector('extracted_text', config='english'),
@@ -375,14 +389,14 @@ class DocumentMetadata(models.Model):
 
     @property
     def is_ready_for_submission(self):
+        mode = self.requirement.text_processing_mode
+
         text_extraction_ready = (
-            self.requirement.text_processing_mode == Requirement.TextProcessingMode.NONE
-            or self.ocr_status == self.OCRStatus.COMPLETED
+            mode == Requirement.TextProcessingMode.NONE or self.text_extraction_status == self.TextExtractionStatus.COMPLETED
         )
-        nlp_ready = (
-            not self.requirement.nlp_enabled
-            or self.nlp_status == self.NLPStatus.PASSED
-        )
+
+        nlp_ready = (not self.requirement.nlp_enabled or self.nlp_status == self.NLPStatus.PASSED)
+
         return text_extraction_ready and nlp_ready
 
     def __str__(self):

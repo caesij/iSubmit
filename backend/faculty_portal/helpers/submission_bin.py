@@ -34,7 +34,7 @@ logger = logging.getLogger(__name__)
 User = get_user_model()
 
 UPLOAD_PAGE = 'faculty_portal:upload_files'
-OCR = DocumentMetadata.OCRStatus
+TextExtraction = DocumentMetadata.TextExtractionStatus
 NLP = DocumentMetadata.NLPStatus
 TEXT_MODE = Requirement.TextProcessingMode
 QUEUE_FAILURE_ERROR = (
@@ -92,25 +92,25 @@ def _build_metadata_values(draft, uploaded_file=None):
         file_size = _stored_file_size(draft)
 
     if requirement.text_processing_mode == TEXT_MODE.OCR:
-        ocr_status, ocr_error = (
-            (OCR.PENDING, '')
+        text_extraction_status, text_extraction_error = (
+            (TextExtraction.PENDING, '')
             if _is_pdf(filename)
             else (
-                OCR.FAILED,
-                'OCR supports PDF files only. Replace this file with a PDF.',
+                TextExtraction.FAILED,
+                'OCR supports PDF files only. Replace this file with a PDF.'
             )
         )
     elif requirement.text_processing_mode == TEXT_MODE.DIGITAL and _supports_direct_extraction(filename):
-        ocr_status, ocr_error = OCR.PENDING, ''
+        text_extraction_status, text_extraction_error = TextExtraction.PENDING, ''
     elif requirement.text_processing_mode == TEXT_MODE.NONE:
-        ocr_status, ocr_error = OCR.NOT_REQUIRED, ''
+        text_extraction_status, text_extraction_error = TextExtraction.NOT_REQUIRED, ''
     elif not _is_pdf(filename):
-        ocr_status, ocr_error = (
-            OCR.FAILED,
-            'This file type does not support text extraction.',
+        text_extraction_status, text_extraction_error = (
+            TextExtraction.FAILED,
+            'This file type does not support text extraction.'
         )
     else:
-        ocr_status, ocr_error = OCR.FAILED, ''
+        text_extraction_status, text_extraction_error = TextExtraction.FAILED, ''
 
     return {
         'faculty_id': draft.faculty_id,
@@ -123,10 +123,10 @@ def _build_metadata_values(draft, uploaded_file=None):
         'content_type': content_type or '',
         'file_size': file_size,
         'page_count': None,
-        'ocr_status': ocr_status,
+        'text_extraction_status': text_extraction_status,
         'extracted_text': '',
-        'ocr_error': ocr_error,
-        'ocr_completed_at': None,
+        'text_extraction_error': text_extraction_error,
+        'text_extraction_completed_at': None,
         'nlp_status': NLP.PENDING if requirement.nlp_enabled else NLP.NOT_REQUIRED,
         'nlp_result': {},
         'nlp_error': '',
@@ -135,24 +135,25 @@ def _build_metadata_values(draft, uploaded_file=None):
 
 
 def _needs_full_reset(draft, metadata):
-    """True when the metadata no longer describes the draft's current file."""
     if metadata is None or metadata.storage_file_name != draft.draft_file.name:
         return True
+
     requires_extraction = draft.requirement.text_processing_mode != TEXT_MODE.NONE
-    queue_failed = metadata.ocr_error in {
+
+    queue_failed = metadata.text_extraction_error in {
         QUEUE_FAILURE_ERROR,
         'Document text extraction could not be queued. Check that the worker '
         'and Redis are running, then replace the file or contact support.',
     }
+
     return (
-        (requires_extraction and metadata.ocr_status == OCR.NOT_REQUIRED)
-        or (not requires_extraction and metadata.ocr_status != OCR.NOT_REQUIRED)
-        or (requires_extraction and metadata.ocr_status == OCR.FAILED and queue_failed)
+        (requires_extraction and metadata.text_extraction_status == TextExtraction.NOT_REQUIRED)
+        or (not requires_extraction and metadata.text_extraction_status != TextExtraction.NOT_REQUIRED)
+        or (requires_extraction and metadata.text_extraction_status == TextExtraction.FAILED and queue_failed)
     )
 
 
 def _needs_nlp_pending(draft, metadata):
-    """The requirement started requiring NLP after this file was uploaded."""
     return draft.requirement.nlp_enabled and metadata.nlp_status == NLP.NOT_REQUIRED
 
 
@@ -166,7 +167,7 @@ def _reset_metadata(draft, metadata, uploaded_file):
     if metadata is None:
         return DocumentMetadata.objects.create(**values)
 
-    values['ocr_request_id'] = metadata.ocr_request_id + 1
+    values['text_extraction_request_id'] = metadata.text_extraction_request_id + 1
     for field, value in values.items():
         setattr(metadata, field, value)
     metadata.save()
@@ -189,7 +190,7 @@ def ensure_document_metadata(draft, uploaded_file=None, force_reset=False, metad
 
     if force_reset or _needs_full_reset(draft, metadata):
         metadata = _reset_metadata(draft, metadata, uploaded_file)
-        return metadata, metadata.ocr_status == OCR.PENDING
+        return metadata, metadata.text_extraction_status == TextExtraction.PENDING
 
     if _needs_nlp_pending(draft, metadata):
         _mark_nlp_pending(metadata)
@@ -204,17 +205,17 @@ def ensure_document_metadata(draft, uploaded_file=None, force_reset=False, metad
 def _mark_enqueue_failed(metadata_id, request_id):
     metadata = (
         DocumentMetadata.objects
-        .filter(pk=metadata_id, ocr_request_id=request_id, draft__isnull=False)
+        .filter(pk=metadata_id, text_extraction_request_id=request_id, draft__isnull=False)
         .select_related('faculty')
         .first()
     )
     if not metadata:
         return
 
-    metadata.ocr_status = OCR.FAILED
-    metadata.ocr_error = QUEUE_FAILURE_ERROR
-    metadata.ocr_completed_at = timezone.now()
-    metadata.save(update_fields=['ocr_status', 'ocr_error', 'ocr_completed_at', 'updated_at'])
+    metadata.text_extraction_status = TextExtraction.FAILED
+    metadata.text_extraction_error = QUEUE_FAILURE_ERROR
+    metadata.text_extraction_completed_at = timezone.now()
+    metadata.save(update_fields=['text_extraction_status', 'text_extraction_error', 'text_extraction_completed_at', 'updated_at'])
 
     try:
         refresh_faculty_submission_bin(metadata.faculty)
@@ -232,9 +233,9 @@ def _enqueue_extraction(metadata_id, request_id):
 
 
 def schedule_extraction(metadata):
-    if not metadata or metadata.ocr_status != OCR.PENDING:
+    if not metadata or metadata.text_extraction_status != TextExtraction.PENDING:
         return
-    metadata_id, request_id = metadata.pk, metadata.ocr_request_id
+    metadata_id, request_id = metadata.pk, metadata.text_extraction_request_id
     transaction.on_commit(lambda: _enqueue_extraction(metadata_id, request_id))
 
 
@@ -281,7 +282,7 @@ def _load_drafts_with_metadata(user, requirements):
         .filter(faculty=user, requirement__in=requirements)
         .select_related('requirement')
     )
-    
+
     metadata_by_draft = {
         m.draft_id: m
         for m in DocumentMetadata.objects.filter(draft_id__in=[d.pk for d in drafts])
@@ -361,11 +362,11 @@ def _submission_block_reason(row):
     if metadata is None:
         return 'We could not finish preparing this document. Please replace the file and try again.'
 
-    if metadata.ocr_status in (OCR.PENDING, OCR.PROCESSING):
+    if metadata.text_extraction_status in (TextExtraction.PENDING, TextExtraction.PROCESSING):
         return 'This document is still being prepared. Please wait a moment before submitting.'
 
-    if metadata.ocr_status != OCR.COMPLETED:
-        return metadata.ocr_error or (
+    if metadata.text_extraction_status != TextExtraction.COMPLETED:
+        return metadata.text_extraction_error or (
             'This document could not be prepared for submission. '
             'Please replace the file and try again.'
         )
@@ -475,7 +476,7 @@ def _send_submission_updates(user, submissions):
         refresh_faculty_submission_bin(user)
 
         full_name = user.get_full_name()
-        
+
         for submission in submissions:
             notify_roles(
                 roles=[User.Role.ADMIN, User.Role.STAFF],
@@ -487,14 +488,14 @@ def _send_submission_updates(user, submissions):
                     args=[submission.id]
                 )
             )
-            
+
     except Exception:
         logger.exception('Submission realtime/notification update failed.')
 
 
 def process_submission(request):
     user = request.user
-    
+
     posted_ids = {
         int(value)
         for value in request.POST.getlist('selected_requirements')

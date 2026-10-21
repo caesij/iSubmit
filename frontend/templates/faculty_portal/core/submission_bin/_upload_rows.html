@@ -11,7 +11,7 @@
                     class="requirement-checkbox"
                     data-text-required="{% if row.requirement.text_processing_mode != 'NONE' %}true{% else %}false{% endif %}"
                     data-processing-mode="{{ row.requirement.text_processing_mode }}"
-                    data-ocr-status="{{ row.metadata.ocr_status|default:'PENDING' }}"
+                    data-text-extraction-status="{{ row.metadata.text_extraction_status|default:'PENDING' }}"
                     data-nlp-required="{% if row.requirement.nlp_enabled %}true{% else %}false{% endif %}"
                     data-nlp-status="{{ row.metadata.nlp_status|default:'PENDING' }}"
                 >
@@ -30,7 +30,7 @@
                     class="requirement-checkbox"
                     data-text-required="{% if row.requirement.text_processing_mode != 'NONE' %}true{% else %}false{% endif %}"
                     data-processing-mode="{{ row.requirement.text_processing_mode }}"
-                    data-ocr-status="{{ row.metadata.ocr_status|default:'PENDING' }}"
+                    data-text-extraction-status="{{ row.metadata.text_extraction_status|default:'PENDING' }}"
                     data-nlp-required="{% if row.requirement.nlp_enabled %}true{% else %}false{% endif %}"
                     data-nlp-status="{{ row.metadata.nlp_status|default:'PENDING' }}"
                 >
@@ -68,12 +68,12 @@
                 </span>
                 {% if row.draft and row.metadata and row.requirement.text_processing_mode != 'NONE' %}
                     <div class="ocr-state">
-                        <span class="status-badge ocr-status" data-status="{{ row.metadata.ocr_status|default:'PENDING' }}">
+                        <span class="status-badge text-extraction-status" data-status="{{ row.metadata.text_extraction_status|default:'PENDING' }}">
                             {% if row.requirement.text_processing_mode == 'OCR' %}OCR{% else %}Text extraction{% endif %}:
-                            {{ row.metadata.get_ocr_status_display|default:'Pending' }}
+                            {{ row.metadata.get_text_extraction_status_display|default:'Pending' }}
                         </span>
-                        {% if row.metadata.ocr_error %}
-                            <small class="ocr-error">{{ row.metadata.ocr_error }}</small>
+                        {% if row.metadata.text_extraction_error %}
+                            <small class="text-extraction-error">{{ row.metadata.text_extraction_error }}</small>
                         {% endif %}
                     </div>
                 {% endif %}
@@ -82,7 +82,7 @@
                         <span class="status-badge nlp-status" data-status="{{ row.metadata.nlp_status }}">
                             Validation: {{ row.metadata.get_nlp_status_display }}
                         </span>
-                        {% if row.metadata.nlp_error %}<small class="ocr-error">{{ row.metadata.nlp_error }}</small>{% endif %}
+                        {% if row.metadata.nlp_error %}<small class="text-extraction-error">{{ row.metadata.nlp_error }}</small>{% endif %}
                     </div>
                 {% endif %}
             </td>
@@ -169,12 +169,12 @@
                 </span>
                 {% if row.metadata and row.requirement.text_processing_mode != 'NONE' %}
                     <div class="ocr-state">
-                        <span class="status-badge ocr-status" data-status="{{ row.metadata.ocr_status|default:'PENDING' }}">
+                        <span class="status-badge text-extraction-status" data-status="{{ row.metadata.text_extraction_status|default:'PENDING' }}">
                             {% if row.requirement.text_processing_mode == 'OCR' %}OCR{% else %}Text extraction{% endif %}:
-                            {{ row.metadata.get_ocr_status_display|default:'Pending' }}
+                            {{ row.metadata.get_text_extraction_status_display|default:'Pending' }}
                         </span>
-                        {% if row.metadata.ocr_error %}
-                            <small class="ocr-error">{{ row.metadata.ocr_error }}</small>
+                        {% if row.metadata.text_extraction_error %}
+                            <small class="text-extraction-error">{{ row.metadata.text_extraction_error }}</small>
                         {% endif %}
                     </div>
                 {% endif %}
@@ -183,7 +183,7 @@
                         <span class="status-badge nlp-status" data-status="{{ row.metadata.nlp_status }}">
                             Validation: {{ row.metadata.get_nlp_status_display }}
                         </span>
-                        {% if row.metadata.nlp_error %}<small class="ocr-error">{{ row.metadata.nlp_error }}</small>{% endif %}
+                        {% if row.metadata.nlp_error %}<small class="text-extraction-error">{{ row.metadata.nlp_error }}</small>{% endif %}
                     </div>
                 {% endif %}
             </td>

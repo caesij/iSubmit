@@ -11,10 +11,10 @@
     <link rel="stylesheet" href="{% static 'css/pages/submissions.css' %}">
     <style>
         .ocr-state { margin-top: 0.35rem; display: flex; flex-direction: column; align-items: flex-start; gap: 0.2rem; }
-        .ocr-status[data-status="PENDING"], .ocr-status[data-status="PROCESSING"], .nlp-status[data-status="PENDING"], .nlp-status[data-status="PROCESSING"] { background: #fff4d6; color: #805b00; }
-        .ocr-status[data-status="COMPLETED"], .nlp-status[data-status="PASSED"] { background: #e0f5e8; color: #17663a; }
-        .ocr-status[data-status="FAILED"], .nlp-status[data-status="FAILED"] { background: #fde7e7; color: #9f2020; }
-        .ocr-error { max-width: 20rem; color: #9f2020; white-space: normal; }
+        .text-extraction-status[data-status="PENDING"], .text-extraction-status[data-status="PROCESSING"], .nlp-status[data-status="PENDING"], .nlp-status[data-status="PROCESSING"] { background: #fff4d6; color: #805b00; }
+        .text-extraction-status[data-status="COMPLETED"], .nlp-status[data-status="PASSED"] { background: #e0f5e8; color: #17663a; }
+        .text-extraction-status[data-status="FAILED"], .nlp-status[data-status="FAILED"] { background: #fde7e7; color: #9f2020; }
+        .text-extraction-error { max-width: 20rem; color: #9f2020; white-space: normal; }
         .btn-continue:disabled { opacity: 0.55; cursor: not-allowed; }
         .submission-readiness { margin-top: 0.5rem; font-size: 0.9rem; }
     </style>

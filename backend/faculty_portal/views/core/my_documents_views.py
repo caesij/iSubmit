@@ -8,12 +8,12 @@ from submissions.models import DocumentSubmission, Requirement
 from submissions.doc_search import search_documents
 
 
-def _render_repository(request, submissions, template_name, academic_term, document_type):
+def _render_repository(request, submissions, template_name, academic_year, document_type):
     search_query = request.GET.get('q', '').strip()
     sort_by = request.GET.get('sort_by', 'newest')
 
-    if academic_term:
-        submissions = submissions.filter(requirement__academic_term=academic_term)
+    if academic_year:
+        submissions = submissions.filter(requirement__academic_year=f'A.Y. {academic_year}')
     if document_type:
         submissions = submissions.filter(
             document_file__iendswith=f'.{document_type.lower()}'
@@ -24,7 +24,7 @@ def _render_repository(request, submissions, template_name, academic_term, docum
         submissions = submissions.order_by(
             'initially_submitted_at' if sort_by == 'oldest' else '-initially_submitted_at'
         )
-    
+
     if not submissions.exists():
         messages.info(request, "No documents match your filters.")
 
@@ -33,11 +33,11 @@ def _render_repository(request, submissions, template_name, academic_term, docum
         'submissions': page_obj,
         'page_obj': page_obj,
         'is_paginated': page_obj.has_other_pages(),
-        'academic_terms': Requirement.objects.values_list(
-            'academic_term', flat=True
-        ).distinct().order_by('-academic_term'),
+        'academic_years': Requirement.objects.values_list(
+            'academic_year', flat=True
+        ).distinct().order_by('-academic_year'),
         'document_type_choices': ['PDF', 'DOC', 'DOCX', 'XLSX'],
-        'selected_academic_term': academic_term,
+        'selected_academic_year': academic_year,
         'selected_document_type': document_type,
         'selected_sort_by': sort_by,
         'search_query': search_query,
@@ -51,11 +51,11 @@ def all_documents_view(request):
         faculty=request.user,
         status=DocumentSubmission.SubmissionStatus.APPROVED
     ).select_related('requirement')
-    
+
     return _render_repository(
         request, submissions,
         'faculty_portal/core/my_documents/all_documents.html',
-        request.GET.get('academic_term', ''),
+        request.GET.get('academic_year', ''),
         request.GET.get('document_type', '')
     )
 
@@ -68,11 +68,11 @@ def pinned_documents_view(request):
         status=DocumentSubmission.SubmissionStatus.APPROVED,
         is_pinned=True
     ).select_related('requirement')
-    
+
     return _render_repository(
         request, submissions,
         'faculty_portal/core/my_documents/pinned_documents.html',
-        request.GET.get('academic_term', ''),
+        request.GET.get('academic_year', ''),
         request.GET.get('document_type', '')
     )
 
@@ -81,7 +81,7 @@ def pinned_documents_view(request):
 @require_http_methods(['POST'])
 def toggle_pin_view(request, document_id):
     document = get_object_or_404(DocumentSubmission, pk=document_id, faculty=request.user)
-    
+
     document.is_pinned = not document.is_pinned
     document.save(update_fields=['is_pinned'])
     return redirect(request.META.get('HTTP_REFERER', 'faculty_portal:all_documents'))
@@ -96,18 +96,18 @@ def document_file_view(request, document_id, source='all'):
         faculty=request.user,
         status=DocumentSubmission.SubmissionStatus.APPROVED
     )
-    
+
     if source == 'pinned':
         back_url_name, breadcrumb_label = 'faculty_portal:pinned_documents', 'Pinned Documents'
     else:
         back_url_name, breadcrumb_label = 'faculty_portal:all_documents', 'All Documents'
-        
+
     context = {
         'document': document,
         'back_url_name': back_url_name,
         'breadcrumb_label': breadcrumb_label
     }
-    
+
     return render(
         request,
         'faculty_portal/core/my_documents/document_file_view.html',
