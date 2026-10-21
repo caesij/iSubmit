@@ -28,7 +28,7 @@ def _refresh_faculty_submission_bin(faculty_id):
 def _metadata_is_current(metadata, request_id, draft_id, file_name):
     if not (
         metadata
-        and metadata.ocr_request_id == request_id
+        and metadata.text_extraction_request_id == request_id
         and metadata.draft_id == draft_id
         and metadata.storage_file_name == file_name
         and metadata.draft_id is not None
@@ -71,44 +71,44 @@ def process_document_extraction(self, metadata_id, request_id):
             .filter(pk=metadata_id)
             .first()
         )
-        
+
         if not metadata:
             return {'status': 'metadata_missing'}
-        if metadata.ocr_request_id != request_id:
+        if metadata.text_extraction_request_id != request_id:
             return {'status': 'stale_request'}
-        if metadata.ocr_status != DocumentMetadata.OCRStatus.PENDING:
+        if metadata.text_extraction_status != DocumentMetadata.TextExtractionStatus.PENDING:
             return {'status': 'not_pending'}
         if not metadata.draft_id or not metadata.draft or not metadata.draft.draft_file:
             return {'status': 'draft_missing'}
         if metadata.requirement.text_processing_mode == metadata.requirement.TextProcessingMode.NONE:
-            metadata.ocr_status = DocumentMetadata.OCRStatus.NOT_REQUIRED
-            metadata.ocr_error = ''
-            metadata.save(update_fields=['ocr_status', 'ocr_error', 'updated_at'])
+            metadata.text_extraction_status = DocumentMetadata.TextExtractionStatus.NOT_REQUIRED
+            metadata.text_extraction_error = ''
+            metadata.save(update_fields=['text_extraction_status', 'text_extraction_error', 'updated_at'])
             return {'status': 'not_required'}
         draft_id = metadata.draft_id
         file_name = metadata.draft.draft_file.name
-        
+
         if not file_name or metadata.storage_file_name != file_name:
             return {'status': 'stale_file'}
-        
+
         suffix = Path(metadata.original_filename or file_name).suffix.lower()
-        
+
         processing_mode = metadata.requirement.text_processing_mode
 
         if processing_mode == metadata.requirement.TextProcessingMode.OCR and suffix != '.pdf':
-            metadata.ocr_status = DocumentMetadata.OCRStatus.FAILED
-            metadata.ocr_error = (
+            metadata.text_extraction_status = DocumentMetadata.TextExtractionStatus.FAILED
+            metadata.text_extraction_error = (
                 'This requirement requires OCR, so the document must be a PDF.'
             )
-            metadata.save(update_fields=['ocr_status', 'ocr_error', 'updated_at'])
+            metadata.save(update_fields=['text_extraction_status', 'text_extraction_error', 'updated_at'])
             _refresh_faculty_submission_bin(metadata.faculty_id)
             return {'status': 'unsupported_file'}
 
         faculty_id = metadata.faculty_id
-        metadata.ocr_status = DocumentMetadata.OCRStatus.PROCESSING
-        metadata.ocr_error = ''
-        metadata.ocr_completed_at = None
-        metadata.save(update_fields=['ocr_status', 'ocr_error', 'ocr_completed_at', 'updated_at'])
+        metadata.text_extraction_status = DocumentMetadata.TextExtractionStatus.PROCESSING
+        metadata.text_extraction_error = ''
+        metadata.text_extraction_completed_at = None
+        metadata.save(update_fields=['text_extraction_status', 'text_extraction_error', 'text_extraction_completed_at', 'updated_at'])
 
     try:
         draft = metadata.draft
@@ -137,18 +137,18 @@ def process_document_extraction(self, metadata_id, request_id):
             )
             if not _metadata_is_current(current, request_id, draft_id, file_name):
                 return {'status': 'stale_result_discarded'}
-            if current.ocr_status != DocumentMetadata.OCRStatus.PROCESSING:
+            if current.text_extraction_status != DocumentMetadata.TextExtractionStatus.PROCESSING:
                 return {'status': 'state_changed'}
 
             current.extracted_text = extracted_text
             current.page_count = page_count
-            current.ocr_status = DocumentMetadata.OCRStatus.COMPLETED
-            current.ocr_error = ''
-            current.ocr_completed_at = timezone.now()
+            current.text_extraction_status = DocumentMetadata.TextExtractionStatus.COMPLETED
+            current.text_extraction_error = ''
+            current.text_extraction_completed_at = timezone.now()
             current.save(
                 update_fields=[
-                    'extracted_text', 'page_count', 'ocr_status', 'ocr_error',
-                    'ocr_completed_at', 'updated_at'
+                    'extracted_text', 'page_count', 'text_extraction_status', 'text_extraction_error',
+                    'text_extraction_completed_at', 'updated_at'
                 ]
             )
 
@@ -165,9 +165,9 @@ def process_document_extraction(self, metadata_id, request_id):
                     .first()
                 )
                 if _metadata_is_current(current, request_id, draft_id, file_name):
-                    current.ocr_status = DocumentMetadata.OCRStatus.FAILED
-                    
-                    current.ocr_error = (
+                    current.text_extraction_status = DocumentMetadata.TextExtractionStatus.FAILED
+
+                    current.text_extraction_error = (
                         str(exc)
                         if isinstance(exc, DocumentTextExtractionError)
                         else (
@@ -175,10 +175,10 @@ def process_document_extraction(self, metadata_id, request_id):
                             'Please replace the file and try again, or contact support.'
                         )
                     )
-                    
-                    current.ocr_completed_at = timezone.now()
-                    current.save(update_fields=['ocr_status', 'ocr_error', 'ocr_completed_at', 'updated_at'])
-                    
+
+                    current.text_extraction_completed_at = timezone.now()
+                    current.save(update_fields=['text_extraction_status', 'text_extraction_error', 'text_extraction_completed_at', 'updated_at'])
+
         except Exception:
             logger.exception('Could not save OCR failure state for %s.', metadata_id)
         return {'status': 'failed'}

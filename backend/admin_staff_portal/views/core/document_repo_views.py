@@ -16,15 +16,15 @@ def document_repo_view(request):
     ).select_related('requirement', 'faculty')
 
     semester = request.GET.get('semester', '')
-    academic_term = request.GET.get('academic_term', '')
+    academic_year = request.GET.get('academic_year', '')
     faculty_type = request.GET.get('faculty_type', '')
     sort_by = request.GET.get('sort_by', 'newest')
     search_query = request.GET.get('q', '').strip()
 
     if semester:
         submissions = submissions.filter(requirement__semester=semester)
-    if academic_term:
-        submissions = submissions.filter(requirement__academic_term=academic_term)
+    if academic_year:
+        submissions = submissions.filter(requirement__academic_year=f'A.Y. {academic_year}')
     if faculty_type:
         submissions = submissions.filter(faculty__faculty_type=faculty_type)
     if search_query:
@@ -33,7 +33,7 @@ def document_repo_view(request):
         submissions = submissions.order_by(
             'initially_submitted_at' if sort_by == 'oldest' else '-initially_submitted_at'
         )
-    
+
     if not submissions.exists():
         messages.info(request, "No approved documents match your filters.")
 
@@ -43,15 +43,15 @@ def document_repo_view(request):
         'page_obj': page_obj,
         'is_paginated': page_obj.has_other_pages(),
         'semesters': Requirement.Semester.choices,
-        'academic_terms': Requirement.objects.values_list(
-            'academic_term', flat=True
-        ).distinct().order_by('-academic_term'),
+        'academic_years': Requirement.objects.values_list(
+            'academic_year', flat=True
+        ).distinct().order_by('-academic_year'),
         'faculty_type_choices': [
             choice for choice in Requirement.AssignedFacultyType.choices
             if choice[0] != 'ALL'
         ],
         'selected_semester': semester,
-        'selected_academic_term': academic_term,
+        'selected_academic_year': academic_year,
         'selected_faculty_type': faculty_type,
         'selected_sort_by': sort_by,
         'search_query': search_query,
@@ -66,9 +66,9 @@ def document_file_view(request, document_id):
         pk=document_id,
         status=DocumentSubmission.SubmissionStatus.APPROVED
     )
-    
+
     context = {'document': document}
-    
+
     return render(
         request,
         'admin_staff_portal/core/documents/document_file_view.html',
