@@ -11,6 +11,7 @@ from accounts.forms import PreferencesForm
 from notifications.models import NotificationPreference
 from accounts.security import get_login_activity
 
+TEMPLATE_DIR = 'faculty_portal/general/settings_module'
 
 @faculty
 @require_http_methods(['GET', 'POST'])
@@ -30,7 +31,7 @@ def preferences_view(request):
     
     return render(
         request,
-        'faculty_portal/settings/preferences.html',
+        f'{TEMPLATE_DIR}/preferences.html',
         context
     )
 
@@ -50,7 +51,7 @@ def notification_settings_view(request):
     
     return render(
         request,
-        'faculty_portal/settings/notification_settings.html',
+        f'{TEMPLATE_DIR}/notification_settings.html',
         context
     )
 
@@ -71,7 +72,7 @@ def notification_channel_view(request):
     
     return render(
         request,
-        'faculty_portal/settings/notification_channel.html',
+        f'{TEMPLATE_DIR}/notification_channel.html',
         context
     )
 
@@ -100,6 +101,6 @@ def account_and_security_view(request):
 
     return render(
         request,
-        'faculty_portal/general/account_security.html',
+        f'{TEMPLATE_DIR}/account_security.html',
         context
     )

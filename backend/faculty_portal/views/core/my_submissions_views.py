@@ -8,6 +8,8 @@ from django.template.loader import render_to_string
 from accounts.decorators import faculty
 from submissions.models import DocumentSubmission
 
+TEMPLATE_DIR = 'faculty_portal/core/my_submissions'
+
 
 @faculty
 @require_http_methods(['GET'])
@@ -21,7 +23,7 @@ def submissions_list(request):
         total_submitted=Count('id'),
         under_review=Count('id', filter=Q(status=DocumentSubmission.SubmissionStatus.UNDER_REVIEW)),
         approved=Count('id', filter=Q(status=DocumentSubmission.SubmissionStatus.APPROVED)),
-        returned=Count('id', filter=Q(status=DocumentSubmission.SubmissionStatus.NEEDS_REVISION)),
+        returned=Count('id', filter=Q(status=DocumentSubmission.SubmissionStatus.NEEDS_REVISION))
     )
 
     submitted_documents = all_submissions.select_related('requirement', 'reviewed_by')
@@ -47,12 +49,12 @@ def submissions_list(request):
         'stats': stats,
         'categories': DocumentSubmission.objects.filter(faculty=request.user)
             .values_list('requirement__category', flat=True).distinct(),
-        'status_choices': DocumentSubmission.SubmissionStatus.choices,
+        'status_choices': DocumentSubmission.SubmissionStatus.choices
     }
     
     return render(
         request,
-        'faculty_portal/core/my_submissions/submissions_list.html',
+        f'{TEMPLATE_DIR}/submissions_list.html',
         context
     )
 
@@ -67,21 +69,15 @@ def submissions_data_view(request):
         total_submitted=Count('id'),
         under_review=Count(
             'id',
-            filter=Q(
-                status=DocumentSubmission.SubmissionStatus.UNDER_REVIEW
-            )
+            filter=Q(status=DocumentSubmission.SubmissionStatus.UNDER_REVIEW)
         ),
         approved=Count(
             'id',
-            filter=Q(
-                status=DocumentSubmission.SubmissionStatus.APPROVED
-            )
+            filter=Q(status=DocumentSubmission.SubmissionStatus.APPROVED)
         ),
         returned=Count(
             'id',
-            filter=Q(
-                status=DocumentSubmission.SubmissionStatus.NEEDS_REVISION
-            )
+            filter=Q(status=DocumentSubmission.SubmissionStatus.NEEDS_REVISION)
         ),
     )
 
@@ -95,39 +91,27 @@ def submissions_data_view(request):
     sort_by = request.GET.get('sort', 'newest')
 
     if submission_status:
-        submitted_documents = submitted_documents.filter(
-            status=submission_status
-        )
+        submitted_documents = submitted_documents.filter(status=submission_status)
 
     if category:
-        submitted_documents = submitted_documents.filter(
-            requirement__category=category
-        )
+        submitted_documents = submitted_documents.filter(requirement__category=category)
 
     if sort_by == 'oldest':
-        submitted_documents = submitted_documents.order_by(
-            'initially_submitted_at'
-        )
+        submitted_documents = submitted_documents.order_by('initially_submitted_at')
     elif sort_by == 'deadline':
-        submitted_documents = submitted_documents.order_by(
-            'requirement__deadline'
-        )
+        submitted_documents = submitted_documents.order_by('requirement__deadline')
     else:
-        submitted_documents = submitted_documents.order_by(
-            '-initially_submitted_at'
-        )
+        submitted_documents = submitted_documents.order_by('-initially_submitted_at')
 
     rows_html = render_to_string(
-        'faculty_portal/core/my_submissions/_submission_rows.html',
-        {
-            'submitted_documents': submitted_documents,
-        },
-        request=request,
+        f'{TEMPLATE_DIR}/_submission_rows.html',
+        {'submitted_documents': submitted_documents},
+        request=request
     )
 
     response = JsonResponse({
         'stats': stats,
-        'rows_html': rows_html,
+        'rows_html': rows_html
     })
 
     response['Cache-Control'] = 'no-store'
@@ -148,6 +132,6 @@ def view_my_submitted_document(request, document_id):
     
     return render(
         request,
-        'faculty_portal/core/my_submissions/view_my_submitted_document.html',
+        f'{TEMPLATE_DIR}/view_my_submitted_document.html',
         context
     )
