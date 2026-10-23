@@ -41,10 +41,12 @@ def submission_bins_view(request):
     if request.method == 'POST' and request.POST.get('action') == 'submit':
         return process_submission(request)
 
+    context = {'rows': load_upload_rows(request.user)}
+
     return render(
         request,
         f'{TEMPLATE_DIR}/upload_files.html',
-        {'rows': load_upload_rows(request.user)}
+        context
     )
 
 
@@ -54,7 +56,7 @@ def attach_document(request, requirement_id):
     requirement = get_object_or_404(
         Requirement,
         pk=requirement_id,
-        status=Requirement.ReqStatus.ACTIVE,
+        status=Requirement.ReqStatus.ACTIVE
     )
 
     allowed_types = (Requirement.AssignedFacultyType.ALL, request.user.faculty_type)
@@ -77,7 +79,7 @@ def replace_document(request, document_id):
     draft = get_object_or_404(
         DraftUpload.objects.select_related('requirement'),
         pk=document_id,
-        faculty=request.user,
+        faculty=request.user
     )
 
     return save_draft_form(
@@ -148,11 +150,13 @@ def submission_complete(request):
     if not submitted_documents:
         messages.info(request, 'No recent submission to show.')
         return redirect(UPLOAD_PAGE)
+    
+    context = {'submitted_documents': submitted_documents}
 
     return render(
         request,
         f'{TEMPLATE_DIR}/submission_complete.html',
-        {'submitted_documents': submitted_documents}
+        context
     )
 
 
@@ -160,9 +164,11 @@ def submission_complete(request):
 @require_http_methods(['GET'])
 def view_document(request, document_id):
     uploaded_document = get_object_or_404(DraftUpload, pk=document_id, faculty=request.user)
+    
+    context = {'uploaded_document': uploaded_document}
 
     return render(
         request,
         f'{TEMPLATE_DIR}/view_uploaded_document.html',
-        {'uploaded_document': uploaded_document}
+        context
     )

@@ -142,8 +142,7 @@ def _needs_full_reset(draft, metadata):
 
     queue_failed = metadata.text_extraction_error in {
         QUEUE_FAILURE_ERROR,
-        'Document text extraction could not be queued. Check that the worker '
-        'and Redis are running, then replace the file or contact support.',
+        'Document text extraction could not be queued. Replace the file or contact support.'
     }
 
     return (

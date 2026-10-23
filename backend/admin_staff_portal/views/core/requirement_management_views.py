@@ -27,10 +27,11 @@ from submissions.models import Requirement
 
 from submissions.forms import RequirementForm
 
+TEMPLATE_DIR = 'admin_staff_portal/core/submissions/submission_bin/'
+
 User = get_user_model()
 
 
-# Submission Bin Views
 @role_required('ADMIN', 'STAFF')
 @staff_permission_required('manage_submission_bins')
 @require_http_methods(['GET'])
@@ -93,7 +94,7 @@ def bulk_requirements_view(request):
 
     return render(
         request,
-        'admin_staff_portal/core/submissions/submission_bin/bulk_requirements.html',
+        f'{TEMPLATE_DIR}/bulk_requirements.html',
         context
     )
 
@@ -161,7 +162,7 @@ def add_requirement_to_bulk(request):
 
     return render(
         request,
-        'admin_staff_portal/core/submissions/submission_bin/requirement_forms.html',
+        f'{TEMPLATE_DIR}/requirement_forms.html',
         context
     )
 
@@ -331,7 +332,7 @@ def edit_requirement(request, requirement_id):
 
     return render(
         request,
-        'admin_staff_portal/core/submissions/submission_bin/requirement_forms.html',
+        f'{TEMPLATE_DIR}/requirement_forms.html',
         context
     )
 
@@ -377,7 +378,7 @@ def requirements_list(request):
 
     return render(
         request,
-        'admin_staff_portal/core/submissions/submission_bin/requirements_list.html',
+        f'{TEMPLATE_DIR}/requirements_list.html',
         context
     )
 

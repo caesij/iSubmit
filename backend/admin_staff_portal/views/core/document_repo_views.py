@@ -7,6 +7,7 @@ from accounts.decorators import role_required
 from submissions.models import DocumentSubmission, Requirement
 from submissions.doc_search import search_documents
 
+TEMPLATE_DIR = 'admin_staff_portal/core/documents'
 
 @role_required('ADMIN', 'STAFF')
 @require_http_methods(['GET'])
@@ -35,10 +36,11 @@ def document_repo_view(request):
         )
 
     if not submissions.exists():
-        messages.info(request, "No approved documents match your filters.")
+        messages.info(request, 'No approved documents match your filters.')
 
-    page_obj = Paginator(submissions, 7).get_page(request.GET.get("page"))
-    return render(request, 'admin_staff_portal/core/documents/document_repo.html', {
+    page_obj = Paginator(submissions, 7).get_page(request.GET.get('page'))
+    
+    return render(request, f'{TEMPLATE_DIR}/document_repo.html', {
         'submissions': page_obj,
         'page_obj': page_obj,
         'is_paginated': page_obj.has_other_pages(),
@@ -54,7 +56,7 @@ def document_repo_view(request):
         'selected_academic_year': academic_year,
         'selected_faculty_type': faculty_type,
         'selected_sort_by': sort_by,
-        'search_query': search_query,
+        'search_query': search_query
     })
 
 
@@ -71,6 +73,6 @@ def document_file_view(request, document_id):
 
     return render(
         request,
-        'admin_staff_portal/core/documents/document_file_view.html',
+        f'{TEMPLATE_DIR}/document_file_view.html',
         context
     )

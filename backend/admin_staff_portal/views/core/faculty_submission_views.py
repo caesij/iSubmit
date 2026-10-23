@@ -26,10 +26,10 @@ from faculty_portal.realtime import (
     refresh_faculty_my_submissions,
 )
 
+TEMPLATE_DIR = 'admin_staff_portal/core/submissions/faculty_submission/'
+
 User = get_user_model()
 
-
-# Faculty Submission Views
 @role_required('ADMIN', 'STAFF')
 @require_http_methods(['GET'])
 def faculty_submissions_list(request):
@@ -108,7 +108,7 @@ def faculty_submissions_list(request):
 
     return render(
         request,
-        'admin_staff_portal/core/submissions/faculty_submission/faculty_list.html',
+        f'{TEMPLATE_DIR}/faculty_list.html',
         context
     )
 
@@ -164,7 +164,7 @@ def faculty_submission_bins_view(request, faculty_id):
     
     return render(
         request,
-        'admin_staff_portal/core/submissions/faculty_submission/faculty_submission_bins.html',
+        f'{TEMPLATE_DIR}/faculty_submission_bins.html',
         context
     )
     
@@ -188,7 +188,7 @@ def review_submission(request, submission_id):
     
     return render(
         request,
-        'admin_staff_portal/core/submissions/faculty_submission/review_submission.html',
+        f'{TEMPLATE_DIR}/review_submission.html',
         context
     )
     
