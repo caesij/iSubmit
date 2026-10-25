@@ -1,0 +1,25 @@
+{% extends 'faculty_portal/base.html' %}
+{% load static %}
+{% block title %}Settings - iSubmit{% endblock %}
+{% block heading %}Settings{% endblock %}
+{% block topbar_subtitle %}Manage your preferences and notification settings.{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/pages/settings.css' %}">{% endblock %}
+{% block content %}
+<div class="faculty-settings">
+    {% include 'faculty_portal/general/settings_module/_settings_tabs.html' with active_tab='notification_settings' %}
+    <form method="POST" class="settings-card notification-card">
+        {% csrf_token %}
+        <h2>Notification Settings</h2>
+        <p class="card-sub">Choose what type of notification you want to receive.</p>
+        <div class="notification-list">
+            {% for preference in preferences %}
+                <div class="notification-row">
+                    <div><strong>{{ preference.get_notification_type_display }}</strong><p>{{ preference.description }}</p></div>
+                    <label class="switch"><input type="checkbox" name="{{ preference.notification_type }}" {% if preference.enabled %}checked{% endif %}><span class="slider"></span></label>
+                </div>
+            {% endfor %}
+        </div>
+        <div class="settings-actions"><button type="submit" class="btn-save">Save Changes</button></div>
+    </form>
+</div>
+{% endblock %}

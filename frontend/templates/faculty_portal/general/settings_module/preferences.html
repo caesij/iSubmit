@@ -1,0 +1,25 @@
+{% extends 'faculty_portal/base.html' %}
+{% load static %}
+
+{% block title %}Settings - iSubmit{% endblock %}
+{% block heading %}Settings{% endblock %}
+{% block topbar_subtitle %}Manage your preferences and notification settings.{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/pages/settings.css' %}">{% endblock %}
+
+{% block content %}
+<div class="faculty-settings">
+    {% include 'faculty_portal/general/settings_module/_settings_tabs.html' with active_tab='preferences' %}
+    <form method="POST" class="settings-card">
+        {% csrf_token %}
+        <h2>Preferences</h2>
+        <p class="card-sub">Set your language, time, and other application preferences.</p>
+        <div class="pref-grid">
+            <div class="pref-field"><label>Language</label><div class="field-note">Choose your preferred language.</div><select><option>English</option></select></div>
+            <div class="pref-field"><label>Date Format</label><div class="field-note">Choose how date are displayed.</div>{{ form.date_format }}</div>
+            <div class="pref-field"><label>Time Zone</label><div class="field-note">Select your current time zone.</div>{{ form.timezone }}</div>
+            <div class="pref-field"><label>Time Format</label><div class="field-note">Choose how time are displayed.</div>{{ form.time_format }}</div>
+        </div>
+        <div class="settings-actions"><button type="submit" class="btn-save">Save Changes</button></div>
+    </form>
+</div>
+{% endblock %}

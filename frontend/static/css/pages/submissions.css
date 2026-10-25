@@ -1818,17 +1818,17 @@ select {
 .requirement-editor-layout {
   display: grid;
   grid-template-columns: 1.45fr 1fr;
-  gap: 18px;
+  gap: 20px;
   align-items: stretch;
 }
 
 .requirement-editor-card {
   min-width: 0;
-  padding: 20px 24px;
+  padding: 20px 28px;
   border: 1px solid #dfe3e8;
-  border-radius: 8px;
+  border-radius: 7px;
   background: #fff;
-  box-shadow: 0 1px 4px rgba(28, 28, 28, 0.06);
+  box-shadow: 0 1px 4px rgba(28, 28, 28, 0.08);
 }
 
 .requirement-editor-main {
@@ -1853,11 +1853,11 @@ select {
 }
 
 .requirement-editor-main .requirement-field {
-  margin-bottom: 18px;
+  margin-bottom: 16px;
 }
 
 .requirement-editor-card .requirement-field {
-  margin-bottom: 14px;
+  margin-bottom: 12px;
 }
 
 .requirement-editor-card .requirement-field:last-child {
@@ -1868,28 +1868,37 @@ select {
   display: block;
   margin-bottom: 6px;
   color: #171717;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
 }
 
 .requirement-editor-card .requirement-field input:not([type="checkbox"]),
 .requirement-editor-card .requirement-field select {
   width: 100%;
-  min-height: 48px;
-  padding: 10px 14px;
+  min-height: 42px;
+  padding: 9px 12px;
   border: 1px solid #d1d5db;
   border-radius: 6px;
   background: #fff;
   color: #374151;
-  font-size: 13px;
+  font-size: 12px;
 }
 
 .requirement-editor-card .requirement-field input[type="datetime-local"] {
   min-width: 0;
 }
 
+.requirement-editor-card .requirement-field textarea {
+  width: 100%;
+  min-height: 120px;
+  padding: 10px 14px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  resize: vertical;
+}
+
 .requirement-editor-side .requirement-field label {
-  font-size: 13px;
+  font-size: 12px;
 }
 
 .requirement-editor-side .requirement-field input:not([type="checkbox"]),
@@ -1903,6 +1912,7 @@ select {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 10px;
   min-height: 38px;
 }
 
@@ -2006,6 +2016,30 @@ select {
   text-decoration: none;
 }
 
+@media (max-width: 760px) {
+  .requirement-editor-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .requirement-editor-main {
+    grid-template-columns: 1fr;
+    padding: 20px;
+  }
+
+  .requirement-editor-main .requirement-field:nth-child(3),
+  .requirement-editor-main .requirement-field:nth-child(4) {
+    grid-column: 1;
+  }
+
+  .requirement-side-row {
+    grid-template-columns: 1fr;
+  }
+
+  .requirement-editor-actions {
+    padding-right: 0;
+  }
+}
+
 /* Faculty Submission Bin */
 .submission-bin-container {
   padding: 18px 20px 28px;
@@ -2049,6 +2083,14 @@ select {
   font-weight: 700;
   border-bottom-color: #a40d0d;
   justify-content: center;
+}
+
+.submission-bin-container .tab-link {
+  font-size: 16px;
+}
+
+.submission-bin-container .tab-link.active {
+  font-size: 16px;
 }
 
 .submission-bin-container .step-card {
@@ -2134,6 +2176,10 @@ select {
 .submission-bin-container .data-table th:nth-child(6) {
   text-align: center;
 }
+.submission-bin-container .data-table th:nth-child(7),
+.submission-bin-container .data-table td:nth-child(7) {
+  text-align: center;
+}
 .submission-bin-container .data-table td {
   padding: 12px 14px;
   border-top: 1px solid #f0f0f0;
@@ -2164,7 +2210,10 @@ select {
 .submission-bin-container .data-table input[type="checkbox"] { width: 15px; height: 15px; accent-color: #7f1d1d; }
 
 .submission-bin-container .status-badge {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 32px;
   padding: 4px 10px;
   border-radius: 6px;
   font-size: 11px;
@@ -2173,12 +2222,35 @@ select {
   line-height: 1.5;
 }
 .submission-bin-container .status-attached {
-  background: #fef2b2;
-  color: #8a5a00;
-  border-color: #ebcc5f;
+  background: #d9f7e5;
+  color: #15803d;
+  border-color: #7bbd94;
   box-shadow: inset 0 0 0 1px rgba(0,0,0,0.01);
 }
 .submission-bin-container .status-no-file { background: #fff; color: #6b7280; border-color: #d9d9d9; }
+
+.submission-bin-container .ocr-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 66px;
+  min-height: 32px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.submission-bin-container .ocr-badge.enabled {
+  background: #d9f7e5;
+  color: #15803d;
+}
+
+.submission-bin-container .ocr-badge.disabled {
+  background: #f5dcdc;
+  color: #b91c1c;
+}
 
 .submission-bin-container .file-link {
   display: inline-flex;
@@ -2186,6 +2258,31 @@ select {
   justify-content: center;
   text-decoration: none;
   color: #1a1a1a;
+}
+
+.submission-bin-container .file-view-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 124px;
+  height: 32px;
+  padding: 6px 12px;
+  border-radius: 5px;
+  background: #d9f3e5;
+  color: #00a94f;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.submission-bin-container .file-view-button:hover {
+  background: #c5ead5;
+}
+
+.submission-bin-container .data-table td > form {
+  display: flex;
+  justify-content: center;
+  margin: 0;
 }
 .submission-bin-container .file-box {
   display: inline-flex;
@@ -2245,7 +2342,9 @@ select {
 .submission-bin-container .btn-outline-danger {
   display: inline-block;
   min-width: 92px;
+  height: 32px;
   padding: 6px 14px;
+  box-sizing: border-box;
   border-radius: 6px;
   background: #fff;
   font-size: 12px;
@@ -2259,11 +2358,15 @@ select {
   border: 1px dashed #d44d4d;
   color: #d44d4d;
   background: transparent;
+  min-width: 124px;
+  padding: 6px 12px;
 }
 
 .submission-bin-container .btn-remove {
   min-width: 76px;
+  height: 32px;
   padding: 6px 10px;
+  box-sizing: border-box;
   border: 1px solid #d44d4d;
   border-radius: 6px;
   background: #fff;
@@ -2271,6 +2374,7 @@ select {
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
+  line-height: 1.4;
 }
 
 .submission-bin-container .btn-remove:hover {
@@ -2283,6 +2387,15 @@ select {
   justify-content: flex-end;
   gap: 16px;
   margin-top: 18px;
+}
+.submission-bin-container .bottom-bar .info-note {
+  flex: 1 1 auto;
+  width: auto;
+  min-height: 60px;
+  margin-bottom: 0;
+}
+.submission-bin-container .bottom-bar .btn-continue {
+  flex: 0 0 auto;
 }
 .submission-bin-container .info-note {
   display: flex;

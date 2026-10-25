@@ -209,7 +209,18 @@
 
                 <ul class="nav-list">
                     <li class="nav-item">
-                        <a class="nav-link" href="#">
+                        <a class="nav-link {% if request.resolver_match.url_name in 'notifications,notification_list' %}active{% endif %}"
+                           href="{% url 'faculty_portal:notifications' %}">
+                            <span class="icon">
+                                <img src="{% static 'images/Icon - Notifications.svg' %}" alt="Notifications icon">
+                            </span>
+                            <span>Notifications</span>
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.url_name in 'preferences,notification_settings,notification_channel,account_and_security' %}active{% endif %}"
+                           href="{% url 'faculty_portal:preferences' %}">
                             <span class="icon">
                                 <img src="{% static 'images/settings.svg' %}" alt="Settings icon">
                             </span>
@@ -218,7 +229,8 @@
                     </li>
 
                     <li class="nav-item">
-                        <a class="nav-link" href="#">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'profile' %}active{% endif %}"
+                           href="{% url 'faculty_portal:profile' %}">
                             <span class="icon">
                                 <img src="{% static 'images/profile.svg' %}" alt="Profile icon">
                             </span>
@@ -253,6 +265,14 @@
                         {% elif request.resolver_match.url_name == 'my_submissions' or request.resolver_match.url_name == 'view_my_submitted_document' %}
                             <span class="page-icon">
                                 <img src="{% static 'images/submissions.svg' %}" alt="My submissions icon">
+                            </span>
+                        {% elif request.resolver_match.url_name in 'preferences,notification_settings,notification_channel,account_and_security' %}
+                            <span class="page-icon">
+                                <img src="{% static 'images/settings.svg' %}" alt="Settings icon">
+                            </span>
+                        {% elif request.resolver_match.url_name == 'profile' %}
+                            <span class="page-icon">
+                                <img src="{% static 'images/profile.svg' %}" alt="Profile icon">
                             </span>
                         {% else %}
                             <span class="page-icon">

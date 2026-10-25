@@ -1,58 +1,89 @@
 {% extends 'faculty_portal/base.html' %}
-{% load core_extras %}
+{% load static core_extras %}
 
 {% block title %}Account &amp; Security - iSubmit{% endblock %}
+{% block heading %}Settings{% endblock %}
+{% block topbar_subtitle %}Manage your preferences and notification settings.{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/pages/settings.css' %}">{% endblock %}
 
 {% block content %}
+<div class="faculty-settings">
+{% include 'faculty_portal/general/settings_module/_settings_tabs.html' with active_tab='account_and_security' %}
 <style>
 .security-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 20px 22px; margin-bottom: 16px; }
+.security-container { padding: 20px; }
 .security-card h2 { font-size: 16px; margin: 0 0 4px; }
 .security-card p { color: #6b7280; font-size: 12px; }
-.security-fields { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
-.security-fields label { display: block; font-size: 12px; font-weight: 700; margin-bottom: 5px; }
-.security-fields input { width: 100%; box-sizing: border-box; padding: 9px; border: 1px solid #e5e7eb; border-radius: 7px; }
-.security-actions { text-align: right; margin-top: 16px; }
-.security-actions button, .logout-all { border: 0; border-radius: 7px; padding: 9px 14px; background: #7f1d1d; color: #fff; font-weight: 700; cursor: pointer; }
-.activity-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 14px; }
-.activity-table th, .activity-table td { text-align: left; padding: 9px 7px; border-bottom: 1px solid #e5e7eb; }
+.security-intro { padding: 0 0 18px; border: 0; border-bottom: 1px solid #d1d5db; border-radius: 0; margin: 0; }
+.security-section { margin: 18px 14px 0; border: 1px solid #e5e7eb; border-radius: 10px; padding: 14px; box-shadow: 0 1px 4px rgba(28, 28, 28, .04); }
+.security-section-heading { display: flex; align-items: flex-start; gap: 13px; }
+.security-icon { display: grid; place-items: center; width: 34px; height: 34px; flex-shrink: 0; border-radius: 4px; background: #fce7e7; }
+.security-icon.login-icon { background: #e7efff; }
+.security-icon img { width: 20px; height: 20px; }
+.security-section-heading h2 { margin-top: 1px; }
+.security-section-heading p { margin: 2px 0 0; }
+.security-fields { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-top: 16px; }
+.security-field { min-width: 0; }
+.security-field label { display: block; color: #232323; font-size: 12px; font-weight: 700; margin-bottom: 5px; }
+.password-input { position: relative; }
+.password-input input { width: 100%; height: 32px; box-sizing: border-box; padding: 7px 34px 7px 10px; border: 1px solid #d1d5db; border-radius: 5px; font-size: 12px; }
+.password-toggle { position: absolute; top: 50%; right: 8px; display: grid; place-items: center; width: 20px; height: 20px; padding: 0; border: 0; transform: translateY(-50%); background: transparent; cursor: pointer; }
+.password-toggle img { width: 15px; height: 15px; }
+.password-help { margin: 3px 0 0; color: #9ca3af !important; font-size: 10px !important; }
+.security-actions { text-align: right; margin-top: 14px; }
+.security-actions button, .logout-all { border: 0; border-radius: 5px; padding: 7px 14px; background: #a90000; color: #fff; font-size: 11px; font-weight: 700; cursor: pointer; }
+.activity-table { width: 100%; margin: 14px 0 0; border-collapse: collapse; font-size: 11px; }
+.activity-table th, .activity-table td { text-align: left; padding: 8px 7px; border-bottom: 1px solid #e5e7eb; }
 .activity-table th { font-size: 11px; }
+.activity-table th:last-child, .activity-table td:last-child { display: none; }
 .activity-device { font-weight: 700; }
 .current { color: #15803d; font-size: 10px; margin-left: 5px; }
 .activity-action { border: 0; background: none; color: #b91c1c; font-weight: 700; cursor: pointer; }
 .activity-heading { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.activity-heading .security-section-heading { width: 100%; flex-direction: row; align-items: flex-start; }
+.activity-heading .security-section-heading > div { min-width: 0; }
+.activity-heading .security-section-heading h2,
+.activity-heading .security-section-heading p { display: block; }
+.activity-table { width: calc(100% - 112px); margin-left: 56px; margin-right: 56px; }
 .activity-selection { display: flex; justify-content: space-between; align-items: center; margin-top: 14px; }
+.activity-selection { margin-left: 56px; margin-right: 56px; }
+.activity-actions { display: flex; align-items: center; gap: 18px; }
+.activity-actions #logout-selected { display: none; }
 .activity-selection button { border: 0; background: none; color: #b91c1c; cursor: pointer; font-size: 11px; font-weight: 700; }
+.activity-actions .logout-all { background: #a90000; color: #fff; }
 .activity-selection button:disabled { color: #9ca3af; cursor: not-allowed; }
+@media (max-width: 760px) {
+    .security-fields { grid-template-columns: 1fr; }
+    .security-section { margin-left: 0; margin-right: 0; }
+    .activity-table { width: 100%; margin-left: 0; margin-right: 0; overflow-x: auto; }
+    .activity-selection { margin-left: 0; }
+    .activity-selection, .activity-actions { align-items: flex-start; flex-direction: column; }
+}
 </style>
 
-<div class="security-card" data-login-activity>
-    <h2>Account &amp; Security</h2>
-    <p>Manage your password and active sessions without collecting your location.</p>
+<div class="security-card security-container" data-login-activity>
+<div class="security-intro">
+    <h2>Account Security</h2>
+    <p>Manage your password, authentication, and account security settings.</p>
 </div>
 
-<form method="POST" class="security-card">
+<form method="POST" class="security-card security-section">
     {% csrf_token %}
-    <h2>Change Password</h2>
-    <p>Update your password to keep your account secure.</p>
+    <div class="security-section-heading">
+        <span class="security-icon"><img src="{% static 'images/Change Password.svg' %}" alt=""></span>
+        <div><h2>Change Password</h2><p>Update your password to keep your account secure.</p></div>
+    </div>
     <div class="security-fields">
-        <label>Current Password {{ form.old_password }}</label>
-        <label>New Password {{ form.new_password1 }}</label>
-        <label>Confirm New Password {{ form.new_password2 }}</label>
+        <div class="security-field"><label for="{{ form.old_password.id_for_label }}">Current Password</label><div class="password-input">{{ form.old_password }}<button type="button" class="password-toggle" aria-label="Show current password" aria-pressed="false"><img src="{% static 'images/eye.svg' %}" alt=""></button></div></div>
+        <div class="security-field"><label for="{{ form.new_password1.id_for_label }}">New Password</label><div class="password-input">{{ form.new_password1 }}<button type="button" class="password-toggle" aria-label="Show new password" aria-pressed="false"><img src="{% static 'images/eye.svg' %}" alt=""></button></div><p class="password-help">Password must be 8 characters long.</p></div>
+        <div class="security-field"><label for="{{ form.new_password2.id_for_label }}">Confirm New Password</label><div class="password-input">{{ form.new_password2 }}<button type="button" class="password-toggle" aria-label="Show confirmed password" aria-pressed="false"><img src="{% static 'images/eye.svg' %}" alt=""></button></div></div>
     </div>
     <div class="security-actions"><button type="submit">Update Password</button></div>
 </form>
 
-<div class="security-card">
+<div class="security-card security-section">
     <div class="activity-heading">
-        <div>
-            <h2>Login Activity</h2>
-        </div>
-        {% if login_activity|length > 1 %}
-            <form method="POST" action="{% url 'accounts:revoke_other_sessions' %}">
-                {% csrf_token %}
-                <button type="submit" class="logout-all">Log out all other sessions</button>
-            </form>
-        {% endif %}
+        <div class="security-section-heading"><span class="security-icon login-icon"><img src="{% static 'images/Login Activity.svg' %}" alt=""></span><div><h2>Login Activity</h2><p>Review your recent account activity and active sessions.</p></div></div>
     </div>
     {% if login_activity %}
         <form id="session-selection-form" method="POST" action="{% url 'accounts:revoke_selected_sessions' %}">{% csrf_token %}</form>
@@ -73,13 +104,32 @@
         </table>
         <div class="activity-selection">
             <span>Log out selected sessions</span>
-            <button type="submit" form="session-selection-form" id="logout-selected" disabled>Log out selected sessions</button>
+            <div class="activity-actions">
+                <button type="submit" form="session-selection-form" id="logout-selected" disabled>Log out selected sessions</button>
+                {% if login_activity|length > 1 %}
+                    <form method="POST" action="{% url 'accounts:revoke_other_sessions' %}">
+                        {% csrf_token %}
+                        <button type="submit" class="logout-all">Log out all other sessions</button>
+                    </form>
+                {% endif %}
+            </div>
         </div>
     {% else %}
         <p>No active login sessions were found.</p>
     {% endif %}
 </div>
+</div>
     <script>
+    document.querySelectorAll('.password-toggle').forEach(function (toggle) {
+        toggle.addEventListener('click', function () {
+            const input = toggle.parentElement.querySelector('input');
+            const showing = input.type === 'text';
+            input.type = showing ? 'password' : 'text';
+            toggle.setAttribute('aria-pressed', String(!showing));
+            toggle.setAttribute('aria-label', (showing ? 'Show' : 'Hide') + ' password');
+        });
+    });
+
     function bindSessionSelection() {
         const form = document.getElementById('session-selection-form');
         const button = document.getElementById('logout-selected');

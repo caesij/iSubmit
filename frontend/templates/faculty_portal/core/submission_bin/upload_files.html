@@ -17,6 +17,7 @@
         .text-extraction-error { max-width: 20rem; color: #9f2020; white-space: normal; }
         .btn-continue:disabled { opacity: 0.55; cursor: not-allowed; }
         .submission-readiness { margin-top: 0.5rem; font-size: 0.9rem; }
+        .submission-bin-container .step-card { display: none; }
     </style>
 {% endblock %}
 
@@ -53,7 +54,7 @@
             href="{% url 'faculty_portal:submission_complete' %}"
             class="tab-link"
         >
-            Submission Complete
+            Submitted Files
         </a>
     </div>
 
@@ -119,6 +120,7 @@
                     <th>Deadline</th>
                     <th>Status</th>
                     <th>File</th>
+                    <th>OCR Enabled</th>
                     <th class="action-heading">Action</th>
                 </tr>
             </thead>

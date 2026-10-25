@@ -139,7 +139,7 @@
                         {% if managed_user.is_locked_out %}
                             <div class="security-status locked">
                                 <span class="security-status-indicator"></span>
-                                Locked Out
+                                Locked
                             </div>
 
                             {% if managed_user.locked_out_until %}
@@ -221,7 +221,7 @@
                                             type="submit"
                                             class="action-menu-item unlock-action"
                                         >
-                                            Unlock Now
+                                            Unlock
                                         </button>
                                     </form>
                                 {% endif %}
@@ -398,8 +398,12 @@
 
     .security-status {
         display: inline-flex;
+        min-width: 80px;
         align-items: center;
+        justify-content: center;
         gap: 6px;
+        padding: 4px 10px;
+        border-radius: 999px;
         font-size: 13px;
         font-weight: 500;
     }
@@ -412,6 +416,7 @@
     }
 
     .security-status.locked {
+        background-color: #f8e7e7;
         color: #b91c1c;
     }
 
@@ -420,6 +425,7 @@
     }
 
     .security-status.unlocked {
+        background-color: #e8f5ec;
         color: #15803d;
     }
 
