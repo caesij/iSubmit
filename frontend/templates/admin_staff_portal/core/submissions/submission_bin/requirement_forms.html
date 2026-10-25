@@ -14,69 +14,81 @@
 <style>
     .processing-options {
         display: grid;
-        gap: 10px;
+        gap: 5px;
     }
 
     .processing-option {
         display: flex;
+        min-height: 45px;
         gap: 9px;
-        align-items: flex-start;
-        padding: 10px;
-        border: 1px solid #ddd;
-        border-radius: 6px;
+        align-items: center;
+        padding: 6px 8px;
+        border: 1px solid #d7d7d7;
+        border-radius: 5px;
+        background: #fff;
+        transition: border-color 0.12s ease, background-color 0.12s ease;
+    }
+
+    .processing-option:has(input[type="radio"]:checked) {
+        border-color: #7e0c0c;
+        background: #f8e7e7;
+    }
+
+    .requirement-editor-card .requirement-field .processing-option input[type="radio"] {
+        appearance: none;
+        width: 14px;
+        height: 14px;
+        flex: 0 0 14px;
+        margin: 0 4px 0 0;
+        min-height: 14px;
+        padding: 0;
+        border: 1px solid #806f6f;
+        border-radius: 50%;
+        background: #806f6f;
+        cursor: pointer;
+        display: grid;
+        place-content: center;
+    }
+
+    .requirement-editor-card .requirement-field .processing-option input[type="radio"]::before {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: #fff;
+        content: "";
+        transform: scale(0);
+        transition: transform 0.12s ease;
+    }
+
+    .requirement-editor-card .requirement-field .processing-option input[type="radio"]:checked {
+        border: 2px solid #7e0c0c;
+        background: #fff;
+    }
+
+    .requirement-editor-card .requirement-field .processing-option input[type="radio"]:checked::before {
+        background: #7e0c0c;
+        transform: scale(1);
+    }
+
+    .requirement-editor-card .requirement-field .processing-option input[type="radio"]:focus-visible {
+        outline: 2px solid rgba(166, 7, 0, 0.25);
+        outline-offset: 2px;
     }
 
     .processing-option label {
         display: grid;
-        gap: 2px;
+        gap: 1px;
+        min-width: 0;
         cursor: pointer;
+        color: #171717;
+        font-size: 10px;
+        line-height: 1.2;
     }
 
     .processing-option small {
         color: #666;
-        font-size: 0.75rem;
-    }
-
-    .requirement-editor .ocr-slider {
-        position: relative;
-        display: inline-block;
-        flex-shrink: 0;
-        width: 56px;
-        height: 30px;
-        border-radius: 30px;
-        background: #ccc;
-        transition: background-color 0.2s ease;
-    }
-
-    .requirement-editor .ocr-slider::before {
-        content: "";
-        position: absolute;
-        top: 4px;
-        left: 4px;
-        width: 22px;
-        height: 22px;
-        border-radius: 50%;
-        background: #fff;
-        box-shadow: 0 1px 3px rgb(0 0 0 / 20%);
-        transition: transform 0.2s ease;
-    }
-
-    .requirement-editor .ocr-checkbox:checked + .ocr-switch .ocr-slider {
-        background: #b10e0e;
-    }
-
-    .requirement-editor .ocr-checkbox:checked + .ocr-switch .ocr-slider::before {
-        transform: translateX(26px);
-    }
-
-    .requirement-editor .ocr-checkbox:focus-visible + .ocr-switch .ocr-slider {
-        outline: 2px solid #2563eb;
-        outline-offset: 3px;
-    }
-
-    .requirement-editor .ocr-checkbox:disabled + .ocr-switch {
-        opacity: 0.5;
-        cursor: not-allowed;
+        font-size: 10px;
+        line-height: 1.2;
     }
 </style>
 {% endblock %}
@@ -131,7 +143,6 @@
                     {% for error in form.assigned_to.errors %}<span class="field-error">{{ error }}</span>{% endfor %}
                 </div>
 
-                
                 <div class="requirement-field{% if form.text_processing_mode.errors %} has-error{% endif %}">
                     <label>{{ form.text_processing_mode.label }}</label>
                     <div class="processing-options">
@@ -151,7 +162,6 @@
                             </div>
                         {% endfor %}
                     </div>
-
                     {% for error in form.text_processing_mode.errors %}
                         <span class="field-error">{{ error }}</span>
                     {% endfor %}

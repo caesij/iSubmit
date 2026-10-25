@@ -79,51 +79,48 @@
                 {% if row.draft and row.draft.draft_file %}
                     <a
                         href="{% url 'faculty_portal:view_uploaded_document' row.draft.id %}"
-                        class="file-link"
+                        class="file-view-button"
                         title="{{ row.draft.draft_file.name }}"
                     >
-                        <div class="file-box">
-                            <img
-                                class="file-icon-svg"
-                                src="{% static 'images/PDF.svg' %}"
-                                alt="PDF file icon"
-                            >
-                            <div>
-                                <div class="file-name">
-                                    {{ row.draft.draft_file.name }}
-                                </div>
-                                <span class="file-size">
-                                    Replacement file
-                                </span>
-                            </div>
-                        </div>
+                        View
                     </a>
                 {% elif row.submission and row.submission.document_file %}
                     <a
                         href="{{ row.submission.document_file.url }}"
-                        class="file-link"
+                        class="file-view-button"
                         title="{{ row.submission.document_file.name }}"
                         target="_blank"
                     >
-                        <div class="file-box">
-                            <img
-                                class="file-icon-svg"
-                                src="{% static 'images/PDF.svg' %}"
-                                alt="PDF file icon"
-                            >
-                            <div>
-                                <div class="file-name">
-                                    {{ row.submission.document_file.name }}
-                                </div>
-                                <span class="file-size">
-                                    Current submitted file
-                                </span>
-                            </div>
-                        </div>
+                        View
                     </a>
                 {% else %}
-                    —
+                    <form
+                        action="{% url 'faculty_portal:attach_document' row.requirement.id %}"
+                        method="post"
+                        enctype="multipart/form-data"
+                    >
+                        {% csrf_token %}
+                        <input
+                            type="file"
+                            name="draft_file"
+                            id="upload-file-{{ row.requirement.id }}"
+                            hidden
+                            onchange="this.form.submit()"
+                        >
+                        <label
+                            for="upload-file-{{ row.requirement.id }}"
+                            class="btn-outline-danger"
+                        >
+                            &uarr; Upload
+                        </label>
+                    </form>
                 {% endif %}
+            </td>
+
+            <td class="action-cell">
+                <span class="ocr-badge {% if row.requirement.text_processing_mode != 'NONE' %}enabled{% else %}disabled{% endif %}">
+                    {% if row.requirement.text_processing_mode != 'NONE' %}Enabled{% else %}Disabled{% endif %}
+                </span>
             </td>
 
             <td class="action-cell">
@@ -153,7 +150,7 @@
         {% elif row.draft and row.draft.draft_file %}
             <td>
                 <span class="status-badge status-attached">
-                    Attached
+                    File Attached
                 </span>
                 {% if row.metadata and row.requirement.text_processing_mode != 'NONE' %}
                     <div class="ocr-state">
@@ -171,25 +168,17 @@
             <td>
                 <a
                     href="{% url 'faculty_portal:view_uploaded_document' row.draft.id %}"
-                    class="file-link"
+                    class="file-view-button"
                     title="{{ row.draft.draft_file.name }}"
                 >
-                    <div class="file-box">
-                        <img
-                            class="file-icon-svg"
-                            src="{% static 'images/PDF.svg' %}"
-                            alt="PDF file icon"
-                        >
-                        <div>
-                            <div class="file-name">
-                                {{ row.draft.draft_file.name }}
-                            </div>
-                            <span class="file-size">
-                                {{ row.draft.draft_file.size|filesizeformat }}
-                            </span>
-                        </div>
-                    </div>
+                    View
                 </a>
+            </td>
+
+            <td class="action-cell">
+                <span class="ocr-badge {% if row.requirement.text_processing_mode != 'NONE' %}enabled{% else %}disabled{% endif %}">
+                    {% if row.requirement.text_processing_mode != 'NONE' %}Enabled{% else %}Disabled{% endif %}
+                </span>
             </td>
 
             <td class="action-cell">
@@ -234,7 +223,7 @@
         {% else %}
             <td>
                 <span class="status-badge status-no-file">
-                    No file yet
+                    No file uploaded
                 </span>
             </td>
 
@@ -243,33 +232,16 @@
             </td>
 
             <td class="action-cell">
-                <form
-                    action="{% url 'faculty_portal:attach_document' row.requirement.id %}"
-                    method="post"
-                    enctype="multipart/form-data"
-                >
-                    {% csrf_token %}
-                    <input
-                        type="file"
-                        name="draft_file"
-                        id="upload-{{ row.requirement.id }}"
-                        hidden
-                        onchange="this.form.submit()"
-                    >
-                    <label
-                        for="upload-{{ row.requirement.id }}"
-                        class="btn-outline-danger"
-                    >
-                        &uarr; Upload
-                    </label>
-                </form>
+                <span class="ocr-badge disabled">Disabled</span>
             </td>
+
+            <td class="action-cell"></td>
         {% endif %}
     </tr>
 {% empty %}
     <tr>
         <td
-            colspan="7"
+            colspan="8"
             class="text-center py-4"
         >
             No active requirements assigned.

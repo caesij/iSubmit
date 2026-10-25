@@ -1,5 +1,6 @@
 from django.urls import path
 from admin_staff_portal import views
+from notifications.views import notification_list_view
 
 app_name = 'admin_staff_portal'
 
@@ -55,4 +56,5 @@ urlpatterns = [
     
     # Profile URL
     path('profile/', views.profile_view, name='profile'),
+    path('notifications/', notification_list_view, name='notifications'),
 ]

@@ -45,7 +45,13 @@ class RequirementForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields['instructions'].required = False
+        self.fields['instructions'].label = 'Instructions (Optional)'
         self.fields['deadline'].input_formats = ['%Y-%m-%dT%H:%M']
+        self.fields['requirement_title'].label = 'Requirement Title'
+        self.fields['assigned_to'].label = 'Assign to'
+        self.fields['category'].widget.attrs['placeholder'] = 'Category'
+        self.fields['requirement_title'].widget.attrs['placeholder'] = 'Requirement Title'
 
         if self.instance and self.instance.pk and self.instance.academic_year:
             parsed = self._parse_academic_year(self.instance.academic_year)

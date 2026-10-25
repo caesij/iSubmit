@@ -1,0 +1,43 @@
+{% extends 'faculty_portal/base.html' %}
+{% load static %}
+{% block title %}Settings - iSubmit{% endblock %}
+{% block heading %}Settings{% endblock %}
+{% block topbar_subtitle %}Manage your preferences and notification settings.{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/pages/settings.css' %}">{% endblock %}
+{% block content %}
+<div class="faculty-settings">
+    {% include 'faculty_portal/general/settings_module/_settings_tabs.html' with active_tab='notification_channel' %}
+    <form method="POST" class="settings-card notification-card">
+        {% csrf_token %}
+        <h2>Notification Channel</h2>
+        <p class="card-sub">Choose how you want to receive notifications.</p>
+        <div class="channel-list">
+            <div class="channel-header">
+                <span>Notification Type</span>
+                <span class="channel-option-heading">
+                    <img src="{% static 'images/Email Profile.svg' %}" alt="">
+                    <span><strong>Email</strong><small>Receive via email</small></span>
+                </span>
+                <span class="channel-option-heading">
+                    <img src="{% static 'images/Icon - Notifications.svg' %}" alt="">
+                    <span><strong>System</strong><small>In-app notifications</small></span>
+                </span>
+            </div>
+            {% for preference in preferences %}
+                <div class="channel-row">
+                    <strong>{{ preference.get_notification_type_display }}</strong>
+                    <label class="channel-switch">
+                        <input type="checkbox" name="email_{{ preference.notification_type }}" {% if preference.email_enabled %}checked{% endif %}>
+                        <span class="channel-slider"></span>
+                    </label>
+                    <label class="channel-switch">
+                        <input type="checkbox" name="system_{{ preference.notification_type }}" {% if preference.system_enabled %}checked{% endif %}>
+                        <span class="channel-slider"></span>
+                    </label>
+                </div>
+            {% endfor %}
+        </div>
+        <div class="settings-actions"><button type="submit" class="btn-save">Save Changes</button></div>
+    </form>
+</div>
+{% endblock %}

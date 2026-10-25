@@ -1,0 +1,6 @@
+<nav class="settings-tabs" aria-label="Settings">
+    <a href="{% url 'faculty_portal:preferences' %}" class="settings-tab {% if active_tab == 'preferences' %}active{% endif %}">Preferences</a>
+    <a href="{% url 'faculty_portal:notification_settings' %}" class="settings-tab {% if active_tab == 'notification_settings' %}active{% endif %}">Notifications Settings</a>
+    <a href="{% url 'faculty_portal:notification_channel' %}" class="settings-tab {% if active_tab == 'notification_channel' %}active{% endif %}">Notifications Channel</a>
+    <a href="{% url 'faculty_portal:account_and_security' %}" class="settings-tab {% if active_tab == 'account_and_security' %}active{% endif %}">Account &amp; Security</a>
+</nav>

@@ -228,6 +228,50 @@
   padding-top: 4px;
 }
 
+.faculty-profile-card {
+  width: 100%;
+  height: auto;
+  min-height: 0;
+  padding: 18px 16px 20px;
+}
+
+.faculty-profile-card .profile-section-heading {
+  padding: 0 0 14px;
+}
+
+.faculty-profile-card .profile-summary {
+  grid-template-columns: 190px minmax(0, 1fr);
+  gap: 38px;
+  min-height: 235px;
+  padding: 26px 26px 16px 0;
+}
+
+.faculty-profile-card .profile-identity {
+  padding: 12px 20px 8px 8px;
+}
+
+.faculty-profile-card .profile-avatar {
+  width: 64px;
+  height: 64px;
+  margin-bottom: 6px;
+}
+
+.faculty-profile-card .profile-details {
+  gap: 12px 38px;
+  align-content: center;
+  padding-right: 34px;
+}
+
+.faculty-profile-card .profile-detail {
+  min-height: 40px;
+  padding: 7px 10px;
+}
+
+.faculty-profile-card .profile-form {
+  margin-left: 0;
+  margin-right: 0;
+}
+
 @media (max-width: 700px) {
   .profile-summary,
   .profile-form {
