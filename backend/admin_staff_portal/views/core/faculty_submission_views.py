@@ -60,24 +60,26 @@ def faculty_submissions_list(request):
             Q(assigned_to=Requirement.AssignedFacultyType.ALL)
             | Q(assigned_to=faculty_member.faculty_type)
         )
+        
         faculty_submissions = DocumentSubmission.objects.filter(
             faculty=faculty_member,
             requirement__status=Requirement.ReqStatus.ACTIVE,
         ).select_related('requirement').order_by('-initially_submitted_at')
+        
         total_count = assigned_requirements.count()
         submitted_count = faculty_submissions.values('requirement_id').distinct().count()
+    
         approved_count = faculty_submissions.filter(
             status=DocumentSubmission.SubmissionStatus.APPROVED
         ).values('requirement_id').distinct().count()
 
         if category:
-            faculty_submissions = faculty_submissions.filter(
-                requirement__category=category
-            )
+            faculty_submissions = faculty_submissions.filter(requirement__category=category)
         if status:
             faculty_submissions = faculty_submissions.filter(status=status)
 
         latest_submission = faculty_submissions.first()
+        
         faculty_rows.append({
             'faculty': faculty_member,
             'submitted_count': faculty_submissions.count(),

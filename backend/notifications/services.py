@@ -17,7 +17,7 @@ def create_notif(
     message,
     link='',
     email_subject=None,
-    email_message=None,
+    email_message=None
 ):
     allowed_types = NotificationPreference.ROLE_TYPES.get(user.role, [])
 
@@ -30,8 +30,8 @@ def create_notif(
         defaults={
             'enabled': True,
             'system_enabled': True,
-            'email_enabled': True,
-        },
+            'email_enabled': True
+        }
     )
 
     if not preference.enabled:
@@ -45,7 +45,7 @@ def create_notif(
             notification_type=notification_type,
             title=title,
             message=message,
-            link=link,
+            link=link
         )
 
         send_to_user(
@@ -59,8 +59,8 @@ def create_notif(
                 'link': notification.link,
                 'created_at': timezone.localtime(
                     notification.created_at
-                ).isoformat(),
-            },
+                ).isoformat()
+            }
         )
 
     if preference.email_enabled:
@@ -69,7 +69,7 @@ def create_notif(
             message=email_message or message,
             from_email=settings.DEFAULT_FROM_EMAIL,
             recipient_list=[user.email],
-            fail_silently=True,
+            fail_silently=True
         )
 
     return notification
@@ -79,7 +79,7 @@ def build_approval_email(
     recipient,
     document_names,
     approved_by,
-    approved_at,
+    approved_at
 ):
     names = list(document_names)
     document_label = (
@@ -118,7 +118,7 @@ def notify_roles(roles, notification_type, title, message, link=''):
             notification_type=notification_type,
             title=title,
             message=message,
-            link=link,
+            link=link
         )
 
         if notification:

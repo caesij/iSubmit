@@ -12,7 +12,7 @@ User = get_user_model()
 def get_admin_dashboard_data():
     faculty = list(
         User.objects
-        .filter(role=User.Role.FACULTY)
+        .filter(role=User.Role.FACULTY, is_active=True)
         .only('id', 'faculty_type')
     )
     
@@ -113,6 +113,8 @@ def get_admin_dashboard_data():
     documents_overview = (
         submissions
         .filter(
+            faculty__role=User.Role.FACULTY,
+            faculty__is_active=True,
             status__in=[
                 DocumentSubmission.SubmissionStatus.APPROVED,
                 DocumentSubmission.SubmissionStatus.SUBMITTED,

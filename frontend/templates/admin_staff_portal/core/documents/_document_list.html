@@ -1,0 +1,157 @@
+{% load core_extras %}
+
+<style>
+.docs-container { padding: 0; }
+.docs-tabs { display: flex; gap: 24px; border-bottom: 1px solid #e5e7eb; margin-bottom: 16px; }
+.docs-tab { padding: 9px 2px; color: #6b7280; text-decoration: none; font-size: 13px; font-weight: 700; border-bottom: 2px solid transparent; }
+.docs-tab.active { color: #7f1d1d; border-bottom-color: #7f1d1d; }
+.filter-card, .table-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; }
+.filter-card { padding: 16px; margin-bottom: 16px; }
+.filter-inputs { display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; }
+.search-group { flex: 1 1 260px; min-width: 220px; }
+.search-group label, .select-wrap label, .search-help { display: block; font-size: 11px; color: #6b7280; margin-bottom: 4px; }
+.search-controls { display: flex; gap: 8px; flex-wrap: wrap; }
+.search-controls input, .select-wrap select { padding: 8px 10px; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 13px; }
+.search-controls input { box-sizing: border-box; min-width: 0; flex: 1 1 180px; }
+.select-wrap select { min-width: 140px; }
+.search-help { margin: 5px 0 0; line-height: 1.4; }
+.btn-search, .btn-action, .btn-clear { padding: 8px 14px; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; }
+.btn-search, .btn-action { border: 1px solid #7f1d1d; color: #fff; background: #7f1d1d; }
+.btn-clear { border: 1px solid #7f1d1d; color: #7f1d1d; background: #fff; text-decoration: none; white-space: nowrap; }
+.bulk-actions { display: flex; gap: 8px; align-items: center; padding: 12px 16px; border-bottom: 1px solid #f0f0f0; }
+.bulk-actions span { margin-right: auto; color: #6b7280; font-size: 12px; }
+.data-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.data-table thead tr { background: #fbe4e4; }
+.data-table th { text-align: left; padding: 12px 16px; font-weight: 700; color: #374151; font-size: 12px; }
+.data-table td { padding: 14px 16px; border-top: 1px solid #f0f0f0; vertical-align: middle; color: #374151; }
+.checkbox-cell { width: 36px; }
+.fname-link { color: #1a1a1a; text-decoration: none; font-weight: 700; }
+.fname-link:hover { text-decoration: underline; }
+.text-sub { font-size: 11px; color: #9ca3af; }
+.pagination-footer { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-top: 1px solid #f0f0f0; font-size: 12px; color: #6b7280; }
+.pagination-controls { display: flex; gap: 6px; }
+.page-btn { width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border: 1px solid #e5e7eb; border-radius: 6px; text-decoration: none; color: #374151; font-size: 12px; }
+.page-btn.active { background: #7f1d1d; color: #fff; border-color: #7f1d1d; }
+@media (max-width: 900px) { .table-card { overflow-x: auto; } .data-table { min-width: 850px; } }
+</style>
+
+<div class="docs-container">
+    <div class="docs-tabs">
+        <a href="{% url 'admin_staff_portal:document_repo' %}" class="docs-tab {% if not is_archive %}active{% endif %}">Repository</a>
+        {% if request.user.is_admin %}
+            <a href="{% url 'admin_staff_portal:document_archive' %}" class="docs-tab {% if is_archive %}active{% endif %}">Archive</a>
+        {% endif %}
+    </div>
+    <div class="filter-card">
+        <form method="get" action="{% if is_archive %}{% url 'admin_staff_portal:document_archive' %}{% else %}{% url 'admin_staff_portal:document_repo' %}{% endif %}" class="filter-inputs">
+            <div class="search-group">
+                <label for="repo-search">Search documents</label>
+                <div class="search-controls">
+                    <input id="repo-search" type="search" name="q" value="{{ search_query }}" placeholder="Search titles and document contents...">
+                    <button type="submit" class="btn-search">Search</button>
+                </div>
+                <p class="search-help">Searches document titles and contents, including likely OCR or typing errors.</p>
+            </div>
+            <div class="select-wrap">
+                <label for="semester">Semester</label>
+                <select id="semester" name="semester" onchange="this.form.submit()">
+                    <option value="">All Semesters</option>
+                    {% for value, label in semesters %}<option value="{{ value }}" {% if selected_semester == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+                </select>
+            </div>
+            <div class="select-wrap">
+                <label for="academic-year">Academic Year</label>
+                <select id="academic-year" name="academic_year" onchange="this.form.submit()">
+                    <option value="">All Years</option>
+                    {% for year in academic_years %}<option value="{{ year|cut:'A.Y. ' }}" {% if selected_academic_year == year|cut:'A.Y. ' %}selected{% endif %}>{{ year|cut:'A.Y. ' }}</option>{% endfor %}
+                </select>
+            </div>
+            <div class="select-wrap">
+                <label for="faculty-type">Faculty Type</label>
+                <select id="faculty-type" name="faculty_type" onchange="this.form.submit()">
+                    <option value="">All Types</option>
+                    {% for value, label in faculty_type_choices %}<option value="{{ value }}" {% if selected_faculty_type == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+                </select>
+            </div>
+            <a href="{% if is_archive %}{% url 'admin_staff_portal:document_archive' %}{% else %}{% url 'admin_staff_portal:document_repo' %}{% endif %}" class="btn-clear">Reset Filters</a>
+        </form>
+    </div>
+
+    <form method="post" action="{% if is_archive %}{% url 'admin_staff_portal:bulk_restore_documents' %}{% else %}{% url 'admin_staff_portal:bulk_archive_documents' %}{% endif %}" class="table-card" data-document-form>
+        {% csrf_token %}
+        <div class="bulk-actions">
+            <span><span data-selected-count>0</span> selected</span>
+            {% if is_archive %}
+                <button type="submit" class="btn-action" formaction="{% url 'admin_staff_portal:bulk_restore_documents' %}">Restore selected</button>
+                <button type="submit" class="btn-action" formaction="{% url 'admin_staff_portal:bulk_permanently_delete_documents' %}" data-confirm="Permanently delete selected documents and their files?">Delete permanently</button>
+            {% else %}
+                <button type="submit" class="btn-action" formaction="{% url 'admin_staff_portal:bulk_archive_documents' %}">Archive selected</button>
+            {% endif %}
+        </div>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th class="checkbox-cell"><input type="checkbox" data-select-all aria-label="Select all visible documents"></th>
+                    <th>File Name</th>
+                    <th>Faculty</th>
+                    <th>Category</th>
+                    <th>Semester</th>
+                    <th>Academic Year</th>
+                    <th>{% if is_archive %}Archived{% else %}Approval Date{% endif %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for sub in submissions %}
+                    <tr>
+                        <td class="checkbox-cell"><input type="checkbox" name="document_ids" value="{{ sub.id }}" data-document-select aria-label="Select document"></td>
+                        <td><a href="{% url 'admin_staff_portal:document_file_view' sub.id %}" class="fname-link">{{ sub.requirement.requirement_title }}</a></td>
+                        <td>{{ sub.faculty.get_full_name }}</td>
+                        <td>{{ sub.requirement.category }}</td>
+                        <td>{{ sub.requirement.get_semester_display }}</td>
+                        <td>{{ sub.requirement.academic_year|cut:"A.Y. " }}</td>
+                        <td>
+                            {% if is_archive and sub.archived_at %}
+                                <div>{{ sub.archived_at|display_date:request.user }}</div>
+                                <div class="text-sub">Expires {{ sub.archive_expires_at|display_date:request.user }}</div>
+                            {% elif sub.approved_at %}
+                                <div>{{ sub.approved_at|display_date:request.user }}</div>
+                                <div class="text-sub">{{ sub.approved_at|display_time:request.user }}</div>
+                            {% else %}<span class="text-sub">&mdash;</span>{% endif %}
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="7" style="text-align:center;padding:20px;">No {% if is_archive %}archived{% else %}approved{% endif %} documents to show.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% if page_obj %}
+        <div class="pagination-footer">
+            <span>Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }} documents</span>
+            <div class="pagination-controls">
+                {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}{% if selected_semester %}&semester={{ selected_semester|urlencode }}{% endif %}{% if selected_academic_year %}&academic_year={{ selected_academic_year|urlencode }}{% endif %}{% if selected_faculty_type %}&faculty_type={{ selected_faculty_type|urlencode }}{% endif %}{% if selected_sort_by %}&sort_by={{ selected_sort_by|urlencode }}{% endif %}{% if search_query %}&q={{ search_query|urlencode }}{% endif %}" class="page-btn">&lt;</a>{% endif %}
+                {% for page_num in page_obj.paginator.page_range %}<a href="?page={{ page_num }}{% if selected_semester %}&semester={{ selected_semester|urlencode }}{% endif %}{% if selected_academic_year %}&academic_year={{ selected_academic_year|urlencode }}{% endif %}{% if selected_faculty_type %}&faculty_type={{ selected_faculty_type|urlencode }}{% endif %}{% if selected_sort_by %}&sort_by={{ selected_sort_by|urlencode }}{% endif %}{% if search_query %}&q={{ search_query|urlencode }}{% endif %}" class="page-btn {% if page_obj.number == page_num %}active{% endif %}">{{ page_num }}</a>{% endfor %}
+                {% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}{% if selected_semester %}&semester={{ selected_semester|urlencode }}{% endif %}{% if selected_academic_year %}&academic_year={{ selected_academic_year|urlencode }}{% endif %}{% if selected_faculty_type %}&faculty_type={{ selected_faculty_type|urlencode }}{% endif %}{% if selected_sort_by %}&sort_by={{ selected_sort_by|urlencode }}{% endif %}{% if search_query %}&q={{ search_query|urlencode }}{% endif %}" class="page-btn">&gt;</a>{% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </form>
+</div>
+
+<script>
+(() => {
+    const form = document.querySelector('[data-document-form]');
+    if (!form) return;
+    const all = form.querySelector('[data-select-all]');
+    const selected = form.querySelectorAll('[data-document-select]');
+    const count = form.querySelector('[data-selected-count]');
+    const update = () => { count.textContent = form.querySelectorAll('[data-document-select]:checked').length; };
+    all?.addEventListener('change', () => {
+        selected.forEach((checkbox) => { checkbox.checked = all.checked; });
+        update();
+    });
+    selected.forEach((checkbox) => checkbox.addEventListener('change', update));
+    form.addEventListener('submit', (event) => {
+        if (event.submitter?.dataset.confirm && !window.confirm(event.submitter.dataset.confirm)) event.preventDefault();
+    });
+})();
+</script>

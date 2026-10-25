@@ -110,7 +110,7 @@
 
                     <li class="nav-item">
                         <a
-                            class="nav-link {% if request.resolver_match.url_name == 'document_repo' or request.resolver_match.url_name == 'document_file_view' %}active{% endif %}"
+                            class="nav-link {% if request.resolver_match.url_name == 'document_repo' or request.resolver_match.url_name == 'document_archive' or request.resolver_match.url_name == 'document_file_view' %}active{% endif %}"
                             href="{% url 'admin_staff_portal:document_repo' %}"
                         >
                             <span class="icon">
@@ -476,6 +476,10 @@
             socket.addEventListener("message", function (event) {
                 const message = JSON.parse(event.data);
                 if (message.event === "submissions.update") {
+                    if (window.location.pathname.includes("/documents/")) {
+                        window.location.reload();
+                        return;
+                    }
                     refreshCurrentPage();
                 }
                 if (message.event === "admin-dashboard.update") {

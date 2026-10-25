@@ -52,8 +52,6 @@ class Requirement(models.Model):
 
     instructions = models.TextField(blank=True)
 
-    nlp_enabled = models.BooleanField(default=False)
-
     assigned_to = models.CharField(
         max_length=20,
         choices=AssignedFacultyType.choices,
@@ -88,9 +86,9 @@ class Requirement(models.Model):
     @property
     def completion_progress(self):
         from django.contrib.auth import get_user_model
-        UserModel = get_user_model()
+        User = get_user_model()
 
-        faculty_qs = UserModel.objects.filter(role=UserModel.Role.FACULTY)
+        faculty_qs = User.objects.filter(role=User.Role.FACULTY, is_active=True)
         if self.assigned_to != self.AssignedFacultyType.ALL:
             faculty_qs = faculty_qs.filter(faculty_type=self.assigned_to)
 
@@ -183,8 +181,6 @@ class DocumentSubmission(models.Model):
 
     document_file = models.FileField(upload_to=submission_upload_path)
 
-    is_pinned = models.BooleanField(default=False)
-
     initially_submitted_at = models.DateTimeField(auto_now_add=True)
     reviewed_at = models.DateTimeField(null=True, blank=True)
     revisioned_at = models.DateTimeField(null=True, blank=True)
@@ -205,6 +201,18 @@ class DocumentSubmission(models.Model):
         null=True,
         blank=True,
         related_name='approved_submissions'
+    )
+    
+    is_pinned = models.BooleanField(default=False)
+    
+    is_archived = models.BooleanField(default=False, db_index=True)
+
+    archived_at = models.DateTimeField(null=True, blank=True)
+
+    archive_expires_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        db_index=True
     )
 
     class Meta:
@@ -283,13 +291,6 @@ class DocumentMetadata(models.Model):
         COMPLETED = 'COMPLETED', 'Completed'
         FAILED = 'FAILED', 'Failed'
 
-    class NLPStatus(models.TextChoices):
-        NOT_REQUIRED = 'NOT_REQUIRED', 'Not Required'
-        PENDING = 'PENDING', 'Pending'
-        PROCESSING = 'PROCESSING', 'Processing'
-        PASSED = 'PASSED', 'Passed'
-        FAILED = 'FAILED', 'Failed'
-
     id = models.AutoField(primary_key=True)
 
     faculty = models.ForeignKey(
@@ -344,17 +345,6 @@ class DocumentMetadata(models.Model):
 
     text_extraction_completed_at = models.DateTimeField(null=True, blank=True)
 
-    nlp_status = models.CharField(
-        max_length=20,
-        choices=NLPStatus.choices,
-        default=NLPStatus.NOT_REQUIRED,
-        db_index=True
-    )
-
-    nlp_result = models.JSONField(default=dict, blank=True)
-    nlp_error = models.TextField(blank=True)
-    nlp_completed_at = models.DateTimeField(null=True, blank=True)
-
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -395,9 +385,7 @@ class DocumentMetadata(models.Model):
             mode == Requirement.TextProcessingMode.NONE or self.text_extraction_status == self.TextExtractionStatus.COMPLETED
         )
 
-        nlp_ready = (not self.requirement.nlp_enabled or self.nlp_status == self.NLPStatus.PASSED)
-
-        return text_extraction_ready and nlp_ready
+        return text_extraction_ready
 
     def __str__(self):
         return f'Metadata for {self.original_filename or self.requirement.requirement_title}'

@@ -1,0 +1,11 @@
+{% extends 'admin_staff_portal/base.html' %}
+{% load static core_extras %}
+
+{% block title %}Document Archive - iSubmit{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/pages/documents.css' %}">{% endblock %}
+{% block heading %}Document Archive{% endblock %}
+{% block subtitle %}Restore or permanently delete archived documents.{% endblock %}
+
+{% block content %}
+{% include 'admin_staff_portal/core/documents/_document_list.html' with is_archive=True %}
+{% endblock %}

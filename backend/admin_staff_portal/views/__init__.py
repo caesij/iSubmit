@@ -8,6 +8,13 @@ from admin_staff_portal.views.core.dashboard_views import (
 
 from admin_staff_portal.views.core.document_repo_views import (
     document_repo_view,
+    document_archive_view,
+    archive_document_view,
+    restore_document_view,
+    permanently_delete_document_view,
+    bulk_archive_document_view,
+    bulk_restore_document_view,
+    bulk_permanently_delete_document_view,
     document_file_view,
 )
 
@@ -36,6 +43,7 @@ from admin_staff_portal.views.core.user_management_views import (
     user_create_view,
     user_update_view,
     user_toggle_acc_status_view,
+    user_unlock_view,
 )
 
 from admin_staff_portal.views.general.settings_views import (
@@ -55,6 +63,13 @@ __all__ = [
     'staff_dashboard_view',
     
     'document_repo_view',
+    'document_archive_view',
+    'archive_document_view',
+    'restore_document_view',
+    'permanently_delete_document_view',
+    'bulk_archive_document_view',
+    'bulk_restore_document_view',
+    'bulk_permanently_delete_document_view',
     'document_file_view',
 
     'bulk_requirements_view',
@@ -77,6 +92,7 @@ __all__ = [
     'user_create_view',
     'user_update_view',
     'user_toggle_acc_status_view',
+    'user_unlock_view',
     
     'preferences_view',
     'notification_settings_view',

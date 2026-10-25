@@ -396,6 +396,22 @@
                     new CustomEvent("my-submissions-update")
                 );
             }
+            if (message.event === "documents.update") {
+                document.dispatchEvent(
+                    new CustomEvent("documents-update", {detail: message.data})
+                );
+                if (window.location.pathname.includes("/my_documents/")) {
+                    if (window.location.pathname.includes("/view/")) {
+                        window.location.href = "{% url 'faculty_portal:all_documents' %}";
+                    } else {
+                        window.location.reload();
+                    }
+                }
+                if (window.location.pathname.includes("/my_submissions/submissions/view/")) {
+                    window.location.href = "{% url 'faculty_portal:my_submissions' %}";
+                }
+                document.dispatchEvent(new CustomEvent("my-submissions-update"));
+            }
             if (message.event === "security.activity-updated") {
                 document.dispatchEvent(new CustomEvent("security-activity-updated"));
             }

@@ -4,8 +4,10 @@ from django.shortcuts import render
 
 from submissions.models import Requirement
 from submissions.doc_search import search_documents
+from submissions.querysets import active_document_queryset
 
 def _render_repository(request, submissions, template_name, academic_year, document_type):
+    submissions = active_document_queryset(submissions)
     search_query = request.GET.get('q', '').strip()
     sort_by = request.GET.get('sort_by', 'newest')
 

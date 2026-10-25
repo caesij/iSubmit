@@ -11,13 +11,13 @@ import secrets
 import string
 from axes.utils import reset as axes_reset
 
-from accounts.decorators import role_required, staff_permission_required
+from accounts.decorators import admin, role_required, staff_permission_required
 from admin_staff_portal.helpers.user_management import (
     get_target_role,
     get_page_title,
     get_form_class,
     get_form_template,
-    can_manage_target,
+    can_manage_target
 )
 
 User = get_user_model()
@@ -30,6 +30,7 @@ def user_list_view(request):
     search_query = request.GET.get('q', '').strip()
     faculty_type_param = request.GET.get('faculty_type', '').strip()
     status_param = request.GET.get('status', '').strip().lower()
+    lockout_param = request.GET.get('lockout', '').strip().lower()
 
     users = User.objects.filter(role=target_role)
 
@@ -48,13 +49,17 @@ def user_list_view(request):
         users = users.filter(is_active=True)
     elif status_param == 'inactive':
         users = users.filter(is_active=False)
+        
+    if lockout_param == 'locked':
+        users = users.filter(is_locked_out=True)
+    elif lockout_param == 'unlocked':
+        users = users.filter(is_locked_out=False)
 
     users = users.order_by('last_name', 'first_name', 'pk')
     page_obj = Paginator(users, 7).get_page(request.GET.get('page'))
     pagination_params = request.GET.copy()
     pagination_params.pop('page', None)
     pagination_params['role'] = target_role
-
     form_class = get_form_class(target_role)
 
     context = {
@@ -66,6 +71,7 @@ def user_list_view(request):
         'current_role': target_role,
         'page_title': get_page_title(target_role),
         'form': form_class(request_user=request.user),
+        'lockout_param': lockout_param
     }
     
     return render(
@@ -73,6 +79,7 @@ def user_list_view(request):
         'admin_staff_portal/core/user_mgmt/user_list.html', 
         context
     )
+
 
 @role_required('ADMIN', 'STAFF')
 @staff_permission_required('add_faculty_users')
@@ -133,6 +140,7 @@ def user_create_view(request):
         context
     )
 
+
 @role_required('ADMIN', 'STAFF')
 @staff_permission_required('add_faculty_users')
 @require_http_methods(['GET', 'POST'])
@@ -169,6 +177,7 @@ def user_update_view(request, pk):
         context
     )
 
+
 @role_required('ADMIN', 'STAFF')
 @staff_permission_required('add_faculty_users')
 @require_http_methods(['POST'])
@@ -185,14 +194,37 @@ def user_toggle_acc_status_view(request, pk):
         return redirect(redirect_url)
 
     target_user.is_active = not target_user.is_active
-
-    if target_user.is_active:
-        target_user.is_locked_out = False
-        axes_reset(username=target_user.email)
-
-    target_user.save()
+    target_user.save(update_fields=['is_active'])
 
     status_label = 'activated' if target_user.is_active else 'deactivated'
     messages.success(request, f'The account has been {status_label}.')
+
+    return redirect(redirect_url)
+
+
+@admin
+@require_http_methods(['POST'])
+def user_unlock_view(request, pk):
+    target_user = get_object_or_404(User, pk=pk)
+    redirect_url = (
+        f"{reverse('admin_staff_portal:user_list')}"
+        f"?role={target_user.role}"
+    )
+
+    if not can_manage_target(request.user, target_user):
+        messages.error(request, 'You do not have permission to unlock this account.')
+        return redirect(redirect_url)
+
+    if not target_user.is_locked_out:
+        messages.info(request, 'This account is not locked out.')
+        return redirect(redirect_url)
+
+    axes_reset(username=target_user.email)
+
+    target_user.is_locked_out = False
+    target_user.locked_out_until = None
+    target_user.save(update_fields=['is_locked_out', 'locked_out_until'])
+
+    messages.success(request, 'The login lockout has been cleared.')
 
     return redirect(redirect_url)

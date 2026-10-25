@@ -5,14 +5,15 @@ from django.contrib.auth import get_user_model
 from django.utils import timezone
 
 from submissions.models import DocumentSubmission
+from submissions.querysets import active_document_queryset
 
 User = get_user_model()
 
 
 def get_staff_dashboard_data():
-    faculty_count = User.objects.filter(role=User.Role.FACULTY).count()
+    faculty_count = User.objects.filter(role=User.Role.FACULTY, is_active=True).count()
 
-    submissions = DocumentSubmission.objects.select_related('faculty', 'requirement')
+    submissions = active_document_queryset().select_related('faculty', 'requirement')
     
     pending_review_statuses = [
         DocumentSubmission.SubmissionStatus.SUBMITTED,
@@ -49,6 +50,8 @@ def get_staff_dashboard_data():
     documents_overview = (
         submissions
         .filter(
+            faculty__role=User.Role.FACULTY,
+            faculty__is_active=True,
             status__in=[
                 DocumentSubmission.SubmissionStatus.PENDING_APPROVAL,
                 DocumentSubmission.SubmissionStatus.SUBMITTED,

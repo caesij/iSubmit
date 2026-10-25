@@ -1,5 +1,7 @@
 from pathlib import Path
 import os
+from celery.schedules import crontab
+from datetime import timedelta
 import dj_database_url
 from dotenv import load_dotenv
 
@@ -138,12 +140,13 @@ AUTHENTICATION_BACKENDS = [
 # Django Axes
 AXES_FAILURE_LIMIT = 5
 AXES_LOCK_OUT_AT_FAILURE = True
-AXES_COOLOFF_TIME = None
+AXES_COOLOFF_TIME = timedelta(hours=1)
 AXES_LOCKOUT_PARAMETERS = [['username', 'ip_address']]
 AXES_USERNAME_FORM_FIELD = 'username'
 AXES_LOCKOUT_CALLABLE = 'accounts.axes_handlers.lockout_response'
 AXES_RESET_ON_SUCCESS = True
 AXES_DISABLE_ACCESS_LOG = False
+AXES_RESET_COOL_OFF_ON_FAILURE_DURING_LOCKOUT = False
 
 
 # Email
@@ -170,13 +173,27 @@ CHANNEL_LAYERS = {
     },
 }
 
+# Celery Settings
 CELERY_BROKER_URL = os.getenv(
     'CELERY_BROKER_URL',
     f'redis://{REDIS_HOST}:{REDIS_PORT}/1',
 )
+
 CELERY_TASK_IGNORE_RESULT = True
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TIMEZONE = TIME_ZONE
 CELERY_TASK_TRACK_STARTED = True
 CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
+
+CELERY_BEAT_SCHEDULE = {
+    'delete-expired-archived-documents-daily': {
+        'task': 'submissions.delete_expired_archived_documents',
+        'schedule': crontab(hour=3, minute=0),
+    },
+    
+    'release-expired-account-lockouts': {
+        'task': 'accounts.tasks.release_expired_account_lockouts',
+        'schedule': 60.0,
+    }
+}

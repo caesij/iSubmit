@@ -3,12 +3,12 @@ from django.views.decorators.http import require_http_methods
 from django.urls import reverse
 from django.http import JsonResponse
 
-from accounts.decorators import role_required
+from accounts.decorators import admin, staff
 from admin_staff_portal.services.admin_dashboard import get_admin_dashboard_data
 from admin_staff_portal.services.staff_dashboard import get_staff_dashboard_data
 from core.date_formatting import format_display_date
 
-@role_required('ADMIN')
+@admin
 @require_http_methods(['GET'])
 def admin_dashboard_data_view(request):
     data = get_admin_dashboard_data()
@@ -54,7 +54,7 @@ def admin_dashboard_data_view(request):
     })
 
 
-@role_required('ADMIN')
+@admin
 @require_http_methods(['GET'])
 def admin_dashboard_view(request):
     context = get_admin_dashboard_data()
@@ -66,7 +66,7 @@ def admin_dashboard_view(request):
     )
     
     
-@role_required('STAFF')
+@staff
 @require_http_methods(['GET'])
 def staff_dashboard_data_view(request):
     data = get_staff_dashboard_data()
@@ -108,7 +108,7 @@ def staff_dashboard_data_view(request):
     })
 
 
-@role_required('STAFF')
+@staff
 @require_http_methods(['GET'])
 def staff_dashboard_view(request):
     context = get_staff_dashboard_data()

@@ -2,6 +2,7 @@ from django.db.models import Q, Count
 from django.utils import timezone
 from core.date_formatting import format_display_date
 from submissions.models import Requirement, DocumentSubmission
+from submissions.querysets import active_document_queryset
 
 
 def get_dashboard_data(user):
@@ -16,7 +17,7 @@ def get_dashboard_data(user):
 
     total_requirements = active_requirements.count()
 
-    submissions = DocumentSubmission.objects.filter(
+    submissions = active_document_queryset().filter(
         faculty=user,
         requirement__in=active_requirements,
     )

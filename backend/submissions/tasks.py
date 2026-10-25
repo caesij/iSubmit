@@ -10,7 +10,8 @@ from django.utils import timezone
 
 from core.text_extraction_digi_docs import DocumentTextExtractionError, extract_text
 from core.post_correction import correct_lines
-from submissions.models import DocumentMetadata
+from submissions.models import DocumentSubmission, DocumentMetadata
+from admin_staff_portal.realtime import refresh_document_surfaces
 
 logger = logging.getLogger(__name__)
 
@@ -46,11 +47,7 @@ def _known_names():
 
 
 def _post_correct(lines, scores):
-    try:
-        return correct_lines(lines, scores, _known_names())
-    except Exception:
-        logger.exception('Post-correction failed. Saving the plain OCR text.')
-        return '\n'.join(lines)
+    return correct_lines(lines, scores, _known_names())
 
 
 @shared_task(bind=True, name='submissions.process_document_extraction', acks_late=True)
@@ -185,3 +182,63 @@ def process_document_extraction(self, metadata_id, request_id):
 
     finally:
         _refresh_faculty_submission_bin(faculty_id)
+        
+
+@shared_task(name='submissions.delete_expired_archived_documents', ignore_result=True)
+def delete_expired_archived_documents():
+
+    expired_ids = list(
+        DocumentSubmission.objects.filter(
+            status=DocumentSubmission.SubmissionStatus.APPROVED,
+            is_archived=True,
+            archive_expires_at__lte=timezone.now()
+        )
+        .order_by('archive_expires_at')
+        .values_list('pk', flat=True)[:50]
+    )
+
+    deleted_count = 0
+    deleted_faculty_ids = []
+
+    for document_id in expired_ids:
+        try:
+            with transaction.atomic():
+                document = (
+                    DocumentSubmission.objects
+                    .select_for_update()
+                    .filter(
+                        pk=document_id,
+                        status=DocumentSubmission.SubmissionStatus.APPROVED,
+                        is_archived=True,
+                        archive_expires_at__lte=timezone.now(),
+                    )
+                    .first()
+                )
+
+                if document is None:
+                    continue
+
+                file_name = document.document_file.name
+                storage = document.document_file.storage
+                deleted_faculty_ids.append(document.faculty_id)
+
+                if file_name:
+                    storage.delete(file_name)
+
+                document.delete()
+                deleted_count += 1
+
+        except Exception:
+            logger.exception(
+                'Failed to permanently delete expired archived document %s.',
+                document_id,
+            )
+
+    logger.info(
+        'Expired archive cleanup finished. Deleted %s document(s).',
+        deleted_count,
+    )
+    if deleted_faculty_ids:
+        refresh_document_surfaces(deleted_faculty_ids)
+
+    return {'deleted_count': deleted_count}

@@ -20,7 +20,7 @@ from notifications.models import NotificationPreference
 from faculty_portal.realtime import (
     refresh_faculty_dashboard,
     refresh_faculty_submission_bin,
-    refresh_all_faculty_submission_bins,
+    refresh_all_faculty_submission_bins
 )
 
 from submissions.models import Requirement

@@ -1,11 +1,10 @@
-from faculty_portal.realtime import refresh_faculty_dashboard
 from django.contrib.auth import get_user_model
 
+from faculty_portal.realtime import refresh_faculty_dashboard
 from submissions.models import Requirement
 
 
 User = get_user_model()
-
 
 def refresh_requirement_faculty_dashboards(old_assigned_to, new_assigned_to):
     faculty_qs = User.objects.filter(role=User.Role.FACULTY)

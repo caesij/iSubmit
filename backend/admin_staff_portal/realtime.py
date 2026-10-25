@@ -1,5 +1,6 @@
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
+from core.realtime import send_to_group
 
 
 def refresh_submission_pages(data=None):
@@ -45,3 +46,16 @@ def refresh_staff_dashboard():
         )
     except Exception as e:
         print('STAFF DASHBOARD REALTIME ERROR:', repr(e))
+
+
+def refresh_document_surfaces(faculty_ids):
+    faculty_ids = [str(faculty_id) for faculty_id in set(faculty_ids)]
+    data = {'faculty_ids': faculty_ids}
+
+    refresh_submission_pages(data)
+    refresh_admin_dashboard()
+    refresh_staff_dashboard()
+
+    for faculty_id in faculty_ids:
+        send_to_group(f'user_{faculty_id}', 'documents.update', data)
+        send_to_group(f'user_{faculty_id}', 'dashboard.update', data)
