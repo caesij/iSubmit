@@ -11,9 +11,9 @@
     <link rel="stylesheet" href="{% static 'css/pages/submissions.css' %}">
     <style>
         .ocr-state { margin-top: 0.35rem; display: flex; flex-direction: column; align-items: flex-start; gap: 0.2rem; }
-        .text-extraction-status[data-status="PENDING"], .text-extraction-status[data-status="PROCESSING"], .nlp-status[data-status="PENDING"], .nlp-status[data-status="PROCESSING"] { background: #fff4d6; color: #805b00; }
-        .text-extraction-status[data-status="COMPLETED"], .nlp-status[data-status="PASSED"] { background: #e0f5e8; color: #17663a; }
-        .text-extraction-status[data-status="FAILED"], .nlp-status[data-status="FAILED"] { background: #fde7e7; color: #9f2020; }
+        .text-extraction-status[data-status="PENDING"], .text-extraction-status[data-status="PROCESSING"] { background: #fff4d6; color: #805b00; }
+        .text-extraction-status[data-status="COMPLETED"] { background: #e0f5e8; color: #17663a; }
+        .text-extraction-status[data-status="FAILED"] { background: #fde7e7; color: #9f2020; }
         .text-extraction-error { max-width: 20rem; color: #9f2020; white-space: normal; }
         .btn-continue:disabled { opacity: 0.55; cursor: not-allowed; }
         .submission-readiness { margin-top: 0.5rem; font-size: 0.9rem; }
@@ -183,14 +183,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
     function isCheckboxReady(checkbox) {
         const textRequired = checkbox.dataset.textRequired === "true";
-        const textStatus = checkbox.dataset.ocrStatus || "PENDING";
-        const nlpRequired = checkbox.dataset.nlpRequired === "true";
-        const nlpStatus = checkbox.dataset.nlpStatus || "PENDING";
-
+        const textStatus = checkbox.dataset.textExtractionStatus || "PENDING";
         if (textRequired && textStatus !== "COMPLETED") {
-            return false;
-        }
-        if (nlpRequired && nlpStatus !== "PASSED") {
             return false;
         }
 
@@ -217,22 +211,16 @@ document.addEventListener("DOMContentLoaded", function () {
         });
         if (blocked) {
             const textRequired = blocked.dataset.textRequired === "true";
-            const textStatus = blocked.dataset.ocrStatus || "PENDING";
-            const nlpRequired = blocked.dataset.nlpRequired === "true";
-            const nlpStatus = blocked.dataset.nlpStatus || "PENDING";
-
+            const textStatus = blocked.dataset.textExtractionStatus || "PENDING";
             if (textRequired && ["PENDING", "PROCESSING"].includes(textStatus)) {
                 readinessMessage.textContent =
                     "Please wait. Text extraction is still processing for one or more selected documents.";
             } else if (textRequired && textStatus !== "COMPLETED") {
                 readinessMessage.textContent =
                     "A selected document's text extraction failed. Check the requirement settings or replace the document before submitting.";
-            } else if (nlpRequired && ["PENDING", "PROCESSING"].includes(nlpStatus)) {
-                readinessMessage.textContent =
-                    "Please wait for document validation to finish before submitting.";
             } else {
                 readinessMessage.textContent =
-                    "A selected document has not passed the required validation.";
+                    "A selected document's text extraction has not completed.";
             }
             return;
         }
@@ -257,12 +245,10 @@ document.addEventListener("DOMContentLoaded", function () {
     function hasInProgressCheck() {
         return getCheckboxes().some(function (checkbox) {
             const textProcessingInProgress = checkbox.dataset.textRequired === "true" &&
-                ["PENDING", "PROCESSING"].includes(checkbox.dataset.ocrStatus || "PENDING");
-            const nlpInProgress = checkbox.dataset.nlpRequired === "true" &&
                 ["PENDING", "PROCESSING"].includes(
-                    checkbox.dataset.nlpStatus || "PENDING"
+                    checkbox.dataset.textExtractionStatus || "PENDING"
                 );
-            return textProcessingInProgress || nlpInProgress;
+            return textProcessingInProgress;
         });
     }
 

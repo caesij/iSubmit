@@ -41,9 +41,7 @@ def staff_permission_required(permission_field):
             if request.user.is_staff_role:
                 permissions = StaffPermission.get_solo()
                 if not permissions.is_effectively_enabled(permission_field):
-                    raise PermissionDenied(
-                        'This action has been disabled for staff accounts by an administrator.'
-                    )
+                    raise PermissionDenied('This action has been disabled for staff accounts by an administrator.')
 
             return view_func(request, *args, **kwargs)
         return _wrapped

@@ -1,23 +1,78 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-
-<head>
-    <meta charset="UTF-8">
+  <head>
+    <meta charset="UTF-8" />
     <title>Account Locked</title>
-</head>
+  </head>
 
-<body>
+  <body>
     <main>
-        <h1>Account Locked</h1>
-        <p>
-            Too many failed login attempts. Your account has been temporarily locked.
-        </p>
+      <h2>Account Temporarily Locked</h2>
 
-        <p>Please contact an administrator to unlock your account.</p>
+      <p>
+        Too many unsuccessful sign-in attempts were detected. {% if username %}
+        Account: {{ username }} {% endif %}
+      </p>
 
+      {% if remaining_seconds > 0 %}
+      <p id="cooldown-message">You can try signing in again in:</p>
 
-        <a href="{% url 'accounts:login' %}">Back to login</a>
+      <p>
+        <strong
+          id="cooldown-timer"
+          data-remaining-seconds="{{ remaining_seconds }}"
+        ></strong>
+      </p>
+      {% else %}
+      <p>
+        The cooldown may have expired. Return to the sign-in page to check
+        whether access has been restored.
+      </p>
+      {% endif %}
+
+      <a href="{% url 'accounts:login' %}">Return to sign in</a>
     </main>
-</body>
+  </body>
 
+  <script>
+    (function () {
+      const timer = document.getElementById("cooldown-timer");
+
+      if (!timer) return;
+
+      let remaining = Number(timer.dataset.remainingSeconds);
+
+      function formatTime(seconds) {
+        const hours = Math.floor(seconds / 3600);
+        const minutes = Math.floor((seconds % 3600) / 60);
+        const secs = seconds % 60;
+
+        return [hours, minutes, secs]
+          .map((value) => String(value).padStart(2, "0"))
+          .join(":");
+      }
+
+      function updateTimer() {
+        timer.textContent = formatTime(remaining);
+      }
+
+      updateTimer();
+
+      const interval = window.setInterval(function () {
+        remaining = Math.max(0, remaining - 1);
+        updateTimer();
+
+        if (remaining === 0) {
+          window.clearInterval(interval);
+
+          const message = document.getElementById("cooldown-message");
+
+          if (message) {
+            message.textContent =
+              "The cooldown has ended. You may try signing in again.";
+          }
+        }
+      }, 1000);
+    })();
+  </script>
 </html>

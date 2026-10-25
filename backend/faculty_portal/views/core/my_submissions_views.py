@@ -7,6 +7,7 @@ from django.template.loader import render_to_string
 
 from accounts.decorators import faculty
 from submissions.models import DocumentSubmission
+from submissions.querysets import active_document_queryset
 
 TEMPLATE_DIR = 'faculty_portal/core/my_submissions'
 
@@ -14,7 +15,7 @@ TEMPLATE_DIR = 'faculty_portal/core/my_submissions'
 @faculty
 @require_http_methods(['GET'])
 def submissions_list(request):
-    all_submissions = DocumentSubmission.objects.filter(faculty=request.user)
+    all_submissions = active_document_queryset().filter(faculty=request.user)
     
     if not all_submissions.exists():
         messages.info(request, 'No recent submission to show')
@@ -47,7 +48,7 @@ def submissions_list(request):
     context = {
         'submitted_documents': submitted_documents,
         'stats': stats,
-        'categories': DocumentSubmission.objects.filter(faculty=request.user)
+        'categories': active_document_queryset().filter(faculty=request.user)
             .values_list('requirement__category', flat=True).distinct(),
         'status_choices': DocumentSubmission.SubmissionStatus.choices
     }
@@ -61,7 +62,7 @@ def submissions_list(request):
 @faculty
 @require_http_methods(['GET'])
 def submissions_data_view(request):
-    all_submissions = DocumentSubmission.objects.filter(
+    all_submissions = active_document_queryset().filter(
         faculty=request.user
     )
 
@@ -123,7 +124,7 @@ def submissions_data_view(request):
 @require_http_methods(['GET'])
 def view_my_submitted_document(request, document_id):
     submitted_document = get_object_or_404(
-        DocumentSubmission,
+        active_document_queryset(),
         pk=document_id,
         faculty=request.user
     )

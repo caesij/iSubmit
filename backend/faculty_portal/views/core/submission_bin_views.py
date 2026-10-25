@@ -20,6 +20,7 @@ from submissions.models import (
     DraftUpload,
     Requirement
 )
+from submissions.querysets import active_document_queryset
 
 TEMPLATE_DIR = 'faculty_portal/core/submission_bin'
 
@@ -141,7 +142,7 @@ def submission_complete(request):
     submitted_ids = request.session.pop('recently_submitted_ids', [])
 
     submitted_documents = list(
-        DocumentSubmission.objects
+        active_document_queryset()
         .filter(faculty=request.user, id__in=submitted_ids)
         .select_related('requirement')
         .order_by('-initially_submitted_at')

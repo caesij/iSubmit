@@ -13,6 +13,13 @@ urlpatterns = [
     
     # Document Repo URLs
     path('documents/document_repository/', views.document_repo_view, name='document_repo'),
+    path('documents/document_archive/', views.document_archive_view, name='document_archive'),
+    path('documents/<uuid:document_id>/archive/', views.archive_document_view, name='archive_document'),
+    path('documents/<uuid:document_id>/restore/', views.restore_document_view, name='restore_document'),
+    path('documents/<uuid:document_id>/permanently-delete/', views.permanently_delete_document_view, name='permanently_delete_document'),
+    path('documents/bulk/archive/', views.bulk_archive_document_view, name='bulk_archive_documents'),
+    path('documents/bulk/restore/', views.bulk_restore_document_view, name='bulk_restore_documents'),
+    path('documents/bulk/permanently-delete/', views.bulk_permanently_delete_document_view, name='bulk_permanently_delete_documents'),
     path('documents/<uuid:document_id>/view/', views.document_file_view, name='document_file_view'),
     
     # Requirement Management (Submission Bin) URLs
@@ -38,6 +45,7 @@ urlpatterns = [
     path('users/add/', views.user_create_view, name='user_create'),
     path('users/<uuid:pk>/edit/', views.user_update_view, name='user_edit'),
     path('users/<uuid:pk>/toggle-acc-status/', views.user_toggle_acc_status_view, name='user_toggle_acc_status'),
+    path('users/<uuid:pk>/unlock/', views.user_unlock_view, name='user_unlock'),
     
     # Settings URLs
     path('settings/preferences/', views.preferences_view, name='preferences'),

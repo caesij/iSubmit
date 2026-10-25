@@ -6,13 +6,14 @@ from django.views.decorators.http import require_http_methods
 from faculty_portal.helpers.my_documents import _render_repository
 from accounts.decorators import faculty
 from submissions.models import DocumentSubmission
+from submissions.querysets import active_document_queryset
 
 TEMPLATE_DIR = 'faculty_portal/core/my_documents'
 
 @faculty
 @require_http_methods(['GET'])
 def all_documents_view(request):
-    submissions = DocumentSubmission.objects.filter(
+    submissions = active_document_queryset().filter(
         faculty=request.user,
         status=DocumentSubmission.SubmissionStatus.APPROVED
     ).select_related('requirement')
@@ -28,7 +29,7 @@ def all_documents_view(request):
 @faculty
 @require_http_methods(['GET'])
 def pinned_documents_view(request):
-    submissions = DocumentSubmission.objects.filter(
+    submissions = active_document_queryset().filter(
         faculty=request.user,
         status=DocumentSubmission.SubmissionStatus.APPROVED,
         is_pinned=True
@@ -45,7 +46,12 @@ def pinned_documents_view(request):
 @faculty
 @require_http_methods(['POST'])
 def toggle_pin_view(request, document_id):
-    document = get_object_or_404(DocumentSubmission, pk=document_id, faculty=request.user)
+    document = get_object_or_404(
+        active_document_queryset(),
+        pk=document_id,
+        faculty=request.user,
+        status=DocumentSubmission.SubmissionStatus.APPROVED,
+    )
 
     document.is_pinned = not document.is_pinned
     document.save(update_fields=['is_pinned'])
@@ -56,7 +62,7 @@ def toggle_pin_view(request, document_id):
 @require_http_methods(['GET'])
 def document_file_view(request, document_id, source='all'):
     document = get_object_or_404(
-        DocumentSubmission.objects.select_related('requirement'),
+        active_document_queryset().select_related('requirement'),
         pk=document_id,
         faculty=request.user,
         status=DocumentSubmission.SubmissionStatus.APPROVED

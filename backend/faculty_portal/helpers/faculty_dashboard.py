@@ -1,9 +1,10 @@
 from core.date_formatting import format_display_date, format_display_time
 from submissions.models import DocumentSubmission
+from submissions.querysets import active_document_queryset
 
 def get_overview_queryset(user, tab='all'):
     overview_qs = (
-        DocumentSubmission.objects
+        active_document_queryset()
         .filter(faculty=user)
         .select_related('requirement')
         .order_by('-initially_submitted_at')

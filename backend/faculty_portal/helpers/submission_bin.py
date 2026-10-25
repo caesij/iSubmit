@@ -8,8 +8,8 @@ from django.core.files import File
 from django.db import transaction
 from django.db.models import Max, Q
 from django.shortcuts import redirect
-from django.urls import reverse
 from django.utils import timezone
+from django.urls import reverse
 
 from admin_staff_portal.realtime import (
     refresh_admin_dashboard,
@@ -18,8 +18,8 @@ from admin_staff_portal.realtime import (
 )
 
 from faculty_portal.realtime import refresh_faculty_dashboard, refresh_faculty_submission_bin
-from notifications.models import NotificationPreference
 from notifications.services import notify_roles
+from notifications.models import NotificationPreference
 from submissions.forms import DraftUploadForm
 
 from submissions.models import (
@@ -35,7 +35,6 @@ User = get_user_model()
 
 UPLOAD_PAGE = 'faculty_portal:upload_files'
 TextExtraction = DocumentMetadata.TextExtractionStatus
-NLP = DocumentMetadata.NLPStatus
 TEXT_MODE = Requirement.TextProcessingMode
 QUEUE_FAILURE_ERROR = (
     'We could not start preparing this document. Please try uploading it again.'
@@ -76,7 +75,7 @@ def _stored_file_size(draft):
 
 
 # ---------------------------------------------------------------------------
-# Document metadata (OCR / NLP state for a draft)
+# Document metadata (OCR state for a draft)
 # ---------------------------------------------------------------------------
 
 def _build_metadata_values(draft, uploaded_file=None):
@@ -127,10 +126,6 @@ def _build_metadata_values(draft, uploaded_file=None):
         'extracted_text': '',
         'text_extraction_error': text_extraction_error,
         'text_extraction_completed_at': None,
-        'nlp_status': NLP.PENDING if requirement.nlp_enabled else NLP.NOT_REQUIRED,
-        'nlp_result': {},
-        'nlp_error': '',
-        'nlp_completed_at': None,
     }
 
 
@@ -152,12 +147,8 @@ def _needs_full_reset(draft, metadata):
     )
 
 
-def _needs_nlp_pending(draft, metadata):
-    return draft.requirement.nlp_enabled and metadata.nlp_status == NLP.NOT_REQUIRED
-
-
 def _metadata_is_current(draft, metadata):
-    return not _needs_full_reset(draft, metadata) and not _needs_nlp_pending(draft, metadata)
+    return not _needs_full_reset(draft, metadata)
 
 
 def _reset_metadata(draft, metadata, uploaded_file):
@@ -173,14 +164,6 @@ def _reset_metadata(draft, metadata, uploaded_file):
     return metadata
 
 
-def _mark_nlp_pending(metadata):
-    metadata.nlp_status = NLP.PENDING
-    metadata.nlp_error = ''
-    metadata.nlp_result = {}
-    metadata.nlp_completed_at = None
-    metadata.save(update_fields=['nlp_status', 'nlp_error', 'nlp_result', 'nlp_completed_at', 'updated_at',])
-
-
 def ensure_document_metadata(draft, uploaded_file=None, force_reset=False, metadata=None):
     if not draft or not draft.draft_file:
         return None, False
@@ -190,9 +173,6 @@ def ensure_document_metadata(draft, uploaded_file=None, force_reset=False, metad
     if force_reset or _needs_full_reset(draft, metadata):
         metadata = _reset_metadata(draft, metadata, uploaded_file)
         return metadata, metadata.text_extraction_status == TextExtraction.PENDING
-
-    if _needs_nlp_pending(draft, metadata):
-        _mark_nlp_pending(metadata)
 
     return metadata, False
 
@@ -274,7 +254,6 @@ def get_available_requirements(user, requirement_ids=None):
     return list(requirements.order_by('deadline'))
 
 
-
 def _load_drafts_with_metadata(user, requirements):
     drafts = list(
         DraftUpload.objects
@@ -349,13 +328,6 @@ def _submission_block_reason(row):
     metadata = row['metadata']
 
     if requirement.text_processing_mode == TEXT_MODE.NONE:
-        if requirement.nlp_enabled and metadata is None:
-            return 'We could not finish checking this document. Please replace the file and try again.'
-        if requirement.nlp_enabled:
-            if metadata.nlp_status in (NLP.PENDING, NLP.PROCESSING):
-                return 'Document validation is still processing. Wait before submitting.'
-            if metadata.nlp_status != NLP.PASSED:
-                return 'Document validation did not pass. Review the result before submitting.'
         return None
 
     if metadata is None:
@@ -369,14 +341,6 @@ def _submission_block_reason(row):
             'This document could not be prepared for submission. '
             'Please replace the file and try again.'
         )
-
-    if requirement.nlp_enabled:
-        if metadata is None:
-            return 'We could not finish checking this document. Please replace the file and try again.'
-        if metadata.nlp_status in (NLP.PENDING, NLP.PROCESSING):
-            return 'This document is still being checked. Please wait a moment before submitting.'
-        if metadata.nlp_status != NLP.PASSED:
-            return 'This document did not pass the required checks. Please review it before submitting.'
 
     return None
 
@@ -465,31 +429,59 @@ def create_submissions(user, rows):
 
     return submissions
 
+def notify_if_faculty_completed_submissions(faculty_member):
+    active_requirements = Requirement.objects.filter(
+        status=Requirement.ReqStatus.ACTIVE,
+    ).filter(
+        Q(assigned_to=Requirement.AssignedFacultyType.ALL)
+        | Q(assigned_to=faculty_member.faculty_type)
+    )
 
-def _send_submission_updates(user, submissions):
+    total_count = active_requirements.count()
+
+    if total_count == 0:
+        return
+
+    completed_count = (
+        DocumentSubmission.objects.filter(
+            faculty=faculty_member,
+            requirement__in=active_requirements,
+        )
+        .exclude(
+            status=DocumentSubmission.SubmissionStatus.NEEDS_REVISION
+        )
+        .values('requirement_id')
+        .distinct()
+        .count()
+    )
+
+    if completed_count != total_count:
+        return
+
+    notify_roles(
+        roles=[User.Role.ADMIN, User.Role.STAFF],
+        notification_type=(NotificationPreference.NotificationType.SUBMISSION_NOTIFICATIONS),
+        title='Completed Document Submission',
+        message=(
+            f'{faculty_member.get_full_name()} has submitted all required documents.'
+        ),
+        link=reverse('admin_staff_portal:faculty_submissions_list')
+    )
+    
+def _send_submission_updates(user):
     try:
         refresh_admin_dashboard()
         refresh_staff_dashboard()
         refresh_submission_pages()
         refresh_faculty_dashboard(user)
         refresh_faculty_submission_bin(user)
-
-        full_name = user.get_full_name()
-
-        for submission in submissions:
-            notify_roles(
-                roles=[User.Role.ADMIN, User.Role.STAFF],
-                notification_type=NotificationPreference.NotificationType.SUBMISSION_NOTIFICATIONS,
-                title='New Document Submission',
-                message=f'{full_name} submitted {submission.requirement.requirement_title}.',
-                link=reverse(
-                    'admin_staff_portal:review_submission',
-                    args=[submission.id]
-                )
-            )
-
     except Exception:
-        logger.exception('Submission realtime/notification update failed.')
+        logger.exception('Submission realtime update failed.')
+
+    try:
+        notify_if_faculty_completed_submissions(user)
+    except Exception:
+        logger.exception('Could not send faculty completion notification.')
 
 
 def process_submission(request):
@@ -528,8 +520,8 @@ def process_submission(request):
         )
         return redirect(UPLOAD_PAGE)
 
-    request.session['recently_submitted_ids'] = [str(s.id) for s in submissions]
-    transaction.on_commit(lambda: _send_submission_updates(user, submissions))
+    request.session['recently_submitted_ids'] = [str(s.id) for s in submissions]        
+    transaction.on_commit(lambda: _send_submission_updates(user))
 
     messages.success(request, 'Selected documents submitted successfully.')
     return redirect('faculty_portal:submission_complete')
