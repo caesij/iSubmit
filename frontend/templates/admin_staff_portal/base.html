@@ -194,7 +194,7 @@
                     <li class="nav-item">
                         <a
                             class="nav-link {% if request.resolver_match.url_name in 'notifications,notification_list' %}active{% endif %}"
-                            href="{% url 'admin_staff_portal:notifications' %}"
+                            href="{% url 'notifications:notification_list' %}"
                         >
                             <span class="icon">
                                 <img

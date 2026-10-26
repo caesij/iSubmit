@@ -259,7 +259,7 @@
                     All Types
                 </option>
 
-                {% for value, label in notification_types %}
+                {% for value, label in notification_type_choices %}
                     <option
                         value="{{ value }}"
                         {% if selected_type == value %}selected{% endif %}

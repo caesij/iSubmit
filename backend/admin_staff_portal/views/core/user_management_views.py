@@ -202,8 +202,7 @@ def user_toggle_acc_status_view(request, pk):
     return redirect(redirect_url)
 
 
-@role_required('ADMIN', 'STAFF')
-@staff_permission_required('add_faculty_users')
+@admin
 @require_http_methods(['POST'])
 def user_unlock_view(request, pk):
     target_user = get_object_or_404(User, pk=pk)

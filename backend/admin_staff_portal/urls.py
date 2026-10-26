@@ -56,5 +56,4 @@ urlpatterns = [
     
     # Profile URL
     path('profile/', views.profile_view, name='profile'),
-    path('notifications/', notification_list_view, name='notifications'),
 ]
