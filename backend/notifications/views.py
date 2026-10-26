@@ -12,6 +12,7 @@ from accounts.models import User
 from notifications.forms import SystemNotificationForm
 from notifications.models import Notification, NotificationPreference
 from notifications.services import notify_roles
+from notifications.helpers import get_role_based_notifications
 
 
 @admin
@@ -49,100 +50,52 @@ def create_system_notification_view(request):
         context
     )
 
+
 @login_required
 @require_http_methods(['GET'])
 def notification_list_data_view(request):
-    notifications = Notification.objects.filter(user=request.user)
+    context = get_role_based_notifications(request)
 
-    notification_type = request.GET.get('type')
-    read_status = request.GET.get('read')
-    sort_by = request.GET.get('sort', 'newest')
-
-    if notification_type:
-        notifications = notifications.filter(notification_type=notification_type)
-
-    if read_status == 'unread':
-        notifications = notifications.filter(is_read=False)
-    elif read_status == 'read':
-        notifications = notifications.filter(is_read=True)
-
-    if sort_by == 'oldest':
-        notifications = notifications.order_by('created_at')
-    else:
-        notifications = notifications.order_by('-created_at')
-
-    paginator = Paginator(notifications, 10)
+    paginator = Paginator(context.pop('notifications'), 7)
     page_obj = paginator.get_page(request.GET.get('page'))
 
-    context = {
+    context.update({
         'notifications': page_obj,
         'page_obj': page_obj,
-        'notification_types': NotificationPreference.NotificationType.choices,
-        'selected_type': notification_type or '',
-        'selected_read': read_status or '',
-        'selected_sort': sort_by,
-    }
+    })
 
     if request.user.is_faculty:
         template = 'faculty_portal/notifications/_notifications_list.html'
     else:
         template = 'admin_staff_portal/notifications/_notifications_list.html'
 
-    html = render_to_string(
-        template,
-        context,
-        request=request,
-    )
+    html = render_to_string(template, context, request=request)
 
     unread_count = Notification.objects.filter(
         user=request.user,
-        is_read=False
+        is_read=False,
+        notification_type__in=NotificationPreference.ROLE_TYPES.get(request.user.role, [])
     ).count()
 
     return JsonResponse({
         'html': html,
-        'unread_count': unread_count,
+        'unread_count': unread_count
     })
 
 
 @login_required
 @require_http_methods(['GET'])
 def notification_list_view(request):
-    notifications = Notification.objects.filter(user=request.user)
+    context = get_role_based_notifications(request)
 
-    notification_type = request.GET.get('type')
-    read_status = request.GET.get('read')
-    sort_by = request.GET.get('sort', 'newest')
-
-    if notification_type:
-        notifications = notifications.filter(notification_type=notification_type)
-
-    if read_status == 'unread':
-        notifications = notifications.filter(
-            is_read=False
-        )
-    elif read_status == 'read':
-        notifications = notifications.filter(
-            is_read=True
-        )
-
-    if sort_by == 'oldest':
-        notifications = notifications.order_by('created_at')
-    else:
-        notifications = notifications.order_by('-created_at')
-
-    paginator = Paginator(notifications, 10)
+    paginator = Paginator(context.pop('notifications'), 7)
     page_obj = paginator.get_page(request.GET.get('page'))
 
-    context = {
+    context.update({
         'notifications': page_obj,
         'page_obj': page_obj,
-        'notification_types': NotificationPreference.NotificationType.choices,
-        'selected_type': notification_type or '',
-        'selected_read': read_status or '',
-        'selected_sort': sort_by,
-    }
-    
+    })
+
     if request.user.is_faculty:
         template = 'faculty_portal/notifications/notifications_list.html'
     else:
@@ -151,38 +104,40 @@ def notification_list_view(request):
     return render(request, template, context)
 
 
+
 @login_required
 @require_http_methods(['GET'])
 def notification_dropdown_view(request):
-    notifications = (
-        Notification.objects
-        .filter(user=request.user)
-        .order_by('-created_at')[:3]
-    )
+    allowed_types = NotificationPreference.ROLE_TYPES.get(request.user.role, [])
+
+    notifications = Notification.objects.filter(
+        user=request.user,
+        notification_type__in=allowed_types
+    ).order_by('-created_at')[:3]
 
     unread_count = Notification.objects.filter(
         user=request.user,
+        notification_type__in=allowed_types,
         is_read=False
     ).count()
+    
+    context = {
+        'notifications': notifications,
+        'unread_count': unread_count,
+    }
 
     if request.user.is_faculty:
-        template = ('faculty_portal/notifications/notif_dropdown.html')
+        template = 'faculty_portal/notifications/notif_dropdown.html'
     else:
-        template = ('admin_staff_portal/notifications/notif_dropdown.html')
+        template = 'admin_staff_portal/notifications/notif_dropdown.html'
 
-    html = render_to_string(
-        template,
-        {
-            'notifications': notifications,
-            'unread_count': unread_count,
-        },
-        request=request,
-    )
+    html = render_to_string(template, context, request=request)
 
     return JsonResponse({
         'html': html,
-        'unread_count': unread_count,
+        'unread_count': unread_count
     })
+
 
 
 @login_required
