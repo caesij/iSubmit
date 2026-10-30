@@ -12,6 +12,8 @@ from accounts.models import StaffPermission
 from notifications.models import NotificationPreference
 from accounts.security import get_login_activity
 
+TEMPLATE_DIR = 'admin_staff_portal/general/settings_module'
+
 PERMISSION_FIELDS = [
     ('review_faculty_submissions', 'Review Faculty Submissions', 'Review submitted documents from faculty.'),
     ('return_for_revisions', 'Return for Revisions', 'Return submissions to faculty for revisions.'),
@@ -38,7 +40,7 @@ def preferences_view(request):
     
     return render(
         request,
-        'admin_staff_portal/general/settings_module/preferences.html',
+        f'{TEMPLATE_DIR}/preferences.html',
         context
     )
 
@@ -53,9 +55,7 @@ def notification_settings_view(request):
             pref.email_enabled = f'email_{pref.notification_type}' in request.POST
             pref.system_enabled = f'system_{pref.notification_type}' in request.POST
 
-        NotificationPreference.objects.bulk_update(
-            preferences, ['enabled', 'email_enabled', 'system_enabled']
-        )
+        NotificationPreference.objects.bulk_update(preferences, ['enabled', 'email_enabled', 'system_enabled'])
         messages.success(request, 'Notification settings updated.')
         return redirect('admin_staff_portal:notification_settings')
 
@@ -63,7 +63,7 @@ def notification_settings_view(request):
     
     return render(
         request,
-        'admin_staff_portal/general/settings_module/notification_settings.html',
+        f'{TEMPLATE_DIR}/notification_settings.html',
         context
     )
 
@@ -92,7 +92,7 @@ def account_and_security_view(request):
 
     return render(
         request,
-        'admin_staff_portal/general/settings_module/account_security.html',
+        f'{TEMPLATE_DIR}/account_security.html',
         context
     )
     
@@ -115,6 +115,6 @@ def staff_permissions_view(request):
     
     return render(
         request,
-        'admin_staff_portal/general/settings_module/staff_permissions.html',
+        f'{TEMPLATE_DIR}/staff_permissions.html',
         context
     )

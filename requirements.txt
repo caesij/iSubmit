@@ -33,6 +33,7 @@ cryptography==50.0.2
 cymem==2.0.13
 dj-database-url==3.1.2
 Django==6.0.5
+django-anymail==15.2
 django-axes==8.3.1
 django-storages==1.14.6
 filelock==4.0.12
