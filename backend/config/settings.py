@@ -26,6 +26,7 @@ INSTALLED_APPS = [
     'django.contrib.postgres',
     'storages',
     'axes',
+    'anymail',
     'accounts',
     'submissions',
     'notifications.apps.NotificationsConfig',
@@ -149,14 +150,11 @@ AXES_DISABLE_ACCESS_LOG = False
 AXES_RESET_COOL_OFF_ON_FAILURE_DURING_LOCKOUT = False
 
 
-# Email
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_PORT = 587
+# Email Transactional Provider
+EMAIL_BACKEND = 'anymail.backends.sendinblue.EmailBackend'
+ANYMAIL = {'SENDINBLUE_API_KEY': os.getenv('EMAIL_API_KEY')}
+DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL')
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = os.environ.get('EMAIL_USER')
-EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_PASS')
-DEFAULT_FROM_EMAIL = os.environ.get('EMAIL_USER')
 
 
 # Security
