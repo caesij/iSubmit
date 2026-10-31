@@ -104,8 +104,9 @@
                             type="file"
                             name="draft_file"
                             id="upload-file-{{ row.requirement.id }}"
+                            accept=".pdf,.docx,.xlsx"
                             hidden
-                            onchange="this.form.submit()"
+                            onchange="this.form.requestSubmit()"
                         >
                         <label
                             for="upload-file-{{ row.requirement.id }}"
@@ -119,32 +120,49 @@
 
             <td class="action-cell">
                 <span class="ocr-badge {% if row.requirement.text_processing_mode != 'NONE' %}enabled{% else %}disabled{% endif %}">
-                    {% if row.requirement.text_processing_mode != 'NONE' %}Enabled{% else %}Disabled{% endif %}
+                    {% if row.requirement.text_processing_mode == 'OCR' %}
+                        OCR Enabled
+                    {% elif row.requirement.text_processing_mode != 'NONE' %}
+                        Enabled
+                    {% else %}
+                        Disabled
+                    {% endif %}
                 </span>
             </td>
 
             <td class="action-cell">
-                <form
-                    action="{% url 'faculty_portal:resubmit_document' row.submission.id %}"
-                    method="post"
-                    enctype="multipart/form-data"
-                >
-                    {% csrf_token %}
-                    <input
-                        type="file"
-                        name="draft_file"
-                        id="resubmit-{{ row.submission.id }}"
-                        hidden
-                        required
-                        onchange="this.form.submit()"
-                    >
-                    <label
-                        for="resubmit-{{ row.submission.id }}"
-                        class="btn-outline-danger"
-                    >
-                        &uarr; Replace File
-                    </label>
-                </form>
+                <details class="action-menu">
+                    <summary aria-label="Actions for {{ row.requirement.requirement_title }}">&#8942;</summary>
+                    <div class="action-menu-panel">
+                        {% if row.draft and row.draft.draft_file %}
+                            <a href="{% url 'faculty_portal:view_uploaded_document' row.draft.id %}">
+                                View File
+                            </a>
+                        {% endif %}
+                        <form
+                            action="{% url 'faculty_portal:resubmit_document' row.submission.id %}"
+                            method="post"
+                            enctype="multipart/form-data"
+                        >
+                            {% csrf_token %}
+                            <input
+                                type="file"
+                                name="draft_file"
+                                id="resubmit-{{ row.submission.id }}"
+                                accept=".pdf,.docx,.xlsx"
+                                hidden
+                                required
+                                onchange="this.form.requestSubmit()"
+                            >
+                            <label
+                                for="resubmit-{{ row.submission.id }}"
+                                class="menu-action-link"
+                            >
+                                Replace File
+                            </label>
+                        </form>
+                    </div>
+                </details>
             </td>
 
         {% elif row.draft and row.draft.draft_file %}
@@ -177,47 +195,54 @@
 
             <td class="action-cell">
                 <span class="ocr-badge {% if row.requirement.text_processing_mode != 'NONE' %}enabled{% else %}disabled{% endif %}">
-                    {% if row.requirement.text_processing_mode != 'NONE' %}Enabled{% else %}Disabled{% endif %}
+                    {% if row.requirement.text_processing_mode == 'OCR' %}
+                        OCR Enabled
+                    {% elif row.requirement.text_processing_mode != 'NONE' %}
+                        Enabled
+                    {% else %}
+                        Disabled
+                    {% endif %}
                 </span>
             </td>
 
             <td class="action-cell">
-                <div class="file-actions">
-                    <form
-                        action="{% url 'faculty_portal:replace_document' row.draft.id %}"
-                        method="post"
-                        enctype="multipart/form-data"
-                    >
-                        {% csrf_token %}
-                        <input
-                            type="file"
-                            name="draft_file"
-                            id="replace-{{ row.draft.id }}"
-                            hidden
-                            onchange="this.form.submit()"
+                <details class="action-menu">
+                    <summary aria-label="Actions for {{ row.requirement.requirement_title }}">&#8942;</summary>
+                    <div class="action-menu-panel">
+                        <a href="{% url 'faculty_portal:view_uploaded_document' row.draft.id %}">
+                            View File
+                        </a>
+                        <form
+                            action="{% url 'faculty_portal:replace_document' row.draft.id %}"
+                            method="post"
+                            enctype="multipart/form-data"
                         >
-                        <label
-                            for="replace-{{ row.draft.id }}"
-                            class="btn-outline"
+                            {% csrf_token %}
+                            <input
+                                type="file"
+                                name="draft_file"
+                                id="replace-{{ row.draft.id }}"
+                                accept=".pdf,.docx,.xlsx"
+                                hidden
+                                onchange="this.form.requestSubmit()"
+                            >
+                            <label
+                                for="replace-{{ row.draft.id }}"
+                                class="menu-action-link"
+                            >
+                                Replace File
+                            </label>
+                        </form>
+                        <form
+                            action="{% url 'faculty_portal:remove_document' row.draft.id %}"
+                            method="post"
+                            class="remove-file-form"
                         >
-                            Replace
-                        </label>
-                    </form>
-
-                    <form
-                        action="{% url 'faculty_portal:remove_document' row.draft.id %}"
-                        method="post"
-                        onsubmit="return confirm('Remove this uploaded file?');"
-                    >
-                        {% csrf_token %}
-                        <button
-                            type="submit"
-                            class="btn-remove"
-                        >
-                            Remove
-                        </button>
-                    </form>
-                </div>
+                            {% csrf_token %}
+                            <button type="submit">Remove File</button>
+                        </form>
+                    </div>
+                </details>
             </td>
 
         {% else %}
@@ -228,11 +253,40 @@
             </td>
 
             <td>
-                —
+                <form
+                    action="{% url 'faculty_portal:attach_document' row.requirement.id %}"
+                    method="post"
+                    enctype="multipart/form-data"
+                >
+                    {% csrf_token %}
+                    <input
+                        type="file"
+                        name="draft_file"
+                        id="upload-file-{{ row.requirement.id }}"
+                        accept=".pdf,.docx,.xlsx"
+                        hidden
+                        required
+                        onchange="this.form.requestSubmit()"
+                    >
+                    <label
+                        for="upload-file-{{ row.requirement.id }}"
+                        class="btn-outline-danger"
+                    >
+                        &uarr; Upload
+                    </label>
+                </form>
             </td>
 
             <td class="action-cell">
-                <span class="ocr-badge disabled">Disabled</span>
+                <span class="ocr-badge {% if row.requirement.text_processing_mode != 'NONE' %}enabled{% else %}disabled{% endif %}">
+                    {% if row.requirement.text_processing_mode == 'OCR' %}
+                        OCR Enabled
+                    {% elif row.requirement.text_processing_mode != 'NONE' %}
+                        Enabled
+                    {% else %}
+                        Disabled
+                    {% endif %}
+                </span>
             </td>
 
             <td class="action-cell"></td>

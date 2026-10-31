@@ -180,7 +180,7 @@
 
                     <li class="nav-item">
                         <a
-                            class="nav-link {% if request.resolver_match.url_name == 'upload_files' or request.resolver_match.url_name == 'submission_complete' %}active{% endif %}"
+                            class="nav-link {% if request.resolver_match.url_name == 'upload_files' or request.resolver_match.url_name == 'submission_complete' or request.resolver_match.url_name == 'view_uploaded_document' %}active{% endif %}"
                             href="{% url 'faculty_portal:upload_files' %}"
                         >
                             <span class="icon">

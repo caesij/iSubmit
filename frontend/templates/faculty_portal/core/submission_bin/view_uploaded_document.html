@@ -1,124 +1,127 @@
 {% extends 'faculty_portal/base.html' %}
-{% load static %}
+{% load static core_extras %}
 
-{% block title %}View Document - iSubmit{% endblock %}
+{% block title %}{{ uploaded_document.requirement.requirement_title }} - iSubmit{% endblock %}
 {% block heading %}Submission Bin{% endblock %}
 {% block topbar_subtitle %}Upload and manage academic documents{% endblock %}
 {% block extra_css %}<link rel="stylesheet" href="{% static 'css/pages/submissions.css' %}">{% endblock %}
 
 {% block content %}
+<style>
+  .fdv-wrap {
+    --maroon: #7a0c0c;
+    --gold: #c99a3d;
+    --ink: #211c1c;
+    --muted: #746b68;
+    --line: #e7e0dc;
+    --card: #fff;
+    color: var(--ink);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+  .fdv-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 14px;
+    padding: 7px 22px;
+    border: 1px solid #b40000;
+    border-radius: 5px;
+    background: #b40000;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 700;
+    text-decoration: none;
+  }
+  .fdv-back:hover { background: #920000; border-color: #920000; }
+  .fdv-back img { width: 16px; height: 16px; }
+  .fdv-crumbs { margin-bottom: 14px; color: var(--muted); font-size: 13px; }
+  .fdv-crumbs .sep { margin: 0 6px; color: #c9bfba; }
+  .fdv-crumbs .current { color: var(--ink); font-weight: 500; }
+  .fdv-title-row { margin-bottom: 16px; }
+  .fdv-title-row h1 { margin: 0; font-size: 22px; font-weight: 700; }
+  .fdv-title-row .uploaded-by { margin-top: 2px; color: #9a9290; font-size: 12px; }
+  .fdv-grid { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 24px; align-items: start; }
+  .fdv-viewer { overflow: hidden; border: 1px solid var(--line); border-radius: 10px; background: var(--card); }
+  .fdv-viewer-header {
+    display: flex; align-items: center; justify-content: space-between; gap: 16px;
+    padding: 15px 18px; border-bottom: 1px solid var(--line);
+  }
+  .fdv-viewer-name { color: #716b69; font-size: 15px; font-weight: 500; }
+  .fdv-viewer-date { color: #aaa3a1; font-size: 12px; white-space: nowrap; }
+  .fdv-viewer-body { min-height: 560px; background: #5b5b5b; }
+  .fdv-page-area { height: 640px; display: flex; align-items: stretch; justify-content: center; overflow: auto; }
+  .fdv-page-area embed { width: 100%; height: 100%; border: 0; background: #fff; }
+  .fdv-panel { display: flex; flex-direction: column; gap: 16px; }
+  .fdv-card { padding: 18px 18px 20px; border: 1px solid var(--line); border-radius: 12px; background: var(--card); }
+  .fdv-card h2 { margin: 0 0 14px; color: var(--muted); font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
+  .fdv-detail-row { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 12px; font-size: 13.5px; }
+  .fdv-detail-row:last-child { margin-bottom: 0; }
+  .fdv-detail-row .dot { width: 6px; height: 6px; flex-shrink: 0; margin-top: 6px; border-radius: 50%; background: var(--gold); }
+  .fdv-detail-row .label { display: block; color: var(--muted); font-size: 11.5px; }
+  .fdv-detail-row .value { color: var(--ink); font-weight: 600; }
+  @media (max-width: 900px) {
+    .fdv-grid { grid-template-columns: 1fr; }
+    .fdv-viewer-date { white-space: normal; text-align: right; }
+  }
+</style>
 
-<div class="submission-bin-container">
+<div class="fdv-wrap">
+  <a href="{% url 'faculty_portal:upload_files' %}" class="fdv-back">
+    <img src="{% static 'images/Back Arrow Left.svg' %}" alt="">
+    Back
+  </a>
 
-    <div class="page-header">
+  <div class="fdv-crumbs">
+    <span>Documents</span>
+    <span class="sep">›</span>
+    <span class="current">{{ uploaded_document.requirement.requirement_title }}</span>
+  </div>
 
-        <div class="page-title-wrap">
+  <div class="fdv-title-row">
+    <h1>{{ uploaded_document.requirement.requirement_title }}</h1>
+    <div class="uploaded-by">Uploaded by {{ uploaded_document.faculty.get_full_name }}</div>
+  </div>
 
-            <span class="page-icon">
-
-                <img
-                    src="{% static 'images/Submission Faculty.svg' %}"
-                    alt="Submission Bin icon"
-                >
-
-            </span>
-
-            <div>
-
-                <h1>Document Details</h1>
-
-                <p class="subtitle">
-                    Uploaded document
-                </p>
-
-            </div>
-
+  {% if uploaded_document.draft_file %}
+    <div class="fdv-grid">
+      <div class="fdv-viewer">
+        <div class="fdv-viewer-header">
+          <span class="fdv-viewer-name">{{ uploaded_document.draft_file.name|cut:"drafts/" }}</span>
+          <span class="fdv-viewer-date">
+            Uploaded on {{ uploaded_document.draft_updated_at|display_date:request.user }}; {{ uploaded_document.draft_updated_at|display_time:request.user }}
+          </span>
         </div>
+        <div class="fdv-viewer-body">
+          {% with file_name=uploaded_document.draft_file.name|lower %}
+            {% if file_name|slice:"-4:" == '.pdf' %}
+              <div class="fdv-page-area">
+                <embed src="{{ uploaded_document.draft_file.url }}#toolbar=0&navpanes=0&scrollbar=0" type="application/pdf">
+              </div>
+            {% else %}
+              <div class="preview-fallback">
+                <p>Preview isn't available for this file type.</p>
+                <a href="{{ uploaded_document.draft_file.url }}" download class="btn-continue">
+                  Download {{ uploaded_document.draft_file.name }}
+                </a>
+              </div>
+            {% endif %}
+          {% endwith %}
+        </div>
+      </div>
 
+      <aside class="fdv-panel">
+        <div class="fdv-card">
+          <h2>Document Details</h2>
+          <div class="fdv-detail-row"><span class="dot"></span><div><span class="label">File Name</span><span class="value">{{ uploaded_document.draft_file.name|cut:"drafts/" }}</span></div></div>
+          <div class="fdv-detail-row"><span class="dot"></span><div><span class="label">Requirement</span><span class="value">{{ uploaded_document.requirement.requirement_title }}</span></div></div>
+          <div class="fdv-detail-row"><span class="dot"></span><div><span class="label">Category</span><span class="value">{{ uploaded_document.requirement.category }}</span></div></div>
+          <div class="fdv-detail-row"><span class="dot"></span><div><span class="label">File Size</span><span class="value">{{ uploaded_document.draft_file.size|filesizeformat }}</span></div></div>
+          <div class="fdv-detail-row"><span class="dot"></span><div><span class="label">Uploaded on</span><span class="value">{{ uploaded_document.draft_updated_at|display_date:request.user }} {{ uploaded_document.draft_updated_at|display_time:request.user }}</span></div></div>
+        </div>
+      </aside>
     </div>
-
-    <p>
-        <strong>Requirement:</strong>
-        {{ uploaded_document.requirement.requirement_title }}
-    </p>
-
-    <p>
-        <strong>Category:</strong>
-        {{ uploaded_document.requirement.category }}
-    </p>
-
-    <p>
-        <strong>Status:</strong>
-        Attached
-    </p>
-
-    <p>
-        <strong>Uploaded:</strong>
-        {{ uploaded_document.draft_created_at }}
-    </p>
-
-    <p>
-        <strong>Last Updated:</strong>
-        {{ uploaded_document.draft_updated_at }}
-    </p>
-
-    {% if uploaded_document.draft_file %}
-
-        {% with file_name=uploaded_document.draft_file.name|lower %}
-
-            <div class="document-preview">
-
-                {% if file_name|slice:"-4:" == '.pdf' %}
-
-                    <iframe
-                        src="{{ uploaded_document.draft_file.url }}"
-                        width="100%"
-                        height="700px"
-                        style="border: 1px solid #e5e7eb; border-radius: 8px;"
-                    >
-                    </iframe>
-
-                {% else %}
-
-                    <div class="preview-fallback">
-
-                        <p>
-                            Preview isn't available for this file type.
-                        </p>
-
-                        <a
-                            href="{{ uploaded_document.draft_file.url }}"
-                            download
-                            class="btn-continue"
-                        >
-                            &#8681; Download
-                            {{ uploaded_document.draft_file.name }}
-                        </a>
-
-                    </div>
-
-                {% endif %}
-
-            </div>
-
-        {% endwith %}
-
-    {% else %}
-
-        <p>
-            No file uploaded yet.
-        </p>
-
-    {% endif %}
-
-    <br>
-
-    <a
-        href="{% url 'faculty_portal:upload_files' %}"
-    >
-        &larr; Back to Submission Bin
-    </a>
-
+  {% else %}
+    <p>No file uploaded yet.</p>
+  {% endif %}
 </div>
-
 {% endblock %}
