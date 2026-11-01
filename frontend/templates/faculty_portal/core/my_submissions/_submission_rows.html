@@ -10,8 +10,16 @@
             >
         </td>
         <td>
-            <div class="file-cell">
-                <span class="file-icon">&#128196;</span>
+            <a
+                href="{% url 'faculty_portal:view_my_submitted_document' doc.id %}"
+                class="file-cell file-link"
+                title="View {{ doc.requirement.requirement_title }}"
+            >
+                <img
+                    class="file-icon"
+                    src="{% static 'images/PDF.svg' %}"
+                    alt="PDF file"
+                >
                 <div>
                     <div class="file-name">
                         {{ doc.requirement.requirement_title }}
@@ -20,7 +28,7 @@
                         {{ doc.document_file.size|filesizeformat }}
                     </div>
                 </div>
-            </div>
+            </a>
         </td>
         <td>{{ doc.requirement.category }}</td>
         <td>
@@ -57,18 +65,10 @@
                 &mdash;
             {% endif %}
         </td>
-        <td>
-            <a
-                href="{% url 'faculty_portal:view_my_submitted_document' doc.id %}"
-                class="btn-icon"
-            >
-                &#8942;
-            </a>
-        </td>
     </tr>
 {% empty %}
     <tr>
-        <td colspan="8" class="text-center py-4">
+        <td colspan="7" class="text-center py-4">
             No submissions found.
         </td>
     </tr>

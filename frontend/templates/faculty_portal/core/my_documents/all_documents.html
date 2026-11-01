@@ -16,10 +16,11 @@
 .docs-tab { padding: 10px 2px; font-size: 13.5px; font-weight: 600; color: #6b7280; text-decoration: none; border-bottom: 2px solid transparent; }
 .docs-tab.active { color: #7f1d1d; border-bottom-color: #7f1d1d; }
 
-.docs-layout { display: grid; grid-template-columns: 220px 1fr; gap: 20px; align-items: start; }
+.docs-layout { display: grid; grid-template-columns: 160px minmax(0, 1fr); gap: 18px; align-items: start; }
 .docs-content { display: flex; flex-direction: column; gap: 0; }
+.filter-panel .search-group { display: none; }
 
-.filter-panel { background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 16px; }
+.filter-panel { background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 14px 10px; }
 .filter-group { margin-bottom: 16px; }
 .search-group { flex: 1 1 260px; min-width: 220px; }
 .search-group label, .search-help { display: block; font-size: 11px; color: #6b7280; margin-bottom: 4px; }
@@ -43,8 +44,12 @@
 .fname-cell { display: flex; align-items: center; gap: 10px; }
 .fname-link { color: #1a1a1a; text-decoration: none; }
 .fname-link:hover { text-decoration: underline; }
-.star-btn { border: none; background: none; cursor: pointer; font-size: 15px; color: #d1d5db; padding: 0; line-height: 1; }
-.star-btn.pinned { color: #f59e0b; }
+.star-btn { display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 22px; border: none; background: none; cursor: pointer; padding: 0; line-height: 1; }
+.star-btn img { width: 16px; height: 16px; opacity: .8; }
+.star-btn.pinned img {
+    filter: brightness(0) saturate(100%) invert(68%) sepia(88%) saturate(1025%) hue-rotate(2deg) brightness(103%) contrast(101%);
+    opacity: 1;
+}
 
 .btn-icon { border: none; background: none; cursor: pointer; font-size: 16px; color: #6b7280; }
 
@@ -71,9 +76,9 @@
             <p class="search-help">Searches document titles and contents, including likely OCR or typing errors.</p>
         </div>
         <div class="filter-group">
-            <label>Academic Year</label>
+            <label>Academic Term</label>
             <select name="academic_year" onchange="this.form.submit()">
-                <option value="">All Years</option>
+                <option value="">All Terms</option>
                 {% for year in academic_years %}
                     <option value="{{ year|cut:'A.Y. ' }}" {% if selected_academic_year == year|cut:'A.Y. ' %}selected{% endif %}>{{ year|cut:"A.Y. " }}</option>
                 {% endfor %}
@@ -121,7 +126,9 @@
                             <div class="fname-cell">
                                 <form method="post" action="{% url 'faculty_portal:toggle_pin' sub.id %}" style="display:inline;">
                                     {% csrf_token %}
-                                    <button type="submit" class="star-btn {% if sub.is_pinned %}pinned{% endif %}" title="{% if sub.is_pinned %}Remove from pinned{% else %}Pin this document{% endif %}">★</button>
+                                    <button type="submit" class="star-btn {% if sub.is_pinned %}pinned{% endif %}" title="{% if sub.is_pinned %}Remove from pinned{% else %}Pin this document{% endif %}">
+                                        <img src="{% static 'images/Pinned.svg' %}" alt="{% if sub.is_pinned %}Pinned{% else %}Pin document{% endif %}">
+                                    </button>
                                 </form>
                                 <a href="{% url 'faculty_portal:document_file_view_all' sub.id %}" class="fname-link font-bold">{{ sub.requirement.requirement_title }}</a>
                             </div>

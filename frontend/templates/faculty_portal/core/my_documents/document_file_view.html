@@ -9,239 +9,168 @@
 {% block content %}
 <style>
   .dfv-wrap {
-    --maroon: #7a0c0c;
     --gold: #c99a3d;
     --ink: #211c1c;
     --muted: #746b68;
     --line: #e7e0dc;
-    --bg: #f7f4f1;
-    --card: #ffffff;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --card: #fff;
     color: var(--ink);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   }
-
-  .dfv-crumbs { font-size: 13px; color: var(--muted); margin-bottom: 14px; }
-  .dfv-crumbs a { color: var(--muted); text-decoration: none; }
-  .dfv-crumbs a:hover { color: var(--maroon); text-decoration: underline; }
-  .dfv-crumbs .sep { margin: 0 6px; color: #c9bfba; }
-  .dfv-crumbs .current { color: var(--ink); font-weight: 500; }
-
   .dfv-back {
     display: inline-flex; align-items: center; gap: 6px;
-    font-size: 13px; font-weight: 600; color: var(--maroon);
-    background: var(--card); border: 1px solid var(--line);
-    border-radius: 8px; padding: 8px 14px; text-decoration: none;
-    margin-bottom: 18px;
+    margin-bottom: 14px; padding: 7px 22px;
+    border: 1px solid #b40000; border-radius: 5px;
+    background: #b40000; color: #fff;
+    font-size: 13px; font-weight: 700; text-decoration: none;
   }
-  .dfv-back:hover { background: #fbeeee; }
-
-  .dfv-title-row {
-    display: flex; align-items: center; justify-content: space-between;
-    margin-bottom: 16px;
+  .dfv-back:hover { background: #920000; border-color: #920000; }
+  .dfv-back img { width: 16px; height: 16px; }
+  .dfv-crumbs { margin-bottom: 14px; color: var(--muted); font-size: 13px; }
+  .dfv-crumbs a { color: var(--muted); text-decoration: none; }
+  .dfv-crumbs a:hover { color: #7a0c0c; text-decoration: underline; }
+  .dfv-crumbs .sep { margin: 0 6px; color: #c9bfba; }
+  .dfv-crumbs .current { color: var(--ink); font-weight: 500; }
+  .dfv-title-row { margin-bottom: 16px; }
+  .dfv-title-row h1 { margin: 0; font-size: 22px; font-weight: 700; }
+  .dfv-title-row .uploaded-by { margin-top: 2px; color: #9a9290; font-size: 12px; }
+  .dfv-grid { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 24px; align-items: start; }
+  .dfv-viewer { overflow: hidden; border: 1px solid var(--line); border-radius: 10px; background: var(--card); }
+  .dfv-viewer-header {
+    display: flex; align-items: center; justify-content: space-between; gap: 16px;
+    padding: 15px 18px; border-bottom: 1px solid var(--line);
   }
-  .dfv-title-row h1 { font-size: 22px; font-weight: 700; margin: 0; }
-
-  .dfv-grid { display: grid; grid-template-columns: 1fr 320px; gap: 24px; align-items: start; }
-
-  /* Viewer */
-  .dfv-viewer { background: var(--card); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
-  .dfv-viewer-toolbar {
-    display: flex; align-items: center; justify-content: center; gap: 28px;
-    padding: 12px 16px; border-bottom: 1px solid var(--line);
-    font-size: 12.5px; color: var(--muted);
-  }
-  .dfv-viewer-toolbar .tool { display: flex; flex-direction: column; align-items: center; gap: 3px; cursor: default; }
-  .dfv-viewer-toolbar .tool-icon { font-size: 14px; }
-
-  .dfv-viewer-body { display: flex; background: #efeae6; min-height: 560px; }
-  .dfv-thumbrail {
-    width: 90px; flex-shrink: 0; background: #efeae6; padding: 12px 8px;
-    display: flex; flex-direction: column; gap: 10px; align-items: center;
-    border-right: 1px solid var(--line); overflow-y: auto; max-height: 640px;
-  }
-  .dfv-thumb { width: 100%; }
-  .dfv-thumb img {
-    width: 100%; border: 2px solid transparent; border-radius: 2px; background: #fff; display: block;
-  }
-  .dfv-thumb.active img { border-color: var(--maroon); }
-  .dfv-thumb .num { text-align: center; font-size: 11px; color: var(--muted); margin-top: 3px; }
-
-  .dfv-page-area { flex: 1; display: flex; align-items: flex-start; justify-content: center; padding: 20px; overflow: auto; }
-  .dfv-page-area embed { width: 100%; max-width: 560px; height: 640px; border: none; background: #fff; box-shadow: 0 1px 6px rgba(0,0,0,.08); }
-
-  /* Side panel */
+  .dfv-viewer-name { color: #716b69; font-size: 15px; font-weight: 500; }
+  .dfv-viewer-date { color: #aaa3a1; font-size: 12px; white-space: nowrap; }
+  .dfv-viewer-body { min-height: 560px; background: #5b5b5b; }
+  .dfv-page-area { height: 640px; display: flex; align-items: stretch; justify-content: center; overflow: auto; }
+  .dfv-page-area embed { width: 100%; height: 100%; border: 0; background: #fff; }
   .dfv-panel { display: flex; flex-direction: column; gap: 16px; }
-  .dfv-card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 18px 18px 20px; }
-  .dfv-card h2 {
-    font-size: 12px; text-transform: uppercase; letter-spacing: .06em;
-    color: var(--muted); margin: 0 0 14px; font-weight: 700;
-  }
-
-  .dfv-detail-row { display: flex; gap: 10px; align-items: flex-start; font-size: 13.5px; margin-bottom: 12px; }
+  .dfv-card { padding: 18px 18px 20px; border: 1px solid var(--line); border-radius: 12px; background: var(--card); }
+  .dfv-card h2 { margin: 0 0 14px; color: var(--muted); font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
+  .dfv-detail-row { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 12px; font-size: 13.5px; }
   .dfv-detail-row:last-child { margin-bottom: 0; }
-  .dfv-detail-row .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--gold); margin-top: 6px; flex-shrink: 0; }
-  .dfv-detail-row .label { color: var(--muted); display: block; font-size: 11.5px; }
-  .dfv-detail-row .value { font-weight: 600; color: var(--ink); }
-
-  .dfv-status-pill {
-    display: inline-flex; align-items: center; gap: 6px;
-    padding: 6px 12px; border-radius: 999px; font-size: 12.5px; font-weight: 700;
+  .dfv-detail-row .dot { width: 6px; height: 6px; flex-shrink: 0; margin-top: 6px; border-radius: 50%; background: var(--gold); }
+  .dfv-detail-row .label { display: block; color: var(--muted); font-size: 11.5px; }
+  .dfv-detail-row .value { color: var(--ink); font-weight: 600; }
+  .dfv-status-box {
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 10px 12px; border: 1px solid #86d8a8; border-radius: 4px;
+    background: #e4f8eb;
   }
-  .dfv-status-pill .sw { width: 7px; height: 7px; border-radius: 50%; }
-  .st-submitted { background: #eef2f6; color: #475569; } .st-submitted .sw { background: #64748b; }
-  .st-under_review { background: #fef3c7; color: #92400e; } .st-under_review .sw { background: #b45309; }
-  .st-pending_approval { background: #ede9fe; color: #5b21b6; } .st-pending_approval .sw { background: #6d28d9; }
-  .st-needs_revision { background: #fee2e2; color: #991b1b; } .st-needs_revision .sw { background: #b91c1c; }
-  .st-resubmitted { background: #dbeafe; color: #1e40af; } .st-resubmitted .sw { background: #1d4ed8; }
-  .st-approved { background: #dcfce7; color: #166534; } .st-approved .sw { background: #15803d; }
-
-  .dfv-status-note { font-size: 12.5px; color: var(--muted); margin-top: 10px; line-height: 1.5; }
-
-  .dfv-review-item { font-size: 13px; margin-bottom: 14px; }
+  .dfv-status-check {
+    display: flex; align-items: center; justify-content: center;
+    width: 18px; height: 18px; flex-shrink: 0; margin-top: 1px;
+    border-radius: 50%; background: #08a34a; color: #fff;
+    font-size: 12px; font-weight: 700;
+  }
+  .dfv-status-value { color: #087b3b; font-size: 13px; font-weight: 700; }
+  .dfv-status-note { margin-top: 2px; color: #16834a; font-size: 10px; line-height: 1.35; }
+  .dfv-review-item { margin-bottom: 12px; }
   .dfv-review-item:last-child { margin-bottom: 0; }
-  .dfv-review-item .who { font-weight: 600; }
-  .dfv-review-item .when { color: var(--muted); font-size: 12px; margin-top: 2px; }
-  .dfv-review-empty { font-size: 13px; color: var(--muted); }
-
+  .dfv-review-item .label, .dfv-empty { display: block; color: #b0aaa8; font-size: 11.5px; }
+  .dfv-review-item .value { display: block; margin-top: 3px; color: var(--ink); font-size: 12px; font-weight: 600; }
+  .dfv-empty { color: var(--muted); }
   @media (max-width: 900px) {
     .dfv-grid { grid-template-columns: 1fr; }
-    .dfv-viewer-body { flex-direction: column; }
-    .dfv-thumbrail { flex-direction: row; width: 100%; max-height: none; }
+    .dfv-viewer-date { white-space: normal; text-align: right; }
   }
 </style>
 
 <div class="dfv-wrap">
+  <a href="{% url back_url_name %}" class="dfv-back">
+    <img src="{% static 'images/Back Arrow Left.svg' %}" alt="">
+    Back
+  </a>
 
   <div class="dfv-crumbs">
     <a href="{% url 'faculty_portal:my_documents' %}">My Documents</a>
     <span class="sep">›</span>
     <a href="{% url back_url_name %}">{{ breadcrumb_label }}</a>
     <span class="sep">›</span>
-    <span class="current">{{ document.document_file.name }}</span>
+    <span class="current">{{ document.requirement.requirement_title }}</span>
   </div>
-
-  <a href="{% url back_url_name %}" class="dfv-back">← Back</a>
 
   <div class="dfv-title-row">
     <h1>{{ document.requirement.requirement_title }}</h1>
+    <div class="uploaded-by">Uploaded by {{ document.faculty.get_full_name }}</div>
   </div>
 
   <div class="dfv-grid">
-
     <div class="dfv-viewer">
-      <div class="dfv-viewer-toolbar">
-        <div class="tool"><span class="tool-icon">−</span> Zoom out</div>
-        <div class="tool"><span class="tool-icon">+</span> Zoom out</div>
-        <div class="tool"><span class="tool-icon">T</span> Add Text</div>
-        <div class="tool"><span class="tool-icon">🖼</span> Insert Image</div>
-        <div class="tool"><span class="tool-icon">⤢</span> Expand</div>
+      <div class="dfv-viewer-header">
+        <span class="dfv-viewer-name">{{ document.document_file.name|cut:"submissions/" }}</span>
+        <span class="dfv-viewer-date">
+          Approved on {{ document.approved_at|display_date:request.user }}; {{ document.approved_at|display_time:request.user }}
+        </span>
       </div>
       <div class="dfv-viewer-body">
-        <div class="dfv-thumbrail">
-          <div class="dfv-thumb active">
-            <img src="{{ document.document_file.url }}" alt="Page 1">
-            <div class="num">1</div>
-          </div>
-        </div>
         <div class="dfv-page-area">
-          <embed src="{{ document.document_file.url }}" type="application/pdf" />
+          <embed src="{{ document.document_file.url }}#toolbar=0&navpanes=0&scrollbar=0" type="application/pdf">
         </div>
       </div>
     </div>
 
-    <div class="dfv-panel">
-
+    <aside class="dfv-panel">
       <div class="dfv-card">
         <h2>Document Details</h2>
-        <div class="dfv-detail-row">
-          <span class="dot"></span>
-          <div>
-            <span class="label">File Name</span>
-            <span class="value">{{ document.document_file.name }}</span>
-          </div>
-        </div>
-        <div class="dfv-detail-row">
-          <span class="dot"></span>
-          <div>
-            <span class="label">File Type</span>
-            <span class="value">{{ document.document_file.name|slice:"-3:"|upper }} Document</span>
-          </div>
-        </div>
-        <div class="dfv-detail-row">
-          <span class="dot"></span>
-          <div>
-            <span class="label">File Size</span>
-            <span class="value">{{ document.document_file.size|filesizeformat }}</span>
-          </div>
-        </div>
-        <div class="dfv-detail-row">
-          <span class="dot"></span>
-          <div>
-            <span class="label">Uploaded on</span>
-            <span class="value">                        {{ document.initially_submitted_at|display_date:request.user }} {{ document.initially_submitted_at|display_time:request.user }}</span>
-          </div>
-        </div>
-        <div class="dfv-detail-row">
-          <span class="dot"></span>
-          <div>
-            <span class="label">Academic Year</span>
-            <span class="value">{{ document.requirement.academic_year|cut:"A.Y. " }}</span>
-          </div>
-        </div>
-        <div class="dfv-detail-row">
-          <span class="dot"></span>
-          <div>
-            <span class="label">Term / Semester</span>
-            <span class="value">{{ document.requirement.get_semester_display }}</span>
-          </div>
-        </div>
+        <div class="dfv-detail-row"><span class="dot"></span><div><span class="label">File Name</span><span class="value">{{ document.document_file.name|cut:"submissions/" }}</span></div></div>
+        <div class="dfv-detail-row"><span class="dot"></span><div><span class="label">File Type</span><span class="value">{{ document.document_file.name|slice:"-3:"|upper }} Document</span></div></div>
+        <div class="dfv-detail-row"><span class="dot"></span><div><span class="label">File Size</span><span class="value">{{ document.document_file.size|filesizeformat }}</span></div></div>
+        <div class="dfv-detail-row"><span class="dot"></span><div><span class="label">Academic Term</span><span class="value">{{ document.requirement.get_semester_display }}, A.Y. {{ document.requirement.academic_year|cut:"A.Y. " }}</span></div></div>
+        <div class="dfv-detail-row"><span class="dot"></span><div><span class="label">Category</span><span class="value">{{ document.requirement.category }}</span></div></div>
       </div>
 
       <div class="dfv-card">
         <h2>Document Status</h2>
-        <span class="dfv-status-pill st-{{ document.status|lower }}">
-          <span class="sw"></span>{{ document.get_status_display }}
-        </span>
-
-        {% if document.status == 'APPROVED' %}
-          <div class="dfv-status-note">This document has been reviewed and approved by the admin.</div>
-        {% elif document.status == 'PENDING_APPROVAL' %}
-          <div class="dfv-status-note">This document has been reviewed and is waiting for admin approval.</div>
-        {% elif document.status == 'UNDER_REVIEW' %}
-          <div class="dfv-status-note">This document is currently being reviewed.</div>
-        {% elif document.status == 'NEEDS_REVISION' %}
-          {% with latest_review=document.revisions.first.reviews.first %}
+        <div class="dfv-status-box">
+          <span class="dfv-status-check">✓</span>
+          <div>
+            <div class="dfv-status-value">{{ document.get_status_display }}</div>
             <div class="dfv-status-note">
-              {% if latest_review %}
-                <strong>Remarks:</strong> {{ latest_review.remarks|linebreaksbr }}
+              {% if document.status == 'APPROVED' %}
+                This document has been reviewed and approved by the admin.
+              {% elif document.status == 'NEEDS_REVISION' %}
+                This document needs revision before it can be approved.
               {% else %}
-                This document needs revision.
+                This document is currently {{ document.get_status_display|lower }}.
               {% endif %}
             </div>
-          {% endwith %}
-        {% endif %}
+          </div>
+        </div>
       </div>
 
       <div class="dfv-card">
         <h2>Review Information</h2>
         {% if document.reviewed_by %}
           <div class="dfv-review-item">
-            <div class="who">Reviewed by {{ document.reviewed_by.get_full_name }}</div>
-            <div class="when">                        {{ document.reviewed_at|display_date:request.user }} {{ document.reviewed_at|display_time:request.user }}</div>
+            <span class="label">Reviewed by</span>
+            <span class="value">{{ document.reviewed_by.get_full_name }}</span>
           </div>
+          {% if document.reviewed_at %}
+            <div class="dfv-review-item">
+              <span class="label">Reviewed on</span>
+              <span class="value">{{ document.reviewed_at|display_date:request.user }} {{ document.reviewed_at|display_time:request.user }}</span>
+            </div>
+          {% endif %}
         {% endif %}
         {% if document.approved_by %}
           <div class="dfv-review-item">
-            <div class="who">Approved by {{ document.approved_by.get_full_name }}</div>
-            <div class="when">                        {{ document.approved_at|display_date:request.user }} {{ document.approved_at|display_time:request.user }}</div>
+            <span class="label">Approved by</span>
+            <span class="value">{{ document.approved_by.get_full_name }}</span>
           </div>
+          {% if document.approved_at %}
+            <div class="dfv-review-item">
+              <span class="label">Approved on</span>
+              <span class="value">{{ document.approved_at|display_date:request.user }} {{ document.approved_at|display_time:request.user }}</span>
+            </div>
+          {% endif %}
         {% endif %}
         {% if not document.reviewed_by and not document.approved_by %}
-          <div class="dfv-review-empty">No review activity yet.</div>
+          <span class="dfv-empty">No review information available.</span>
         {% endif %}
       </div>
-
-    </div>
+    </aside>
   </div>
 </div>
 {% endblock %}

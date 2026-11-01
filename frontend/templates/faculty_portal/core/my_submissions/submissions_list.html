@@ -15,7 +15,7 @@ Monitor submission progress and document status
 {% block content %}
 <style>
     .my-submissions-container {
-        padding: 24px 32px;
+        padding: 20px 20px 28px;
         font-family: 'Segoe UI', Arial, sans-serif;
         color: #1a1a1a;
     }
@@ -31,105 +31,118 @@ Monitor submission progress and document status
     .stat-grid {
         display: grid;
         grid-template-columns: repeat(4, 1fr);
-        gap: 14px;
-        margin-bottom: 20px;
+        gap: 12px;
+        margin-bottom: 16px;
     }
     .stat-card {
         display: flex;
         align-items: center;
-        gap: 10px;
+        justify-content: flex-start;
+        gap: 12px;
         background: #fff;
-        border: 1px solid #e5e7eb;
-        border-radius: 10px;
-        padding: 14px 16px;
+        border: 1px solid #e1e5ea;
+        border-radius: 8px;
+        padding: 14px 18px;
+        min-height: 68px;
+        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
     }
     .stat-icon {
-        width: 34px;
-        height: 34px;
+        width: 32px;
+        height: 32px;
         border-radius: 8px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 15px;
+        font-size: 14px;
+        font-weight: 700;
         flex-shrink: 0;
     }
-    .stat-icon.orange { background: #fef3c7; color: #b45309; }
-    .stat-icon.blue { background: #dbeafe; color: #1d4ed8; }
-    .stat-icon.green { background: #dcfce7; color: #15803d; }
-    .stat-icon.red { background: #fee2e2; color: #b91c1c; }
+    .stat-icon.orange { background: #FBFBD9; color: #E5E200; }
+    .stat-icon.blue { background: #DAE5FC; color: #054FE8; }
+    .stat-icon.green { background: #D9F2E3; color: #03A846; }
+    .stat-icon.red { background: #F2DAD9; color: #A60700; }
 
-    .stat-value { font-size: 18px; font-weight: 700; margin: 0; }
-    .stat-label { font-size: 11px; color: #6b7280; margin: 0; }
-    .stat-value.orange { color: #b45309; }
-    .stat-value.blue { color: #1d4ed8; }
-    .stat-value.green { color: #15803d; }
-    .stat-value.red { color: #b91c1c; }
+    .stat-label { font-size: 16px; margin: 0; font-weight: 700; }
+    .stat-card:nth-child(1) .stat-label { color: #E5E200; }
+    .stat-card:nth-child(2) .stat-label { color: #03A846; }
+    .stat-card:nth-child(3) .stat-label { color: #054FE8; }
+    .stat-card:nth-child(4) .stat-label { color: #A60700; }
 
     /* ---------- Layout and filters ---------- */
-    .layout { display: grid; grid-template-columns: 220px 1fr; gap: 20px; align-items: start; }
+    .layout { display: grid; grid-template-columns: 160px 1fr; gap: 18px; align-items: start; }
 
-    .filter-panel { background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 16px; }
-    .filter-group { margin-bottom: 16px; }
+    .filter-panel { background: #fff; border: 1px solid #e1e5ea; border-radius: 8px; padding: 12px 10px; box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05); }
+    .filter-group { margin-bottom: 14px; }
     .filter-group label {
         display: block;
-        font-size: 12px;
+        font-size: 11px;
         font-weight: 600;
         color: #374151;
-        margin-bottom: 6px;
+        margin-bottom: 5px;
     }
     .filter-group select {
         width: 100%;
-        padding: 8px 10px;
-        border: 1px solid #e5e7eb;
-        border-radius: 8px;
-        font-size: 13px;
+        padding: 8px 9px;
+        border: 1px solid #e1e5ea;
+        border-radius: 6px;
+        font-size: 10px;
     }
     .btn-reset {
         width: 100%;
-        padding: 9px;
+        padding: 7px;
         border: 1px solid #b91c1c;
         color: #b91c1c;
         background: #fff;
-        border-radius: 8px;
-        font-size: 13px;
+        border-radius: 5px;
+        font-size: 11px;
         font-weight: 700;
         cursor: pointer;
     }
 
     /* ---------- Table ---------- */
-    .table-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; overflow: hidden; }
+    .table-card { background: #fff; border: 1px solid #e1e5ea; border-radius: 8px; overflow: hidden; }
     .data-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-    .data-table thead tr { background: #fbe4e4; }
-    .data-table th { text-align: left; padding: 12px 16px; font-weight: 700; color: #374151; font-size: 12px; }
+    .data-table { table-layout: fixed; }
+    .data-table thead tr { background: #f4dddd; }
+    .data-table th { text-align: left; padding: 11px 12px; font-weight: 700; color: #1f2937; font-size: 11px; }
     .data-table td {
-        padding: 14px 16px;
+        padding: 11px 12px;
         border-top: 1px solid #f0f0f0;
         vertical-align: middle;
         color: #374151;
+        font-size: 11px;
     }
+    .data-table th:nth-child(1) { width: 34px; }
+    .data-table th:nth-child(2) { width: 24%; }
+    .data-table th:nth-child(3) { width: 15%; }
+    .data-table th:nth-child(4) { width: 14%; }
+    .data-table th:nth-child(5) { width: 14%; }
+    .data-table th:nth-child(6) { width: 13%; }
+    .data-table th:nth-child(7) { width: 17%; }
     .data-table input[type="checkbox"] { width: 15px; height: 15px; accent-color: #7f1d1d; }
 
     .file-cell { display: flex; align-items: center; gap: 8px; }
-    .file-icon { font-size: 18px; }
-    .file-name { font-weight: 700; font-size: 13px; color: #1a1a1a; }
-    .file-size { font-size: 11px; color: #9ca3af; }
-    .text-sub { font-size: 11px; color: #9ca3af; }
+    .file-link { color: inherit; text-decoration: none; }
+    .file-link:hover .file-name { color: #A60700; text-decoration: underline; }
+    .file-icon { width: 17px; height: 20px; object-fit: contain; }
+    .file-name { font-weight: 700; font-size: 11px; color: #1a1a1a; }
+    .file-size { font-size: 9px; color: #9ca3af; }
+    .text-sub { font-size: 9px; color: #9ca3af; }
 
     /* ---------- Status pills ---------- */
     .pill {
         display: inline-block;
-        padding: 4px 12px;
-        border-radius: 6px;
-        font-size: 12px;
+        padding: 4px 10px;
+        border-radius: 5px;
+        font-size: 10px;
         font-weight: 700;
         border: 1px solid transparent;
     }
-    .pill-review { background: #fff; color: #1d4ed8; border-color: #bfdbfe; }
-    .pill-approved { background: #dcfce7; color: #15803d; border-color: #bbf7d0; }
+    .pill-review { background: #fff; color: #165be5; border-color: #5d8cff; }
+    .pill-approved { background: #d9f3e5; color: #079447; border-color: #a7e5c1; }
     .pill-revision { background: #fee2e2; color: #b91c1c; border-color: #fecaca; }
-    .pill-submitted { background: #fef3c7; color: #b45309; border-color: #fde68a; }
+    .pill-submitted { background: #fffdf0; color: #b08a00; border-color: #e6c928; }
 
-    .btn-icon { border: none; background: none; cursor: pointer; font-size: 16px; color: #6b7280; }
 </style>
 
 
@@ -138,41 +151,37 @@ Monitor submission progress and document status
     <!-- Stat cards -->
     <div class="stat-grid">
         <div class="stat-card">
-            <span class="stat-icon orange">&#128196;</span>
+            <span id="stat-total-submitted" class="stat-icon orange">
+                {{ stats.total_submitted }}
+            </span>
             <div>
-                <p id="stat-total-submitted" class="stat-value orange">
-                    {{ stats.total_submitted }}
-                </p>
                 <p class="stat-label">Total Submitted</p>
             </div>
         </div>
 
         <div class="stat-card">
-            <span class="stat-icon blue">&#128257;</span>
+            <span id="stat-approved" class="stat-icon green">
+                {{ stats.approved }}
+            </span>
             <div>
-                <p id="stat-under-review" class="stat-value blue">
-                    {{ stats.under_review }}
-                </p>
-                <p class="stat-label">Under Review</p>
-            </div>
-        </div>
-
-        <div class="stat-card">
-            <span class="stat-icon green">&#9989;</span>
-            <div>
-                <p id="stat-approved" class="stat-value green">
-                    {{ stats.approved }}
-                </p>
                 <p class="stat-label">Approved</p>
             </div>
         </div>
 
         <div class="stat-card">
-            <span class="stat-icon red">&#128257;</span>
+            <span id="stat-under-review" class="stat-icon blue">
+                {{ stats.under_review }}
+            </span>
             <div>
-                <p id="stat-returned" class="stat-value red">
-                    {{ stats.returned }}
-                </p>
+                <p class="stat-label">Under Review</p>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <span id="stat-returned" class="stat-icon red">
+                {{ stats.returned }}
+            </span>
+            <div>
                 <p class="stat-label">Returned</p>
             </div>
         </div>
@@ -258,7 +267,6 @@ Monitor submission progress and document status
                         <th>Deadline</th>
                         <th>Status</th>
                         <th>Reviewed by</th>
-                        <th>Action</th>
                     </tr>
                 </thead>
 

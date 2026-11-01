@@ -27,40 +27,31 @@
 
   .adf-back {
     display: inline-flex; align-items: center; gap: 6px;
-    font-size: 13px; font-weight: 600; color: var(--maroon);
-    background: var(--card); border: 1px solid var(--line);
-    border-radius: 8px; padding: 8px 14px; text-decoration: none;
-    margin-bottom: 18px;
+    font-size: 13px; font-weight: 700; color: #fff;
+    background: #b40000; border: 1px solid #b40000;
+    border-radius: 5px; padding: 7px 22px; text-decoration: none;
+    margin-bottom: 14px;
   }
-  .adf-back:hover { background: #fbeeee; }
+  .adf-back:hover { background: #920000; border-color: #920000; }
+  .adf-back img { width: 16px; height: 16px; }
 
   .adf-title-row { margin-bottom: 16px; }
   .adf-title-row h1 { font-size: 22px; font-weight: 700; margin: 0; }
+  .adf-title-row .uploaded-by { color: #9a9290; font-size: 12px; margin-top: 2px; }
 
   .adf-grid { display: grid; grid-template-columns: 1fr 320px; gap: 24px; align-items: start; }
 
   /* Viewer */
-  .adf-viewer { background: var(--card); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
-  .adf-viewer-toolbar {
-    display: flex; align-items: center; justify-content: center; gap: 28px;
-    padding: 12px 16px; border-bottom: 1px solid var(--line);
-    font-size: 12.5px; color: var(--muted);
+  .adf-viewer { background: var(--card); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+  .adf-viewer-header {
+    display: flex; align-items: center; justify-content: space-between; gap: 16px;
+    padding: 15px 18px; border-bottom: 1px solid var(--line);
   }
-  .adf-viewer-toolbar .tool { display: flex; flex-direction: column; align-items: center; gap: 3px; cursor: default; }
-  .adf-viewer-toolbar .tool-icon { font-size: 14px; }
-
-  .adf-viewer-body { display: flex; background: #efeae6; min-height: 560px; }
-  .adf-thumbrail {
-    width: 90px; flex-shrink: 0; background: #efeae6; padding: 12px 8px;
-    display: flex; flex-direction: column; gap: 10px; align-items: center;
-    border-right: 1px solid var(--line); overflow-y: auto; max-height: 640px;
-  }
-  .adf-thumb img { width: 100%; border: 2px solid transparent; border-radius: 2px; background: #fff; display: block; }
-  .adf-thumb.active img { border-color: var(--maroon); }
-  .adf-thumb .num { text-align: center; font-size: 11px; color: var(--muted); margin-top: 3px; }
-
-  .adf-page-area { flex: 1; display: flex; align-items: flex-start; justify-content: center; padding: 20px; overflow: auto; }
-  .adf-page-area embed { width: 100%; max-width: 560px; height: 640px; border: none; background: #fff; box-shadow: 0 1px 6px rgba(0,0,0,.08); }
+  .adf-viewer-name { color: #716b69; font-size: 15px; font-weight: 500; }
+  .adf-viewer-date { color: #aaa3a1; font-size: 12px; white-space: nowrap; }
+  .adf-viewer-body { background: #5b5b5b; min-height: 560px; }
+  .adf-page-area { height: 640px; display: flex; align-items: stretch; justify-content: center; overflow: auto; }
+  .adf-page-area embed { width: 100%; height: 100%; border: none; background: #fff; }
 
   /* Side panel */
   .adf-panel { display: flex; flex-direction: column; gap: 16px; }
@@ -106,35 +97,34 @@
 
 <div class="adf-wrap">
 
+  <a href="{% url 'admin_staff_portal:document_repo' %}" class="adf-back">
+    <img src="{% static 'images/Back Arrow Left.svg' %}" alt="">
+    Back
+  </a>
+
   <div class="adf-crumbs">
     <a href="{% url 'admin_staff_portal:document_repo' %}">Documents</a>
     <span class="sep">›</span>
-    <span class="current">{{ document.document_file.name }}</span>
+    <span class="current">{{ document.requirement.requirement_title }}</span>
   </div>
-
-  <a href="{% url 'admin_staff_portal:document_repo' %}" class="adf-back">← Back</a>
 
   <div class="adf-title-row">
     <h1>{{ document.requirement.requirement_title }}</h1>
+    <div class="uploaded-by">Uploaded by {{ document.faculty.get_full_name }}</div>
   </div>
 
   <div class="adf-grid">
 
     <div class="adf-viewer">
-      <div class="adf-viewer-toolbar">
-        <div class="tool"><span class="tool-icon">−</span> Zoom out</div>
-        <div class="tool"><span class="tool-icon">+</span> Zoom in</div>
-        <div class="tool"><span class="tool-icon">⤢</span> Expand</div>
+      <div class="adf-viewer-header">
+        <span class="adf-viewer-name">{{ document.document_file.name|cut:"submissions/" }}</span>
+        <span class="adf-viewer-date">
+          Approved on {{ document.approved_at|display_date:request.user }}; {{ document.approved_at|display_time:request.user }}
+        </span>
       </div>
       <div class="adf-viewer-body">
-        <div class="adf-thumbrail">
-          <div class="adf-thumb active">
-            <img src="{{ document.document_file.url }}" alt="Page 1">
-            <div class="num">1</div>
-          </div>
-        </div>
         <div class="adf-page-area">
-          <embed src="{{ document.document_file.url }}" type="application/pdf" />
+          <embed src="{{ document.document_file.url }}#toolbar=0&navpanes=0&scrollbar=0" type="application/pdf" />
         </div>
       </div>
     </div>
