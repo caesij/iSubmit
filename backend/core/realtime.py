@@ -13,6 +13,7 @@ def send_to_user(user, event, data=None):
         },
     )
 
+
 def send_to_group(group_name, event, data=None):
     channel_layer = get_channel_layer()
 

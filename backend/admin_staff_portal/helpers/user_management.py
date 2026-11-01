@@ -25,6 +25,7 @@ def get_form_template(target_role):
     return 'admin_staff_portal/core/user_mgmt/user_form_staff.html'
 
 
+# Checks user permissions to manage target user
 def can_manage_target(request_user, target_user):
     if request_user.is_staff_role:
         return target_user.role == User.Role.FACULTY
