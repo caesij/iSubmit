@@ -2,15 +2,19 @@ from django.contrib import messages
 from django.db import transaction
 from django.http import HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
 from django.views.decorators.http import require_http_methods
 
 from accounts.decorators import faculty
 
 from faculty_portal.helpers.submission_bin import (
     UPLOAD_PAGE,
+    cancel_extraction,
     delete_file_after_commit,
+    dispatch_pending_extractions,
     load_upload_rows,
     process_submission,
+    retry_extraction,
     save_draft_form
 )
 
@@ -57,7 +61,8 @@ def attach_document(request, requirement_id):
     requirement = get_object_or_404(
         Requirement,
         pk=requirement_id,
-        status=Requirement.ReqStatus.ACTIVE
+        status=Requirement.ReqStatus.ACTIVE,
+        deadline__gt=timezone.now(),
     )
 
     allowed_types = (Requirement.AssignedFacultyType.ALL, request.user.faculty_type)
@@ -80,7 +85,8 @@ def replace_document(request, document_id):
     draft = get_object_or_404(
         DraftUpload.objects.select_related('requirement'),
         pk=document_id,
-        faculty=request.user
+        faculty=request.user,
+        requirement__deadline__gt=timezone.now(),
     )
 
     return save_draft_form(
@@ -94,7 +100,12 @@ def replace_document(request, document_id):
 @faculty
 @require_http_methods(['POST'])
 def remove_document(request, document_id):
-    draft = get_object_or_404(DraftUpload, pk=document_id, faculty=request.user)
+    draft = get_object_or_404(
+        DraftUpload,
+        pk=document_id,
+        faculty=request.user,
+        requirement__deadline__gt=timezone.now(),
+    )
 
     if not draft.draft_file:
         messages.info(request, 'There is no file to remove.')
@@ -102,14 +113,38 @@ def remove_document(request, document_id):
 
     old_file_name = draft.draft_file.name
     old_storage = draft.draft_file.storage
+    metadata = DocumentMetadata.objects.filter(draft=draft).first()
+    if metadata:
+        cancel_extraction(metadata.pk, metadata.text_extraction_request_id)
 
     with transaction.atomic():
-        draft.draft_file = ''
-        draft.save(update_fields=['draft_file', 'draft_updated_at'])
         DocumentMetadata.objects.filter(draft=draft).delete()
         delete_file_after_commit(old_storage, old_file_name)
+        draft.delete()
+        transaction.on_commit(
+            lambda: dispatch_pending_extractions(request.user.pk)
+        )
 
     messages.success(request, 'File removed successfully.')
+    return redirect(UPLOAD_PAGE)
+
+
+@faculty
+@require_http_methods(['POST'])
+def retry_document_extraction(request, document_id):
+    draft = get_object_or_404(
+        DraftUpload.objects.select_related('requirement'),
+        pk=document_id,
+        faculty=request.user,
+        requirement__deadline__gt=timezone.now(),
+    )
+
+    if not draft.draft_file:
+        messages.error(request, 'Upload a file before retrying text extraction.')
+        return redirect(UPLOAD_PAGE)
+
+    retry_extraction(draft)
+    messages.success(request, 'Text extraction was queued again.')
     return redirect(UPLOAD_PAGE)
 
 
@@ -120,7 +155,8 @@ def resubmit_document(request, submission_id):
         DocumentSubmission.objects.select_related('requirement'),
         pk=submission_id,
         faculty=request.user,
-        status=DocumentSubmission.SubmissionStatus.NEEDS_REVISION
+        status=DocumentSubmission.SubmissionStatus.NEEDS_REVISION,
+        requirement__deadline__gt=timezone.now(),
     )
 
     draft, _ = DraftUpload.objects.select_related('requirement').get_or_create(
@@ -164,9 +200,17 @@ def submission_complete(request):
 @faculty
 @require_http_methods(['GET'])
 def view_document(request, document_id):
-    uploaded_document = get_object_or_404(DraftUpload, pk=document_id, faculty=request.user)
+    uploaded_document = get_object_or_404(
+        DraftUpload.objects.select_related('requirement', 'document_metadata'),
+        pk=document_id,
+        faculty=request.user,
+        requirement__deadline__gt=timezone.now(),
+    )
     
-    context = {'uploaded_document': uploaded_document}
+    context = {
+        'uploaded_document': uploaded_document,
+        'metadata': getattr(uploaded_document, 'document_metadata', None),
+    }
 
     return render(
         request,

@@ -118,6 +118,24 @@
           <div class="fdv-detail-row"><span class="dot"></span><div><span class="label">File Size</span><span class="value">{{ uploaded_document.draft_file.size|filesizeformat }}</span></div></div>
           <div class="fdv-detail-row"><span class="dot"></span><div><span class="label">Uploaded on</span><span class="value">{{ uploaded_document.draft_updated_at|display_date:request.user }} {{ uploaded_document.draft_updated_at|display_time:request.user }}</span></div></div>
         </div>
+        {% if metadata and metadata.requirement.validation_enabled %}
+          <div class="fdv-card">
+            <h2>Validation</h2>
+            <div class="fdv-detail-row"><span class="dot"></span><div><span class="label">Processing</span><span class="value">{{ metadata.get_validation_status_display }}</span></div></div>
+            {% for name, field in metadata.validation_result.fields.items %}
+              <div class="fdv-detail-row"><span class="dot"></span><div><span class="label">{{ name|title }}</span><span class="value">{% if field.found %}Found{% else %}Not found{% endif %}</span></div></div>
+              {% for candidate in field.candidates %}
+                {% if candidate.reliable %}
+                  <div>Possible match: {{ candidate.text }} - Confidence: {{ candidate.confidence|floatformat:2 }}</div>
+                {% endif %}
+              {% endfor %}
+            {% endfor %}
+            {% for item in metadata.validation_result.recheck %}
+              <div>{{ item.field|title }}: {{ item.reason }}</div>
+            {% endfor %}
+            {% if metadata.validation_error %}<div>{{ metadata.validation_error }}</div>{% endif %}
+          </div>
+        {% endif %}
       </aside>
     </div>
   {% else %}

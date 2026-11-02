@@ -307,7 +307,6 @@
 <script>
 document.addEventListener("DOMContentLoaded", function () {
     const selectAll = document.getElementById("select-all-requirements");
-    const uploadLoading = document.getElementById("upload-loading");
     const tableBody = document.getElementById("submission-bin-body");
     const removeConfirmation = document.getElementById("remove-file-confirmation");
     const cancelRemoveFile = document.getElementById("cancel-remove-file");
@@ -316,7 +315,9 @@ document.addEventListener("DOMContentLoaded", function () {
     const readinessMessage = document.getElementById("submission-readiness");
     let refreshController = null;
     let pollTimer = null;
+    let deadlineTimer = null;
     let pendingRemoveForm = null;
+    let activeUploadRow = null;
 
     function getCheckboxes() {
         return Array.from(
@@ -411,6 +412,34 @@ document.addEventListener("DOMContentLoaded", function () {
         }, 2500);
     }
 
+    function scheduleDeadlineRefresh() {
+        if (deadlineTimer) {
+            clearTimeout(deadlineTimer);
+            deadlineTimer = null;
+        }
+
+        const deadlines = Array.from(
+            document.querySelectorAll(
+                "#submission-bin-body tr[data-requirement-id][data-deadline]"
+            )
+        )
+            .map(function (row) {
+                return Date.parse(row.dataset.deadline);
+            })
+            .filter(function (deadline) {
+                return Number.isFinite(deadline);
+            });
+
+        if (!deadlines.length) return;
+
+        const nextDeadline = Math.min(...deadlines);
+        deadlineTimer = setTimeout(async function () {
+            deadlineTimer = null;
+            await refreshSubmissionBin();
+            scheduleDeadlineRefresh();
+        }, Math.max(1000, nextDeadline - Date.now() + 50));
+    }
+
     function closeRemoveConfirmation() {
         pendingRemoveForm = null;
         removeConfirmation.hidden = true;
@@ -444,6 +473,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
     async function refreshSubmissionBin() {
         if (!tableBody) return;
+        if (!removeConfirmation.hidden) {
+            return;
+        }
 
         const selectedValues = new Set(
             getCheckboxes()
@@ -467,12 +499,66 @@ document.addEventListener("DOMContentLoaded", function () {
             if (!response.ok) throw new Error("We couldn't refresh your submission list.");
 
             const html = await response.text();
-            tableBody.innerHTML = html;
+            const refreshedBody = document.createElement("tbody");
+            refreshedBody.innerHTML = html;
+            const refreshedRows = new Map(
+                Array.from(refreshedBody.querySelectorAll("tr[data-requirement-id]"))
+                    .map(function (row) {
+                        return [row.dataset.requirementId, row];
+                    })
+            );
+
+            tableBody.querySelectorAll("tr[data-requirement-id]").forEach(function (row) {
+                const refreshedRow = refreshedRows.get(row.dataset.requirementId);
+                const hasActiveFile = Array.from(
+                    row.querySelectorAll('input[type="file"]')
+                ).some(function (input) {
+                    return input.files && input.files.length > 0;
+                });
+                const hasFocusedControl = row.contains(document.activeElement);
+                if (
+                    refreshedRow &&
+                    !hasActiveFile &&
+                    !hasFocusedControl &&
+                    row !== activeUploadRow &&
+                    !row.querySelector("details[open]")
+                ) {
+                    row.replaceWith(refreshedRow.cloneNode(true));
+                } else if (
+                    !refreshedRow &&
+                    !hasActiveFile &&
+                    !hasFocusedControl &&
+                    row !== activeUploadRow &&
+                    !row.querySelector("details[open]")
+                ) {
+                    row.remove();
+                }
+            });
+
+            const existingIds = new Set(
+                Array.from(
+                    tableBody.querySelectorAll("tr[data-requirement-id]")
+                ).map(function (row) {
+                    return row.dataset.requirementId;
+                })
+            );
+            refreshedRows.forEach(function (row, requirementId) {
+                if (!existingIds.has(requirementId)) {
+                    tableBody.appendChild(row.cloneNode(true));
+                }
+            });
+            tableBody.querySelectorAll("tr:not([data-requirement-id])").forEach(function (row) {
+                row.remove();
+            });
+            if (!refreshedRows.size && !tableBody.querySelector("tr")) {
+                tableBody.innerHTML = html;
+            }
 
             getCheckboxes().forEach(function (checkbox) {
                 checkbox.checked = selectedValues.has(checkbox.value);
             });
             syncSelectAll();
+            scheduleDeadlineRefresh();
         } catch (error) {
             if (error.name !== "AbortError") {
                 console.error("Submission Bin status refresh failed:", error);
@@ -482,17 +568,35 @@ document.addEventListener("DOMContentLoaded", function () {
 
     document.addEventListener("change", function (event) {
         const target = event.target;
-        if (
-            target.matches('input[type="file"]') &&
-            target.files.length > 0 &&
-            target.form
-        ) {
-            uploadLoading.hidden = false;
+        if (target.matches("#submission-bin-body input[type='file']")) {
+            setTimeout(function () {
+                activeUploadRow = null;
+            }, 0);
         }
         if (target.matches("#submission-bin-body .requirement-checkbox")) {
             syncSelectAll();
         }
     }, true);
+
+    document.addEventListener("pointerdown", function (event) {
+        const uploadLabel = event.target.closest(
+            "#submission-bin-body label[for^='upload-file-'], " +
+            "#submission-bin-body label[for^='replace-'], " +
+            "#submission-bin-body label[for^='resubmit-']"
+        );
+        if (uploadLabel) {
+            activeUploadRow = uploadLabel.closest("tr[data-requirement-id]");
+        }
+    }, true);
+
+    window.addEventListener("focus", function () {
+        if (
+            activeUploadRow &&
+            !activeUploadRow.querySelector('input[type="file"]')?.files?.length
+        ) {
+            activeUploadRow = null;
+        }
+    });
 
     if (selectAll) {
         selectAll.addEventListener("change", function () {
@@ -510,6 +614,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     syncSelectAll();
     scheduleStatusPolling();
+    scheduleDeadlineRefresh();
 });
 </script>
 

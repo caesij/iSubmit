@@ -112,13 +112,13 @@ def add_requirement_to_bulk(request):
             requirement_title = (form.cleaned_data['requirement_title'])
             academic_year = (form.cleaned_data['academic_year'])
             semester = (form.cleaned_data['semester'])
-            instructions = (form.cleaned_data['instructions'])
+            validation_instructions = form.cleaned_data['validation_instructions']
 
             staged_key = (
                 requirement_title.casefold(),
                 academic_year,
                 semester,
-                instructions.casefold() if instructions else ''
+                validation_instructions.casefold() if validation_instructions else '',
             )
 
             existing_keys = {
@@ -126,7 +126,7 @@ def add_requirement_to_bulk(request):
                     item['requirement_title'].casefold(),
                     item['academic_year'],
                     item['semester'],
-                    item.get('instructions', '').casefold()
+                    item.get('validation_instructions', '').casefold(),
                 )
                 for item in bulk_requirements
             }
@@ -148,7 +148,8 @@ def add_requirement_to_bulk(request):
                     'status': form.cleaned_data['status'],
                     'deadline': deadline.strftime('%Y-%m-%dT%H:%M'),
                     'text_processing_mode': form.cleaned_data['text_processing_mode'],
-                    'instructions': instructions,
+                    'validation_enabled': form.cleaned_data['validation_enabled'],
+                    'validation_instructions': validation_instructions,
                 })
 
                 request.session['bulk_requirements'] = (bulk_requirements)
@@ -208,7 +209,8 @@ def post_bulk_requirements(request):
                         'text_processing_mode',
                         'OCR' if item.get('ocr_enabled') else 'NONE'
                     ),
-                    'instructions': item.get('instructions', '')
+                    'validation_enabled': item.get('validation_enabled', False),
+                    'validation_instructions': item.get('validation_instructions', ''),
                 })
 
                 if not form.is_valid():

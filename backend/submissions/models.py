@@ -50,7 +50,8 @@ class Requirement(models.Model):
         default=TextProcessingMode.NONE
     )
 
-    instructions = models.TextField(blank=True)
+    validation_enabled = models.BooleanField(default=False)
+    validation_instructions = models.TextField(blank=True)
 
     assigned_to = models.CharField(
         max_length=20,
@@ -291,6 +292,13 @@ class DocumentMetadata(models.Model):
         COMPLETED = 'COMPLETED', 'Completed'
         FAILED = 'FAILED', 'Failed'
 
+    class ValidationStatus(models.TextChoices):
+        NOT_REQUIRED = 'NOT_REQUIRED', 'Not Required'
+        PENDING = 'PENDING', 'Pending'
+        PROCESSING = 'PROCESSING', 'Processing'
+        COMPLETED = 'COMPLETED', 'Completed'
+        FAILED = 'FAILED', 'Failed'
+
     id = models.AutoField(primary_key=True)
 
     faculty = models.ForeignKey(
@@ -344,6 +352,16 @@ class DocumentMetadata(models.Model):
     )
 
     text_extraction_completed_at = models.DateTimeField(null=True, blank=True)
+
+    validation_status = models.CharField(
+        max_length=20,
+        choices=ValidationStatus.choices,
+        default=ValidationStatus.NOT_REQUIRED,
+        db_index=True,
+    )
+    validation_result = models.JSONField(default=dict, blank=True)
+    validation_error = models.TextField(blank=True)
+    validation_completed_at = models.DateTimeField(null=True, blank=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

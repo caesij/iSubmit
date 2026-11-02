@@ -65,7 +65,7 @@ def admin_dashboard_view(request):
         context
     )
     
-    
+
 @staff
 @require_http_methods(['GET'])
 def staff_dashboard_data_view(request):

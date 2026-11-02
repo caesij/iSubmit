@@ -24,7 +24,38 @@ def _extract_pdf(file_path):
     import fitz
 
     with fitz.open(file_path) as document:
-        text = '\n'.join(page.get_text('text') for page in document).strip()
+        lines = []
+        for page in document:
+            entries = []
+            for block in page.get_text('dict').get('blocks', []):
+                for block_line in block.get('lines', []):
+                    spans = block_line.get('spans', [])
+                    if not spans:
+                        continue
+                    text = ''.join(span.get('text', '') for span in spans).strip()
+                    if text:
+                        x0, y0, _x1, _y1 = block_line['bbox']
+                        entries.append((round(y0, 1), x0, text))
+
+            entries.sort(key=lambda entry: (entry[0], entry[1]))
+            grouped = []
+            for top, left, text in entries:
+                if not grouped or top - grouped[-1][0] > 4:
+                    grouped.append([top, [(left, text)]])
+                else:
+                    grouped[-1][1].append((left, text))
+
+            for _top, parts in grouped:
+                parts.sort()
+                line = []
+                cursor = 0
+                for left, text in parts:
+                    gap = max(1, round((left - cursor) / 5)) if line else 0
+                    line.append(' ' * gap + text)
+                    cursor = left + len(text) * 5
+                lines.append(''.join(line).rstrip())
+
+        text = '\n'.join(lines).strip()
         if not text:
             raise DocumentTextExtractionError(
                 'We could not find selectable text in this PDF. '

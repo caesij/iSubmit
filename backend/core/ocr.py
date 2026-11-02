@@ -12,6 +12,36 @@ from core.ocr_preprocessing import preprocess_image
 ocr = None
 
 
+def _layout_lines(texts, polygons):
+    entries = []
+    for text, polygon in zip(texts, polygons):
+        if not text or not polygon:
+            continue
+        x_values = [point[0] for point in polygon]
+        y_values = [point[1] for point in polygon]
+        entries.append((min(y_values), min(x_values), max(x_values), text.strip()))
+
+    entries.sort(key=lambda item: (item[0], item[1]))
+    lines = []
+    for top, left, right, text in entries:
+        if not lines or top - lines[-1]['top'] > 24:
+            lines.append({'top': top, 'parts': [(left, right, text)]})
+        else:
+            lines[-1]['parts'].append((left, right, text))
+
+    formatted = []
+    for line in lines:
+        parts = sorted(line['parts'])
+        output = []
+        cursor = 0
+        for left, right, text in parts:
+            gap = max(1, round((left - cursor) / 8)) if output else 0
+            output.append(' ' * gap + text)
+            cursor = right
+        formatted.append(''.join(output).rstrip())
+    return formatted
+
+
 def _get_ocr_engine():
     global ocr
     if ocr is None:
@@ -46,7 +76,7 @@ def extract_lines_and_page_count_from_pdf(pdf_path):
         try:
             for page_number, page in enumerate(document, start=1):
                 pixmap = page.get_pixmap(
-                    dpi=200,
+                    dpi=500,
                     colorspace=pymupdf.csRGB,
                     alpha=False,
                 )
@@ -63,11 +93,15 @@ def extract_lines_and_page_count_from_pdf(pdf_path):
                 for result in results:
                     data = result.json.get('res', {})
                     page_scores = data.get('rec_scores', [])
-                    for index, text in enumerate(data.get('rec_texts', [])):
-                        line = str(text).strip()
-                        if line:
-                            lines.append(line)
-                            scores.append(page_scores[index] if index < len(page_scores) else None)
+                    page_lines = _layout_lines(
+                        data.get('rec_texts', []),
+                        data.get('rec_polys', data.get('dt_polys', [])),
+                    )
+                    lines.extend(page_lines)
+                    scores.extend(
+                        page_scores[index] if index < len(page_scores) else None
+                        for index in range(len(page_lines))
+                    )
 
                 del results, processed, image, pixmap
                 gc.collect()

@@ -23,10 +23,10 @@ from accounts.models import StaffPermission
 from faculty_portal.realtime import (
     refresh_faculty_dashboard,
     refresh_faculty_submission_bin,
-    refresh_faculty_my_submissions,
+    refresh_faculty_my_submissions
 )
 
-TEMPLATE_DIR = 'admin_staff_portal/core/submissions/faculty_submission/'
+TEMPLATE_DIR = 'admin_staff_portal/core/submissions/faculty_submission'
 
 User = get_user_model()
 

@@ -28,7 +28,8 @@ class RequirementForm(forms.ModelForm):
             'status',
             'deadline',
             'text_processing_mode',
-            'instructions'
+            'validation_enabled',
+            'validation_instructions',
         ]
 
         widgets = {
@@ -45,8 +46,11 @@ class RequirementForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['instructions'].required = False
-        self.fields['instructions'].label = 'Instructions (Optional)'
+        self.fields['validation_enabled'].label = 'Enable NLP validation'
+        self.fields['validation_instructions'].label = 'Required validation fields'
+        self.fields['validation_instructions'].help_text = (
+            'One per line using only: Field name: required'
+        )
         self.fields['deadline'].input_formats = ['%Y-%m-%dT%H:%M']
         self.fields['requirement_title'].label = 'Requirement Title'
         self.fields['assigned_to'].label = 'Assign to'
@@ -82,8 +86,17 @@ class RequirementForm(forms.ModelForm):
             raise ValidationError('Please enter a category.')
         return category
 
-    def clean_instructions(self):
-        instructions = self.cleaned_data.get('instructions', '').strip()
+    def clean_validation_instructions(self):
+        from core.document_validation import parse_validation_instructions
+
+        instructions = self.cleaned_data.get('validation_instructions', '').strip()
+        fields, errors = parse_validation_instructions(instructions)
+        if errors:
+            raise ValidationError(errors)
+        if self.cleaned_data.get('validation_enabled') and not fields:
+            raise ValidationError(
+                'Add at least one required field when NLP validation is enabled.'
+            )
         return instructions
 
     def clean_academic_year(self):
