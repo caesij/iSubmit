@@ -10,6 +10,7 @@ from django.utils import timezone
 
 from core.text_extraction_digi_docs import DocumentTextExtractionError, extract_text
 from core.post_correction import correct_lines
+from core.document_validation import DocumentValidationError, validate_document_text
 from submissions.models import DocumentSubmission, DocumentMetadata
 from admin_staff_portal.realtime import refresh_document_surfaces
 
@@ -73,11 +74,17 @@ def process_document_extraction(self, metadata_id, request_id):
             return {'status': 'metadata_missing'}
         if metadata.text_extraction_request_id != request_id:
             return {'status': 'stale_request'}
-        if metadata.text_extraction_status != DocumentMetadata.TextExtractionStatus.PENDING:
+        if metadata.text_extraction_status not in (
+            DocumentMetadata.TextExtractionStatus.PENDING,
+            DocumentMetadata.TextExtractionStatus.PROCESSING,
+        ):
             return {'status': 'not_pending'}
         if not metadata.draft_id or not metadata.draft or not metadata.draft.draft_file:
             return {'status': 'draft_missing'}
-        if metadata.requirement.text_processing_mode == metadata.requirement.TextProcessingMode.NONE:
+        if (
+            metadata.requirement.text_processing_mode == metadata.requirement.TextProcessingMode.NONE
+            and not metadata.requirement.validation_enabled
+        ):
             metadata.text_extraction_status = DocumentMetadata.TextExtractionStatus.NOT_REQUIRED
             metadata.text_extraction_error = ''
             metadata.save(update_fields=['text_extraction_status', 'text_extraction_error', 'updated_at'])
@@ -102,10 +109,9 @@ def process_document_extraction(self, metadata_id, request_id):
             return {'status': 'unsupported_file'}
 
         faculty_id = metadata.faculty_id
-        metadata.text_extraction_status = DocumentMetadata.TextExtractionStatus.PROCESSING
         metadata.text_extraction_error = ''
         metadata.text_extraction_completed_at = None
-        metadata.save(update_fields=['text_extraction_status', 'text_extraction_error', 'text_extraction_completed_at', 'updated_at'])
+        metadata.save(update_fields=['text_extraction_error', 'text_extraction_completed_at', 'updated_at'])
 
     try:
         draft = metadata.draft
@@ -149,6 +155,12 @@ def process_document_extraction(self, metadata_id, request_id):
                 ]
             )
 
+        if current.requirement.validation_enabled:
+            process_document_validation.delay(
+                str(current.pk),
+                str(current.text_extraction_request_id),
+            )
+
         return {'status': 'completed', 'page_count': page_count}
 
     except Exception as exc:
@@ -181,7 +193,98 @@ def process_document_extraction(self, metadata_id, request_id):
         return {'status': 'failed'}
 
     finally:
+        try:
+            from faculty_portal.helpers.submission_bin import (
+                dispatch_pending_extractions,
+            )
+            dispatch_pending_extractions(faculty_id)
+        except Exception:
+            logger.exception('Could not advance the extraction queue.')
         _refresh_faculty_submission_bin(faculty_id)
+
+
+@shared_task(bind=True, name='submissions.process_document_validation', acks_late=True)
+def process_document_validation(self, metadata_id, request_id):
+    try:
+        request_id = int(request_id)
+        if request_id < 1:
+            raise ValueError
+    except (TypeError, ValueError, OverflowError):
+        logger.warning('Ignoring validation task with invalid request identifier.')
+        return {'status': 'invalid_request'}
+
+    with transaction.atomic():
+        metadata = (
+            DocumentMetadata.objects
+            .select_for_update()
+            .select_related('requirement')
+            .filter(pk=metadata_id, text_extraction_request_id=request_id)
+            .first()
+        )
+        if not metadata:
+            return {'status': 'stale_request'}
+        if not metadata.requirement.validation_enabled:
+            metadata.validation_status = DocumentMetadata.ValidationStatus.NOT_REQUIRED
+            metadata.validation_result = {}
+            metadata.validation_error = ''
+            metadata.save(update_fields=[
+                'validation_status', 'validation_result', 'validation_error', 'updated_at',
+            ])
+            return {'status': 'not_required'}
+        if metadata.text_extraction_status != DocumentMetadata.TextExtractionStatus.COMPLETED:
+            return {'status': 'text_not_ready'}
+
+        metadata.validation_status = DocumentMetadata.ValidationStatus.PROCESSING
+        metadata.validation_error = ''
+        metadata.save(update_fields=['validation_status', 'validation_error', 'updated_at'])
+
+    try:
+        result = validate_document_text(
+            metadata.extracted_text,
+            metadata.requirement.validation_instructions,
+        )
+        with transaction.atomic():
+            current = (
+                DocumentMetadata.objects
+                .select_for_update()
+                .filter(pk=metadata_id, text_extraction_request_id=request_id)
+                .first()
+            )
+            if not current or current.validation_status != DocumentMetadata.ValidationStatus.PROCESSING:
+                return {'status': 'stale_result_discarded'}
+            current.validation_status = DocumentMetadata.ValidationStatus.COMPLETED
+            current.validation_result = result
+            current.validation_error = ''
+            current.validation_completed_at = timezone.now()
+            current.save(update_fields=[
+                'validation_status', 'validation_result', 'validation_error',
+                'validation_completed_at', 'updated_at',
+            ])
+        _refresh_faculty_submission_bin(metadata.faculty_id)
+        return {'status': 'completed'}
+    except Exception as exc:
+        logger.exception('Document validation failed for metadata record %s.', metadata_id)
+        with transaction.atomic():
+            current = (
+                DocumentMetadata.objects
+                .select_for_update()
+                .filter(pk=metadata_id, text_extraction_request_id=request_id)
+                .first()
+            )
+            if current:
+                current.validation_status = DocumentMetadata.ValidationStatus.FAILED
+                current.validation_error = (
+                    str(exc)
+                    if isinstance(exc, DocumentValidationError)
+                    else 'We could not validate this document. Please re-check it manually.'
+                )
+                current.validation_completed_at = timezone.now()
+                current.save(update_fields=[
+                    'validation_status', 'validation_error',
+                    'validation_completed_at', 'updated_at',
+                ])
+        _refresh_faculty_submission_bin(metadata.faculty_id)
+        return {'status': 'failed'}
         
 
 @shared_task(name='submissions.delete_expired_archived_documents', ignore_result=True)

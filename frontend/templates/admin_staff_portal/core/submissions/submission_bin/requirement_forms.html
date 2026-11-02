@@ -175,10 +175,17 @@
                     {% for error in form.academic_year.errors %}<span class="field-error">{{ error }}</span>{% endfor %}
                 </div>
 
-                <div class="requirement-field{% if form.instructions.errors %} has-error{% endif %}">
-                    {{ form.instructions.label_tag }}
-                    {{ form.instructions }}
-                    {% for error in form.instructions.errors %}<span class="field-error">{{ error }}</span>{% endfor %}
+                <div class="requirement-field{% if form.validation_enabled.errors %} has-error{% endif %}">
+                    {{ form.validation_enabled }}
+                    {{ form.validation_enabled.label_tag }}
+                    {% for error in form.validation_enabled.errors %}<span class="field-error">{{ error }}</span>{% endfor %}
+                </div>
+
+                <div class="requirement-field{% if form.validation_instructions.errors %} has-error{% endif %}">
+                    {{ form.validation_instructions.label_tag }}
+                    {{ form.validation_instructions }}
+                    {% if form.validation_instructions.help_text %}<small>{{ form.validation_instructions.help_text }}</small>{% endif %}
+                    {% for error in form.validation_instructions.errors %}<span class="field-error">{{ error }}</span>{% endfor %}
                 </div>
 
                 <div class="requirement-field{% if form.semester.errors %} has-error{% endif %}">

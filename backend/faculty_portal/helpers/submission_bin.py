@@ -1,3 +1,4 @@
+from datetime import timedelta
 import logging
 import mimetypes
 from pathlib import Path
@@ -35,10 +36,12 @@ User = get_user_model()
 
 UPLOAD_PAGE = 'faculty_portal:upload_files'
 TextExtraction = DocumentMetadata.TextExtractionStatus
+ValidationStatus = DocumentMetadata.ValidationStatus
 TEXT_MODE = Requirement.TextProcessingMode
 QUEUE_FAILURE_ERROR = (
     'We could not start preparing this document. Please try uploading it again.'
 )
+STALE_EXTRACTION_AFTER = timedelta(minutes=10)
 
 
 # ---------------------------------------------------------------------------
@@ -75,7 +78,7 @@ def _stored_file_size(draft):
 
 
 # ---------------------------------------------------------------------------
-# Document metadata (OCR state for a draft)
+# Document metadata (text extraction and validation state for a draft)
 # ---------------------------------------------------------------------------
 
 def _build_metadata_values(draft, uploaded_file=None):
@@ -101,8 +104,13 @@ def _build_metadata_values(draft, uploaded_file=None):
         )
     elif requirement.text_processing_mode == TEXT_MODE.DIGITAL and _supports_direct_extraction(filename):
         text_extraction_status, text_extraction_error = TextExtraction.PENDING, ''
-    elif requirement.text_processing_mode == TEXT_MODE.NONE:
+    elif (
+        requirement.text_processing_mode == TEXT_MODE.NONE
+        and not requirement.validation_enabled
+    ):
         text_extraction_status, text_extraction_error = TextExtraction.NOT_REQUIRED, ''
+    elif requirement.validation_enabled and _supports_direct_extraction(filename):
+        text_extraction_status, text_extraction_error = TextExtraction.PENDING, ''
     elif not _is_pdf(filename):
         text_extraction_status, text_extraction_error = (
             TextExtraction.FAILED,
@@ -126,6 +134,14 @@ def _build_metadata_values(draft, uploaded_file=None):
         'extracted_text': '',
         'text_extraction_error': text_extraction_error,
         'text_extraction_completed_at': None,
+        'validation_status': (
+            ValidationStatus.PENDING
+            if requirement.validation_enabled
+            else ValidationStatus.NOT_REQUIRED
+        ),
+        'validation_result': {},
+        'validation_error': '',
+        'validation_completed_at': None,
     }
 
 
@@ -133,7 +149,10 @@ def _needs_full_reset(draft, metadata):
     if metadata is None or metadata.storage_file_name != draft.draft_file.name:
         return True
 
-    requires_extraction = draft.requirement.text_processing_mode != TEXT_MODE.NONE
+    requires_extraction = (
+        draft.requirement.text_processing_mode != TEXT_MODE.NONE
+        or draft.requirement.validation_enabled
+    )
 
     queue_failed = metadata.text_extraction_error in {
         QUEUE_FAILURE_ERROR,
@@ -144,11 +163,29 @@ def _needs_full_reset(draft, metadata):
         (requires_extraction and metadata.text_extraction_status == TextExtraction.NOT_REQUIRED)
         or (not requires_extraction and metadata.text_extraction_status != TextExtraction.NOT_REQUIRED)
         or (requires_extraction and metadata.text_extraction_status == TextExtraction.FAILED and queue_failed)
+        or is_extraction_stale(metadata)
     )
 
 
+def is_extraction_stale(metadata):
+    if not metadata or metadata.text_extraction_status not in (
+        TextExtraction.PENDING,
+        TextExtraction.PROCESSING,
+    ):
+        return False
+    return metadata.updated_at <= timezone.now() - STALE_EXTRACTION_AFTER
+
+
 def _metadata_is_current(draft, metadata):
-    return not _needs_full_reset(draft, metadata)
+    return not _needs_full_reset(draft, metadata) and not _needs_validation_pending(draft, metadata)
+
+
+def _needs_validation_pending(draft, metadata):
+    return (
+        draft.requirement.validation_enabled
+        and metadata
+        and metadata.validation_status == ValidationStatus.NOT_REQUIRED
+    )
 
 
 def _reset_metadata(draft, metadata, uploaded_file):
@@ -171,8 +208,23 @@ def ensure_document_metadata(draft, uploaded_file=None, force_reset=False, metad
     metadata = metadata or DocumentMetadata.objects.filter(draft=draft).first()
 
     if force_reset or _needs_full_reset(draft, metadata):
+        if metadata and is_extraction_stale(metadata):
+            cancel_extraction(
+                metadata.pk,
+                metadata.text_extraction_request_id,
+            )
         metadata = _reset_metadata(draft, metadata, uploaded_file)
         return metadata, metadata.text_extraction_status == TextExtraction.PENDING
+
+    if _needs_validation_pending(draft, metadata):
+        metadata.validation_status = ValidationStatus.PENDING
+        metadata.validation_result = {}
+        metadata.validation_error = ''
+        metadata.validation_completed_at = None
+        metadata.save(update_fields=[
+            'validation_status', 'validation_result', 'validation_error',
+            'validation_completed_at', 'updated_at',
+        ])
 
     return metadata, False
 
@@ -202,26 +254,121 @@ def _mark_enqueue_failed(metadata_id, request_id):
         logger.exception('Could not refresh the faculty Submission Bin.')
 
 
+def _extraction_task_id(metadata_id, request_id):
+    return f'extraction-{metadata_id}-{request_id}'
+
+
 def _enqueue_extraction(metadata_id, request_id):
     try:
         from submissions.tasks import process_document_extraction
-        process_document_extraction.delay(str(metadata_id), str(request_id))
+        process_document_extraction.apply_async(
+            args=[str(metadata_id), str(request_id)],
+            task_id=_extraction_task_id(metadata_id, request_id),
+        )
     except Exception:
         logger.exception('Could not queue document extraction for metadata record %s.', metadata_id)
+        faculty_id = (
+            DocumentMetadata.objects
+            .filter(pk=metadata_id)
+            .values_list('faculty_id', flat=True)
+            .first()
+        )
         _mark_enqueue_failed(metadata_id, request_id)
+        if faculty_id:
+            dispatch_pending_extractions(faculty_id)
 
 
 def schedule_extraction(metadata):
     if not metadata or metadata.text_extraction_status != TextExtraction.PENDING:
         return
-    metadata_id, request_id = metadata.pk, metadata.text_extraction_request_id
-    transaction.on_commit(lambda: _enqueue_extraction(metadata_id, request_id))
+    transaction.on_commit(
+        lambda: dispatch_pending_extractions(metadata.faculty_id)
+    )
+
+
+def dispatch_pending_extractions(faculty_id):
+    with transaction.atomic():
+        User.objects.select_for_update().get(pk=faculty_id)
+        if DocumentMetadata.objects.filter(
+            faculty_id=faculty_id,
+            draft__isnull=False,
+            text_extraction_status=TextExtraction.PROCESSING,
+        ).exists():
+            return
+        metadata = (
+            DocumentMetadata.objects
+            .select_for_update()
+            .filter(
+                faculty_id=faculty_id,
+                draft__isnull=False,
+                draft__draft_file__isnull=False,
+                text_extraction_status=TextExtraction.PENDING,
+            )
+            .order_by('updated_at', 'created_at', 'pk')
+            .first()
+        )
+        if not metadata:
+            return
+        metadata.text_extraction_status = TextExtraction.PROCESSING
+        metadata.save(update_fields=['text_extraction_status', 'updated_at'])
+        metadata_id = metadata.pk
+        request_id = metadata.text_extraction_request_id
+    _enqueue_extraction(metadata_id, request_id)
+
+
+def cancel_extraction(metadata_id, request_id):
+    try:
+        from config.celery import app
+        app.control.revoke(
+            _extraction_task_id(metadata_id, request_id),
+            terminate=True,
+            signal='SIGTERM',
+        )
+        return True
+    except Exception:
+        logger.exception(
+            'Could not cancel extraction task for metadata record %s.',
+            metadata_id,
+        )
+    return False
+
+
+def _enqueue_validation(metadata_id, request_id):
+    try:
+        from submissions.tasks import process_document_validation
+        process_document_validation.delay(str(metadata_id), str(request_id))
+    except Exception:
+        logger.exception('Could not queue document validation for metadata record %s.', metadata_id)
+
+
+def schedule_validation(metadata):
+    if not metadata or metadata.validation_status != ValidationStatus.PENDING:
+        return
+    if metadata.text_extraction_status != TextExtraction.COMPLETED:
+        return
+    transaction.on_commit(
+        lambda: _enqueue_validation(metadata.pk, metadata.text_extraction_request_id)
+    )
 
 
 def run_extraction(draft):
     metadata, should_enqueue = ensure_document_metadata(draft)
     if should_enqueue:
         schedule_extraction(metadata)
+    else:
+        schedule_validation(metadata)
+    return metadata
+
+
+def retry_extraction(draft):
+    metadata, should_enqueue = ensure_document_metadata(
+        draft,
+        force_reset=True,
+    )
+    if should_enqueue:
+        schedule_extraction(metadata)
+    else:
+        schedule_validation(metadata)
     return metadata
 
 
@@ -231,6 +378,8 @@ def run_extraction(draft):
 
 
 def get_available_requirements(user, requirement_ids=None):
+    purge_expired_drafts(user)
+
     submitted_ids = (
         DocumentSubmission.objects
         .filter(faculty=user)
@@ -241,6 +390,7 @@ def get_available_requirements(user, requirement_ids=None):
     requirements = (
         Requirement.objects
         .filter(status=Requirement.ReqStatus.ACTIVE)
+        .filter(deadline__gt=timezone.now())
         .filter(
             Q(assigned_to=Requirement.AssignedFacultyType.ALL)
             | Q(assigned_to=user.faculty_type)
@@ -252,6 +402,37 @@ def get_available_requirements(user, requirement_ids=None):
         requirements = requirements.filter(id__in=requirement_ids)
 
     return list(requirements.order_by('deadline'))
+
+
+def purge_expired_drafts(user):
+    expired_drafts = list(
+        DraftUpload.objects
+        .filter(
+            faculty=user,
+            requirement__deadline__lte=timezone.now(),
+        )
+        .select_related('requirement')
+    )
+
+    if not expired_drafts:
+        return
+
+    with transaction.atomic():
+        for draft in expired_drafts:
+            metadata = DocumentMetadata.objects.filter(draft=draft).first()
+            if metadata:
+                cancel_extraction(
+                    metadata.pk,
+                    metadata.text_extraction_request_id,
+                )
+                metadata.delete()
+
+            if draft.draft_file:
+                delete_file_after_commit(
+                    draft.draft_file.storage,
+                    draft.draft_file.name,
+                )
+            draft.delete()
 
 
 def _load_drafts_with_metadata(user, requirements):
@@ -268,6 +449,8 @@ def _load_drafts_with_metadata(user, requirements):
 
     for draft in drafts:
         if not draft.draft_file:
+            DocumentMetadata.objects.filter(draft_id=draft.pk).delete()
+            metadata_by_draft.pop(draft.pk, None)
             continue
         metadata = metadata_by_draft.get(draft.pk)
         if _metadata_is_current(draft, metadata):
@@ -276,6 +459,8 @@ def _load_drafts_with_metadata(user, requirements):
         metadata_by_draft[draft.pk] = metadata
         if should_enqueue:
             schedule_extraction(metadata)
+        else:
+            schedule_validation(metadata)
 
     return {d.requirement_id: d for d in drafts}, metadata_by_draft
 
@@ -311,6 +496,16 @@ def build_rows(user, requirements, include_history=True):
             'needs_revision_submission': submission,
             'is_resubmission': submission is not None,
             'is_ready': bool(draft and draft.draft_file),
+            'can_retry_extraction': bool(
+                draft
+                and draft.draft_file
+                and metadata_by_draft.get(draft.pk)
+                and (
+                    metadata_by_draft[draft.pk].text_extraction_status
+                    == TextExtraction.FAILED
+                    or is_extraction_stale(metadata_by_draft[draft.pk])
+                )
+            ),
         })
     return rows
 
@@ -553,12 +748,24 @@ def save_draft_form(request, draft, success_message, error_message):
 
     old_file_name = draft.draft_file.name if draft.draft_file else ''
     old_storage = draft.draft_file.storage if draft.draft_file else None
+    old_metadata = (
+        DocumentMetadata.objects
+        .filter(draft=draft)
+        .first()
+    )
+    if uploaded_file and old_metadata:
+        cancel_extraction(
+            old_metadata.pk,
+            old_metadata.text_extraction_request_id,
+        )
     saved_draft = form.save()
 
     if not uploaded_file:
         metadata, should_enqueue = ensure_document_metadata(saved_draft)
         if should_enqueue:
             schedule_extraction(metadata)
+        else:
+            schedule_validation(metadata)
         messages.success(request, success_message)
         return redirect(UPLOAD_PAGE)
 
@@ -570,6 +777,8 @@ def save_draft_form(request, draft, success_message, error_message):
         delete_file_after_commit(old_storage, old_file_name)
     if should_enqueue:
         schedule_extraction(metadata)
+    else:
+        schedule_validation(metadata)
 
     if processing_mode != TEXT_MODE.NONE:
         success_message += (

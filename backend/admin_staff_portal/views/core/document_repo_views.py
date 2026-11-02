@@ -9,7 +9,7 @@ from django.utils import timezone
 from django.views.decorators.http import require_http_methods
 
 from accounts.decorators import admin, role_required
-from submissions.models import DocumentSubmission
+from submissions.models import DocumentMetadata, DocumentSubmission
 from admin_staff_portal.realtime import refresh_document_surfaces
 from faculty_portal.realtime import refresh_faculty_submission_bin
 
@@ -167,7 +167,12 @@ def document_file_view(request, document_id):
         status=DocumentSubmission.SubmissionStatus.APPROVED
     )
 
-    context = {'document': document}
+    context = {
+        'document': document,
+        'metadata': DocumentMetadata.objects.filter(
+            submission=document
+        ).order_by('-version_number').first()
+    }
 
     return render(
         request,

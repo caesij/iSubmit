@@ -14,6 +14,7 @@ urlpatterns = [
     path('submission_bin/attach/<int:requirement_id>/', views.attach_document, name='attach_document'),
     path('submission_bin/replace/<uuid:document_id>/', views.replace_document, name='replace_document'),
     path('submission_bin/remove/<uuid:document_id>/', views.remove_document, name='remove_document'),
+    path('submission_bin/retry/<uuid:document_id>/', views.retry_document_extraction, name='retry_document_extraction'),
     path('submission_bin/resubmit/<uuid:submission_id>/', views.resubmit_document, name='resubmit_document'),
     path('submission_bin/submission_complete/', views.submission_complete, name='submission_complete'),
     path('submission_bin/view/<uuid:document_id>/', views.view_document, name='view_uploaded_document'),

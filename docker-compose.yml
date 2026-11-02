@@ -33,7 +33,7 @@ services:
     pull_policy: never
     working_dir: /app/backend
     entrypoint: []
-    command: celery -A config worker --loglevel=info --pool=solo --concurrency=1
+    command: celery -A config worker --loglevel=info --pool=prefork --concurrency=1
     depends_on:
       redis:
         condition: service_healthy

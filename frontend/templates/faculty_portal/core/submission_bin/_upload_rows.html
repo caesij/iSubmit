@@ -1,6 +1,9 @@
 {% load static core_extras %}
 {% for row in rows %}
-    <tr>
+    <tr
+        data-requirement-id="{{ row.requirement.id }}"
+        data-deadline="{{ row.requirement.deadline|date:'c' }}"
+    >
         <td>
             {% if row.is_resubmission and row.draft and row.draft.draft_file %}
                 <input
@@ -42,6 +45,12 @@
         <td class="font-bold">
             {{ forloop.counter }}.
             {{ row.requirement.requirement_title }}
+            {% if row.requirement.validation_instructions %}
+                <details>
+                    <summary>Required validation fields</summary>
+                    <div>{{ row.requirement.validation_instructions|linebreaksbr }}</div>
+                </details>
+            {% endif %}
         </td>
 
         <td>
@@ -161,6 +170,15 @@
                                 Replace File
                             </label>
                         </form>
+                        {% if row.can_retry_extraction %}
+                            <form
+                                action="{% url 'faculty_portal:retry_document_extraction' row.draft.id %}"
+                                method="post"
+                            >
+                                {% csrf_token %}
+                                <button type="submit">Retry text extraction</button>
+                            </form>
+                        {% endif %}
                     </div>
                 </details>
             </td>
@@ -241,6 +259,15 @@
                             {% csrf_token %}
                             <button type="submit">Remove File</button>
                         </form>
+                        {% if row.can_retry_extraction %}
+                            <form
+                                action="{% url 'faculty_portal:retry_document_extraction' row.draft.id %}"
+                                method="post"
+                            >
+                                {% csrf_token %}
+                                <button type="submit">Retry text extraction</button>
+                            </form>
+                        {% endif %}
                     </div>
                 </details>
             </td>

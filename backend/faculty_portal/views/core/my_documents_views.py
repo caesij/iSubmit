@@ -5,7 +5,7 @@ from django.views.decorators.http import require_http_methods
 
 from faculty_portal.helpers.my_documents import _render_repository
 from accounts.decorators import faculty
-from submissions.models import DocumentSubmission
+from submissions.models import DocumentMetadata, DocumentSubmission
 from submissions.querysets import active_document_queryset
 
 TEMPLATE_DIR = 'faculty_portal/core/my_documents'
@@ -75,6 +75,9 @@ def document_file_view(request, document_id, source='all'):
 
     context = {
         'document': document,
+        'metadata': DocumentMetadata.objects.filter(
+            submission=document
+        ).order_by('-version_number').first(),
         'back_url_name': back_url_name,
         'breadcrumb_label': breadcrumb_label
     }
