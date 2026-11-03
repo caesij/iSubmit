@@ -46,7 +46,7 @@
             {{ forloop.counter }}.
             {{ row.requirement.requirement_title }}
             {% if row.requirement.validation_instructions %}
-                <details>
+                <details class="validation-details">
                     <summary>Required validation fields</summary>
                     <div>{{ row.requirement.validation_instructions|linebreaksbr }}</div>
                 </details>
@@ -69,19 +69,8 @@
         {% if row.is_resubmission %}
             <td>
                 <span class="status-badge status-no-file">
-                    Needs Revision
+                    {% if row.draft and row.draft.draft_file %}File Attached{% else %}No file uploaded{% endif %}
                 </span>
-                {% if row.draft and row.metadata and row.requirement.text_processing_mode != 'NONE' %}
-                    <div class="ocr-state">
-                        <span class="status-badge text-extraction-status" data-status="{{ row.metadata.text_extraction_status|default:'PENDING' }}">
-                            {% if row.requirement.text_processing_mode == 'OCR' %}OCR{% else %}Text extraction{% endif %}:
-                            {{ row.metadata.get_text_extraction_status_display|default:'Pending' }}
-                        </span>
-                        {% if row.metadata.text_extraction_error %}
-                            <small class="text-extraction-error">{{ row.metadata.text_extraction_error }}</small>
-                        {% endif %}
-                    </div>
-                {% endif %}
             </td>
 
             <td>
@@ -128,15 +117,7 @@
             </td>
 
             <td class="action-cell">
-                <span class="ocr-badge {% if row.requirement.text_processing_mode != 'NONE' %}enabled{% else %}disabled{% endif %}">
-                    {% if row.requirement.text_processing_mode == 'OCR' %}
-                        OCR Enabled
-                    {% elif row.requirement.text_processing_mode != 'NONE' %}
-                        Enabled
-                    {% else %}
-                        Disabled
-                    {% endif %}
-                </span>
+                {% include 'faculty_portal/core/submission_bin/_text_extraction_status.html' with row=row %}
             </td>
 
             <td class="action-cell">
@@ -188,17 +169,6 @@
                 <span class="status-badge status-attached">
                     File Attached
                 </span>
-                {% if row.metadata and row.requirement.text_processing_mode != 'NONE' %}
-                    <div class="ocr-state">
-                        <span class="status-badge text-extraction-status" data-status="{{ row.metadata.text_extraction_status|default:'PENDING' }}">
-                            {% if row.requirement.text_processing_mode == 'OCR' %}OCR{% else %}Text extraction{% endif %}:
-                            {{ row.metadata.get_text_extraction_status_display|default:'Pending' }}
-                        </span>
-                        {% if row.metadata.text_extraction_error %}
-                            <small class="text-extraction-error">{{ row.metadata.text_extraction_error }}</small>
-                        {% endif %}
-                    </div>
-                {% endif %}
             </td>
 
             <td>
@@ -212,15 +182,7 @@
             </td>
 
             <td class="action-cell">
-                <span class="ocr-badge {% if row.requirement.text_processing_mode != 'NONE' %}enabled{% else %}disabled{% endif %}">
-                    {% if row.requirement.text_processing_mode == 'OCR' %}
-                        OCR Enabled
-                    {% elif row.requirement.text_processing_mode != 'NONE' %}
-                        Enabled
-                    {% else %}
-                        Disabled
-                    {% endif %}
-                </span>
+                {% include 'faculty_portal/core/submission_bin/_text_extraction_status.html' with row=row %}
             </td>
 
             <td class="action-cell">
@@ -305,15 +267,7 @@
             </td>
 
             <td class="action-cell">
-                <span class="ocr-badge {% if row.requirement.text_processing_mode != 'NONE' %}enabled{% else %}disabled{% endif %}">
-                    {% if row.requirement.text_processing_mode == 'OCR' %}
-                        OCR Enabled
-                    {% elif row.requirement.text_processing_mode != 'NONE' %}
-                        Enabled
-                    {% else %}
-                        Disabled
-                    {% endif %}
-                </span>
+                {% include 'faculty_portal/core/submission_bin/_text_extraction_status.html' with row=row %}
             </td>
 
             <td class="action-cell"></td>
