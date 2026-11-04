@@ -65,13 +65,13 @@
             </div>
 
             <div class="select-wrap">
-                <label>Assigned To</label>
+                <label>Assigned Faculty Type</label>
 
-                <select name="assigned_to" onchange="this.form.submit()">
+                <select name="assigned_faculty_type" onchange="this.form.submit()">
                     <option value="">All Faculties</option>
 
-                    {% for value, label in assigned_to_choices %}
-                        <option value="{{ value }}" {% if request.GET.assigned_to == value %}selected{% endif %}>
+                    {% for value, label in assigned_faculty_type_choices %}
+                        <option value="{{ value }}" {% if request.GET.assigned_faculty_type == value %}selected{% endif %}>
                             {{ label }}
                         </option>
                     {% endfor %}
@@ -112,7 +112,7 @@
                 </select>
             </div>
 
-            {% if request.GET.q or request.GET.category or request.GET.assigned_to or request.GET.semester or request.GET.academic_year %}
+            {% if request.GET.q or request.GET.category or request.GET.assigned_faculty_type or request.GET.semester or request.GET.academic_year %}
                 <a href="{% url 'admin_staff_portal:requirements_list' %}" class="btn-clear">
                     <img src="{% static 'images/Clear Filters.svg' %}" alt="">
                     Clear Filters

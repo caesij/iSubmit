@@ -30,6 +30,7 @@ from submissions.models import (
     DraftUpload,
     Requirement
 )
+from submissions.helpers import get_faculty_assigned_requirements
 
 logger = logging.getLogger(__name__)
 User = get_user_model()
@@ -37,10 +38,7 @@ User = get_user_model()
 UPLOAD_PAGE = 'faculty_portal:upload_files'
 TextExtraction = DocumentMetadata.TextExtractionStatus
 ValidationStatus = DocumentMetadata.ValidationStatus
-TEXT_MODE = Requirement.TextProcessingMode
-QUEUE_FAILURE_ERROR = (
-    'We could not start preparing this document. Please try uploading it again.'
-)
+QUEUE_FAILURE_ERROR = ('We could not start preparing this document. Please try uploading it again.')
 STALE_EXTRACTION_AFTER = timedelta(minutes=10)
 
 
@@ -93,25 +91,13 @@ def _build_metadata_values(draft, uploaded_file=None):
         content_type = mimetypes.guess_type(filename)[0] or ''
         file_size = _stored_file_size(draft)
 
-    if requirement.text_processing_mode == TEXT_MODE.OCR:
-        text_extraction_status, text_extraction_error = (
-            (TextExtraction.PENDING, '')
-            if _is_pdf(filename)
-            else (
-                TextExtraction.FAILED,
-                'OCR supports PDF files only. Replace this file with a PDF.'
-            )
-        )
-    elif requirement.text_processing_mode == TEXT_MODE.DIGITAL and _supports_direct_extraction(filename):
-        text_extraction_status, text_extraction_error = TextExtraction.PENDING, ''
-    elif (
-        requirement.text_processing_mode == TEXT_MODE.NONE
-        and not requirement.validation_enabled
-    ):
+    if not requirement.text_extraction_enabled and not requirement.validation_enabled:
         text_extraction_status, text_extraction_error = TextExtraction.NOT_REQUIRED, ''
-    elif requirement.validation_enabled and _supports_direct_extraction(filename):
+    elif requirement.text_extraction_enabled or (
+        requirement.validation_enabled and _supports_direct_extraction(filename)
+    ):
         text_extraction_status, text_extraction_error = TextExtraction.PENDING, ''
-    elif not _is_pdf(filename):
+    elif not _supports_direct_extraction(filename):
         text_extraction_status, text_extraction_error = (
             TextExtraction.FAILED,
             'This file type does not support text extraction.'
@@ -150,7 +136,7 @@ def _needs_full_reset(draft, metadata):
         return True
 
     requires_extraction = (
-        draft.requirement.text_processing_mode != TEXT_MODE.NONE
+        draft.requirement.text_extraction_enabled
         or draft.requirement.validation_enabled
     )
 
@@ -387,16 +373,9 @@ def get_available_requirements(user, requirement_ids=None):
         .values_list('requirement_id', flat=True)
     )
 
-    requirements = (
-        Requirement.objects
-        .filter(status=Requirement.ReqStatus.ACTIVE)
-        .filter(deadline__gt=timezone.now())
-        .filter(
-            Q(assigned_to=Requirement.AssignedFacultyType.ALL)
-            | Q(assigned_to=user.faculty_type)
-        )
-        .exclude(id__in=submitted_ids)
-    )
+    requirements = get_faculty_assigned_requirements(user).filter(
+        deadline__gt=timezone.now()
+    ).exclude(id__in=submitted_ids)
 
     if requirement_ids is not None:
         requirements = requirements.filter(id__in=requirement_ids)
@@ -522,7 +501,7 @@ def _submission_block_reason(row):
     requirement = row['requirement']
     metadata = row['metadata']
 
-    if requirement.text_processing_mode == TEXT_MODE.NONE:
+    if not requirement.text_extraction_enabled:
         return None
 
     if metadata is None:
@@ -625,12 +604,7 @@ def create_submissions(user, rows):
     return submissions
 
 def notify_if_faculty_completed_submissions(faculty_member):
-    active_requirements = Requirement.objects.filter(
-        status=Requirement.ReqStatus.ACTIVE,
-    ).filter(
-        Q(assigned_to=Requirement.AssignedFacultyType.ALL)
-        | Q(assigned_to=faculty_member.faculty_type)
-    )
+    active_requirements = get_faculty_assigned_requirements(faculty_member)
 
     total_count = active_requirements.count()
 
@@ -733,19 +707,6 @@ def save_draft_form(request, draft, success_message, error_message):
         return redirect(UPLOAD_PAGE)
 
     uploaded_file = request.FILES.get('draft_file')
-    processing_mode = draft.requirement.text_processing_mode
-
-    if (
-        uploaded_file
-        and processing_mode == TEXT_MODE.OCR
-        and not _is_pdf(uploaded_file.name)
-    ):
-        messages.error(
-            request,
-            'This requirement uses OCR. Please upload a PDF file.',
-        )
-        return redirect(UPLOAD_PAGE)
-
     old_file_name = draft.draft_file.name if draft.draft_file else ''
     old_storage = draft.draft_file.storage if draft.draft_file else None
     old_metadata = (
@@ -780,7 +741,7 @@ def save_draft_form(request, draft, success_message, error_message):
     else:
         schedule_validation(metadata)
 
-    if processing_mode != TEXT_MODE.NONE:
+    if saved_draft.requirement.text_extraction_enabled or saved_draft.requirement.validation_enabled:
         success_message += (
             ' Text processing status will appear below; final submission will be enabled '
             'after required checks finish.'

@@ -28,7 +28,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         choices=DateFormatChoice.choices, 
         default=DateFormatChoice.LONG
     )
-    
+
     time_format = models.CharField(
         max_length=2, 
         choices=TimeFormatChoice.choices, 
@@ -82,7 +82,13 @@ class User(AbstractBaseUser, PermissionsMixin):
         max_length=20, 
         choices=FacultyType.choices,
         null=True,
+        blank=True
+    )
+
+    assigned_programs = models.ManyToManyField(
+        'programs.Program',
         blank=True,
+        related_name='faculty_members'
     )
 
     is_active = models.BooleanField(default=True)

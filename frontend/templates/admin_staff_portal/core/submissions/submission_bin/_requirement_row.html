@@ -5,7 +5,15 @@
     </td>
     <td class="font-bold">{{ req.requirement_title }}</td>
     <td>{{ req.category }}</td>
-    <td>{{ req.get_assigned_to_display }}</td>
+    <td>
+        {% if req.assigned_faculty_member.exists %}
+            Selected faculty
+        {% elif req.assigned_programs.exists %}
+            Selected programs
+        {% else %}
+            {{ req.get_assigned_faculty_type_display }}
+        {% endif %}
+    </td>
     <td>{{ req.academic_year }} - {{ req.get_semester_display }}</td>
 
     <td>
@@ -26,8 +34,8 @@
     </td>
 
     <td>
-        <span class="ocr-badge {% if req.text_processing_mode == 'NONE' %}ocr-disabled{% else %}ocr-enabled{% endif %}">
-            {{ req.get_text_processing_mode_display }}
+        <span class="ocr-badge {% if req.text_extraction_enabled %}ocr-enabled{% else %}ocr-disabled{% endif %}">
+            {% if req.text_extraction_enabled %}Enabled{% else %}Disabled{% endif %}
         </span>
     </td>
 

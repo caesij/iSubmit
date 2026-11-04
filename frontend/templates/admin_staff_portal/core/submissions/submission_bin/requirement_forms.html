@@ -56,32 +56,30 @@
                     {% for error in form.category.errors %}<span class="field-error">{{ error }}</span>{% endfor %}
                 </div>
 
-                <div class="requirement-field{% if form.assigned_to.errors %} has-error{% endif %}">
-                    {{ form.assigned_to.label_tag }}
-                    {{ form.assigned_to }}
-                    {% for error in form.assigned_to.errors %}<span class="field-error">{{ error }}</span>{% endfor %}
+                <div class="requirement-field{% if form.assigned_faculty_type.errors %} has-error{% endif %}">
+                    {{ form.assigned_faculty_type.label_tag }}
+                    {{ form.assigned_faculty_type }}
+                    {% for error in form.assigned_faculty_type.errors %}<span class="field-error">{{ error }}</span>{% endfor %}
                 </div>
 
-                <div class="requirement-field{% if form.text_processing_mode.errors %} has-error{% endif %}">
-                    <label>{{ form.text_processing_mode.label }}</label>
-                    <div class="processing-options">
-                        {% for radio in form.text_processing_mode %}
-                            <div class="processing-option">
-                                {{ radio.tag }}
-                                <label for="{{ radio.id_for_label }}">
-                                    <strong>{{ radio.choice_label }}</strong>
-                                    {% if forloop.first %}
-                                        <small>Accept documents normally.</small>
-                                    {% elif forloop.counter == 2 %}
-                                        <small>Require embedded text extraction from digital files.</small>
-                                    {% else %}
-                                        <small>Require OCR processing for PDF files.</small>
-                                    {% endif %}
-                                </label>
-                            </div>
-                        {% endfor %}
+                <div class="requirement-field{% if form.assigned_programs.errors %} has-error{% endif %}">
+                    {{ form.assigned_programs.label_tag }}
+                    {{ form.assigned_programs }}
+                    {% for error in form.assigned_programs.errors %}<span class="field-error">{{ error }}</span>{% endfor %}
+                </div>
+
+                <div class="requirement-field{% if form.assigned_faculty_member.errors %} has-error{% endif %}">
+                    {{ form.assigned_faculty_member.label_tag }}
+                    {{ form.assigned_faculty_member }}
+                    {% for error in form.assigned_faculty_member.errors %}<span class="field-error">{{ error }}</span>{% endfor %}
+                </div>
+
+                <div class="requirement-field{% if form.text_extraction_enabled.errors %} has-error{% endif %}">
+                    <div class="processing-option">
+                        {{ form.text_extraction_enabled }}
+                        {{ form.text_extraction_enabled.label_tag }}
                     </div>
-                    {% for error in form.text_processing_mode.errors %}
+                    {% for error in form.text_extraction_enabled.errors %}
                         <span class="field-error">{{ error }}</span>
                     {% endfor %}
                 </div>
@@ -153,6 +151,21 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
+            const facultyType = document.getElementById('{{ form.assigned_faculty_type.id_for_label }}');
+            const programs = document.getElementById('{{ form.assigned_programs.id_for_label }}');
+            const faculty = document.getElementById('{{ form.assigned_faculty_member.id_for_label }}');
+
+            function syncAssignmentFields() {
+                const hasSelectedFaculty = faculty && Array.from(faculty.selectedOptions).length > 0;
+                if (facultyType) facultyType.disabled = hasSelectedFaculty;
+                if (programs) programs.disabled = hasSelectedFaculty;
+            }
+
+            if (faculty) {
+                faculty.addEventListener('change', syncAssignmentFields);
+                syncAssignmentFields();
+            }
+
             const validationToggle = document.getElementById('{{ form.validation_enabled.id_for_label }}');
             const instructionsField = document.querySelector('.validation-instructions-field');
 

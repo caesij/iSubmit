@@ -1,0 +1,56 @@
+{% extends 'admin_staff_portal/base.html' %}
+
+{% block title %}Program Management - iSubmit{% endblock %}
+{% block heading %}Program Management{% endblock %}
+
+{% block content %}
+<section class="table-card">
+    <h1>Programs</h1>
+    <form method="post" action="{% url 'admin_staff_portal:add_program' %}">
+        {% csrf_token %}
+        <label for="id_program_name">Program name</label>
+        <input id="id_program_name" name="program_name" maxlength="150" required>
+        <label for="id_short_name">Short name</label>
+        <input id="id_short_name" name="short_name" maxlength="20" required>
+        <button type="submit">Add program</button>
+    </form>
+
+    <table class="data-table">
+        <thead>
+            <tr><th>Program</th><th>Short name</th><th>Actions</th></tr>
+        </thead>
+        <tbody>
+            {% for program in programs %}
+                <tr>
+                    <td>
+                        <form method="post" action="{% url 'admin_staff_portal:update_program' program.id %}">
+                            {% csrf_token %}
+                            <input name="program_name" value="{{ program.program_name }}" maxlength="150" required>
+                    </td>
+                    <td>
+                            <input name="short_name" value="{{ program.short_name }}" maxlength="20" required>
+                    </td>
+                    <td>
+                            <button type="submit">Save</button>
+                        </form>
+                        <form method="post" action="{% url 'admin_staff_portal:delete_program' program.id %}">
+                            {% csrf_token %}
+                            <button type="submit">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="3">No programs have been added.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    {% if page_obj.has_other_pages %}
+        <nav aria-label="Program pages">
+            {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}">Previous</a>{% endif %}
+            <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+            {% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}">Next</a>{% endif %}
+        </nav>
+    {% endif %}
+</section>
+{% endblock %}
