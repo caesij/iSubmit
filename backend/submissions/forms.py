@@ -1,8 +1,12 @@
 import os
 import datetime
 from django import forms
-from submissions.models import Requirement, DraftUpload, DocumentReview
 from django.core.exceptions import ValidationError
+from django.contrib.auth import get_user_model
+
+from submissions.models import Requirement, DraftUpload, DocumentReview
+
+User = get_user_model()
 
 ALLOWED_EXTENSIONS = {'.pdf', '.docx', '.xlsx'}
 MAX_UPLOAD_SIZE = 10 * 1024 * 1024
@@ -22,14 +26,16 @@ class RequirementForm(forms.ModelForm):
         fields = [
             'requirement_title',
             'category',
-            'assigned_to',
+            'assigned_faculty_type',
+            'assigned_programs',
+            'assigned_faculty_member',
             'academic_year',
             'semester',
             'status',
             'deadline',
-            'text_processing_mode',
+            'text_extraction_enabled',
             'validation_enabled',
-            'validation_instructions',
+            'validation_instructions'
         ]
 
         widgets = {
@@ -37,7 +43,7 @@ class RequirementForm(forms.ModelForm):
                 attrs={'type': 'datetime-local'},
                 format='%Y-%m-%dT%H:%M'
             ),
-            'text_processing_mode': forms.RadioSelect,
+            'text_extraction_enabled': forms.CheckboxInput,
         }
 
         error_messages = {
@@ -47,13 +53,14 @@ class RequirementForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['validation_enabled'].label = 'Enable NLP validation'
+        self.fields['text_extraction_enabled'].label = 'Enable text extraction'
         self.fields['validation_instructions'].label = 'Required validation fields'
-        self.fields['validation_instructions'].help_text = (
-            'One per line using only: Field name: required'
-        )
+        self.fields['validation_instructions'].help_text = ('One per line using only: Field name: required')
         self.fields['deadline'].input_formats = ['%Y-%m-%dT%H:%M']
         self.fields['requirement_title'].label = 'Requirement Title'
-        self.fields['assigned_to'].label = 'Assign to'
+        faculty_field = self.fields['assigned_faculty_member']
+        faculty_field.queryset = User.objects.filter(role=User.Role.FACULTY, is_active=True).order_by('last_name', 'first_name')
+        faculty_field.label_from_instance = lambda user: user.get_full_name()
         self.fields['category'].widget.attrs['placeholder'] = 'Category'
         self.fields['requirement_title'].widget.attrs['placeholder'] = 'Requirement Title'
 
@@ -114,6 +121,11 @@ class RequirementForm(forms.ModelForm):
 
     def clean(self):
         cleaned_data = super().clean()
+        selected_faculty = cleaned_data.get('assigned_faculty_member')
+
+        if selected_faculty:
+            cleaned_data['assigned_faculty_type'] = None
+            cleaned_data['assigned_programs'] = self.fields['assigned_programs'].queryset.none()
 
         title = cleaned_data.get('requirement_title')
         academic_year = cleaned_data.get('academic_year')
@@ -144,6 +156,7 @@ class RequirementForm(forms.ModelForm):
         instance.academic_year = f'A.Y. {self.cleaned_data["academic_year"]}'
         if commit:
             instance.save()
+            self.save_m2m()
         return instance
 
 class DraftUploadForm(forms.ModelForm):
@@ -159,7 +172,7 @@ class DraftUploadForm(forms.ModelForm):
                 'This file type is not supported. Please upload a PDF, DOCX, or XLSX file.'
             )
         if file.size > MAX_UPLOAD_SIZE:
-            raise ValidationError("Please choose a file smaller than 10 MB.")
+            raise ValidationError('Please choose a file smaller than 10 MB.')
         return file
 
 class DocumentRevisionForm(forms.Form):

@@ -110,14 +110,15 @@ class FacultyManagementForm(BaseUserManagementForm):
     assigned_role = User.Role.FACULTY
 
     class Meta(BaseUserManagementForm.Meta):
-        fields = BaseUserManagementForm.Meta.fields + ['faculty_type']
+        fields = BaseUserManagementForm.Meta.fields + ['faculty_type', 'assigned_programs']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if 'faculty_type' in self.fields:
-            self.fields['faculty_type'].widget.attrs.update({
-                'class': 'form-select',
-            })
+            self.fields['faculty_type'].widget.attrs.update({'class': 'form-select'})
+
+        if 'assigned_programs' in self.fields:
+            self.fields['assigned_programs'].widget.attrs.update({'class': 'form-select'})
 
     def clean_faculty_type(self):
         faculty_type = self.cleaned_data.get('faculty_type')

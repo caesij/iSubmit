@@ -48,6 +48,12 @@ urlpatterns = [
     path('users/<uuid:pk>/toggle-acc-status/', views.user_toggle_acc_status_view, name='user_toggle_acc_status'),
     path('users/<uuid:pk>/unlock/', views.user_unlock_view, name='user_unlock'),
     
+    # Program Management URLs
+    path('programs/', views.program_list, name='program_list'),
+    path('programs/add/', views.add_program, name='add_program'),
+    path('programs/<int:program_id>/update/', views.update_program, name='update_program'),
+    path('programs/<int:program_id>/delete/', views.delete_program, name='delete_program'),
+
     # Settings URLs
     path('settings/preferences/', views.preferences_view, name='preferences'),
     path('settings/notification_settings/', views.notification_settings_view, name='notification_settings'),

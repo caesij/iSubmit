@@ -14,12 +14,13 @@ def get_admin_dashboard_data():
         User.objects
         .filter(role=User.Role.FACULTY, is_active=True)
         .only('id', 'faculty_type')
+        .prefetch_related('assigned_programs')
     )
     
     active_requirements = list(
         Requirement.objects
         .filter(status=Requirement.ReqStatus.ACTIVE)
-        .only('id', 'assigned_to')
+        .prefetch_related('assigned_faculty_member', 'assigned_programs')
     )
     
     submissions = DocumentSubmission.objects.all()
@@ -76,14 +77,30 @@ def get_admin_dashboard_data():
     not_submitted_count = 0
 
     for user in faculty:
-        assigned_requirements = [
-            requirement
-            for requirement in active_requirements
-            if requirement.assigned_to in (
-                Requirement.AssignedFacultyType.ALL,
-                user.faculty_type,
-            )
-        ]
+        user_program_ids = {program.pk for program in user.assigned_programs.all()}
+        assigned_requirements = []
+        for requirement in active_requirements:
+            selected_ids = {
+                faculty.pk for faculty in requirement.assigned_faculty_member.all()
+            }
+            if selected_ids:
+                matches = user.id in selected_ids
+            else:
+                requirement_program_ids = {
+                    program.pk for program in requirement.assigned_programs.all()
+                }
+                matches = (
+                    requirement.assigned_faculty_type in (
+                        Requirement.AssignedFacultyType.ALL,
+                        user.faculty_type,
+                    )
+                    and (
+                        not requirement_program_ids
+                        or user_program_ids.intersection(requirement_program_ids)
+                    )
+                )
+            if matches:
+                assigned_requirements.append(requirement)
 
         assigned_requirement_ids = {requirement.id for requirement in assigned_requirements}
 

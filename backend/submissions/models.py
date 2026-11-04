@@ -39,24 +39,29 @@ class Requirement(models.Model):
     )
 
     deadline = models.DateTimeField()
-    class TextProcessingMode(models.TextChoices):
-        NONE = 'NONE', 'No text processing'
-        DIGITAL = 'DIGITAL', 'Extract digital text'
-        OCR = 'OCR', 'Extract text with OCR'
-
-    text_processing_mode = models.CharField(
-        max_length=10,
-        choices=TextProcessingMode.choices,
-        default=TextProcessingMode.NONE
-    )
+    text_extraction_enabled = models.BooleanField(default=False)
 
     validation_enabled = models.BooleanField(default=False)
     validation_instructions = models.TextField(blank=True)
 
-    assigned_to = models.CharField(
+    assigned_faculty_type = models.CharField(
         max_length=20,
         choices=AssignedFacultyType.choices,
-        default=AssignedFacultyType.ALL
+        default=AssignedFacultyType.ALL,
+        null=True,
+        blank=True
+    )
+
+    assigned_programs = models.ManyToManyField(
+        'programs.Program',
+        blank=True,
+        related_name='requirements'
+    )
+
+    assigned_faculty_member = models.ManyToManyField(
+        settings.AUTH_USER_MODEL,
+        blank=True,
+        related_name='individually_assigned_requirements'
     )
 
     status = models.CharField(
@@ -86,20 +91,23 @@ class Requirement(models.Model):
 
     @property
     def completion_progress(self):
-        from django.contrib.auth import get_user_model
-        User = get_user_model()
+        if not self.pk:
+            return 0
 
-        faculty_qs = User.objects.filter(role=User.Role.FACULTY, is_active=True)
-        if self.assigned_to != self.AssignedFacultyType.ALL:
-            faculty_qs = faculty_qs.filter(faculty_type=self.assigned_to)
+        from submissions.helpers import get_target_faculty_queryset
+
+        faculty_qs = get_target_faculty_queryset(self)
 
         total_faculty = faculty_qs.count()
+
         if total_faculty == 0:
             return 0
 
         submitted_count = self.submissions.filter(
-            faculty_id__in=faculty_qs.values_list('id', flat=True)
-        ).values('faculty_id').distinct().count()
+            faculty_id__in=faculty_qs.values_list('pk', flat=True)
+        ).values(
+            'faculty_id'
+        ).distinct().count()
 
         return round((submitted_count / total_faculty) * 100)
 
@@ -397,10 +405,9 @@ class DocumentMetadata(models.Model):
 
     @property
     def is_ready_for_submission(self):
-        mode = self.requirement.text_processing_mode
-
         text_extraction_ready = (
-            mode == Requirement.TextProcessingMode.NONE or self.text_extraction_status == self.TextExtractionStatus.COMPLETED
+            not self.requirement.text_extraction_enabled
+            or self.text_extraction_status == self.TextExtractionStatus.COMPLETED
         )
 
         return text_extraction_ready

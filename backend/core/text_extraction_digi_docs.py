@@ -7,6 +7,10 @@ class DocumentTextExtractionError(Exception):
     pass
 
 
+class NoEmbeddedTextError(DocumentTextExtractionError):
+    pass
+
+
 def extract_text(file_path):
     suffix = Path(file_path).suffix.lower()
 
@@ -57,9 +61,9 @@ def _extract_pdf(file_path):
 
         text = '\n'.join(lines).strip()
         if not text:
-            raise DocumentTextExtractionError(
+            raise NoEmbeddedTextError(
                 'We could not find selectable text in this PDF. '
-                'Please upload a digital PDF or ask an administrator to enable OCR.'
+                'OCR will be attempted automatically.'
             )
         return text, len(document)
 
@@ -73,9 +77,7 @@ def _extract_docx(file_path):
                 archive.read('word/document.xml')
             )
         except KeyError as exc:
-            raise DocumentTextExtractionError(
-                'The DOCX document is missing its main document content.'
-            ) from exc
+            raise NoEmbeddedTextError('The DOCX document is missing its main document content.') from exc
 
     lines = []
     for paragraph in document.iter(f'{namespace}p'):
@@ -87,9 +89,7 @@ def _extract_docx(file_path):
             lines.append(line)
 
     if not lines:
-        raise DocumentTextExtractionError(
-            'We could not find readable text in this Word document.'
-        )
+        raise NoEmbeddedTextError('We could not find readable text in this Word document.')
 
     return '\n'.join(lines), None
 
@@ -131,8 +131,6 @@ def _extract_xlsx(file_path):
                     lines.append(' | '.join(values))
 
     if not lines:
-        raise DocumentTextExtractionError(
-            'We could not find readable text in this spreadsheet.'
-        )
+        raise DocumentTextExtractionError('We could not find readable text in this spreadsheet.')
 
     return '\n'.join(lines), None

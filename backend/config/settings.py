@@ -28,6 +28,7 @@ INSTALLED_APPS = [
     'axes',
     'anymail',
     'accounts',
+    'programs',
     'submissions',
     'notifications.apps.NotificationsConfig',
     'admin_staff_portal',

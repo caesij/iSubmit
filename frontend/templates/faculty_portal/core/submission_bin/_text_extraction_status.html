@@ -1,8 +1,8 @@
-{% if row.requirement.text_processing_mode == 'NONE' %}
+{% if not row.requirement.text_extraction_enabled %}
     <span class="ocr-badge disabled">Disabled</span>
 {% elif row.draft and row.draft.draft_file and row.metadata %}
     <span class="status-badge text-extraction-status" data-status="{{ row.metadata.text_extraction_status|default:'PENDING' }}">
-        {% if row.requirement.text_processing_mode == 'OCR' %}OCR{% else %}Text extraction{% endif %}:
+        Text extraction:
         {% if row.metadata.text_extraction_status == 'PENDING' or row.metadata.text_extraction_status == 'PROCESSING' %}
             Processing
         {% else %}

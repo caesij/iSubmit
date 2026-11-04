@@ -97,6 +97,7 @@ def user_create_view(request):
             generated_password = ''.join(secrets.choice(alphabet) for _ in range(12))
             user.set_password(generated_password)
             user.save()
+            form.save_m2m()
 
             subject = 'Welcome to iSubmit - Your Account Credentials'
             message = (

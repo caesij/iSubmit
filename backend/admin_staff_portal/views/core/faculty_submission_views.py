@@ -17,6 +17,7 @@ from admin_staff_portal.realtime import refresh_submission_pages
 from notifications.services import build_approval_email, create_notif
 from notifications.models import NotificationPreference
 from submissions.models import DocumentSubmission, DocumentRevision, Requirement
+from submissions.helpers import get_faculty_assigned_requirements
 from submissions.forms import DocumentReviewForm
 from accounts.models import StaffPermission
 
@@ -54,12 +55,8 @@ def faculty_submissions_list(request):
         faculty_members = faculty_members.filter(faculty_type=faculty_type)
 
     faculty_rows = []
-    active_requirements = Requirement.objects.filter(status=Requirement.ReqStatus.ACTIVE)
     for faculty_member in faculty_members.distinct():
-        assigned_requirements = active_requirements.filter(
-            Q(assigned_to=Requirement.AssignedFacultyType.ALL)
-            | Q(assigned_to=faculty_member.faculty_type)
-        )
+        assigned_requirements = get_faculty_assigned_requirements(faculty_member)
         
         faculty_submissions = DocumentSubmission.objects.filter(
             faculty=faculty_member,

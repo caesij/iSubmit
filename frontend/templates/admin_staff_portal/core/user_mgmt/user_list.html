@@ -82,6 +82,10 @@
             Apply Filters
         </button>
 
+        {% if current_role == 'FACULTY' %}
+            <a href="{% url 'admin_staff_portal:program_list' %}">Manage Programs</a>
+        {% endif %}
+
         <a class="action-button"
            href="{% url 'admin_staff_portal:user_create' %}?role={{ current_role }}">
             <img

@@ -60,7 +60,7 @@ Supports document submission and monitoring of review status.
                     </th>
                     <th>Bin Title</th>
                     <th>Category</th>
-                    <th>Assigned To</th>
+                    <th>Assigned Faculty</th>
                     <th>Academic Term</th>
                     <th>Deadline</th>
                     <th>Status</th>
@@ -82,7 +82,7 @@ Supports document submission and monitoring of review status.
                         </td>
 
                         <td>{{ requirement.category }}</td>
-                        <td>{{ requirement.assigned_to_display }}</td>
+                        <td>{{ requirement.assigned_faculty_type_display }}</td>
 
                         <td>
                             <div>{{ requirement.semester_display }}</div>
@@ -99,8 +99,8 @@ Supports document submission and monitoring of review status.
                         </td>
 
                         <td>
-                            <span class="ocr-badge {% if requirement.text_processing_mode == 'NONE' %}ocr-disabled{% else %}ocr-enabled{% endif %}">
-                                {{ requirement.text_processing_mode_display }}
+                            <span class="ocr-badge {% if requirement.text_extraction_enabled %}ocr-enabled{% else %}ocr-disabled{% endif %}">
+                                {% if requirement.text_extraction_enabled %}Enabled{% else %}Disabled{% endif %}
                             </span>
                         </td>
 

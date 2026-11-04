@@ -3,17 +3,11 @@ from django.utils import timezone
 from core.date_formatting import format_display_date
 from submissions.models import Requirement, DocumentSubmission
 from submissions.querysets import active_document_queryset
+from submissions.helpers import get_faculty_assigned_requirements
 
 
 def get_dashboard_data(user):
-    active_requirements = (
-        Requirement.objects
-        .filter(status=Requirement.ReqStatus.ACTIVE)
-        .filter(
-            Q(assigned_to=Requirement.AssignedFacultyType.ALL)
-            | Q(assigned_to=user.faculty_type)
-        )
-    )
+    active_requirements = get_faculty_assigned_requirements(user)
 
     total_requirements = active_requirements.count()
 

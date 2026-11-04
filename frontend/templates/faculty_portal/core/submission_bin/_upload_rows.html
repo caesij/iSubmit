@@ -12,8 +12,7 @@
                     value="{{ row.requirement.id }}"
                     form="selection-form"
                     class="requirement-checkbox"
-                    data-text-required="{% if row.requirement.text_processing_mode != 'NONE' %}true{% else %}false{% endif %}"
-                    data-processing-mode="{{ row.requirement.text_processing_mode }}"
+                    data-text-required="{{ row.requirement.text_extraction_enabled|yesno:'true,false' }}"
                     data-text-extraction-status="{{ row.metadata.text_extraction_status|default:'PENDING' }}"
                 >
             {% elif row.is_resubmission %}
@@ -29,8 +28,7 @@
                     value="{{ row.requirement.id }}"
                     form="selection-form"
                     class="requirement-checkbox"
-                    data-text-required="{% if row.requirement.text_processing_mode != 'NONE' %}true{% else %}false{% endif %}"
-                    data-processing-mode="{{ row.requirement.text_processing_mode }}"
+                    data-text-required="{{ row.requirement.text_extraction_enabled|yesno:'true,false' }}"
                     data-text-extraction-status="{{ row.metadata.text_extraction_status|default:'PENDING' }}"
                 >
             {% else %}

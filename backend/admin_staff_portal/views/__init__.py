@@ -54,6 +54,12 @@ from admin_staff_portal.views.general.settings_views import (
 )
 
 from admin_staff_portal.views.general.profile_views import profile_view
+from admin_staff_portal.views.core.program_management_views import (
+    program_list,
+    add_program,
+    update_program,
+    delete_program,
+)
 
 __all__ = [
     'admin_dashboard_data_view',
@@ -100,4 +106,8 @@ __all__ = [
     'staff_permissions_view',
     
     'profile_view',
+    'program_list',
+    'add_program',
+    'update_program',
+    'delete_program',
 ]

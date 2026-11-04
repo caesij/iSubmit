@@ -53,6 +53,17 @@
                     <label for="id_faculty_type" class="label-required">Faculty Type</label>
 {{ form.faculty_type }}
                 </div>
+                <div class="form-field">
+                    <label for="{{ form.assigned_programs.id_for_label }}">
+                        Assigned Programs
+                    </label>
+
+                    {{ form.assigned_programs }}
+
+                    {% for error in form.assigned_programs.errors %}
+                        <div class="field-error">{{ error }}</div>
+                    {% endfor %}
+                </div>
             </div>
         </div>
 

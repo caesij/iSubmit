@@ -3,6 +3,7 @@ from django.db import transaction
 from django.http import HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
+from submissions.helpers import get_target_faculty_queryset
 from django.views.decorators.http import require_http_methods
 
 from accounts.decorators import faculty
@@ -65,8 +66,7 @@ def attach_document(request, requirement_id):
         deadline__gt=timezone.now(),
     )
 
-    allowed_types = (Requirement.AssignedFacultyType.ALL, request.user.faculty_type)
-    if requirement.assigned_to not in allowed_types:
+    if not get_target_faculty_queryset(requirement).filter(pk=request.user.pk).exists():
         return HttpResponseForbidden('This requirement is not available for your account.')
 
     draft, _ = DraftUpload.objects.select_related('requirement').get_or_create(faculty=request.user, requirement=requirement)

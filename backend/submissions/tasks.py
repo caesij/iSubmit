@@ -8,7 +8,12 @@ from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.utils import timezone
 
-from core.text_extraction_digi_docs import DocumentTextExtractionError, extract_text
+from core.document_conversion import DocumentConversionError, convert_to_pdf
+from core.text_extraction_digi_docs import (
+    DocumentTextExtractionError,
+    NoEmbeddedTextError,
+    extract_text
+)
 from core.post_correction import correct_lines
 from core.document_validation import DocumentValidationError, validate_document_text
 from submissions.models import DocumentSubmission, DocumentMetadata
@@ -82,7 +87,7 @@ def process_document_extraction(self, metadata_id, request_id):
         if not metadata.draft_id or not metadata.draft or not metadata.draft.draft_file:
             return {'status': 'draft_missing'}
         if (
-            metadata.requirement.text_processing_mode == metadata.requirement.TextProcessingMode.NONE
+            not metadata.requirement.text_extraction_enabled
             and not metadata.requirement.validation_enabled
         ):
             metadata.text_extraction_status = DocumentMetadata.TextExtractionStatus.NOT_REQUIRED
@@ -96,17 +101,6 @@ def process_document_extraction(self, metadata_id, request_id):
             return {'status': 'stale_file'}
 
         suffix = Path(metadata.original_filename or file_name).suffix.lower()
-
-        processing_mode = metadata.requirement.text_processing_mode
-
-        if processing_mode == metadata.requirement.TextProcessingMode.OCR and suffix != '.pdf':
-            metadata.text_extraction_status = DocumentMetadata.TextExtractionStatus.FAILED
-            metadata.text_extraction_error = (
-                'This requirement requires OCR, so the document must be a PDF.'
-            )
-            metadata.save(update_fields=['text_extraction_status', 'text_extraction_error', 'updated_at'])
-            _refresh_faculty_submission_bin(metadata.faculty_id)
-            return {'status': 'unsupported_file'}
 
         faculty_id = metadata.faculty_id
         metadata.text_extraction_error = ''
@@ -122,14 +116,23 @@ def process_document_extraction(self, metadata_id, request_id):
                 with local_document.open('wb') as local_file:
                     shutil.copyfileobj(remote_file, local_file)
 
-            if processing_mode == metadata.requirement.TextProcessingMode.OCR:
+            try:
+                extracted_text, page_count = extract_text(local_document)
+                extraction_method = 'digital'
+            except NoEmbeddedTextError:
+                ocr_document = local_document
+                if suffix != '.pdf':
+                    ocr_document = convert_to_pdf(
+                        local_document,
+                        Path(temp_dir) / 'converted',
+                    )
+
                 from core.ocr import extract_lines_and_page_count_from_pdf
                 lines, scores, page_count = (
-                    extract_lines_and_page_count_from_pdf(local_document)
+                    extract_lines_and_page_count_from_pdf(ocr_document)
                 )
                 extracted_text = _post_correct(lines, scores)
-            else:
-                extracted_text, page_count = extract_text(local_document)
+                extraction_method = 'ocr'
 
         with transaction.atomic():
             current = (
@@ -161,7 +164,11 @@ def process_document_extraction(self, metadata_id, request_id):
                 str(current.text_extraction_request_id),
             )
 
-        return {'status': 'completed', 'page_count': page_count}
+        return {
+            'status': 'completed',
+            'page_count': page_count,
+            'method': extraction_method
+        }
 
     except Exception as exc:
         logger.exception('Document extraction failed for metadata record %s.', metadata_id)
@@ -178,7 +185,7 @@ def process_document_extraction(self, metadata_id, request_id):
 
                     current.text_extraction_error = (
                         str(exc)
-                        if isinstance(exc, DocumentTextExtractionError)
+                        if isinstance(exc, (DocumentTextExtractionError, DocumentConversionError))
                         else (
                             'We could not read the text from this document. '
                             'Please replace the file and try again, or contact support.'

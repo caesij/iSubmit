@@ -13,7 +13,6 @@ from core.date_formatting import format_display_date, format_display_time
 from admin_staff_portal.realtime import refresh_admin_dashboard
 from admin_staff_portal.realtime import refresh_staff_dashboard
 from admin_staff_portal.realtime import refresh_submission_pages
-from admin_staff_portal.helpers.submissions import refresh_requirement_faculty_dashboards
 from notifications.services import create_notif
 from notifications.models import NotificationPreference
 
@@ -26,6 +25,7 @@ from faculty_portal.realtime import (
 from submissions.models import Requirement
 
 from submissions.forms import RequirementForm
+from submissions.helpers import get_target_faculty_queryset
 
 TEMPLATE_DIR = 'admin_staff_portal/core/submissions/submission_bin/'
 
@@ -43,7 +43,6 @@ def bulk_requirements_view(request):
     assigned_labels = dict(Requirement.AssignedFacultyType.choices)
     semester_labels = dict(Requirement.Semester.choices)
     status_labels = dict(Requirement.ReqStatus.choices)
-    processing_mode_labels = dict(Requirement.TextProcessingMode.choices)
 
     for index, item in enumerate(bulk_requirements):
         display_item = item.copy()
@@ -57,12 +56,14 @@ def bulk_requirements_view(request):
             display_item['deadline_date'] = ''
             display_item['deadline_time'] = ''
 
-        display_item['assigned_to_display'] = (
+        display_item['assigned_faculty_type_display'] = (
             assigned_labels.get(
-                item.get('assigned_to'),
-                item.get('assigned_to', '')
+                item.get('assigned_faculty_type'),
+                'Selected faculty' if item.get('assigned_faculty_member_ids') else 'All Faculty',
             )
         )
+        if item.get('assigned_program_ids'):
+            display_item['assigned_faculty_type_display'] = 'Selected programs'
 
         display_item['semester_display'] = (
             semester_labels.get(
@@ -77,14 +78,7 @@ def bulk_requirements_view(request):
                 item.get('status', '')
             )
         )
-        display_item['text_processing_mode'] = item.get(
-            'text_processing_mode',
-            'OCR' if item.get('ocr_enabled') else 'NONE'
-        )
-        display_item['text_processing_mode_display'] = processing_mode_labels.get(
-            display_item['text_processing_mode'],
-            item.get('text_processing_mode', '')
-        )
+        display_item['text_extraction_enabled'] = item.get('text_extraction_enabled', False)
 
         display_item['index'] = index
 
@@ -142,12 +136,14 @@ def add_requirement_to_bulk(request):
                 bulk_requirements.append({
                     'requirement_title': requirement_title,
                     'category': form.cleaned_data['category'],
-                    'assigned_to': form.cleaned_data['assigned_to'],
+                    'assigned_faculty_type': form.cleaned_data['assigned_faculty_type'],
+                    'assigned_program_ids': list(form.cleaned_data['assigned_programs'].values_list('pk', flat=True)),
+                    'assigned_faculty_member_ids': list(form.cleaned_data['assigned_faculty_member'].values_list('pk', flat=True)),
                     'academic_year': academic_year,
                     'semester': semester,
                     'status': form.cleaned_data['status'],
                     'deadline': deadline.strftime('%Y-%m-%dT%H:%M'),
-                    'text_processing_mode': form.cleaned_data['text_processing_mode'],
+                    'text_extraction_enabled': form.cleaned_data['text_extraction_enabled'],
                     'validation_enabled': form.cleaned_data['validation_enabled'],
                     'validation_instructions': validation_instructions,
                 })
@@ -200,15 +196,14 @@ def post_bulk_requirements(request):
                 form = RequirementForm(data={
                     'requirement_title': item['requirement_title'],
                     'category': item['category'],
-                    'assigned_to': item['assigned_to'],
+                    'assigned_faculty_type': item.get('assigned_faculty_type'),
+                    'assigned_programs': item.get('assigned_program_ids', []),
+                    'assigned_faculty_member': item.get('assigned_faculty_member_ids', []),
                     'academic_year': item['academic_year'],
                     'semester': item['semester'],
                     'status': item['status'],
                     'deadline': item['deadline'],
-                    'text_processing_mode': item.get(
-                        'text_processing_mode',
-                        'OCR' if item.get('ocr_enabled') else 'NONE'
-                    ),
+                    'text_extraction_enabled': item.get('text_extraction_enabled', False),
                     'validation_enabled': item.get('validation_enabled', False),
                     'validation_instructions': item.get('validation_instructions', ''),
                 })
@@ -240,10 +235,7 @@ def post_bulk_requirements(request):
                         matching_requirements = [
                             requirement
                             for requirement in active_requirements
-                            if (requirement.assigned_to == Requirement.AssignedFacultyType.ALL
-                                or
-                                requirement.assigned_to== faculty_member.faculty_type
-                            )
+                            if faculty_member in get_target_faculty_queryset(requirement)
                         ]
 
                         if not matching_requirements:
@@ -309,8 +301,6 @@ def edit_requirement(request, requirement_id):
     requirement = get_object_or_404(Requirement, pk=requirement_id)
 
     if request.method == 'POST':
-        old_assigned_to = requirement.assigned_to
-
         form = RequirementForm(request.POST, instance=requirement)
 
         if form.is_valid():
@@ -321,7 +311,7 @@ def edit_requirement(request, requirement_id):
             refresh_submission_pages()
             refresh_all_faculty_submission_bins()
 
-            refresh_requirement_faculty_dashboards(old_assigned_to, requirement.assigned_to)
+            refresh_all_faculty_submission_bins()
 
             return redirect('admin_staff_portal:requirements_list')
     else:
@@ -346,7 +336,7 @@ def requirements_list(request):
 
     query = request.GET.get('q')
     category = request.GET.get('category')
-    assigned_to = request.GET.get('assigned_to')
+    assigned_faculty_type = request.GET.get('assigned_faculty_type')
     semester = request.GET.get('semester')
     academic_year = request.GET.get('academic_year')
 
@@ -354,8 +344,8 @@ def requirements_list(request):
         requirements = requirements.filter(requirement_title__icontains=query)
     if category:
         requirements = requirements.filter(category=category)
-    if assigned_to:
-        requirements = requirements.filter(assigned_to=assigned_to)
+    if assigned_faculty_type:
+        requirements = requirements.filter(assigned_faculty_type=assigned_faculty_type)
     if semester:
         requirements = requirements.filter(semester=semester)
     if academic_year:
@@ -369,7 +359,7 @@ def requirements_list(request):
         'page_obj': page_obj,
         'is_paginated': page_obj.has_other_pages(),
         'categories': Requirement.objects.values_list('category', flat=True).distinct(),
-        'assigned_to_choices': [
+        'assigned_faculty_type_choices': [
             c for c in Requirement.AssignedFacultyType.choices if c[0] != 'ALL'
         ],
         'academic_years': [
@@ -402,8 +392,7 @@ def toggle_requirement_status(request, requirement_id):
         requirement.save(update_fields=['status', 'updated_at'])
 
         faculty_qs = User.objects.filter(role=User.Role.FACULTY)
-        if requirement.assigned_to != Requirement.AssignedFacultyType.ALL:
-            faculty_qs = faculty_qs.filter(faculty_type=requirement.assigned_to)
+        faculty_qs = get_target_faculty_queryset(requirement)
 
         def publish_requirement_updates():
             refresh_admin_dashboard()
