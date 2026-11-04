@@ -59,6 +59,42 @@
   .fdv-detail-row .dot { width: 6px; height: 6px; flex-shrink: 0; margin-top: 6px; border-radius: 50%; background: var(--gold); }
   .fdv-detail-row .label { display: block; color: var(--muted); font-size: 11.5px; }
   .fdv-detail-row .value { color: var(--ink); font-weight: 600; }
+  .fdv-validation-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 10px;
+    padding: 9px 10px;
+    border: 1px solid var(--line);
+    border-radius: 7px;
+    background: #fffdfa;
+  }
+  .fdv-validation-row:last-of-type { margin-bottom: 0; }
+  .fdv-validation-field {
+    color: var(--muted);
+    font-size: 11.5px;
+  }
+  .fdv-validation-result {
+    display: block;
+    margin-top: 2px;
+    color: var(--ink);
+    font-size: 12.5px;
+    font-weight: 700;
+  }
+  .fdv-validation-result.is-found { color: #17663a; }
+  .fdv-validation-result.is-missing { color: #9f2020; }
+  .fdv-validation-confidence {
+    color: var(--muted);
+    font-size: 10.5px;
+    white-space: nowrap;
+  }
+  .fdv-validation-message {
+    margin-top: 10px;
+    color: #9f2020;
+    font-size: 11.5px;
+    line-height: 1.4;
+  }
   @media (max-width: 900px) {
     .fdv-grid { grid-template-columns: 1fr; }
     .fdv-viewer-date { white-space: normal; text-align: right; }
@@ -123,17 +159,27 @@
             <h2>Validation</h2>
             <div class="fdv-detail-row"><span class="dot"></span><div><span class="label">Processing</span><span class="value">{{ metadata.get_validation_status_display }}</span></div></div>
             {% for name, field in metadata.validation_result.fields.items %}
-              <div class="fdv-detail-row"><span class="dot"></span><div><span class="label">{{ name|title }}</span><span class="value">{% if field.found %}Found{% else %}Not found{% endif %}</span></div></div>
-              {% for candidate in field.candidates %}
-                {% if candidate.reliable %}
-                  <div>Possible match: {{ candidate.text }} - Confidence: {{ candidate.confidence|floatformat:2 }}</div>
+              <div class="fdv-validation-row">
+                <div>
+                  <span class="fdv-validation-field">{{ name|title }}</span>
+                  <span class="fdv-validation-result {% if field.found %}is-found{% else %}is-missing{% endif %}">
+                    {% if field.found %}Found{% else %}Not found{% endif %}
+                  </span>
+                </div>
+                {% if field.candidates %}
+                  {% for candidate in field.candidates %}
+                    {% if forloop.first %}
+                      <span class="fdv-validation-confidence">Confidence {{ candidate.confidence|floatformat:2 }}</span>
+                    {% endif %}
+                  {% endfor %}
+                {% else %}
+                  <span class="fdv-validation-confidence">Confidence —</span>
                 {% endif %}
-              {% endfor %}
+              </div>
             {% endfor %}
-            {% for item in metadata.validation_result.recheck %}
-              <div>{{ item.field|title }}: {{ item.reason }}</div>
-            {% endfor %}
-            {% if metadata.validation_error %}<div>{{ metadata.validation_error }}</div>{% endif %}
+            {% if metadata.validation_error %}
+              <div class="fdv-validation-message">{{ metadata.validation_error }}</div>
+            {% endif %}
           </div>
         {% endif %}
       </aside>

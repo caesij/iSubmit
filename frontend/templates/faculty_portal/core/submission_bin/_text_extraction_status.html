@@ -1,0 +1,14 @@
+{% if row.requirement.text_processing_mode == 'NONE' %}
+    <span class="ocr-badge disabled">Disabled</span>
+{% elif row.draft and row.draft.draft_file and row.metadata %}
+    <span class="status-badge text-extraction-status" data-status="{{ row.metadata.text_extraction_status|default:'PENDING' }}">
+        {% if row.requirement.text_processing_mode == 'OCR' %}OCR{% else %}Text extraction{% endif %}:
+        {% if row.metadata.text_extraction_status == 'PENDING' or row.metadata.text_extraction_status == 'PROCESSING' %}
+            Processing
+        {% else %}
+            {{ row.metadata.get_text_extraction_status_display|default:'Processing' }}
+        {% endif %}
+    </span>
+{% else %}
+    <span class="ocr-badge enabled">Enabled</span>
+{% endif %}

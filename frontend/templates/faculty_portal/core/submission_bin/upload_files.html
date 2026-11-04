@@ -116,6 +116,21 @@
             padding: 4px 9px;
             font-size: 10px;
         }
+        .submission-bin-container .data-table details {
+            margin-top: 3px;
+            font-weight: 400;
+        }
+        .submission-bin-container .data-table details summary {
+            cursor: pointer;
+            font-weight: 700;
+            list-style-position: outside;
+        }
+        .submission-bin-container .data-table details div {
+            padding: 2px 0 0 14px;
+            font-weight: 400;
+            line-height: 1.35;
+            white-space: normal;
+        }
         .submission-bin-container .data-table .file-actions {
             gap: 4px;
         }
@@ -236,7 +251,7 @@
                     <th>Deadline</th>
                     <th>Status</th>
                     <th>File</th>
-                    <th>Text Processing</th>
+                    <th>Text Extraction</th>
                     <th class="action-heading">Action</th>
                 </tr>
             </thead>
@@ -318,6 +333,13 @@ document.addEventListener("DOMContentLoaded", function () {
     let deadlineTimer = null;
     let pendingRemoveForm = null;
     let activeUploadRow = null;
+    const uploadLoading = document.getElementById("upload-loading");
+
+    function showUploadLoading() {
+        if (uploadLoading) {
+            uploadLoading.hidden = false;
+        }
+    }
 
     function getCheckboxes() {
         return Array.from(
@@ -569,12 +591,20 @@ document.addEventListener("DOMContentLoaded", function () {
     document.addEventListener("change", function (event) {
         const target = event.target;
         if (target.matches("#submission-bin-body input[type='file']")) {
+            showUploadLoading();
             setTimeout(function () {
                 activeUploadRow = null;
             }, 0);
         }
         if (target.matches("#submission-bin-body .requirement-checkbox")) {
             syncSelectAll();
+        }
+    }, true);
+
+    document.addEventListener("submit", function (event) {
+        if (event.target.matches("#submission-bin-body form") &&
+            event.target.querySelector("input[type='file']")) {
+            showUploadLoading();
         }
     }, true);
 
