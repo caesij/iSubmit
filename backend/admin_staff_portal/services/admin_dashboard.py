@@ -32,7 +32,11 @@ def get_admin_dashboard_data():
     submitted_count = submissions.filter(
         status__in=[
             DocumentSubmission.SubmissionStatus.SUBMITTED, 
-            DocumentSubmission.SubmissionStatus.RESUBMITTED]
+            DocumentSubmission.SubmissionStatus.RESUBMITTED,
+            DocumentSubmission.SubmissionStatus.UNDER_REVIEW,
+            DocumentSubmission.SubmissionStatus.PENDING_APPROVAL,
+            DocumentSubmission.SubmissionStatus.APPROVED
+        ]
     ).count()
     
     pending_approval_count = submissions.filter(status=DocumentSubmission.SubmissionStatus.PENDING_APPROVAL).count()

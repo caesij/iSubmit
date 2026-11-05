@@ -1,14 +1,17 @@
 from django.urls import path
 from admin_staff_portal import views
-from notifications.views import notification_list_view
+from core.global_search_views import global_search_results, global_search_suggestions
 
 app_name = 'admin_staff_portal'
 
 urlpatterns = [
-    # Dashboard URL
+    # Global Search URLs
+    path('search/', global_search_results, name='global_search_results'),
+    path('search/suggestions/', global_search_suggestions, name='global_search_suggestions'),
+    
+    # Dashboard URLs
     path('admin-dashboard/', views.admin_dashboard_view, name='admin_dashboard'),
     path('admin-dashboard/data/', views.admin_dashboard_data_view, name='admin_dashboard_data'),
-    
     path('staff-dashboard/', views.staff_dashboard_view, name='staff_dashboard'),
     path('staff-dashboard/data/', views.staff_dashboard_data_view, name='staff_dashboard_data'),
     

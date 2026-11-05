@@ -1,0 +1,50 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search results - iSubmit</title>
+    <link rel="stylesheet" href="{% static 'css/layout/admin_staff_portal.css' %}">
+</head>
+<body>
+    <main style="max-width: 900px; margin: 40px auto; padding: 0 24px;">
+        <h1>Search results</h1>
+        <p>Showing results for <strong>{{ query }}</strong></p>
+
+        {% if pages %}
+            <h2>Pages</h2>
+            <ul>
+                {% for result in pages %}
+                    <li><a href="{{ result.url }}">{{ result.label }}</a></li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+
+        {% if requirements %}
+            <h2>Requirements</h2>
+            <ul>
+                {% for result in requirements %}
+                    <li><a href="{{ result.url }}">{{ result.label }}</a></li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+
+        {% if documents %}
+            <h2>Documents</h2>
+            <ul>
+                {% for result in documents %}
+                    <li>
+                        <small>{{ result.category }}</small>
+                        <a href="{{ result.url }}">{{ result.label }}</a>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+
+        {% if not pages and not requirements and not documents %}
+            <p>No pages, requirement titles, or documents matched your search.</p>
+        {% endif %}
+    </main>
+</body>
+</html>

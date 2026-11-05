@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}iSubmit - {{ request.user.get_role_display }} Portal{% endblock %}</title>
     <link rel="stylesheet" href="{% static 'css/layout/admin_staff_portal.css' %}">
+    <script src="{% static 'js/global-search.js' %}" defer></script>
     {% block extra_css %}{% endblock %}
 
     <style>
@@ -324,8 +325,10 @@
 
                 <div class="topbar-controls">
                     <div
-                        class="global-search global-search-disabled"
-                        aria-label="Global search is not available yet"
+                        class="global-search"
+                        data-global-search
+                        data-suggestions-url="{% url 'admin_staff_portal:global_search_suggestions' %}"
+                        data-results-url="{% url 'admin_staff_portal:global_search_results' %}"
                     >
                         <span class="icon">
                             <img
@@ -335,11 +338,18 @@
                         </span>
 
                         <input
+                            data-global-search-input
                             type="text"
-                            placeholder="Search requirements, documents, or submissions..."
-                            disabled
-                            aria-disabled="true"
+                            placeholder="Search pages or requirements..."
+                            autocomplete="off"
+                            aria-label="Search pages or requirements"
                         >
+                        <div
+                            class="global-search-menu"
+                            data-global-search-menu
+                            role="listbox"
+                            hidden
+                        ></div>
                     </div>
 
                     <div

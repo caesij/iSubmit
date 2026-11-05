@@ -18,25 +18,21 @@ def get_staff_dashboard_data():
     pending_review_statuses = [
         DocumentSubmission.SubmissionStatus.SUBMITTED,
         DocumentSubmission.SubmissionStatus.RESUBMITTED,
-        DocumentSubmission.SubmissionStatus.UNDER_REVIEW,
+        DocumentSubmission.SubmissionStatus.UNDER_REVIEW
     ]
     
     reviewed_statuses = [
         DocumentSubmission.SubmissionStatus.PENDING_APPROVAL,
-        DocumentSubmission.SubmissionStatus.APPROVED,
+        DocumentSubmission.SubmissionStatus.APPROVED
     ]
-
+    
+    submitted_count = submissions.count()
+    
     completed_reviews_count = submissions.filter(status__in=reviewed_statuses).count()
 
-    submitted_count = submissions.count()
+    under_review_count = submissions.filter(status=DocumentSubmission.SubmissionStatus.UNDER_REVIEW).count()
 
-    under_review_count = submissions.filter(
-        status=DocumentSubmission.SubmissionStatus.UNDER_REVIEW
-    ).count()
-
-    returned_count = submissions.filter(
-        status=DocumentSubmission.SubmissionStatus.NEEDS_REVISION
-    ).count()
+    returned_count = submissions.filter(status=DocumentSubmission.SubmissionStatus.NEEDS_REVISION).count()
 
     pending_review_count = submissions.filter(
         status__in=pending_review_statuses
@@ -77,7 +73,7 @@ def get_staff_dashboard_data():
         'pending_review_progress': pending_review_progress,
         
         'documents_overview': documents_overview,
-        'submission_trends': trends,
+        'submission_trends': trends
     }
 
 
