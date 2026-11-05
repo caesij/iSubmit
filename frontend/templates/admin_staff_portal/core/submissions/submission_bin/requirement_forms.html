@@ -10,6 +10,7 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/pages/submissions.css' %}">
+<link rel="stylesheet" href="{% static 'css/pages/requirement-form-controls.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -64,20 +65,63 @@
 
                 <div class="requirement-field{% if form.assigned_programs.errors %} has-error{% endif %}">
                     {{ form.assigned_programs.label_tag }}
-                    {{ form.assigned_programs }}
+                    <div class="requirement-multi-picker" data-requirement-picker>
+                        {{ form.assigned_programs }}
+                        <button type="button" class="requirement-picker-button" aria-expanded="false">
+                            <span class="requirement-picker-placeholder">Select programs</span>
+                            <span class="requirement-picker-chevron" aria-hidden="true"></span>
+                        </button>
+                        <div class="requirement-picker-menu">
+                            <input type="search" class="requirement-picker-search" placeholder="Search programs..." aria-label="Search programs">
+                            <div class="requirement-picker-options">
+                                {% for program in form.assigned_programs.field.queryset %}
+                                    <button type="button" class="requirement-picker-option" data-value="{{ program.pk }}" data-label="{{ program.short_name }} - {{ program.program_name }}">
+                                        <span class="requirement-picker-check" aria-hidden="true"></span>
+                                        <span><strong>{{ program.short_name }}</strong><small>{{ program.program_name }}</small></span>
+                                    </button>
+                                {% empty %}
+                                    <span class="requirement-picker-empty">No programs available.</span>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
                     {% for error in form.assigned_programs.errors %}<span class="field-error">{{ error }}</span>{% endfor %}
                 </div>
 
                 <div class="requirement-field{% if form.assigned_faculty_member.errors %} has-error{% endif %}">
                     {{ form.assigned_faculty_member.label_tag }}
-                    {{ form.assigned_faculty_member }}
+                    <div class="requirement-multi-picker" data-requirement-picker>
+                        {{ form.assigned_faculty_member }}
+                        <button type="button" class="requirement-picker-button" aria-expanded="false">
+                            <span class="requirement-picker-placeholder">Search faculty members</span>
+                            <span class="requirement-picker-chevron" aria-hidden="true"></span>
+                        </button>
+                        <div class="requirement-picker-menu">
+                            <input type="search" class="requirement-picker-search" placeholder="Search faculty members..." aria-label="Search faculty members">
+                            <div class="requirement-picker-options">
+                                {% for faculty in form.assigned_faculty_member.field.queryset %}
+                                    <button type="button" class="requirement-picker-option" data-value="{{ faculty.pk }}" data-label="{{ faculty.get_full_name }}">
+                                        <span class="requirement-picker-check" aria-hidden="true"></span>
+                                        <span><strong>{{ faculty.get_full_name }}</strong></span>
+                                    </button>
+                                {% empty %}
+                                    <span class="requirement-picker-empty">No faculty members available.</span>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
                     {% for error in form.assigned_faculty_member.errors %}<span class="field-error">{{ error }}</span>{% endfor %}
                 </div>
 
                 <div class="requirement-field{% if form.text_extraction_enabled.errors %} has-error{% endif %}">
-                    <div class="processing-option">
+                    <div class="requirement-switch-field">
                         {{ form.text_extraction_enabled }}
-                        {{ form.text_extraction_enabled.label_tag }}
+                        <label for="{{ form.text_extraction_enabled.id_for_label }}">{{ form.text_extraction_enabled.label }}</label>
+                        <label
+                            for="{{ form.text_extraction_enabled.id_for_label }}"
+                            class="requirement-switch"
+                            aria-label="Toggle text extraction"
+                        ></label>
                     </div>
                     {% for error in form.text_extraction_enabled.errors %}
                         <span class="field-error">{{ error }}</span>
@@ -94,7 +138,12 @@
 
                 <div class="requirement-field validation-toggle-field{% if form.validation_enabled.errors %} has-error{% endif %}">
                     {{ form.validation_enabled }}
-                    {{ form.validation_enabled.label_tag }}
+                    <label for="{{ form.validation_enabled.id_for_label }}">{{ form.validation_enabled.label }}</label>
+                    <label
+                        for="{{ form.validation_enabled.id_for_label }}"
+                        class="requirement-switch"
+                        aria-label="Toggle NLP validation"
+                    ></label>
                     {% for error in form.validation_enabled.errors %}<span class="field-error">{{ error }}</span>{% endfor %}
                 </div>
 
@@ -179,6 +228,77 @@
 
             validationToggle.addEventListener('change', updateValidationFields);
             updateValidationFields();
+
+            document.querySelectorAll('[data-requirement-picker]').forEach(function (picker) {
+                const select = picker.querySelector('select');
+                const trigger = picker.querySelector('.requirement-picker-button');
+                const menu = picker.querySelector('.requirement-picker-menu');
+                const search = picker.querySelector('.requirement-picker-search');
+                const options = Array.from(picker.querySelectorAll('.requirement-picker-option'));
+
+                function render() {
+                    const selected = Array.from(select.options).filter(function (option) {
+                        return option.selected;
+                    });
+                    trigger.querySelectorAll('.requirement-picker-chip').forEach(function (chip) {
+                        chip.remove();
+                    });
+                    const placeholder = trigger.querySelector('.requirement-picker-placeholder');
+                    placeholder.hidden = selected.length > 0;
+                    selected.forEach(function (selectedOption) {
+                        const chip = document.createElement('span');
+                        chip.className = 'requirement-picker-chip';
+                        chip.textContent = selectedOption.textContent.trim().split(' - ')[0];
+                        trigger.insertBefore(chip, trigger.querySelector('.requirement-picker-chevron'));
+                    });
+                    options.forEach(function (option) {
+                        const nativeOption = Array.from(select.options).find(function (item) {
+                            return item.value === option.dataset.value;
+                        });
+                        option.classList.toggle('is-selected', Boolean(nativeOption && nativeOption.selected));
+                    });
+                }
+
+                trigger.addEventListener('click', function () {
+                    const isOpen = menu.classList.toggle('is-open');
+                    trigger.setAttribute('aria-expanded', String(isOpen));
+                    if (isOpen && search) {
+                        search.focus();
+                    }
+                });
+
+                options.forEach(function (option) {
+                    option.addEventListener('click', function () {
+                        const nativeOption = Array.from(select.options).find(function (item) {
+                            return item.value === option.dataset.value;
+                        });
+                        if (!nativeOption) return;
+                        nativeOption.selected = !nativeOption.selected;
+                        select.dispatchEvent(new Event('change', {bubbles: true}));
+                        render();
+                    });
+                });
+
+                if (search) {
+                    search.addEventListener('input', function () {
+                        const query = search.value.toLowerCase();
+                        options.forEach(function (option) {
+                            option.hidden = !option.dataset.label.toLowerCase().includes(query);
+                        });
+                    });
+                }
+
+                render();
+            });
+
+            document.addEventListener('click', function (event) {
+                document.querySelectorAll('[data-requirement-picker]').forEach(function (picker) {
+                    if (!picker.contains(event.target)) {
+                        picker.querySelector('.requirement-picker-menu').classList.remove('is-open');
+                        picker.querySelector('.requirement-picker-button').setAttribute('aria-expanded', 'false');
+                    }
+                });
+            });
         });
     </script>
 </div>

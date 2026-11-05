@@ -2,7 +2,10 @@
 {% load static %}
 
 {% block title %}{% if object %}Edit Faculty{% else %}Add Faculty{% endif %} - iSubmit{% endblock %}
-{% block extra_css %}<link rel="stylesheet" href="{% static 'css/pages/user-management.css' %}">{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/pages/user-management.css' %}">
+<link rel="stylesheet" href="{% static 'css/pages/faculty-form.css' %}">
+{% endblock %}
 
 {% block content %}
 <div class="panel-header">
@@ -54,11 +57,63 @@
 {{ form.faculty_type }}
                 </div>
                 <div class="form-field">
-                    <label for="{{ form.assigned_programs.id_for_label }}">
-                        Assigned Programs
-                    </label>
+                    <label for="program-picker-button">Assigned Programs</label>
 
-                    {{ form.assigned_programs }}
+                    <div
+                        class="program-picker"
+                        data-program-picker
+                        data-selected-values="{{ form.assigned_programs.value|join:',' }}"
+                    >
+                        <select
+                            id="{{ form.assigned_programs.id_for_label }}"
+                            name="{{ form.assigned_programs.html_name }}"
+                            multiple
+                            hidden
+                            aria-hidden="true"
+                        >
+                            {% for program in form.assigned_programs.field.queryset %}
+                                <option
+                                    value="{{ program.pk }}"
+                                    {% if program in form.instance.assigned_programs.all %}selected{% endif %}
+                                >
+                                    {{ program.short_name }}
+                                </option>
+                            {% endfor %}
+                        </select>
+
+                        <button
+                            type="button"
+                            id="program-picker-button"
+                            class="program-picker-button"
+                            aria-haspopup="listbox"
+                            aria-expanded="false"
+                        >
+                            <span class="program-picker-placeholder">Select programs</span>
+                            <span class="program-picker-chevron" aria-hidden="true"></span>
+                        </button>
+
+                        <div class="program-picker-menu" role="listbox" aria-label="Assigned programs">
+                            {% for program in form.assigned_programs.field.queryset %}
+                                <button
+                                    type="button"
+                                    class="program-picker-option"
+                                    role="option"
+                                    data-program-value="{{ program.pk }}"
+                                    data-program-abbreviation="{{ program.short_name }}"
+                                    data-program-name="{{ program.program_name }}"
+                                    aria-selected="false"
+                                >
+                                    <span class="program-picker-check" aria-hidden="true"></span>
+                                    <span>
+                                        <strong>{{ program.short_name }}</strong>
+                                        <small>{{ program.program_name }}</small>
+                                    </span>
+                                </button>
+                            {% empty %}
+                                <span class="program-picker-empty">No programs available.</span>
+                            {% endfor %}
+                        </div>
+                    </div>
 
                     {% for error in form.assigned_programs.errors %}
                         <div class="field-error">{{ error }}</div>
@@ -93,4 +148,99 @@
         </button>
     </div>
 </form>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const picker = document.querySelector("[data-program-picker]");
+        if (!picker) {
+            return;
+        }
+
+        const select = picker.querySelector("select");
+        const button = picker.querySelector(".program-picker-button");
+        const menu = picker.querySelector(".program-picker-menu");
+        const placeholder = picker.querySelector(".program-picker-placeholder");
+        const options = Array.from(picker.querySelectorAll(".program-picker-option"));
+        const initialValues = (picker.dataset.selectedValues || "")
+            .split(",")
+            .filter(Boolean);
+
+        initialValues.forEach(function (value) {
+            const option = Array.from(select.options).find(function (item) {
+                return item.value === value;
+            });
+            if (option) {
+                option.selected = true;
+            }
+        });
+
+        function selectedValues() {
+            return Array.from(select.options)
+                .filter(function (option) { return option.selected; })
+                .map(function (option) { return option.value; });
+        }
+
+        function renderSelection() {
+            const selected = selectedValues();
+            button.querySelectorAll(".program-picker-chip").forEach(function (chip) {
+                chip.remove();
+            });
+
+            placeholder.hidden = selected.length > 0;
+
+            options.forEach(function (option) {
+                const isSelected = selected.includes(option.dataset.programValue);
+                option.setAttribute("aria-selected", String(isSelected));
+                option.classList.toggle("is-selected", isSelected);
+            });
+
+            selected.forEach(function (value) {
+                const option = options.find(function (item) {
+                    return item.dataset.programValue === value;
+                });
+                if (!option) {
+                    return;
+                }
+
+                const chip = document.createElement("span");
+                chip.className = "program-picker-chip";
+                chip.textContent = option.dataset.programAbbreviation;
+                button.insertBefore(chip, button.querySelector(".program-picker-chevron"));
+            });
+        }
+
+        function closeMenu() {
+            menu.classList.remove("is-open");
+            button.setAttribute("aria-expanded", "false");
+        }
+
+        button.addEventListener("click", function () {
+            const isOpen = menu.classList.toggle("is-open");
+            button.setAttribute("aria-expanded", String(isOpen));
+        });
+
+        options.forEach(function (option) {
+            option.addEventListener("click", function () {
+                const nativeOption = Array.from(select.options).find(function (item) {
+                    return item.value === option.dataset.programValue;
+                });
+                if (!nativeOption) {
+                    return;
+                }
+
+                nativeOption.selected = !nativeOption.selected;
+                select.dispatchEvent(new Event("change", {bubbles: true}));
+                renderSelection();
+            });
+        });
+
+        document.addEventListener("click", function (event) {
+            if (!picker.contains(event.target)) {
+                closeMenu();
+            }
+        });
+
+        renderSelection();
+    });
+</script>
 {% endblock %}

@@ -1,41 +1,88 @@
 {% extends 'admin_staff_portal/base.html' %}
+{% load static %}
 
 {% block title %}Program Management - iSubmit{% endblock %}
 {% block heading %}Program Management{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/pages/program-management.css' %}">
+{% endblock %}
+
 {% block content %}
-<section class="table-card">
-    <h1>Programs</h1>
-    <form method="post" action="{% url 'admin_staff_portal:add_program' %}">
+<section class="program-page">
+    <div class="program-page-header">
+        <div>
+            <a class="program-back-link" href="{% url 'admin_staff_portal:user_list' %}?role=FACULTY">
+                <span aria-hidden="true">&larr;</span>
+                <span>Back</span>
+            </a>
+            <h2>Programs</h2>
+            <p>Add and manage the programs available for faculty accounts.</p>
+        </div>
+    </div>
+
+    {% if messages %}
+        <div class="program-toast-stack" aria-live="polite">
+            {% for message in messages %}
+                <div class="program-toast program-toast-{{ message.tags|default:'info' }}" role="status">
+                    <span class="program-toast-icon" aria-hidden="true">&#10003;</span>
+                    <span>{{ message }}</span>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <form method="post" action="{% url 'admin_staff_portal:add_program' %}" class="program-add-card">
         {% csrf_token %}
-        <label for="id_program_name">Program name</label>
-        <input id="id_program_name" name="program_name" maxlength="150" required>
-        <label for="id_short_name">Short name</label>
-        <input id="id_short_name" name="short_name" maxlength="20" required>
-        <button type="submit">Add program</button>
+        <div class="program-form-field">
+            <label for="id_program_name">Program name</label>
+            <input id="id_program_name" name="program_name" maxlength="150" required>
+        </div>
+        <div class="program-form-field">
+            <label for="id_short_name">Abbreviation</label>
+            <input id="id_short_name" name="short_name" maxlength="20" required>
+        </div>
+        <button type="submit" class="btn program-add-button">Add program</button>
     </form>
 
-    <table class="data-table">
+    <div class="program-table-card">
+        <table class="data-table program-table">
         <thead>
-            <tr><th>Program</th><th>Short name</th><th>Actions</th></tr>
+            <tr><th>Program</th><th>Abbreviation</th><th>Actions</th></tr>
         </thead>
         <tbody>
             {% for program in programs %}
                 <tr>
                     <td>
-                        <form method="post" action="{% url 'admin_staff_portal:update_program' program.id %}">
+                            <input
+                                name="program_name"
+                                value="{{ program.program_name }}"
+                                maxlength="150"
+                                required
+                                form="update-program-{{ program.id }}"
+                            >
+                    </td>
+                    <td>
+                            <input
+                                name="short_name"
+                                value="{{ program.short_name }}"
+                                maxlength="20"
+                                required
+                                form="update-program-{{ program.id }}"
+                            >
+                    </td>
+                    <td>
+                        <form
+                            id="update-program-{{ program.id }}"
+                            method="post"
+                            action="{% url 'admin_staff_portal:update_program' program.id %}"
+                        >
                             {% csrf_token %}
-                            <input name="program_name" value="{{ program.program_name }}" maxlength="150" required>
-                    </td>
-                    <td>
-                            <input name="short_name" value="{{ program.short_name }}" maxlength="20" required>
-                    </td>
-                    <td>
-                            <button type="submit">Save</button>
+                            <button type="submit" class="program-action-button program-save-button">Save</button>
                         </form>
                         <form method="post" action="{% url 'admin_staff_portal:delete_program' program.id %}">
                             {% csrf_token %}
-                            <button type="submit">Delete</button>
+                            <button type="submit" class="program-action-button program-delete-button">Delete</button>
                         </form>
                     </td>
                 </tr>
@@ -43,7 +90,8 @@
                 <tr><td colspan="3">No programs have been added.</td></tr>
             {% endfor %}
         </tbody>
-    </table>
+        </table>
+    </div>
 
     {% if page_obj.has_other_pages %}
         <nav aria-label="Program pages">
@@ -53,4 +101,94 @@
         </nav>
     {% endif %}
 </section>
+
+<div class="program-confirm-modal" id="delete-confirm-modal" hidden>
+    <div class="program-confirm-backdrop" data-confirm-cancel></div>
+    <section
+        class="program-confirm-dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="delete-confirm-title"
+        aria-describedby="delete-confirm-message"
+    >
+        <div class="program-confirm-icon" aria-hidden="true">!</div>
+        <h2 id="delete-confirm-title">Delete program?</h2>
+        <p id="delete-confirm-message">
+            This program will be permanently deleted. This action cannot be undone.
+        </p>
+        <div class="program-confirm-actions">
+            <button type="button" class="program-confirm-cancel" data-confirm-cancel>
+                Cancel
+            </button>
+            <button type="button" class="program-confirm-delete" id="confirm-delete-button">
+                Delete
+            </button>
+        </div>
+    </section>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const deleteModal = document.getElementById("delete-confirm-modal");
+        const confirmDeleteButton = document.getElementById("confirm-delete-button");
+        let deleteFormToSubmit = null;
+
+        document.querySelectorAll(".program-toast").forEach(function (toast) {
+            window.setTimeout(function () {
+                toast.classList.add("program-toast-hidden");
+            }, 4200);
+        });
+
+        document.querySelector(".program-add-card").addEventListener("submit", function () {
+            const button = this.querySelector("button[type='submit']");
+            button.disabled = true;
+            button.textContent = "Adding...";
+        });
+
+        document.querySelectorAll("[id^='update-program-']").forEach(function (form) {
+            form.addEventListener("submit", function () {
+                const button = this.querySelector("button[type='submit']");
+                button.disabled = true;
+                button.textContent = "Saving...";
+            });
+        });
+
+        document.querySelectorAll(".program-delete-button").forEach(function (button) {
+            button.closest("form").addEventListener("submit", function (event) {
+                event.preventDefault();
+                deleteFormToSubmit = this;
+                deleteModal.hidden = false;
+                document.body.classList.add("program-modal-open");
+                confirmDeleteButton.focus();
+            });
+        });
+
+        function closeDeleteModal() {
+            deleteModal.hidden = true;
+            document.body.classList.remove("program-modal-open");
+            deleteFormToSubmit = null;
+        }
+
+        document.querySelectorAll("[data-confirm-cancel]").forEach(function (button) {
+            button.addEventListener("click", closeDeleteModal);
+        });
+
+        confirmDeleteButton.addEventListener("click", function () {
+            if (!deleteFormToSubmit) {
+                return;
+            }
+
+            const deleteButton = deleteFormToSubmit.querySelector(".program-delete-button");
+            deleteButton.disabled = true;
+            deleteButton.textContent = "Deleting...";
+            deleteFormToSubmit.submit();
+        });
+
+        document.addEventListener("keydown", function (event) {
+            if (event.key === "Escape" && !deleteModal.hidden) {
+                closeDeleteModal();
+            }
+        });
+    });
+</script>
 {% endblock %}

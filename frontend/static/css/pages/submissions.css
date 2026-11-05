@@ -1695,10 +1695,10 @@ select {
 }
 
 .bulk-page-heading .btn-add-bin {
-  width: 135px;
-  height: 28px;
+  width: 155px;
+  height: 35px;
   border-radius: 4px;
-  font-size: 11px;
+  font-size: 12px;
 }
 
 .bulk-requirements-table-card {

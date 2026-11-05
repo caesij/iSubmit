@@ -83,7 +83,12 @@
         </button>
 
         {% if current_role == 'FACULTY' %}
-            <a href="{% url 'admin_staff_portal:program_list' %}">Manage Programs</a>
+            <a
+                href="{% url 'admin_staff_portal:program_list' %}"
+                class="action-button manage-program-button"
+            >
+                Manage Programs
+            </a>
         {% endif %}
 
         <a class="action-button"

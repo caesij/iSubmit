@@ -145,11 +145,11 @@
                         </a>
                     </li>
 
-                    <li class="nav-item user-management-nav {% if request.resolver_match.url_name in 'user_list,user_create,user_edit,user_toggle_acc_status' %}is-open{% endif %}">
+                    <li class="nav-item user-management-nav {% if request.resolver_match.url_name in 'user_list,user_create,user_edit,user_toggle_acc_status,user_unlock,program_list,add_program,update_program,delete_program' %}is-open{% endif %}">
                         <button
                             type="button"
-                            class="nav-link nav-toggle {% if request.resolver_match.url_name in 'user_list,user_create,user_edit,user_toggle_acc_status' %}active{% endif %}"
-                            aria-expanded="{% if request.resolver_match.url_name in 'user_list,user_create,user_edit,user_toggle_acc_status' %}true{% else %}false{% endif %}"
+                            class="nav-link nav-toggle {% if request.resolver_match.url_name in 'user_list,user_create,user_edit,user_toggle_acc_status,user_unlock,program_list,add_program,update_program,delete_program' %}active{% endif %}"
+                            aria-expanded="{% if request.resolver_match.url_name in 'user_list,user_create,user_edit,user_toggle_acc_status,user_unlock,program_list,add_program,update_program,delete_program' %}true{% else %}false{% endif %}"
                         >
                             <span class="icon">
                                 <img
@@ -175,7 +175,7 @@
                             {% if request.user.is_admin or request.user.is_staff_role %}
                                 <li class="subnav-item">
                                     <a
-                                        class="subnav-link {% if request.GET.role == 'FACULTY' %}active{% endif %}"
+                                        class="subnav-link {% if request.GET.role == 'FACULTY' or request.resolver_match.url_name in 'program_list,add_program,update_program,delete_program' %}active{% endif %}"
                                         href="{% url 'admin_staff_portal:user_list' %}?role=FACULTY"
                                     >
                                         Faculty Management
@@ -267,7 +267,7 @@
                                 >
                             </span>
 
-                        {% elif request.resolver_match.url_name in 'user_list,user_create,user_edit,user_toggle_acc_status' %}
+                        {% elif request.resolver_match.url_name in 'user_list,user_create,user_edit,user_toggle_acc_status,user_unlock,program_list,add_program,update_program,delete_program' %}
                             <span class="page-icon">
                                 <img
                                     src="{% static 'images/usermanagement.svg' %}"
