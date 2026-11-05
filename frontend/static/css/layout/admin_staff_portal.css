@@ -617,6 +617,18 @@ select {
   white-space: nowrap;
 }
 
+.manage-program-button {
+  min-width: 148px;
+}
+
+.filters > .manage-program-button {
+  margin-left: auto;
+}
+
+.filters > .manage-program-button + .action-button {
+  margin-left: 0;
+}
+
 .action-button-icon {
   width: 18px;
   height: 18px;
