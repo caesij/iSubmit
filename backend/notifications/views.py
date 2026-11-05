@@ -1,5 +1,6 @@
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.contrib.auth import get_user_model
 from django.core.exceptions import PermissionDenied
 from django.shortcuts import render, get_object_or_404, redirect
 from django.views.decorators.http import require_http_methods
@@ -7,15 +8,15 @@ from django.template.loader import render_to_string
 from django.core.paginator import Paginator
 from django.http import JsonResponse
 
-from accounts.decorators import admin
-from accounts.models import User
+from accounts.decorators import role_required
 from notifications.forms import SystemNotificationForm
 from notifications.models import Notification, NotificationPreference
 from notifications.services import notify_roles
 from notifications.helpers import get_role_based_notifications
 
+User = get_user_model()
 
-@admin
+@role_required('ADMIN')
 @require_http_methods(['GET', 'POST'])
 def create_system_notification_view(request):
     if not request.user.is_superuser:

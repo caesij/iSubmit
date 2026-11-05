@@ -1,10 +1,15 @@
 from django.urls import path
 from faculty_portal import views
-from notifications.views import notification_list_view
+from core.global_search_views import global_search_results, global_search_suggestions
 
 app_name = 'faculty_portal'
 
 urlpatterns = [
+    # Global Search URLs
+    path('search/', global_search_results, name='global_search_results'),
+    path('search/suggestions/', global_search_suggestions, name='global_search_suggestions'),
+    
+    # Dashboard URLs
     path('dashboard/', views.dashboard_view, name='dashboard'),
     path('dashboard/data/', views.dashboard_data_view, name='dashboard_data'),
     

@@ -2,7 +2,7 @@ from django.shortcuts import render
 from django.views.decorators.http import require_http_methods
 from django.http import JsonResponse
 
-from accounts.decorators import faculty
+from accounts.decorators import role_required
 from faculty_portal.services.faculty_dashboard import get_dashboard_data
 
 from faculty_portal.helpers.faculty_dashboard import (
@@ -11,7 +11,7 @@ from faculty_portal.helpers.faculty_dashboard import (
 )
 
 
-@faculty
+@role_required('FACULTY')
 @require_http_methods(['GET'])
 def dashboard_data_view(request):
     tab = request.GET.get('tab', 'all')
@@ -33,7 +33,7 @@ def dashboard_data_view(request):
     return JsonResponse(data)
 
 
-@faculty
+@role_required('FACULTY')
 @require_http_methods(['GET'])
 def dashboard_view(request):
     tab = request.GET.get('tab', 'all')

@@ -11,10 +11,7 @@ def get_dashboard_data(user):
 
     total_requirements = active_requirements.count()
 
-    submissions = active_document_queryset().filter(
-        faculty=user,
-        requirement__in=active_requirements,
-    )
+    submissions = active_document_queryset().filter(faculty=user, requirement__in=active_requirements)
 
     counts = submissions.aggregate(
         approved_count=Count(
