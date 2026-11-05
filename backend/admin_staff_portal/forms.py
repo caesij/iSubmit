@@ -1,7 +1,9 @@
 from django import forms
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
-from accounts.models import User
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
 
 class BaseUserManagementForm(forms.ModelForm):
     
@@ -65,14 +67,14 @@ class BaseUserManagementForm(forms.ModelForm):
         employee_id = self.cleaned_data.get('employee_ID', '').strip()
 
         if not employee_id:
-            raise ValidationError("Please enter an employee ID.")
+            raise ValidationError('Please enter an employee ID.')
 
         query = User.objects.filter(employee_ID__iexact=employee_id)
         if self.instance.pk:
             query = query.exclude(pk=self.instance.pk)
 
         if query.exists():
-            raise ValidationError("This employee ID is already in use.")
+            raise ValidationError('This employee ID is already in use.')
 
         return employee_id
 
@@ -83,7 +85,7 @@ class BaseUserManagementForm(forms.ModelForm):
         try:
             validate_email(email)
         except ValidationError:
-            raise ValidationError("Please enter a valid email address, such as name@example.com.")
+            raise ValidationError('Please enter a valid email address, such as name@example.com.')
 
         query = User.objects.filter(email__iexact=email)
         
@@ -91,7 +93,7 @@ class BaseUserManagementForm(forms.ModelForm):
             query = query.exclude(pk=self.instance.pk)
             
         if query.exists():
-            raise ValidationError("This email address is already in use.")
+            raise ValidationError('This email address is already in use.')
 
         return email
 

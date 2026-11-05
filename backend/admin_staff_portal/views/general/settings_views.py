@@ -4,9 +4,8 @@ from django.contrib import messages
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.forms import PasswordChangeForm
 
-from accounts.decorators import admin, role_required
+from accounts.decorators import role_required
 from accounts.utils import get_or_create_preferences
-
 from accounts.forms import PreferencesForm
 from accounts.models import StaffPermission
 from notifications.models import NotificationPreference
@@ -96,7 +95,7 @@ def account_and_security_view(request):
         context
     )
     
-@admin
+@role_required('ADMIN')
 @require_http_methods(['GET', 'POST'])
 def staff_permissions_view(request):
     permissions = StaffPermission.get_solo()

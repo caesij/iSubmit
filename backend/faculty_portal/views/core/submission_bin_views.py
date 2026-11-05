@@ -6,7 +6,7 @@ from django.utils import timezone
 from submissions.helpers import get_target_faculty_queryset
 from django.views.decorators.http import require_http_methods
 
-from accounts.decorators import faculty
+from accounts.decorators import role_required
 
 from faculty_portal.helpers.submission_bin import (
     UPLOAD_PAGE,
@@ -29,7 +29,7 @@ from submissions.querysets import active_document_queryset
 
 TEMPLATE_DIR = 'faculty_portal/core/submission_bin'
 
-@faculty
+@role_required('FACULTY')
 @require_http_methods(['GET'])
 def submission_bin_data_view(request):
     response = render(
@@ -41,7 +41,7 @@ def submission_bin_data_view(request):
     return response
 
 
-@faculty
+@role_required('FACULTY')
 @require_http_methods(['GET', 'POST'])
 def submission_bins_view(request):
     if request.method == 'POST' and request.POST.get('action') == 'submit':
@@ -56,7 +56,7 @@ def submission_bins_view(request):
     )
 
 
-@faculty
+@role_required('FACULTY')
 @require_http_methods(['POST'])
 def attach_document(request, requirement_id):
     requirement = get_object_or_404(
@@ -79,7 +79,7 @@ def attach_document(request, requirement_id):
     )
 
 
-@faculty
+@role_required('FACULTY')
 @require_http_methods(['POST'])
 def replace_document(request, document_id):
     draft = get_object_or_404(
@@ -97,7 +97,7 @@ def replace_document(request, document_id):
     )
 
 
-@faculty
+@role_required('FACULTY')
 @require_http_methods(['POST'])
 def remove_document(request, document_id):
     draft = get_object_or_404(
@@ -129,7 +129,7 @@ def remove_document(request, document_id):
     return redirect(UPLOAD_PAGE)
 
 
-@faculty
+@role_required('FACULTY')
 @require_http_methods(['POST'])
 def retry_document_extraction(request, document_id):
     draft = get_object_or_404(
@@ -148,7 +148,7 @@ def retry_document_extraction(request, document_id):
     return redirect(UPLOAD_PAGE)
 
 
-@faculty
+@role_required('FACULTY')
 @require_http_methods(['POST'])
 def resubmit_document(request, submission_id):
     submission = get_object_or_404(
@@ -172,7 +172,7 @@ def resubmit_document(request, submission_id):
     )
 
 
-@faculty
+@role_required('FACULTY')
 @require_http_methods(['GET'])
 def submission_complete(request):
     submitted_ids = request.session.pop('recently_submitted_ids', [])
@@ -197,7 +197,7 @@ def submission_complete(request):
     )
 
 
-@faculty
+@role_required('FACULTY')
 @require_http_methods(['GET'])
 def view_document(request, document_id):
     uploaded_document = get_object_or_404(

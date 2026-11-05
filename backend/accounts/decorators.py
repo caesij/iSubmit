@@ -20,17 +20,6 @@ def role_required(*roles):
 
     return decorator
 
-def admin(view_func):
-    return role_required('ADMIN')(view_func)
-
-
-def staff(view_func):
-    return role_required('STAFF')(view_func)
-
-
-def faculty(view_func):
-    return role_required('FACULTY')(view_func)
-
 def staff_permission_required(permission_field):
     def decorator(view_func):
         @wraps(view_func)

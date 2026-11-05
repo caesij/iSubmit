@@ -11,7 +11,7 @@ import secrets
 import string
 from axes.utils import reset as axes_reset
 
-from accounts.decorators import admin, role_required, staff_permission_required
+from accounts.decorators import role_required, staff_permission_required
 from admin_staff_portal.helpers.user_management import (
     get_target_role,
     get_page_title,
@@ -203,7 +203,7 @@ def user_toggle_acc_status_view(request, pk):
     return redirect(redirect_url)
 
 
-@admin
+@role_required('ADMIN')
 @require_http_methods(['POST'])
 def user_unlock_view(request, pk):
     target_user = get_object_or_404(User, pk=pk)

@@ -2,10 +2,10 @@ from django.shortcuts import render, redirect
 from django.views.decorators.http import require_http_methods
 from django.contrib import messages
 
-from accounts.decorators import faculty
+from accounts.decorators import role_required
 from accounts.forms import FacultyProfileForm
 
-@faculty
+@role_required('FACULTY')
 @require_http_methods(['GET', 'POST'])
 def profile_view(request):
     if request.method == 'POST':

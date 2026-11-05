@@ -5,14 +5,14 @@ from django.db.models import Count, Q
 from django.http import JsonResponse
 from django.template.loader import render_to_string
 
-from accounts.decorators import faculty
+from accounts.decorators import role_required
 from submissions.models import DocumentSubmission
 from submissions.querysets import active_document_queryset
 
 TEMPLATE_DIR = 'faculty_portal/core/my_submissions'
 
 
-@faculty
+@role_required('FACULTY')
 @require_http_methods(['GET'])
 def submissions_list(request):
     all_submissions = active_document_queryset().filter(faculty=request.user)
@@ -59,7 +59,7 @@ def submissions_list(request):
         context
     )
 
-@faculty
+@role_required('FACULTY')
 @require_http_methods(['GET'])
 def submissions_data_view(request):
     all_submissions = active_document_queryset().filter(
@@ -120,7 +120,7 @@ def submissions_data_view(request):
     return response
 
 
-@faculty
+@role_required('FACULTY')
 @require_http_methods(['GET'])
 def view_my_submitted_document(request, document_id):
     submitted_document = get_object_or_404(

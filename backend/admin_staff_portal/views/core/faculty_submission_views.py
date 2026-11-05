@@ -10,7 +10,7 @@ from django.contrib import messages
 from django.db import transaction
 from django.urls import reverse
 
-from accounts.decorators import admin, role_required, staff_permission_required
+from accounts.decorators import role_required, staff_permission_required
 from admin_staff_portal.realtime import refresh_admin_dashboard
 from admin_staff_portal.realtime import refresh_staff_dashboard
 from admin_staff_portal.realtime import refresh_submission_pages
@@ -354,7 +354,7 @@ def mark_needs_revision_view(request, submission_id):
     return redirect('admin_staff_portal:review_submission', submission_id=submission.id)
 
 
-@admin
+@role_required('ADMIN')
 @require_http_methods(['POST'])
 def approve_selected_submissions_view(request, faculty_id):
     faculty_member = get_object_or_404(
