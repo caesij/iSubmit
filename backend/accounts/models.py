@@ -171,13 +171,11 @@ class StaffPermission(models.Model):
     return_for_revisions = models.BooleanField(default=True)
     manage_submission_bins = models.BooleanField(default=True)
     view_approved_documents = models.BooleanField(default=True)
-    add_faculty_users = models.BooleanField(default=False)
+    add_faculty_users = models.BooleanField(default=True)
 
     updated_at = models.DateTimeField(auto_now=True)
 
-    DEPENDENCIES = {
-        'return_for_revisions': ['review_faculty_submissions'],
-    }
+    DEPENDENCIES = {'return_for_revisions': ['review_faculty_submissions']}
     
     class Meta:
         verbose_name = 'Staff Permission'

@@ -80,14 +80,14 @@ class RequirementForm(forms.ModelForm):
             return None
 
     def clean_requirement_title(self):
-        title = self.cleaned_data.get('requirement_title', '').strip()
+        title = self.cleaned_data.get('requirement_title', '').strip().upper()
 
         if not title:
             raise ValidationError('Please enter a requirement title.')
         return title
 
     def clean_category(self):
-        category = self.cleaned_data.get('category', '').strip()
+        category = self.cleaned_data.get('category', '').strip().upper()
 
         if not category:
             raise ValidationError('Please enter a category.')
