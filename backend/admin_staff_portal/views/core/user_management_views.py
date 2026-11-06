@@ -82,7 +82,6 @@ def user_list_view(request):
 
 
 @role_required('ADMIN', 'STAFF')
-@staff_permission_required('add_faculty_users')
 @require_http_methods(['GET', 'POST'])
 def user_create_view(request):
     target_role = get_target_role(request)
@@ -143,7 +142,6 @@ def user_create_view(request):
 
 
 @role_required('ADMIN', 'STAFF')
-@staff_permission_required('add_faculty_users')
 @require_http_methods(['GET', 'POST'])
 def user_update_view(request, pk):
     target_user = get_object_or_404(User, pk=pk)

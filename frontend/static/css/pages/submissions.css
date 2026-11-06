@@ -1573,8 +1573,9 @@ select {
 .requirements-table-card .data-table th:nth-child(6) { width: 11%; }
 .requirements-table-card .data-table th:nth-child(7) { width: 11%; }
 .requirements-table-card .data-table th:nth-child(8) { width: 8%; }
-.requirements-table-card .data-table th:nth-child(9) { width: 9%; }
-.requirements-table-card .data-table th:nth-child(10) { width: 5%; }
+.requirements-table-card .data-table th:nth-child(9) { width: 8%; }
+.requirements-table-card .data-table th:nth-child(10) { width: 8%; }
+.requirements-table-card .data-table th:nth-child(11) { width: 6%; }
 
 .requirements-table-card .select-column input {
   width: 13px;

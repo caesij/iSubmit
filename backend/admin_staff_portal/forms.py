@@ -103,6 +103,7 @@ class BaseUserManagementForm(forms.ModelForm):
             user.role = self.assigned_role
         if commit:
             user.save()
+            self.save_m2m()
         return user
 
 class StaffManagementForm(BaseUserManagementForm):

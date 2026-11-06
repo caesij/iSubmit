@@ -8,7 +8,9 @@
 <div class="panel-header">
     <div class="section-tabs">
         <a href="{% url 'admin_staff_portal:user_list' %}?role=STAFF" class="tab-link">Staff</a>
-        <a href="{% url 'admin_staff_portal:user_create' %}?role=STAFF" class="tab-link active">Add Staff</a>
+        <a href="{% url 'admin_staff_portal:user_create' %}?role=STAFF" class="tab-link active">
+            {% if object %}Edit Staff{% else %}Add Staff{% endif %}
+        </a>
     </div>
 </div>
 
@@ -73,8 +75,12 @@
         <a href="{% url 'admin_staff_portal:user_list' %}?role=STAFF" class="btn btn-secondary btn-cancel">Cancel</a>
 
         <button type="submit" class="btn btn-primary btn-send">
-            <img src="{% static 'images/Send.svg' %}" alt="Send credentials" class="action-icon-svg">
-            <span>Create User &amp; Send Credentials</span>
+            {% if object %}
+                <span>Save Changes</span>
+            {% else %}
+                <img src="{% static 'images/Send.svg' %}" alt="Send credentials" class="action-icon-svg">
+                <span>Create User &amp; Send Credentials</span>
+            {% endif %}
         </button>
     </div>
 </form>
