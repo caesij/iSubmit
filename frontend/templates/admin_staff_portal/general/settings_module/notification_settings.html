@@ -23,12 +23,54 @@
         {% for preference in preferences %}
             <div class="notification-row">
                 <div>
-                    <strong>{{ preference.get_notification_type_display }}</strong>
+                    <strong>
+                        {% if preference.notification_type == 'SUBMISSION_NOTIFICATIONS' %}
+                            Submission Notification
+                        {% else %}
+                            Security Notification
+                        {% endif %}
+                    </strong>
                     <p>{{ preference.description }}</p>
                 </div>
                 <label class="switch">
                     <input type="checkbox" name="{{ preference.notification_type }}" {% if preference.enabled %}checked{% endif %}>
                     <span class="slider"></span>
+                </label>
+            </div>
+        {% endfor %}
+    </div>
+
+    <h2 class="notification-channel-title">Notification Channel</h2>
+    <p class="card-sub">Choose how you want to receive notifications.</p>
+
+    <div class="channel-list">
+        <div class="channel-header">
+            <span>Notification Type</span>
+            <span class="channel-option-heading">
+                <img src="{% static 'images/Email Profile.svg' %}" alt="">
+                <span><strong>Email</strong><small>Receive via email</small></span>
+            </span>
+            <span class="channel-option-heading">
+                <img src="{% static 'images/Icon - Notifications.svg' %}" alt="">
+                <span><strong>System</strong><small>In-app notifications</small></span>
+            </span>
+        </div>
+        {% for preference in preferences %}
+            <div class="channel-row">
+                <strong>
+                    {% if preference.notification_type == 'SUBMISSION_NOTIFICATIONS' %}
+                        Submission Notification
+                    {% else %}
+                        Security Notification
+                    {% endif %}
+                </strong>
+                <label class="channel-switch">
+                    <input type="checkbox" name="email_{{ preference.notification_type }}" {% if preference.email_enabled %}checked{% endif %}>
+                    <span class="channel-slider"></span>
+                </label>
+                <label class="channel-switch">
+                    <input type="checkbox" name="system_{{ preference.notification_type }}" {% if preference.system_enabled %}checked{% endif %}>
+                    <span class="channel-slider"></span>
                 </label>
             </div>
         {% endfor %}

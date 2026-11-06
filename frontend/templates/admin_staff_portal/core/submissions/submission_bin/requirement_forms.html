@@ -204,14 +204,52 @@
             const programs = document.getElementById('{{ form.assigned_programs.id_for_label }}');
             const faculty = document.getElementById('{{ form.assigned_faculty_member.id_for_label }}');
 
+            function hasSelectedOptions(select) {
+                return select && Array.from(select.selectedOptions).length > 0;
+            }
+
+            function clearSelectedOptions(select) {
+                if (!select) return;
+                Array.from(select.options).forEach(function (option) {
+                    option.selected = false;
+                });
+                select.dispatchEvent(new Event('change', {bubbles: true}));
+            }
+
             function syncAssignmentFields() {
-                const hasSelectedFaculty = faculty && Array.from(faculty.selectedOptions).length > 0;
+                const hasSelectedFaculty = hasSelectedOptions(faculty);
                 if (facultyType) facultyType.disabled = hasSelectedFaculty;
                 if (programs) programs.disabled = hasSelectedFaculty;
             }
 
+            if (facultyType) {
+                facultyType.addEventListener('change', function () {
+                    if (facultyType.value && hasSelectedOptions(faculty)) {
+                        clearSelectedOptions(faculty);
+                    }
+                    syncAssignmentFields();
+                });
+            }
+
+            if (programs) {
+                programs.addEventListener('change', function () {
+                    if (hasSelectedOptions(programs) && hasSelectedOptions(faculty)) {
+                        clearSelectedOptions(faculty);
+                    }
+                    syncAssignmentFields();
+                });
+            }
+
             if (faculty) {
-                faculty.addEventListener('change', syncAssignmentFields);
+                faculty.addEventListener('change', function () {
+                    if (hasSelectedOptions(faculty)) {
+                        if (facultyType) {
+                            facultyType.value = '';
+                        }
+                        clearSelectedOptions(programs);
+                    }
+                    syncAssignmentFields();
+                });
                 syncAssignmentFields();
             }
 
@@ -258,6 +296,8 @@
                         option.classList.toggle('is-selected', Boolean(nativeOption && nativeOption.selected));
                     });
                 }
+
+                select.addEventListener('change', render);
 
                 trigger.addEventListener('click', function () {
                     const isOpen = menu.classList.toggle('is-open');
