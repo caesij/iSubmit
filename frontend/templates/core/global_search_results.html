@@ -1,50 +1,519 @@
+
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Search results - iSubmit</title>
-    <link rel="stylesheet" href="{% static 'css/layout/admin_staff_portal.css' %}">
+    <title>Search Results - iSubmit</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 40px 20px;
+            background: #f5f6f8;
+            color: #232323;
+            font-family: Arial, sans-serif;
+        }
+
+        .search-results-page {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .page-header {
+            margin-bottom: 28px;
+        }
+
+        .page-header h1 {
+            margin: 0 0 8px;
+            font-size: 26px;
+        }
+
+        .page-header p {
+            margin: 0;
+            color: #6b7280;
+            font-size: 13px;
+        }
+
+        /* Main Search Bar */
+
+        .main-search-form {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 18px;
+        }
+
+        .main-search-input {
+            flex: 1;
+            min-width: 0;
+            height: 48px;
+            padding: 0 16px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            background: #fff;
+            color: #232323;
+            font-size: 14px;
+        }
+
+        .main-search-input:focus {
+            outline: none;
+            border-color: #af1717;
+            box-shadow: 0 0 0 3px rgba(175, 23, 23, 0.1);
+        }
+
+        .main-search-button {
+            height: 48px;
+            padding: 0 22px;
+            border: none;
+            border-radius: 8px;
+            background: #af1717;
+            color: #fff;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .main-search-button:hover {
+            background: #8a0d0d;
+        }
+
+        /* Advanced Search */
+
+        .advanced-search-dropdown {
+            margin-bottom: 28px;
+            background: #fff;
+            border: 1px solid #d8d8d8;
+            border-radius: 10px;
+        }
+
+        .advanced-search-dropdown summary {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            list-style: none;
+        }
+
+        .advanced-search-dropdown summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .advanced-search-dropdown summary::after {
+            content: "+";
+            font-size: 20px;
+            color: #6b7280;
+        }
+
+        .advanced-search-dropdown[open] summary::after {
+            content: "−";
+        }
+
+        .advanced-search-content {
+            padding: 18px 20px 20px;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .advanced-search-section {
+            margin-top: 16px;
+        }
+
+        .advanced-search-section h3 {
+            margin: 0 0 12px;
+            font-size: 13px;
+        }
+
+        .advanced-search-fields {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 16px;
+        }
+
+        .advanced-search-field {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .advanced-search-field label {
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .advanced-search-field input {
+            width: 100%;
+            min-height: 40px;
+            padding: 9px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            background: #fff;
+            font: inherit;
+            font-size: 12px;
+        }
+
+        .advanced-search-field input:focus {
+            outline: none;
+            border-color: #af1717;
+            box-shadow: 0 0 0 2px rgba(175, 23, 23, 0.1);
+        }
+
+        .advanced-search-actions {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 14px;
+            margin-top: 20px;
+        }
+
+        .advanced-search-actions a {
+            color: #666;
+            font-size: 12px;
+            text-decoration: none;
+        }
+
+        .advanced-search-actions button {
+            min-height: 38px;
+            padding: 8px 18px;
+            border: none;
+            border-radius: 6px;
+            background: #af1717;
+            color: #fff;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        /* Search Results */
+
+        .search-results-intro {
+            margin: 0 0 20px;
+            color: #666;
+            font-size: 13px;
+        }
+
+        .search-results-section {
+            margin: 24px 0;
+            padding: 18px 20px;
+            background: #fff;
+            border: 1px solid #d8d8d8;
+            border-radius: 10px;
+        }
+
+        .search-results-section h2 {
+            margin: 0 0 14px;
+            font-size: 16px;
+        }
+
+        .search-results-list {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .search-results-list li {
+            padding: 11px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .search-results-list li:last-child {
+            border-bottom: none;
+        }
+
+        .search-results-list a {
+            color: #8f1010;
+            font-size: 13px;
+            text-decoration: none;
+        }
+
+        .search-results-list a:hover {
+            text-decoration: underline;
+        }
+
+        .document-category {
+            display: block;
+            margin-bottom: 4px;
+            color: #777;
+            font-size: 11px;
+        }
+
+        .document-owner {
+            display: block;
+            margin-top: 5px;
+            color: #777;
+            font-size: 11px;
+        }
+
+        .document-owner a {
+            color: #8f1010;
+            text-decoration: none;
+        }
+
+        .document-owner a:hover {
+            text-decoration: underline;
+        }
+
+        .search-empty {
+            padding: 24px;
+            text-align: center;
+            color: #777;
+            font-size: 13px;
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: #6b7280;
+            font-size: 13px;
+            text-decoration: none;
+        }
+
+        .back-link:hover {
+            color: #af1717;
+        }
+
+        @media (max-width: 600px) {
+            body {
+                padding: 24px 14px;
+            }
+
+            .advanced-search-fields {
+                grid-template-columns: 1fr;
+            }
+
+            .main-search-form {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .main-search-button {
+                width: 100%;
+            }
+        }
+    </style>
 </head>
+
 <body>
-    <main style="max-width: 900px; margin: 40px auto; padding: 0 24px;">
-        <h1>Search results</h1>
-        <p>Showing results for <strong>{{ query }}</strong></p>
 
-        {% if pages %}
+<main class="search-results-page">
+
+    <a href="{% url dashboard_url %}" class="back-link">
+        ← Back
+    </a>
+
+    <header class="page-header">
+        <h1>Search Results</h1>
+        <p>Explore matching pages, requirements, and documents.</p>
+    </header>
+
+    <!-- Dedicated Main Search Bar -->
+
+    <form method="get" action="{{ request.path }}" class="main-search-form">
+        <input
+            type="search"
+            name="q"
+            class="main-search-input"
+            value="{{ query }}"
+            placeholder="Search pages, documents, and requirements..."
+            aria-label="Search"
+        >
+
+        <button type="submit" class="main-search-button">
+            Search
+        </button>
+    </form>
+
+
+    <!-- Advanced Search -->
+
+    {% if request.user.role == 'ADMIN' or request.user.role == 'STAFF' %}
+
+        <details
+            class="advanced-search-dropdown"
+            {% if faculty_name or document_title %}open{% endif %}
+        >
+            <summary>Advanced Search</summary>
+
+            <div class="advanced-search-content">
+
+                <form method="get" action="{{ request.path }}">
+
+                    <section class="advanced-search-section">
+                        <h3>Documents</h3>
+
+                        <div class="advanced-search-fields">
+
+                            <div class="advanced-search-field">
+                                <label for="faculty-name">Faculty Name</label>
+                                <input
+                                    type="text"
+                                    id="faculty-name"
+                                    name="faculty_name"
+                                    value="{{ faculty_name }}"
+                                    placeholder="Search faculty name"
+                                >
+                            </div>
+
+                            <div class="advanced-search-field">
+                                <label for="document-title">Document Title</label>
+                                <input
+                                    type="text"
+                                    id="document-title"
+                                    name="document_title"
+                                    value="{{ document_title }}"
+                                    placeholder="Search document requirement title"
+                                >
+                            </div>
+
+                        </div>
+                    </section>
+
+                    <div class="advanced-search-actions">
+
+                        <a href="{{ request.path }}">
+                            Clear Search
+                        </a>
+
+                        <button type="submit">
+                            Search
+                        </button>
+
+                    </div>
+
+                </form>
+
+            </div>
+        </details>
+
+    {% endif %}
+
+
+    <!-- Search Results -->
+
+    {% if has_search %}
+        <p class="search-results-intro">
+            Showing results for:
+
+            {% if query %}
+                <strong>{{ query }}</strong>
+            {% endif %}
+
+            {% if faculty_name %}
+                <strong>Faculty: {{ faculty_name }}</strong>
+            {% endif %}
+
+            {% if document_title %}
+                <strong>Document: {{ document_title }}</strong>
+            {% endif %}
+        </p>
+    {% endif %}
+
+    <!-- Pages -->
+    {% if pages %}
+        <section class="search-results-section">
             <h2>Pages</h2>
-            <ul>
+
+            <ul class="search-results-list">
                 {% for result in pages %}
-                    <li><a href="{{ result.url }}">{{ result.label }}</a></li>
-                {% endfor %}
-            </ul>
-        {% endif %}
-
-        {% if requirements %}
-            <h2>Requirements</h2>
-            <ul>
-                {% for result in requirements %}
-                    <li><a href="{{ result.url }}">{{ result.label }}</a></li>
-                {% endfor %}
-            </ul>
-        {% endif %}
-
-        {% if documents %}
-            <h2>Documents</h2>
-            <ul>
-                {% for result in documents %}
                     <li>
-                        <small>{{ result.category }}</small>
-                        <a href="{{ result.url }}">{{ result.label }}</a>
+                        <a href="{{ result.url }}">
+                            {{ result.label }}
+                        </a>
                     </li>
                 {% endfor %}
             </ul>
-        {% endif %}
+        </section>
+    {% endif %}
 
-        {% if not pages and not requirements and not documents %}
-            <p>No pages, requirement titles, or documents matched your search.</p>
-        {% endif %}
-    </main>
+    <!-- Faculty -->
+    {% if faculty %}
+        <section class="search-results-section">
+            <h2>Faculty</h2>
+
+            <ul class="search-results-list">
+                {% for result in faculty %}
+                    <li>
+                        <a href="{{ result.url }}">
+                            {{ result.label }}
+                        </a>
+                    </li>
+                {% endfor %}
+            </ul>
+        </section>
+    {% endif %}
+
+    <!-- Requirements -->
+    {% if requirements %}
+        <section class="search-results-section">
+            <h2>Requirements</h2>
+
+            <ul class="search-results-list">
+                {% for result in requirements %}
+                    <li>
+                        <a href="{{ result.url }}">
+                            {{ result.label }}
+                        </a>
+                    </li>
+                {% endfor %}
+            </ul>
+        </section>
+    {% endif %}
+
+
+    <!-- Documents -->
+    {% if documents %}
+        <section class="search-results-section">
+            <h2>Documents</h2>
+
+            <ul class="search-results-list">
+                {% for result in documents %}
+                    <li>
+                        <small class="document-category">
+                            {{ result.category }}
+                        </small>
+
+                        <a href="{{ result.url }}">
+                            {{ result.label }}
+                        </a>
+
+                        <small class="document-owner">
+                            Faculty:
+                            {% if result.faculty_url %}
+                                <a href="{{ result.faculty_url }}">
+                                    {{ result.faculty_name }}
+                                </a>
+                            {% else %}
+                                {{ result.faculty_name }}
+                            {% endif %}
+                        </small>
+                    </li>
+                {% endfor %}
+            </ul>
+        </section>
+    {% endif %}
+
+    <!-- Empty State -->
+    {% if has_search and not pages and not faculty and not requirements and not documents %}
+        <div class="search-empty">
+            No pages, faculty, requirements, or documents matched your search.
+        </div>
+    {% elif not has_search %}
+        <div class="search-empty">
+            Enter a search term or use Advanced Search to find specific records.
+        </div>
+    {% endif %}
+
+</main>
+
 </body>
 </html>

@@ -1,14 +1,20 @@
-from functools import reduce
-from operator import and_
 from urllib.parse import urlencode
-
 from django.db.models import Q
 from django.urls import reverse
 from django.utils import timezone
+from django.contrib.auth import get_user_model
 
 from submissions.models import DocumentSubmission, Requirement
 from submissions.helpers import get_faculty_assigned_requirements
+from core.search_utils import all_terms_query
 
+User = get_user_model()
+
+FACULTY_SEARCH_FIELDS = (
+    'faculty__first_name',
+    'faculty__middle_name',
+    'faculty__last_name',
+)
 
 RESULT_LIMIT = 4
 
@@ -20,8 +26,8 @@ _NAVIGATION = {
         ('Document Archive', 'admin_staff_portal:document_archive', ('document archive', 'archive')),
         
         ('Submissions', 'admin_staff_portal:requirements_list', ('submissions', 'submission')),
-        ('Submission Bin', 'admin_staff_portal:requirements_list', ('submission bin', 'requirements')),
-        ('Faculty Submissions', 'admin_staff_portal:faculty_submissions_list', ('faculty submissions',)),
+        ('Submissions > Submission Bin', 'admin_staff_portal:requirements_list', ('submission bin', 'requirements')),
+        ('Submissions > Faculty Submissions', 'admin_staff_portal:faculty_submissions_list', ('faculty submissions',)),
         
         ('Staff Management', 'admin_staff_portal:user_list', ('staff management',)),
         ('Faculty Management', 'admin_staff_portal:user_list', ('faculty management',)),
@@ -43,8 +49,8 @@ _NAVIGATION = {
         ('Documents', 'admin_staff_portal:document_repo', ('documents', 'document repository')),
         
         ('Submissions', 'admin_staff_portal:requirements_list', ('submissions', 'submission')),
-        ('Submission Bin', 'admin_staff_portal:requirements_list', ('submission bin', 'requirements')),
-        ('Faculty Submissions', 'admin_staff_portal:faculty_submissions_list', ('faculty submissions',)),
+        ('Submissions > Submission Bin', 'admin_staff_portal:requirements_list', ('submission bin', 'requirements')),
+        ('Submissions > Faculty Submissions', 'admin_staff_portal:faculty_submissions_list', ('faculty submissions',)),
         
         ('Faculty Management', 'admin_staff_portal:user_list', ('faculty management',)),
         
@@ -135,14 +141,6 @@ def _visible_documents(user):
     return documents.filter(is_archived=False)
 
 
-def _matching_terms(query):
-    return tuple(part for part in query.split() if part)
-
-
-def _title_query(terms, field='requirement_title'):
-    return reduce(and_, (Q(**{f'{field}__icontains': term}) for term in terms))
-
-
 def _navigation_results(user, query):
     terms = query.casefold().split()
     results = []
@@ -178,61 +176,204 @@ def _document_navigation_target(user, document):
 
 def _document_search_result(user, document):
     route_name, category = _document_navigation_target(user, document)
-    title = document.requirement.requirement_title
+
+    title = (
+        document.requirement.requirement_title
+        if document.requirement_id and document.requirement.requirement_title
+        else 'Untitled Document'
+    )
+
+    faculty = document.faculty
+
+    faculty_name = (
+        ' '.join(
+            part.strip()
+            for part in (
+                faculty.first_name,
+                faculty.middle_name,
+                faculty.last_name
+            )
+            if part and part.strip()
+        )
+        if faculty else ''
+    )
+
+    if not faculty_name and faculty:
+        faculty_name = faculty.email or faculty.get_username()
+
+    faculty_url = ''
+
+    if faculty and user.role in ('ADMIN', 'STAFF'):
+        faculty_search_term = (faculty_name or faculty.email or faculty.get_username())
+
+        faculty_url = (
+            f'{reverse("admin_staff_portal:user_list")}?'
+            f'{urlencode({
+                "role": "FACULTY",
+                "q": faculty_search_term,
+            })}'
+        )
 
     return {
         'id': document.id,
         'label': title,
+        'faculty_name': faculty_name or 'Unknown Faculty',
+        'faculty_url': faculty_url,
         'category': category,
-        'url': f'{reverse(route_name)}?{urlencode({"q": title})}',
+        'url': f'{reverse(route_name)}?{urlencode({"q": title})}'
     }
 
-def search_portal(user, query, limit=None):
-    query = ' '.join((query or '').split())
-    if not query:
-        return {'pages': [], 'requirements': [], 'documents': []}
 
-    terms = _matching_terms(query)
-    
-    requirement_queryset = (
-        _visible_requirements(user)
-        .filter(_title_query(terms))
-        .order_by('-updated_at', 'requirement_title')
+def _faculty_search_results(user, query, limit=None):
+    if user.role not in ('ADMIN', 'STAFF') or not query:
+        return []
+
+    faculty_queryset = (
+        User.objects
+        .filter(role=User.Role.FACULTY)
+        .filter(
+            all_terms_query(
+                query,
+                'first_name',
+                'middle_name',
+                'last_name',
+                'email'
+            )
+        )
+        .order_by('last_name', 'first_name', 'pk')
     )
+
+    if limit is not None:
+        faculty_queryset = faculty_queryset[:limit]
+
+    results = []
+
+    for faculty in faculty_queryset:
+        faculty_name = ' '.join(
+            part.strip()
+            for part in (
+                faculty.first_name,
+                faculty.middle_name,
+                faculty.last_name
+            )
+            if part and part.strip()
+        )
+
+        if not faculty_name:
+            faculty_name = faculty.email or faculty.get_username()
+
+        faculty_url = (
+            f'{reverse("admin_staff_portal:user_list")}?'
+            f'{urlencode({
+                "role": User.Role.FACULTY,
+                "q": faculty_name
+            })}'
+        )
+
+        results.append({
+            'label': faculty_name,
+            'category': 'Faculty',
+            'url': faculty_url
+        })
+
+    return results
+
+
+def search_portal(user, query='', limit=None, faculty_name='', document_title=''):
+    query = ' '.join((query or '').split())
+    faculty_name = ' '.join((faculty_name or '').split())
+    document_title = ' '.join((document_title or '').split())
     
-    requirement_url_name = (
-        'faculty_portal:upload_files'
-        if user.is_faculty
-        else 'admin_staff_portal:requirements_list'
-    )
-    
-    requirement_results = requirement_queryset.values('id', 'requirement_title')
-    
-    document_queryset = (
-        _visible_documents(user)
-        .filter(_title_query(terms, 'requirement__requirement_title'))
-        .order_by('-initially_submitted_at', 'requirement__requirement_title')
-    )
+    if not any((query, faculty_name, document_title)):
+        return {
+            'pages': [],
+            'faculty': [],
+            'requirements': [],
+            'documents': []
+        }
+
+    is_admin_staff = user.role in ('ADMIN', 'STAFF')
+
+    # Page Search
+    pages = (_navigation_results(user, query) if query else [])
     
     if limit is not None:
-        requirement_results = requirement_results[:limit]
-        document_queryset = document_queryset[:limit]
+        pages = pages[:limit]
+    
+    # Faculty Search
+    faculty = _faculty_search_results(user, query, limit=limit)
 
-    return {
-        'pages': _navigation_results(user, query),
-        
-        'requirements': [
+    # Requirement Search
+    requirements = []
+
+    if query:
+        requirement_queryset = _visible_requirements(user).filter(all_terms_query(query, 'requirement_title'))
+
+        requirement_url_name = (
+            'faculty_portal:upload_files'
+            if user.is_faculty
+            else 'admin_staff_portal:requirements_list'
+        )
+
+        requirement_results = requirement_queryset.order_by('-updated_at', 'requirement_title').values('id', 'requirement_title')
+
+        if limit is not None:
+            requirement_results = requirement_results[:limit]
+
+        requirements = [
             {
                 'id': item['id'],
                 'label': item['requirement_title'],
                 'category': 'Requirements',
-                'url': (f'{reverse(requirement_url_name)}?{urlencode({"q": item["requirement_title"]})}')
+                'url': (
+                    f'{reverse(requirement_url_name)}?'
+                    f'{urlencode({"q": item["requirement_title"]})}'
+                )
             }
             for item in requirement_results
-        ],
-        
-        'documents': [
-            _document_search_result(user, document)
-            for document in document_queryset
         ]
+
+    # Document Search
+    documents = []
+
+    has_document_search = bool(query) or (is_admin_staff and bool(faculty_name or document_title))
+
+    if has_document_search:
+        document_filters = []
+
+        # General search: requirement title or faculty name
+        if query:
+            general_query = all_terms_query(query, 'requirement__requirement_title')
+
+            if is_admin_staff:
+                general_query |= all_terms_query(query, *FACULTY_SEARCH_FIELDS)
+
+            document_filters.append(general_query)
+
+        if is_admin_staff:
+            # Advanced faculty name search
+            if faculty_name:
+                document_filters.append(all_terms_query(faculty_name, *FACULTY_SEARCH_FIELDS))
+
+            # Advanced document title search
+            if document_title:
+                document_filters.append(all_terms_query(document_title, 'requirement__requirement_title',))
+
+        document_queryset = _visible_documents(user).filter(
+            *document_filters
+        ).order_by(
+            '-initially_submitted_at',
+            'requirement__requirement_title'
+        )
+
+        if limit is not None:
+            document_queryset = document_queryset[:limit]
+
+        documents = [_document_search_result(user, document) for document in document_queryset]
+        
+    return {
+        'pages': pages,
+        'faculty': faculty,
+        'requirements': requirements,
+        'documents': documents
     }

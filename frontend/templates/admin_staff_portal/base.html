@@ -324,11 +324,13 @@
                 </div>
 
                 <div class="topbar-controls">
-                    <div
+                    <form
                         class="global-search"
                         data-global-search
+                        method="get"
+                        action="{% url 'admin_staff_portal:global_search_results' %}"
                         data-suggestions-url="{% url 'admin_staff_portal:global_search_suggestions' %}"
-                        data-results-url="{% url 'admin_staff_portal:global_search_results' %}"
+                        autocomplete="off"
                     >
                         <span class="icon">
                             <img
@@ -340,17 +342,76 @@
                         <input
                             data-global-search-input
                             type="text"
-                            placeholder="Search pages or requirements..."
+                            name="q"
+                            placeholder="Search pages, requirements, or documents..."
                             autocomplete="off"
-                            aria-label="Search pages or requirements"
+                            aria-label="Search pages, requirements, or documents"
+                            aria-expanded="false"
+                            aria-controls="global-search-dropdown"
                         >
+
                         <div
-                            class="global-search-menu"
-                            data-global-search-menu
-                            role="listbox"
+                            class="global-search-dropdown"
+                            id="global-search-dropdown"
+                            data-global-search-dropdown
                             hidden
-                        ></div>
-                    </div>
+                        >
+                            <div class="global-search-advanced">
+
+                                <div class="global-search-advanced-heading">
+                                    <strong>Advanced Search</strong>
+                                    <span>Find specific records using filters.</span>
+                                </div>
+
+                                <!-- Document filters -->
+                                <section class="global-search-filter-section">
+                                    <h3>Documents</h3>
+
+                                    <div class="global-search-filter-grid">
+                                        <div class="global-search-filter-field">
+                                            <label for="global-faculty-name">
+                                                Faculty Name
+                                            </label>
+
+                                            <input
+                                                type="text"
+                                                id="global-faculty-name"
+                                                name="faculty_name"
+                                                placeholder="Search faculty name"
+                                            >
+                                        </div>
+
+                                        <div class="global-search-filter-field">
+                                            <label for="global-document-title">
+                                                Document Title
+                                            </label>
+
+                                            <input
+                                                type="text"
+                                                id="global-document-title"
+                                                name="document_title"
+                                                placeholder="Search uploaded filename"
+                                            >
+                                        </div>
+                                    </div>
+                                </section>
+
+                                <div class="global-search-actions">
+                                    <button type="submit">
+                                        Search
+                                    </button>
+                                </div>
+
+                            </div>
+
+                            <div
+                                class="global-search-menu"
+                                data-global-search-menu
+                                role="listbox"
+                                hidden
+                            ></div>
+                        </div>
+                    </form>
 
                     <div
                         class="notification-wrap"
