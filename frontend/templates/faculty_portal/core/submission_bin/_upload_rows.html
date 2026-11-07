@@ -108,7 +108,8 @@
                             for="upload-file-{{ row.requirement.id }}"
                             class="btn-outline-danger"
                         >
-                            &uarr; Upload
+                            <img src="{% static 'images/upload.svg' %}" alt="" class="upload-button-icon">
+                            Upload
                         </label>
                     </form>
                 {% endif %}
@@ -119,47 +120,25 @@
             </td>
 
             <td class="action-cell">
-                <details class="action-menu">
-                    <summary aria-label="Actions for {{ row.requirement.requirement_title }}">&#8942;</summary>
-                    <div class="action-menu-panel">
-                        {% if row.draft and row.draft.draft_file %}
-                            <a href="{% url 'faculty_portal:view_uploaded_document' row.draft.id %}">
-                                View File
-                            </a>
-                        {% endif %}
-                        <form
-                            action="{% url 'faculty_portal:resubmit_document' row.submission.id %}"
-                            method="post"
-                            enctype="multipart/form-data"
-                        >
-                            {% csrf_token %}
-                            <input
-                                type="file"
-                                name="draft_file"
-                                id="resubmit-{{ row.submission.id }}"
-                                accept=".pdf,.docx,.xlsx"
-                                hidden
-                                required
-                                onchange="this.form.requestSubmit()"
-                            >
-                            <label
-                                for="resubmit-{{ row.submission.id }}"
-                                class="menu-action-link"
-                            >
-                                Replace File
-                            </label>
-                        </form>
-                        {% if row.can_retry_extraction %}
-                            <form
-                                action="{% url 'faculty_portal:retry_document_extraction' row.draft.id %}"
-                                method="post"
-                            >
-                                {% csrf_token %}
-                                <button type="submit">Retry text extraction</button>
-                            </form>
-                        {% endif %}
-                    </div>
-                </details>
+                <form
+                    action="{% url 'faculty_portal:resubmit_document' row.submission.id %}"
+                    method="post"
+                    enctype="multipart/form-data"
+                >
+                    {% csrf_token %}
+                    <input
+                        type="file"
+                        name="draft_file"
+                        id="resubmit-{{ row.submission.id }}"
+                        accept=".pdf,.docx,.xlsx"
+                        hidden
+                        required
+                        onchange="this.form.requestSubmit()"
+                    >
+                    <label for="resubmit-{{ row.submission.id }}" class="submission-replace-button">
+                        Replace
+                    </label>
+                </form>
             </td>
 
         {% elif row.draft and row.draft.draft_file %}
@@ -184,52 +163,25 @@
             </td>
 
             <td class="action-cell">
-                <details class="action-menu">
-                    <summary aria-label="Actions for {{ row.requirement.requirement_title }}">&#8942;</summary>
-                    <div class="action-menu-panel">
-                        <a href="{% url 'faculty_portal:view_uploaded_document' row.draft.id %}">
-                            View File
-                        </a>
-                        <form
-                            action="{% url 'faculty_portal:replace_document' row.draft.id %}"
-                            method="post"
-                            enctype="multipart/form-data"
-                        >
-                            {% csrf_token %}
-                            <input
-                                type="file"
-                                name="draft_file"
-                                id="replace-{{ row.draft.id }}"
-                                accept=".pdf,.docx,.xlsx"
-                                hidden
-                                onchange="this.form.requestSubmit()"
-                            >
-                            <label
-                                for="replace-{{ row.draft.id }}"
-                                class="menu-action-link"
-                            >
-                                Replace File
-                            </label>
-                        </form>
-                        <form
-                            action="{% url 'faculty_portal:remove_document' row.draft.id %}"
-                            method="post"
-                            class="remove-file-form"
-                        >
-                            {% csrf_token %}
-                            <button type="submit">Remove File</button>
-                        </form>
-                        {% if row.can_retry_extraction %}
-                            <form
-                                action="{% url 'faculty_portal:retry_document_extraction' row.draft.id %}"
-                                method="post"
-                            >
-                                {% csrf_token %}
-                                <button type="submit">Retry text extraction</button>
-                            </form>
-                        {% endif %}
-                    </div>
-                </details>
+                <form
+                    action="{% url 'faculty_portal:replace_document' row.draft.id %}"
+                    method="post"
+                    enctype="multipart/form-data"
+                >
+                    {% csrf_token %}
+                    <input
+                        type="file"
+                        name="draft_file"
+                        id="replace-{{ row.draft.id }}"
+                        accept=".pdf,.docx,.xlsx"
+                        hidden
+                        required
+                        onchange="this.form.requestSubmit()"
+                    >
+                    <label for="replace-{{ row.draft.id }}" class="submission-replace-button">
+                        Replace
+                    </label>
+                </form>
             </td>
 
         {% else %}
@@ -259,7 +211,8 @@
                         for="upload-file-{{ row.requirement.id }}"
                         class="btn-outline-danger"
                     >
-                        &uarr; Upload
+                        <img src="{% static 'images/upload.svg' %}" alt="" class="upload-button-icon">
+                        Upload
                     </label>
                 </form>
             </td>

@@ -65,7 +65,6 @@ Supports document submission and monitoring of review status.
                     <th>Deadline</th>
                     <th>Status</th>
                     <th>Text Extraction</th>
-                    <th>NLP Validation</th>
                     <th class="action-heading">Action</th>
                 </tr>
             </thead>
@@ -104,8 +103,6 @@ Supports document submission and monitoring of review status.
                             </span>
                         </td>
 
-                        <td>{% if requirement.validation_enabled %}Enabled{% else %}Disabled{% endif %}</td>
-
                         <td class="action-cell">
                             <form
                                 method="post"
@@ -122,7 +119,7 @@ Supports document submission and monitoring of review status.
                     </tr>
                 {% empty %}
                     <tr>
-                        <td colspan="10" class="text-center py-4">
+                        <td colspan="9" class="text-center py-4">
                             No requirements added yet.
                             Click + Add Requirement to begin.
                         </td>
