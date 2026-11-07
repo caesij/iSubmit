@@ -223,16 +223,27 @@ Overview of system activities and updates
 
     </div>
 
-    <!-- Review queue -->
+    <!-- Documents Overview -->
     <div class="dashboard-card pending-card">
 
         <div class="card-header">
-            <h2>Review Queue</h2>
+            <div>
+                <h2>Documents Overview</h2>
+
+                <div class="document-tabs">
+                    <button type="button" class="document-tab active" data-status="">All</button>
+                    <button type="button" class="document-tab" data-status="APPROVED">Approved</button>
+                    <button type="button" class="document-tab" data-status="SUBMITTED">Submitted</button>
+                    <button type="button" class="document-tab" data-status="PENDING_APPROVAL">Pending Approval</button>
+                </div>
+            </div>
 
             <a
                 href="{% url 'admin_staff_portal:faculty_submissions_list' %}"
+                class="documents-overview-link"
             >
-                View all &rsaquo;
+                View All
+                <img src="{% static 'images/Arrow Right.svg' %}" alt="">
             </a>
         </div>
 
@@ -240,25 +251,28 @@ Overview of system activities and updates
 
             <table>
                 <thead>
-                    <tr>
-                        <th>ID</th>
+                    <tr data-status="{{ submission.status }}">
                         <th>Faculty Member</th>
-                        <th>Document</th>
-                        <th>Date Submitted</th>
+                        <th>Faculty Type</th>
+                        <th>Bin Title</th>
+                        <th>Latest Submission</th>
+                        <th>Action</th>
                     </tr>
                 </thead>
 
-                <tbody id="review-queue-body">
+                <tbody id="documents-overview-body">
 
-                    {% for submission in review_queue %}
+                    {% for submission in documents_overview %}
 
                         <tr>
                             <td>
-                                {{ submission.faculty.employee_ID }}
+                                {{ submission.faculty.get_full_name }}
                             </td>
 
                             <td>
-                                {{ submission.faculty.get_full_name }}
+                                <span class="faculty-type-badge">
+                                    {{ submission.faculty.get_faculty_type_display }}
+                                </span>
                             </td>
 
                             <td>
@@ -272,17 +286,22 @@ Overview of system activities and updates
                                     {{ submission.initially_submitted_at|display_date:request.user }}
                                 {% endif %}
                             </td>
+
+                            <td>
+                                <a
+                                    href="{% url 'admin_staff_portal:faculty_submission_bins_view' submission.faculty.id %}"
+                                    class="view-bins-link"
+                                >
+                                    View Bins
+                                    <img src="{% static 'images/Arrow Right.svg' %}" alt="">
+                                </a>
+                            </td>
                         </tr>
 
                     {% empty %}
 
                         <tr>
-                            <td
-                                colspan="4"
-                                class="empty-row"
-                            >
-                                No submissions in the review queue.
-                            </td>
+                            <td colspan="5" class="empty-row">No documents found.</td>
                         </tr>
 
                     {% endfor %}
@@ -309,18 +328,21 @@ Overview of system activities and updates
 
     /* ---------- Welcome card ---------- */
     .welcome-card {
-        padding: 18px;
+        padding: 22px 26px;
         margin-bottom: 14px;
     }
 
     .welcome-label {
-        font-size: 12px;
-        color: #777;
+        font-size: 17px;
+        font-weight: 700;
+        color: #171717;
     }
 
     .welcome-card h2 {
         margin: 4px 0 2px;
-        font-size: 18px;
+        font-size: 22px;
+        font-weight: 400;
+        color: #171717;
     }
 
     .welcome-card p {
@@ -333,7 +355,7 @@ Overview of system activities and updates
     /* ---------- Stat cards ---------- */
     .stats-grid {
         display: grid;
-        grid-template-columns: repeat(4, minmax(0, 1fr));
+        grid-template-columns: repeat(5, minmax(0, 1fr));
         gap: 10px;
         margin-bottom: 14px;
     }
@@ -342,45 +364,89 @@ Overview of system activities and updates
         display: flex;
         align-items: center;
         gap: 10px;
+        min-height: 85px;
         min-width: 0;
         padding: 14px 12px;
         background: #fff;
         border: 1px solid #e5e7eb;
         border-radius: 9px;
+        box-shadow: 0 1px 4px rgba(28, 28, 28, 0.08);
     }
 
     .stat-icon {
-        width: 30px;
-        height: 30px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        flex-shrink: 0;
-        border-radius: 7px;
-        background: #fef2f2;
-        color: #991b1b;
-        font-size: 13px;
+        display: none;
     }
 
     .stat-icon img {
-        width: 16px;
-        height: 16px;
+        width: 49px;
+        height: 49px;
+        display: block;
+        object-fit: contain;
+    }
+
+    .stat-content {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-width: 0;
     }
 
     .stat-number {
-        display: block;
-        font-size: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 50px;
+        height: 40px;
+        flex: 0 0 50px;
+        border-radius: 8px;
+        font-size: 22px;
         font-weight: 700;
-        color: #991b1b;
     }
 
     .stat-label {
         display: block;
-        margin-top: 2px;
-        color: #777;
-        font-size: 10px;
-        font-weight: 600;
-        white-space: nowrap;
+        margin-top: 0;
+        font-size: 11px;
+        font-weight: 700;
+        line-height: 1.15;
+    }
+
+    .faculty-card .stat-number,
+    .returned-card .stat-number {
+        background: #F6E6E6;
+        color: #A60700;
+    }
+
+    .faculty-card .stat-label,
+    .returned-card .stat-label {
+        color: #A60700;
+    }
+
+    .completed-card .stat-number {
+        background: #E6F6ED;
+        color: #03A846;
+    }
+
+    .completed-card .stat-label {
+        color: #03A846;
+    }
+
+    .submitted-card .stat-number {
+        background: #FCFCE6;
+        color: #E5E200;
+    }
+
+    .submitted-card .stat-label {
+        color: #E5E200;
+    }
+
+    .review-card .stat-number {
+        background: #E6EDFD;
+        color: #054FE8;
+    }
+
+    .review-card .stat-label {
+        color: #054FE8;
     }
 
     /* ---------- Dashboard grid ---------- */
@@ -412,6 +478,67 @@ Overview of system activities and updates
         font-size: 11px;
         font-weight: 600;
         text-decoration: none;
+    }
+
+    .pending-card .card-header {
+        position: relative;
+        align-items: flex-start;
+        margin-bottom: 12px;
+    }
+
+    .pending-card .card-header::after {
+        position: absolute;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        border-bottom: 2px solid #BFBFBF;
+        content: "";
+    }
+
+    .pending-card .card-header > div:first-child {
+        flex: 1;
+    }
+
+    .document-tabs {
+        display: flex;
+        gap: 18px;
+        margin-top: 7px;
+    }
+
+    .document-tab {
+        position: relative;
+        z-index: 1;
+        padding: 0 0 8px;
+        border: 0;
+        border-bottom: 2px solid transparent;
+        margin-bottom: -1px;
+        background: transparent;
+        color: #777;
+        cursor: pointer;
+        font-size: 12px;
+    }
+
+    .document-tab.active {
+        border-bottom-color: #A60700;
+        color: #A60700;
+        font-weight: 700;
+    }
+
+    .documents-overview-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        margin-top: 27px;
+        color: #A60700;
+        font-size: 11px;
+        font-weight: 700;
+        text-decoration: none;
+    }
+
+    .documents-overview-link img,
+    .view-bins-link img {
+        width: 13px;
+        height: 13px;
     }
 
     /* ---------- Review progress ---------- */
@@ -582,6 +709,25 @@ Overview of system activities and updates
         color: #444;
     }
 
+    .faculty-type-badge {
+        display: inline-block;
+        padding: 4px 18px;
+        border-radius: 4px;
+        background: #e8e8e8;
+        color: #555;
+        font-size: 9px;
+    }
+
+    .view-bins-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        color: #A60700;
+        font-size: 10px;
+        font-weight: 700;
+        text-decoration: none;
+    }
+
     .empty-row {
         padding: 20px !important;
         text-align: center;
@@ -591,7 +737,7 @@ Overview of system activities and updates
     /* ---------- Responsive ---------- */
     @media (max-width: 1100px) {
         .stats-grid {
-            grid-template-columns: repeat(2, 1fr);
+            grid-template-columns: repeat(3, 1fr);
         }
 
         .dashboard-grid {
@@ -638,7 +784,7 @@ async function refreshStaffDashboard() {
         updateStats(data);
         updateReviewProgress(data);
         updateSubmissionTrends(data);
-        updateReviewQueue(data);
+        updateDocumentsOverview(data);
 
     } catch (error) {
         console.error(
@@ -729,11 +875,8 @@ function updateReviewProgress(data) {
     }
 }
 
-function updateReviewQueue(data) {
-    const body =
-        document.getElementById(
-            "review-queue-body"
-        );
+function updateDocumentsOverview(data) {
+    const body = document.getElementById("documents-overview-body");
 
     if (!body) {
         return;
@@ -742,35 +885,54 @@ function updateReviewQueue(data) {
     body.innerHTML = "";
 
     if (
-        !data.review_queue ||
-        data.review_queue.length === 0
+        !data.documents_overview ||
+        data.documents_overview.length === 0
     ) {
         body.innerHTML = `
             <tr>
-                <td
-                    colspan="4"
-                    class="empty-row"
-                >
-                    No submissions in the review queue.
-                </td>
+                <td colspan="5" class="empty-row">No documents found.</td>
             </tr>
         `;
 
         return;
     }
 
-    data.review_queue.forEach(submission => {
-        const row =
-            document.createElement("tr");
+    data.documents_overview.forEach(submission => {
+        const row = document.createElement("tr");
+        row.dataset.status = submission.status;
 
         row.innerHTML = `
-            <td>${submission.id}</td>
             <td>${submission.faculty}</td>
-            <td>${submission.document}</td>
-            <td>${submission.date}</td>
+            <td><span class="faculty-type-badge">${submission.faculty_type}</span></td>
+            <td>${submission.bin_title}</td>
+            <td>${submission.latest_submission_date}</td>
+            <td>
+                <a href="${submission.faculty_bins_url}" class="view-bins-link">
+                    View Bins
+                    <img src="{% static 'images/Arrow Right.svg' %}" alt="">
+                </a>
+            </td>
         `;
 
         body.appendChild(row);
+    });
+
+    applyDocumentsOverviewFilter();
+}
+
+let selectedDocumentsStatus = "";
+
+function applyDocumentsOverviewFilter() {
+    document.querySelectorAll("#documents-overview-body tr[data-status]").forEach(row => {
+        const matchesStatus =
+            !selectedDocumentsStatus ||
+            row.dataset.status === selectedDocumentsStatus ||
+            (
+                selectedDocumentsStatus === "SUBMITTED" &&
+                row.dataset.status === "RESUBMITTED"
+            );
+
+        row.style.display = matchesStatus ? "" : "none";
     });
 }
 
@@ -848,6 +1010,16 @@ function updateSubmissionTrends(data) {
 }
 
 document.addEventListener("staff-dashboard-update", refreshStaffDashboard);
+
+document.querySelectorAll(".document-tab").forEach(tab => {
+    tab.addEventListener("click", function () {
+        selectedDocumentsStatus = this.dataset.status;
+        document.querySelectorAll(".document-tab").forEach(item => {
+            item.classList.toggle("active", item === this);
+        });
+        applyDocumentsOverviewFilter();
+    });
+});
 
 refreshStaffDashboard();
 </script>

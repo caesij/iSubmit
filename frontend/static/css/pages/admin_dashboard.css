@@ -202,13 +202,12 @@
 }
 
 .compliance-circle {
-    width: 120px;
-    height: 120px;
+    width: 176px;
+    height: 176px;
     display: flex;
     align-items: center;
     justify-content: center;
     position: relative;
-    border: none;
     border-radius: 50%;
     background: conic-gradient(
         #991b1b 0% 0%,
@@ -220,8 +219,8 @@
 .compliance-circle::before {
     content: "";
     position: absolute;
-    width: 102px;
-    height: 102px;
+    width: 142px;
+    height: 142px;
     border-radius: 50%;
     background: #fff;
 }
@@ -229,24 +228,41 @@
 .compliance-circle span {
     position: relative;
     z-index: 1;
-    font-size: 24px;
+    font-size: 34px;
     font-weight: 700;
     color: #991b1b;
 }
 
 .compliance-legend {
 	display: flex;
-	gap: 12px;
-	margin-top: 14px;
-	font-size: 10px;
+	justify-content: center;
+	align-items: flex-start;
+	gap: 24px;
+	margin-top: 18px;
+	font-size: 11px;
 	color: #777;
+}
+
+.compliance-legend > div {
+	display: flex;
+	align-items: flex-start;
+	gap: 7px;
+	color: #171717;
+}
+
+.compliance-legend small {
+	display: block;
+	margin-top: 2px;
+	color: #777;
+	font-size: 10px;
 }
 
 .legend-dot {
 	display: inline-block;
-	width: 7px;
-	height: 7px;
-	margin-right: 3px;
+	width: 12px;
+	height: 12px;
+	margin-top: 2px;
+	flex-shrink: 0;
 	border-radius: 50%;
 }
 
