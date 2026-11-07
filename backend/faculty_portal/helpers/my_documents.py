@@ -3,7 +3,6 @@ from django.core.paginator import Paginator
 from django.shortcuts import render
 
 from submissions.models import Requirement
-from submissions.doc_search import search_documents
 from submissions.querysets import active_document_queryset
 
 def _render_repository(request, submissions, template_name, academic_year, document_type):
@@ -17,8 +16,6 @@ def _render_repository(request, submissions, template_name, academic_year, docum
         submissions = submissions.filter(
             document_file__iendswith=f'.{document_type.lower()}'
         )
-    if search_query:
-        submissions = search_documents(submissions, search_query, sort_by)
     else:
         submissions = submissions.order_by(
             'initially_submitted_at' if sort_by == 'oldest' else '-initially_submitted_at'
@@ -40,5 +37,4 @@ def _render_repository(request, submissions, template_name, academic_year, docum
         'selected_academic_year': academic_year,
         'selected_document_type': document_type,
         'selected_sort_by': sort_by,
-        'search_query': search_query,
     })

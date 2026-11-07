@@ -11,6 +11,7 @@ import secrets
 import string
 from axes.utils import reset as axes_reset
 
+from core.search_utils import all_terms_query
 from accounts.decorators import role_required, staff_permission_required
 from admin_staff_portal.helpers.user_management import (
     get_target_role,
@@ -21,6 +22,7 @@ from admin_staff_portal.helpers.user_management import (
 )
 
 User = get_user_model()
+
 
 @role_required('ADMIN', 'STAFF')
 @require_http_methods(['GET'])
@@ -34,12 +36,16 @@ def user_list_view(request):
 
     users = User.objects.filter(role=target_role)
 
+    # Normal multi-word search
     if search_query:
         users = users.filter(
-            Q(first_name__icontains=search_query) |
-            Q(middle_name__icontains=search_query) |
-            Q(last_name__icontains=search_query) |
-            Q(email__icontains=search_query)
+            all_terms_query(
+                search_query,
+                'first_name',
+                'middle_name',
+                'last_name',
+                'email'
+            )
         )
 
     if target_role == User.Role.FACULTY and faculty_type_param:
@@ -49,17 +55,20 @@ def user_list_view(request):
         users = users.filter(is_active=True)
     elif status_param == 'inactive':
         users = users.filter(is_active=False)
-        
+
     if lockout_param == 'locked':
         users = users.filter(is_locked_out=True)
     elif lockout_param == 'unlocked':
         users = users.filter(is_locked_out=False)
 
     users = users.order_by('last_name', 'first_name', 'pk')
+
     page_obj = Paginator(users, 7).get_page(request.GET.get('page'))
     pagination_params = request.GET.copy()
     pagination_params.pop('page', None)
+    pagination_params.pop('faculty_id', None)
     pagination_params['role'] = target_role
+
     form_class = get_form_class(target_role)
 
     context = {
@@ -71,12 +80,13 @@ def user_list_view(request):
         'current_role': target_role,
         'page_title': get_page_title(target_role),
         'form': form_class(request_user=request.user),
-        'lockout_param': lockout_param
+        'lockout_param': lockout_param,
+        'search_query': search_query
     }
-    
+
     return render(
-        request, 
-        'admin_staff_portal/core/user_mgmt/user_list.html', 
+        request,
+        'admin_staff_portal/core/user_mgmt/user_list.html',
         context
     )
 

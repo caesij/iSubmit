@@ -1,39 +1,49 @@
+
 (function () {
     const searchRoot = document.querySelector("[data-global-search]");
+
     if (!searchRoot) {
         return;
     }
 
     const input = searchRoot.querySelector("[data-global-search-input]");
+    const dropdown = searchRoot.querySelector("[data-global-search-dropdown]");
     const menu = searchRoot.querySelector("[data-global-search-menu]");
     const suggestionsUrl = searchRoot.dataset.suggestionsUrl;
-    const resultsUrl = searchRoot.dataset.resultsUrl;
-    let timer;
-    let request;
 
-    function closeMenu() {
+    if (!input || !dropdown || !menu || !suggestionsUrl) {
+        return;
+    }
+
+    const advancedInputs = searchRoot.querySelectorAll(
+        '[name="faculty_name"], [name="document_title"]'
+    );
+
+    let timer = null;
+    let request = null;
+
+    function openDropdown() {
+        dropdown.hidden = false;
+        input.setAttribute("aria-expanded", "true");
+    }
+
+    function closeDropdown() {
+        dropdown.hidden = true;
         menu.hidden = true;
         menu.innerHTML = "";
-    }
 
-    function renderGroup(title, items) {
-        if (!items.length) {
-            return "";
+        input.setAttribute("aria-expanded", "false");
+
+        clearTimeout(timer);
+
+        if (request) {
+            request.abort();
+            request = null;
         }
-
-        return `<section class="global-search-group">
-            <h2>${escapeHtml(title)}</h2>
-            ${items.map((item) => `
-                <a class="global-search-result" href="${escapeHtml(item.url)}">
-                    ${escapeHtml(item.label)}
-                </a>
-            `).join("")}
-        </section>`;
     }
-
 
     function escapeHtml(value) {
-        return String(value)
+        return String(value ?? "")
             .replaceAll("&", "&amp;")
             .replaceAll("<", "&lt;")
             .replaceAll(">", "&gt;")
@@ -41,25 +51,110 @@
             .replaceAll("'", "&#039;");
     }
 
-    function renderResults(data) {
-        const documentGroups = {};
+    function renderGroup(title, items) {
+        if (!items || !items.length) {
+            return "";
+        }
 
-        data.documents.forEach((document) => {
-            if (!documentGroups[document.category]) {
-                documentGroups[document.category] = [];
+        return `
+            <section class="global-search-group">
+                <h2>${escapeHtml(title)}</h2>
+
+                ${items.map(item => `
+                    <a
+                        class="global-search-result"
+                        href="${escapeHtml(item.url)}"
+                    >
+                        ${escapeHtml(item.label)}
+                    </a>
+                `).join("")}
+            </section>
+        `;
+    }
+
+    function renderDocuments(items) {
+        if (!items || !items.length) {
+            return "";
+        }
+
+        return `
+            <section class="global-search-group">
+                <h2>Documents</h2>
+
+                ${items.map(document => `
+                    <div class="global-search-document-result">
+                        <small class="global-search-document-category">
+                            ${escapeHtml(document.category || "Document")}
+                        </small>
+
+                        <a
+                            class="global-search-result"
+                            href="${escapeHtml(document.url)}"
+                        >
+                            ${escapeHtml(document.label)}
+                        </a>
+
+                        ${document.faculty_name ? `
+                            <small class="global-search-document-owner">
+                                Faculty:
+
+                                ${document.faculty_url ? `
+                                    <a href="${escapeHtml(document.faculty_url)}">
+                                        ${escapeHtml(document.faculty_name)}
+                                    </a>
+                                ` : escapeHtml(document.faculty_name)}
+                            </small>
+                        ` : ""}
+                    </div>
+                `).join("")}
+            </section>
+        `;
+    }
+
+    function getResultsUrl(query) {
+        const url = new URL(searchRoot.action, window.location.origin);
+
+        url.searchParams.set("q", query);
+
+        advancedInputs.forEach(field => {
+            const value = field.value.trim();
+
+            if (value) {
+                url.searchParams.set(field.name, value);
             }
-
-            documentGroups[document.category].push(document);
         });
 
-        menu.innerHTML =
-            renderGroup("Pages", data.pages) +
-            renderGroup("Requirements", data.requirements) +
-            Object.entries(documentGroups)
-                .map(([category, items]) => renderGroup(category, items))
-                .join("");
+        return url.toString();
+    }
 
-        menu.hidden = !menu.innerHTML;
+    function renderResults(data, query) {
+        const groups = [
+            renderGroup("Pages", data.pages),
+            renderGroup("Faculty", data.faculty),
+            renderGroup("Requirements", data.requirements),
+            renderDocuments(data.documents),
+        ].filter(Boolean);
+
+        const resultsHtml = groups.length
+            ? groups.join("")
+            : `
+                <div class="global-search-empty">
+                    No matching results found.
+                </div>
+            `;
+
+        menu.innerHTML = `
+            ${resultsHtml}
+
+            <a
+                class="global-search-view-all"
+                href="${escapeHtml(getResultsUrl(query))}"
+            >
+                View all search results
+            </a>
+        `;
+
+        menu.hidden = false;
     }
 
     async function loadSuggestions(query) {
@@ -67,51 +162,109 @@
             request.abort();
         }
 
-        request = new AbortController();
+        const controller = new AbortController();
+        request = controller;
+
+        const url = new URL(suggestionsUrl, window.location.origin);
+        url.searchParams.set("q", query);
+
+        advancedInputs.forEach(field => {
+            const value = field.value.trim();
+
+            if (value) {
+                url.searchParams.set(field.name, value);
+            }
+        });
+
         try {
-            const response = await fetch(
-                `${suggestionsUrl}?q=${encodeURIComponent(query)}`,
-                {
-                    headers: {"X-Requested-With": "XMLHttpRequest"},
-                    signal: request.signal,
+            const response = await fetch(url.toString(), {
+                method: "GET",
+                headers: {
+                    "X-Requested-With": "XMLHttpRequest",
                 },
-            );
+                cache: "no-store",
+                signal: controller.signal,
+            });
+
             if (!response.ok) {
                 throw new Error("Search suggestions failed.");
             }
-            renderResults(await response.json());
+
+            const data = await response.json();
+
+            if (request === controller) {
+                renderResults(data, query);
+            }
+
         } catch (error) {
-            if (error.name !== "AbortError") {
+            if (error.name !== "AbortError" && request === controller) {
                 console.error(error);
-                closeMenu();
+
+                menu.innerHTML = `
+                    <div class="global-search-empty">
+                        Unable to load search results. Please try again.
+                    </div>
+                `;
+
+                menu.hidden = false;
+            }
+        } finally {
+            if (request === controller) {
+                request = null;
             }
         }
     }
 
-    input.addEventListener("input", function () {
+    function scheduleSuggestions() {
+        openDropdown();
         clearTimeout(timer);
+
         const query = input.value.trim();
+
         if (query.length < 2) {
-            closeMenu();
+            if (request) {
+                request.abort();
+                request = null;
+            }
+
+            menu.innerHTML = "";
+            menu.hidden = true;
             return;
         }
-        timer = setTimeout(() => loadSuggestions(query), 250);
+
+        timer = setTimeout(function () {
+            loadSuggestions(query);
+        }, 250);
+    }
+
+    input.addEventListener("focus", openDropdown);
+    input.addEventListener("click", openDropdown);
+    input.addEventListener("input", scheduleSuggestions);
+
+    // Refresh suggestions when advanced filters change.
+    advancedInputs.forEach(field => {
+        field.addEventListener("input", scheduleSuggestions);
     });
 
     input.addEventListener("keydown", function (event) {
-        if (event.key === "Enter" && input.value.trim()) {
-            event.preventDefault();
-            window.location.href =
-                `${resultsUrl}?q=${encodeURIComponent(input.value.trim())}`;
-        }
         if (event.key === "Escape") {
-            closeMenu();
+            closeDropdown();
+            input.blur();
+        }
+    });
+
+    searchRoot.addEventListener("submit", function () {
+        clearTimeout(timer);
+
+        if (request) {
+            request.abort();
+            request = null;
         }
     });
 
     document.addEventListener("click", function (event) {
         if (!searchRoot.contains(event.target)) {
-            closeMenu();
+            closeDropdown();
         }
     });
 })();

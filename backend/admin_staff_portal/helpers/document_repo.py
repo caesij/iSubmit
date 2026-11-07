@@ -2,7 +2,7 @@ from django.contrib import messages
 from django.core.paginator import Paginator
 from django.shortcuts import render, redirect
 
-from submissions.doc_search import search_documents
+from admin_staff_portal.helpers.doc_repo_search import search_documents
 from submissions.models import DocumentSubmission, Requirement
 
 
@@ -16,6 +16,7 @@ def _document_redirect(archived):
 
 def _selected_ids(request):
     return request.POST.getlist('document_ids')
+
 
 def get_document_queryset(request, *, archived=False):
     params = request.GET

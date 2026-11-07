@@ -294,30 +294,51 @@
                 </div>
 
                 <div class="topbar-controls">
-                    <div
+                    <form
                         class="global-search"
                         data-global-search
+                        method="get"
+                        action="{% url 'faculty_portal:global_search_results' %}"
                         data-suggestions-url="{% url 'faculty_portal:global_search_suggestions' %}"
-                        data-results-url="{% url 'faculty_portal:global_search_results' %}"
+                        autocomplete="off"
                     >
                         <span class="icon">
-                            <img src="{% static 'images/search.svg' %}" alt="Search icon">
+                            <img
+                                src="{% static 'images/search.svg' %}"
+                                alt="Search icon"
+                            >
                         </span>
 
                         <input
                             data-global-search-input
                             type="text"
-                            placeholder="Search pages or requirements..."
+                            name="q"
+                            placeholder="Search pages, requirements, or documents..."
                             autocomplete="off"
-                            aria-label="Search pages or requirements"
+                            aria-label="Search pages, requirements, or documents"
+                            aria-expanded="false"
+                            aria-controls="faculty-global-search-dropdown"
                         >
+
                         <div
-                            class="global-search-menu"
-                            data-global-search-menu
-                            role="listbox"
+                            class="global-search-dropdown"
+                            id="faculty-global-search-dropdown"
+                            data-global-search-dropdown
                             hidden
-                        ></div>
-                    </div>
+                        >
+                            <div class="global-search-hint">
+                                Type at least two characters to see matching pages,
+                                requirements, and documents.
+                            </div>
+
+                            <div
+                                class="global-search-menu"
+                                data-global-search-menu
+                                role="listbox"
+                                hidden
+                            ></div>
+                        </div>
+                    </form>
 
                     <div
                         class="notification-wrap"
