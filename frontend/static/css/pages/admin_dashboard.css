@@ -320,21 +320,37 @@
 }
 
 .pending-card .card-header {
+	position: relative;
 	align-items: flex-start;
 	margin-bottom: 12px;
+}
+
+.pending-card .card-header::after {
+	position: absolute;
+	right: 0;
+	bottom: 0;
+	left: 0;
+	border-bottom: 2px solid #BFBFBF;
+	content: "";
+}
+
+.pending-card .card-header > div:first-child {
+	flex: 1;
 }
 
 .document-tabs {
 	display: flex;
 	gap: 18px;
 	margin-top: 7px;
-	border-bottom: 1px solid #c7c7c7;
 }
 
 .document-tab {
 	padding: 0 0 8px;
 	border: 0;
 	border-bottom: 2px solid transparent;
+	margin-bottom: -1px;
+	position: relative;
+	z-index: 1;
 	background: transparent;
 	color: #777;
 	cursor: pointer;
@@ -351,7 +367,7 @@
 	display: inline-flex;
 	align-items: center;
 	gap: 5px;
-	margin-top: 3px;
+	margin-top: 27px;
 	color: #A60700;
 	font-size: 11px;
 	font-weight: 700;
