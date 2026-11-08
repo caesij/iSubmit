@@ -78,7 +78,13 @@
                     <tr>
                         <td>
                             <div class="faculty-cell">
-                                <div class="faculty-avatar">{{ row.faculty.first_name|first }}{{ row.faculty.last_name|first }}</div>
+                                <div class="faculty-avatar">
+                                    {% if row.faculty.profile_picture %}
+                                        <img src="{{ row.faculty.profile_picture.url }}" alt="{{ row.faculty.get_full_name }} profile photo">
+                                    {% else %}
+                                        <img src="{% static 'images/default profile.jpg' %}" alt="Default profile photo">
+                                    {% endif %}
+                                </div>
                                 <div>
                                     <div class="font-bold">{{ row.faculty.get_full_name }}</div>
                                     <div class="text-sub">{{ row.faculty.email }}</div>
@@ -119,8 +125,9 @@
                 {% endfor %}
             </tbody>
         </table>
+    </div>
 
-        {% if is_paginated or page_obj %}
+    {% if is_paginated or page_obj %}
         <div class="pagination-footer" data-live-container="faculty-overview-pagination">
             <span class="pagination-info">Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }} faculty members</span>
             <div class="pagination-controls">
@@ -137,8 +144,8 @@
                 {% else %}
                     <span class="page-btn page-btn-disabled" aria-disabled="true">&gt;</span>
                 {% endif %}
+            </div>
         </div>
-        {% endif %}
-    </div>
+    {% endif %}
 </div>
 {% endblock %}

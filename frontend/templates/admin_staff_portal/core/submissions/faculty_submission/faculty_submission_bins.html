@@ -10,7 +10,7 @@
 <style>
 .submissions-container { padding: 0; }
 
-.faculty-header { display: flex; align-items: center; gap: 24px; min-height: 64px; padding: 10px 18px; margin-bottom: 16px; border: 1px solid #e5e7eb; border-radius: 10px; background: #fff; box-shadow: 0 1px 4px rgba(28, 28, 28, 0.06); }
+.faculty-header { display: flex; align-items: center; gap: 24px; min-height: 64px; padding: 12px 18px; margin-bottom: 16px; border: 1px solid #e5e7eb; border-radius: 10px; background: #fff; box-shadow: 0 1px 4px rgba(28, 28, 28, 0.06); }
 .faculty-header-left { display: flex; align-items: center; gap: 12px; }
 .faculty-avatar { width: 40px; height: 40px; border-radius: 50%; background: #7f1d1d; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 15px; }
 .faculty-name { font-size: 16px; font-weight: 700; color: #1a1a1a; }
@@ -27,7 +27,7 @@
 .submission-message-warning { color: #92400e; background: #fffbeb; border-color: #fde68a; }
 .submission-message-info { color: #1e40af; background: #eff6ff; border-color: #bfdbfe; }
 
-.filter-card { display: flex; align-items: center; flex: 0 0 auto; margin: 0 0 0 auto; }
+.filter-card { display: flex; align-items: center; flex: 0 0 auto; margin: 0 auto; }
 .filter-form { display: flex; }
 .filter-inputs { display: flex; gap: 12px; align-items: flex-end; flex-wrap: nowrap; }
 .select-wrap label { display: block; font-size: 11px; color: #6b7280; margin-bottom: 4px; }
@@ -41,8 +41,19 @@
 .faculty-submission-table-card .dropdown-menu form { margin: 0; }
 .data-table { width: 100%; border-collapse: collapse; font-size: 13px; }
 .data-table thead tr { background: #fbe4e4; }
-.data-table th { text-align: left; padding: 12px 16px; font-weight: 700; color: #374151; font-size: 12px; }
-.data-table td { padding: 14px 16px; border-top: 1px solid #f0f0f0; vertical-align: middle; color: #374151; }
+.data-table { table-layout: fixed; }
+.data-table th { text-align: left; padding: 14px 16px; font-weight: 700; color: #374151; font-size: 12px; }
+.data-table td { padding: 18px 16px; border-top: 1px solid #f0f0f0; vertical-align: middle; color: #374151; }
+.data-table th:nth-child(1), .data-table td:nth-child(1) { width: 3%; }
+.data-table th:nth-child(2), .data-table td:nth-child(2) { width: 18%; }
+.data-table th:nth-child(3), .data-table td:nth-child(3) { width: 14%; }
+.data-table th:nth-child(4), .data-table td:nth-child(4) { width: 12%; }
+.data-table th:nth-child(5), .data-table td:nth-child(5) { width: 12%; }
+.data-table th:nth-child(6), .data-table td:nth-child(6) { width: 12%; }
+.data-table th:nth-child(7), .data-table td:nth-child(7) { width: 10%; }
+.data-table th:nth-child(8), .data-table td:nth-child(8) { width: 12%; }
+.data-table th:nth-child(9), .data-table td:nth-child(9) { width: 7%; }
+.data-table th:nth-child(9), .data-table td:nth-child(9) { text-align: center; }
 .data-table .font-bold { font-weight: 700; color: #1a1a1a; }
 .data-table .text-sub { font-size: 11px; color: #9ca3af; }
 
@@ -61,7 +72,7 @@
 .faculty-breadcrumb { margin: 0 0 12px; color: #777; font-size: 12px; }
 .faculty-breadcrumb span { margin: 0 6px; color: #aaa; }
 
-.pagination-footer { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; padding: 12px 2px; font-size: 12px; color: #6b7280; }
+.pagination-footer { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; margin-top: 16px; padding: 12px 2px; font-size: 12px; color: #6b7280; }
 .pagination-controls { display: flex; grid-column: 2; gap: 8px; align-items: center; }
 .page-btn { display: flex; width: 28px; height: 28px; align-items: center; justify-content: center; border: none; border-radius: 4px; text-decoration: none; color: #6b7280; font-size: 18px; }
 .page-btn.active { background: #8f1010; color: #fff; font-size: 14px; font-weight: 700; }
@@ -75,17 +86,6 @@
 
     <a href="{% url 'admin_staff_portal:faculty_submissions_list' %}" class="back-link">&larr; Back</a>
     <div class="faculty-breadcrumb">Faculty Submission <span aria-hidden="true">&rsaquo;</span> {{ faculty_member.get_full_name }}</div>
-
-    {% if messages %}
-        <div class="submission-messages" aria-live="polite">
-            {% for message in messages %}
-                <div
-                    class="submission-message submission-message-{% if message.tags == 'success' %}success{% elif message.tags == 'error' %}error{% elif message.tags == 'warning' %}warning{% else %}info{% endif %}"
-                    role="{% if message.tags == 'error' %}alert{% else %}status{% endif %}"
-                >{{ message }}</div>
-            {% endfor %}
-        </div>
-    {% endif %}
 
     <div class="faculty-header">
         <div class="faculty-header-left">

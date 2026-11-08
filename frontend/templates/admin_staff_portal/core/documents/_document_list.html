@@ -8,7 +8,7 @@
 .docs-tab.active { color: #232323; font-weight: 700; border-bottom-color: #ba1a1a; }
 .filter-card, .table-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; }
 .filter-card { padding: 16px; margin-bottom: 16px; }
-.filter-inputs { display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; }
+.filter-inputs { display: flex; gap: 12px; align-items: flex-start; flex-wrap: wrap; }
 .search-group { flex: 1 1 260px; min-width: 220px; }
 .search-group label, .select-wrap label, .search-help { display: block; font-size: 11px; color: #6b7280; margin-bottom: 4px; }
 .search-controls { display: flex; gap: 8px; flex-wrap: wrap; }
@@ -18,7 +18,7 @@
 .search-help { margin: 5px 0 0; line-height: 1.4; }
 .btn-search, .btn-action, .btn-clear { padding: 8px 14px; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; }
 .btn-search, .btn-action { border: 1px solid #7f1d1d; color: #fff; background: #7f1d1d; }
-.btn-clear { border: 1px solid #7f1d1d; color: #7f1d1d; background: #fff; text-decoration: none; white-space: nowrap; }
+.btn-clear { align-self: flex-start; margin-top: 21px; border: 1px solid #7f1d1d; color: #7f1d1d; background: #fff; text-decoration: none; white-space: nowrap; }
 .bulk-actions { display: flex; gap: 8px; align-items: center; padding: 12px 16px; border-bottom: 1px solid #f0f0f0; }
 .bulk-actions span { margin-right: auto; color: #6b7280; font-size: 12px; }
 .data-table { width: 100%; border-collapse: collapse; font-size: 13px; }
@@ -29,10 +29,11 @@
 .fname-link { color: #1a1a1a; text-decoration: none; font-weight: 700; }
 .fname-link:hover { text-decoration: underline; }
 .text-sub { font-size: 11px; color: #9ca3af; }
-.pagination-footer { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-top: 1px solid #f0f0f0; font-size: 12px; color: #6b7280; }
-.pagination-controls { display: flex; gap: 6px; }
+.pagination-footer { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; padding: 14px 0; font-size: 12px; color: #6b7280; }
+.pagination-controls { display: flex; grid-column: 2; gap: 6px; }
 .page-btn { width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border: 1px solid #e5e7eb; border-radius: 6px; text-decoration: none; color: #374151; font-size: 12px; }
 .page-btn.active { background: #7f1d1d; color: #fff; border-color: #7f1d1d; }
+.page-btn-disabled { border-color: transparent; color: #9ca3af; }
 @media (max-width: 900px) { .table-card { overflow-x: auto; } .data-table { min-width: 850px; } }
 </style>
 
@@ -125,17 +126,18 @@
                 {% endfor %}
             </tbody>
         </table>
-        {% if page_obj %}
-        <div class="pagination-footer">
-            <span>Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }} documents</span>
-            <div class="pagination-controls">
-                {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}{% if selected_semester %}&semester={{ selected_semester|urlencode }}{% endif %}{% if selected_academic_year %}&academic_year={{ selected_academic_year|urlencode }}{% endif %}{% if selected_faculty_type %}&faculty_type={{ selected_faculty_type|urlencode }}{% endif %}{% if selected_sort_by %}&sort_by={{ selected_sort_by|urlencode }}{% endif %}{% if search_query %}&q={{ search_query|urlencode }}{% endif %}" class="page-btn">&lt;</a>{% endif %}
-                {% for page_num in page_obj.paginator.page_range %}<a href="?page={{ page_num }}{% if selected_semester %}&semester={{ selected_semester|urlencode }}{% endif %}{% if selected_academic_year %}&academic_year={{ selected_academic_year|urlencode }}{% endif %}{% if selected_faculty_type %}&faculty_type={{ selected_faculty_type|urlencode }}{% endif %}{% if selected_sort_by %}&sort_by={{ selected_sort_by|urlencode }}{% endif %}{% if search_query %}&q={{ search_query|urlencode }}{% endif %}" class="page-btn {% if page_obj.number == page_num %}active{% endif %}">{{ page_num }}</a>{% endfor %}
-                {% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}{% if selected_semester %}&semester={{ selected_semester|urlencode }}{% endif %}{% if selected_academic_year %}&academic_year={{ selected_academic_year|urlencode }}{% endif %}{% if selected_faculty_type %}&faculty_type={{ selected_faculty_type|urlencode }}{% endif %}{% if selected_sort_by %}&sort_by={{ selected_sort_by|urlencode }}{% endif %}{% if search_query %}&q={{ search_query|urlencode }}{% endif %}" class="page-btn">&gt;</a>{% endif %}
-            </div>
-        </div>
-        {% endif %}
     </form>
+
+    {% if page_obj %}
+    <div class="pagination-footer">
+        <span>Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }} documents</span>
+        <div class="pagination-controls">
+            {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}{% if selected_semester %}&semester={{ selected_semester|urlencode }}{% endif %}{% if selected_academic_year %}&academic_year={{ selected_academic_year|urlencode }}{% endif %}{% if selected_faculty_type %}&faculty_type={{ selected_faculty_type|urlencode }}{% endif %}{% if selected_sort_by %}&sort_by={{ selected_sort_by|urlencode }}{% endif %}{% if search_query %}&q={{ search_query|urlencode }}{% endif %}" class="page-btn" aria-label="Previous page">&lt;</a>{% else %}<span class="page-btn page-btn-disabled" aria-disabled="true" aria-label="Previous page">&lt;</span>{% endif %}
+            {% for page_num in page_obj.paginator.page_range %}<a href="?page={{ page_num }}{% if selected_semester %}&semester={{ selected_semester|urlencode }}{% endif %}{% if selected_academic_year %}&academic_year={{ selected_academic_year|urlencode }}{% endif %}{% if selected_faculty_type %}&faculty_type={{ selected_faculty_type|urlencode }}{% endif %}{% if selected_sort_by %}&sort_by={{ selected_sort_by|urlencode }}{% endif %}{% if search_query %}&q={{ search_query|urlencode }}{% endif %}" class="page-btn {% if page_obj.number == page_num %}active{% endif %}">{{ page_num }}</a>{% endfor %}
+            {% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}{% if selected_semester %}&semester={{ selected_semester|urlencode }}{% endif %}{% if selected_academic_year %}&academic_year={{ selected_academic_year|urlencode }}{% endif %}{% if selected_faculty_type %}&faculty_type={{ selected_faculty_type|urlencode }}{% endif %}{% if selected_sort_by %}&sort_by={{ selected_sort_by|urlencode }}{% endif %}{% if search_query %}&q={{ search_query|urlencode }}{% endif %}" class="page-btn" aria-label="Next page">&gt;</a>{% else %}<span class="page-btn page-btn-disabled" aria-disabled="true" aria-label="Next page">&gt;</span>{% endif %}
+        </div>
+    </div>
+    {% endif %}
 </div>
 
 <script>

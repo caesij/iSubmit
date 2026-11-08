@@ -1,61 +1,63 @@
 {% extends 'admin_staff_portal/base.html' %}
 {% load static core_extras %}
 
-{% block title %}Settings - iSubmit{% endblock %}
+{% block title %}Account &amp; Security - iSubmit{% endblock %}
 {% block heading %}Settings{% endblock %}
 {% block subtitle %}Configure system preferences and default behaviors.{% endblock %}
 {% block extra_css %}<link rel="stylesheet" href="{% static 'css/pages/settings.css' %}">{% endblock %}
 
 {% block content %}
+<div class="faculty-settings">
 <style>
-.settings-tabs { display: flex; gap: 28px; border-bottom: 1px solid #e5e7eb; margin-bottom: 20px; }
-.settings-tab { padding: 10px 2px; font-size: 13.5px; font-weight: 600; color: #6b7280; text-decoration: none; border-bottom: 2px solid transparent; }
-.settings-tab.active { color: #7f1d1d; border-bottom-color: #7f1d1d; font-weight: 700; }
-
-.page-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 20px 22px; margin-bottom: 16px; }
-.page-card h2 { font-size: 16px; font-weight: 700; margin: 0 0 2px; }
-.page-card .card-sub { font-size: 12.5px; color: #6b7280; margin: 0; }
-
-.section-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 20px 22px; margin-bottom: 16px; }
-.section-head { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 18px; }
-.section-icon {
-    width: 36px; height: 36px; border-radius: 8px; flex-shrink: 0;
-    display: flex; align-items: center; justify-content: center; font-size: 16px;
-}
-.icon-red { background: #fef2f2; color: #b91c1c; }
-.icon-blue { background: #eff6ff; color: #1d4ed8; }
-.section-title { font-size: 14.5px; font-weight: 700; color: #1a1a1a; margin: 0; }
-.section-desc { font-size: 12px; color: #9ca3af; margin: 2px 0 0; }
-
-.pw-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; align-items: start; }
-.pw-field label { display: block; font-size: 12.5px; font-weight: 700; color: #374151; margin-bottom: 6px; }
-.pw-input-wrap { position: relative; }
-.pw-input-wrap input {
-    width: 100%; padding: 9px 36px 9px 12px; border: 1px solid #e5e7eb; border-radius: 8px;
-    font-size: 13px; box-sizing: border-box;
-}
-.pw-toggle {
-    position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
-    background: none; border: none; cursor: pointer; color: #9ca3af; font-size: 14px; padding: 0;
-}
-.pw-field .field-hint { font-size: 11px; color: #9ca3af; margin-top: 4px; }
-.errorlist { color: #b91c1c; font-size: 11.5px; margin: 4px 0 0; padding-left: 16px; }
-
-.settings-actions { margin-top: 18px; text-align: right; }
-.btn-save { padding: 9px 20px; background: #7f1d1d; color: #fff; border: none; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; }
-.activity-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
-.activity-table { width: 100%; border-collapse: collapse; margin-top: 16px; font-size: 12px; }
-.activity-table th, .activity-table td { padding: 10px 8px; border-bottom: 1px solid #e5e7eb; text-align: left; }
-.activity-table th { color: #374151; font-size: 11px; }
-.activity-table td { color: #4b5563; }
-.activity-device { color: #1f2937; font-weight: 600; }
-.activity-current { color: #15803d; font-size: 10px; font-weight: 700; margin-left: 5px; }
-.activity-action { border: 0; background: none; color: #b91c1c; cursor: pointer; font-size: 11px; font-weight: 700; padding: 0; }
-.activity-empty { color: #6b7280; font-size: 12px; margin: 16px 0 0; }
-.btn-logout-all { border: 1px solid #b91c1c; background: #fff; color: #b91c1c; border-radius: 7px; padding: 8px 12px; font-size: 11px; font-weight: 700; cursor: pointer; }
+.security-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 20px 22px; margin-bottom: 16px; }
+.security-container { padding: 20px; }
+.security-card h2 { font-size: 16px; margin: 0 0 4px; }
+.security-card p { color: #6b7280; font-size: 12px; }
+.security-intro { padding: 0 0 18px; border: 0; border-bottom: 1px solid #d1d5db; border-radius: 0; margin: 0; }
+.security-section { margin: 18px 14px 0; border: 1px solid #e5e7eb; border-radius: 10px; padding: 14px; box-shadow: 0 1px 4px rgba(28, 28, 28, .04); }
+.security-section-heading { display: flex; align-items: flex-start; gap: 13px; }
+.security-icon { display: grid; place-items: center; width: 34px; height: 34px; flex-shrink: 0; border-radius: 4px; background: #fce7e7; }
+.security-icon.login-icon { background: #e7efff; }
+.security-icon img { width: 26px; height: 26px; }
+.security-section-heading h2 { margin-top: 1px; }
+.security-section-heading p { margin: 2px 0 0; }
+.security-fields { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-top: 16px; }
+.security-field { min-width: 0; }
+.security-field label { display: block; color: #232323; font-size: 12px; font-weight: 700; margin-bottom: 5px; }
+.password-input { position: relative; }
+.password-input input { width: 100%; height: 32px; box-sizing: border-box; padding: 7px 34px 7px 10px; border: 1px solid #d1d5db; border-radius: 5px; font-size: 12px; }
+.password-toggle { position: absolute; top: 50%; right: 8px; display: grid; place-items: center; width: 20px; height: 20px; padding: 0; border: 0; transform: translateY(-50%); background: transparent; cursor: pointer; }
+.password-toggle img { width: 15px; height: 15px; }
+.password-help { margin: 3px 0 0; color: #9ca3af !important; font-size: 10px !important; }
+.security-actions { text-align: right; margin-top: 14px; }
+.security-actions button, .logout-all { border: 0; border-radius: 5px; padding: 7px 14px; background: #a90000; color: #fff; font-size: 11px; font-weight: 700; cursor: pointer; }
+.activity-table { width: 100%; margin: 14px 0 0; border-collapse: collapse; font-size: 11px; }
+.activity-table th, .activity-table td { text-align: left; padding: 8px 7px; border-bottom: 1px solid #e5e7eb; }
+.activity-table th { font-size: 11px; }
+.activity-table th:last-child, .activity-table td:last-child { display: none; }
+.activity-device { font-weight: 700; }
+.current { color: #15803d; font-size: 10px; margin-left: 5px; }
+.activity-action { border: 0; background: none; color: #b91c1c; font-weight: 700; cursor: pointer; }
+.activity-heading { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.activity-heading .security-section-heading { width: 100%; flex-direction: row; align-items: flex-start; }
+.activity-heading .security-section-heading > div { min-width: 0; }
+.activity-heading .security-section-heading h2,
+.activity-heading .security-section-heading p { display: block; }
+.activity-table { width: calc(100% - 112px); margin-left: 56px; margin-right: 56px; }
 .activity-selection { display: flex; justify-content: space-between; align-items: center; margin-top: 14px; }
+.activity-selection { margin-left: 56px; margin-right: 56px; }
+.activity-actions { display: flex; align-items: center; gap: 18px; }
+.activity-actions #logout-selected { display: none; }
 .activity-selection button { border: 0; background: none; color: #b91c1c; cursor: pointer; font-size: 11px; font-weight: 700; }
+.activity-actions .logout-all { background: #a90000; color: #fff; }
 .activity-selection button:disabled { color: #9ca3af; cursor: not-allowed; }
+@media (max-width: 760px) {
+    .security-fields { grid-template-columns: 1fr; }
+    .security-section { margin-left: 0; margin-right: 0; }
+    .activity-table { width: 100%; margin-left: 0; margin-right: 0; overflow-x: auto; }
+    .activity-selection { margin-left: 0; }
+    .activity-selection, .activity-actions { align-items: flex-start; flex-direction: column; }
+}
 </style>
 
 <div class="settings-tabs">
@@ -67,130 +69,97 @@
     {% endif %}
 </div>
 
-<div class="page-card">
-    <h2>Account &amp; Security</h2>
-    <p class="card-sub">Manage your account credentials and account settings.</p>
-</div>
-
-<form method="POST" class="section-card">
-    {% csrf_token %}
-    <div class="section-head">
-        <div class="section-icon icon-red">🔒</div>
-        <div>
-            <div class="section-title">Change Password</div>
-            <div class="section-desc">Update your password to keep your account secure.</div>
-        </div>
+<div class="security-card security-container" data-login-activity>
+    <div class="security-intro">
+        <h2>Account Security</h2>
+        <p>Manage your password, authentication, and account security settings.</p>
     </div>
 
-    <div class="pw-grid">
-        <div class="pw-field">
-            <label>Current Password</label>
-            <div class="pw-input-wrap">
-                {{ form.old_password }}
-                <button type="button" class="pw-toggle" onclick="togglePw(this)">👁</button>
-            </div>
-            {% if form.old_password.errors %}<ul class="errorlist">{% for e in form.old_password.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+    <form method="POST" class="security-card security-section">
+        {% csrf_token %}
+        <div class="security-section-heading">
+            <span class="security-icon"><img src="{% static 'images/Change Password.svg' %}" alt=""></span>
+            <div><h2>Change Password</h2><p>Update your password to keep your account secure.</p></div>
         </div>
-        <div class="pw-field">
-            <label>New Password</label>
-            <div class="pw-input-wrap">
-                {{ form.new_password1 }}
-                <button type="button" class="pw-toggle" onclick="togglePw(this)">👁</button>
+        <div class="security-fields">
+            <div class="security-field">
+                <label for="{{ form.old_password.id_for_label }}">Current Password</label>
+                <div class="password-input">
+                    {{ form.old_password }}
+                    <button type="button" class="password-toggle" aria-label="Show current password" aria-pressed="false"><img src="{% static 'images/eye.svg' %}" alt=""></button>
+                </div>
             </div>
-            <div class="field-hint">Password must be at least 8 characters long.</div>
-            {% if form.new_password1.errors %}<ul class="errorlist">{% for e in form.new_password1.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
-        </div>
-        <div class="pw-field">
-            <label>Confirm New Password</label>
-            <div class="pw-input-wrap">
-                {{ form.new_password2 }}
-                <button type="button" class="pw-toggle" onclick="togglePw(this)">👁</button>
+            <div class="security-field">
+                <label for="{{ form.new_password1.id_for_label }}">New Password</label>
+                <div class="password-input">
+                    {{ form.new_password1 }}
+                    <button type="button" class="password-toggle" aria-label="Show new password" aria-pressed="false"><img src="{% static 'images/eye.svg' %}" alt=""></button>
+                </div>
+                <p class="password-help">Password must be 8 characters long.</p>
             </div>
-            {% if form.new_password2.errors %}<ul class="errorlist">{% for e in form.new_password2.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+            <div class="security-field">
+                <label for="{{ form.new_password2.id_for_label }}">Confirm New Password</label>
+                <div class="password-input">
+                    {{ form.new_password2 }}
+                    <button type="button" class="password-toggle" aria-label="Show confirmed password" aria-pressed="false"><img src="{% static 'images/eye.svg' %}" alt=""></button>
+                </div>
+            </div>
         </div>
-    </div>
+        <div class="security-actions"><button type="submit">Update Password</button></div>
+    </form>
 
-    <div class="settings-actions">
-        <button type="submit" class="btn-save">Update Password</button>
-    </div>
-</form>
-
-<div class="section-card" data-login-activity>
-    <div class="activity-head">
-        <div class="section-head" style="margin-bottom:0;">
-            <div class="section-icon icon-blue">🖥️</div>
-            <div>
-                <div class="section-title">Login Activity</div>
+    <div class="security-card security-section">
+        <div class="activity-heading">
+            <div class="security-section-heading">
+                <span class="security-icon login-icon"><img src="{% static 'images/Login Activity.svg' %}" alt=""></span>
+                <div><h2>Login Activity</h2><p>Review your recent account activity and active sessions.</p></div>
             </div>
         </div>
-        {% if login_activity|length > 1 %}
-            <form method="POST" action="{% url 'accounts:revoke_other_sessions' %}">
-                {% csrf_token %}
-                <button type="submit" class="btn-logout-all">Log out all other sessions</button>
-            </form>
+        {% if login_activity %}
+            <form id="session-selection-form" method="POST" action="{% url 'accounts:revoke_selected_sessions' %}">{% csrf_token %}</form>
+            <table class="activity-table">
+                <thead><tr><th></th><th>Device / Browser</th><th>First Seen</th><th>Last Active</th><th>Session</th><th></th></tr></thead>
+                <tbody>
+                    {% for activity in login_activity %}
+                        <tr>
+                            <td><input type="checkbox" class="session-checkbox" value="{{ activity.record.id }}" {% if activity.is_current %}disabled{% endif %} aria-label="Select {{ activity.device }} to log out"></td>
+                            <td class="activity-device">{{ activity.device }}{% if activity.is_current %}<span class="current">Current</span>{% endif %}</td>
+                            <td>{{ activity.record.first_seen|display_date:request.user }} {{ activity.record.first_seen|display_time:request.user }}</td>
+                            <td>{{ activity.record.last_seen|display_date:request.user }} {{ activity.record.last_seen|display_time:request.user }}</td>
+                            <td>{% if activity.is_current %}Active{% else %}Other session{% endif %}</td>
+                            <td><form method="POST" action="{% url 'accounts:revoke_session' activity.record.id %}">{% csrf_token %}<button class="activity-action" type="submit">Log out</button></form></td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <div class="activity-selection">
+                <span>Log out selected sessions</span>
+                <div class="activity-actions">
+                    <button type="submit" form="session-selection-form" id="logout-selected" disabled>Log out selected sessions</button>
+                    {% if login_activity|length > 1 %}
+                        <form method="POST" action="{% url 'accounts:revoke_other_sessions' %}">
+                            {% csrf_token %}
+                            <button type="submit" class="logout-all">Log out all other sessions</button>
+                        </form>
+                    {% endif %}
+                </div>
+            </div>
+        {% else %}
+            <p>No active login sessions were found.</p>
         {% endif %}
     </div>
-
-    {% if login_activity %}
-        <form id="session-selection-form" method="POST" action="{% url 'accounts:revoke_selected_sessions' %}">
-            {% csrf_token %}
-        </form>
-        <table class="activity-table">
-            <thead>
-                <tr>
-                    <th></th>
-                    <th>Device / Browser</th>
-                    <th>First Seen</th>
-                    <th>Last Active</th>
-                    <th>Session</th>
-                    <th></th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for activity in login_activity %}
-                    <tr>
-                        <td>
-                            <input
-                                type="checkbox"
-                                class="session-checkbox"
-                                value="{{ activity.record.id }}"
-                                {% if activity.is_current %}disabled{% endif %}
-                                aria-label="Select {{ activity.device }} to log out"
-                            >
-                        </td>
-                        <td class="activity-device">
-                            {{ activity.device }}
-                            {% if activity.is_current %}<span class="activity-current">Current</span>{% endif %}
-                        </td>
-                        <td>                        {{ activity.record.first_seen|display_date:request.user }} {{ activity.record.first_seen|display_time:request.user }}</td>
-                        <td>                        {{ activity.record.last_seen|display_date:request.user }} {{ activity.record.last_seen|display_time:request.user }}</td>
-                        <td>{% if activity.is_current %}Active{% else %}Other session{% endif %}</td>
-                        <td>
-                            <form method="POST" action="{% url 'accounts:revoke_session' activity.record.id %}">
-                                {% csrf_token %}
-                                <button type="submit" class="activity-action">
-                                    {% if activity.is_current %}Log out{% else %}Log out{% endif %}
-                                </button>
-                            </form>
-                        </td>
-                    </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-        <div class="activity-selection">
-            <span>Log out selected sessions</span>
-            <button type="submit" form="session-selection-form" id="logout-selected" disabled>Log out selected sessions</button>
-        </div>
-    {% else %}
-        <p class="activity-empty">No active login sessions were found.</p>
-    {% endif %}
 </div>
 
 <script>
-function togglePw(btn) {
-    const input = btn.previousElementSibling;
-    input.type = input.type === 'password' ? 'text' : 'password';
-}
+document.querySelectorAll('.password-toggle').forEach(function (toggle) {
+    toggle.addEventListener('click', function () {
+        const input = toggle.parentElement.querySelector('input');
+        const showing = input.type === 'text';
+        input.type = showing ? 'password' : 'text';
+        toggle.setAttribute('aria-pressed', String(!showing));
+        toggle.setAttribute('aria-label', (showing ? 'Show' : 'Hide') + ' password');
+    });
+});
 
 function bindSessionSelection() {
     const form = document.getElementById('session-selection-form');

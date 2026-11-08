@@ -1,8 +1,8 @@
 <style>
 .notifications-page {
-    padding: 24px 32px;
+    padding: 24px 28px;
     color: #1a1a1a;
-    font-family: 'Segoe UI', Arial, sans-serif;
+    font-family: 'Poppins', sans-serif;
 }
 
 .notifications-header {
@@ -61,7 +61,7 @@
 
 .notification-filters {
     display: flex;
-    align-items: end;
+    align-items: center;
     gap: 12px;
     flex-wrap: wrap;
     margin-bottom: 20px;
@@ -69,6 +69,26 @@
     background: #fff;
     border: 1px solid #e5e7eb;
     border-radius: 10px;
+}
+
+.notification-filter-form {
+    display: flex;
+    align-items: end;
+    gap: 12px;
+    flex-wrap: wrap;
+    flex: 1 1 auto;
+}
+
+.notification-filters .notifications-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: auto;
+    align-self: center;
+}
+
+.notification-filters .notifications-header-actions form {
+    margin: 0;
 }
 
 .notification-filter-group {
@@ -125,7 +145,7 @@
 .notification-list {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 8px;
 }
 
 .notification-card {
@@ -133,7 +153,8 @@
     align-items: center;
     justify-content: space-between;
     gap: 16px;
-    padding: 16px;
+    min-height: 80px;
+    padding: 14px 16px;
     background: #fff;
     border: 1px solid #e5e7eb;
     border-radius: 10px;
@@ -149,16 +170,16 @@
 }
 
 .notification-card-content h3 {
-    margin: 0 0 5px;
+    margin: 0 0 4px;
     font-size: 14px;
     font-weight: 700;
     color: #1a1a1a;
 }
 
 .notification-card-content p {
-    margin: 0 0 7px;
+    margin: 0 0 5px;
     font-size: 13px;
-    line-height: 1.5;
+    line-height: 1.4;
     color: #6b7280;
     white-space: pre-line;
 }
@@ -183,7 +204,7 @@
 .notification-card-actions a {
     padding: 7px 10px;
     border-radius: 7px;
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 700;
     text-decoration: none;
     cursor: pointer;
@@ -215,6 +236,23 @@
     border-radius: 10px;
     color: #6b7280;
     font-size: 13px;
+}
+
+.notification-show-all {
+    display: block;
+    margin: 14px auto 0;
+    padding: 7px 16px;
+    border: 1px solid #7f1d1d;
+    border-radius: 7px;
+    background: #fff;
+    color: #7f1d1d;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.notification-show-all[hidden] {
+    display: none;
 }
 
 .notification-pagination {
@@ -251,49 +289,15 @@
 </style>
 
 <div class="notifications-page">
-    <div class="notifications-header">
-        <div>
-            <h2>Notifications</h2>
-            <p>View and manage your notifications.</p>
-        </div>
-
-        <div class="notifications-header-actions">
-            {% if request.user.is_admin and request.user.is_superuser %}
-                <a
-                    href="{% url 'notifications:create_system_notification' %}"
-                    class="create-notification-button"
-                >
-                    Create Notification
-                </a>
-            {% endif %}
-
-            <form
-                method="post"
-                action="{% url 'notifications:mark_all_read' %}"
-            >
-                {% csrf_token %}
-
-                <button
-                    type="submit"
-                    class="notification-reset-button"
-                >
-                    Mark All as Read
-                </button>
-            </form>
-        </div>
-    </div>
-
     {% for message in messages %}
         <div class="notification-message">
             {{ message }}
         </div>
     {% endfor %}
 
-    <form
-        method="get"
-        class="notification-filters"
-    >
-        <div class="notification-filter-group">
+    <div class="notification-filters">
+        <form method="get" class="notification-filter-form">
+            <div class="notification-filter-group">
             <label for="notification-type">
                 Type
             </label>
@@ -315,9 +319,9 @@
                     </option>
                 {% endfor %}
             </select>
-        </div>
+            </div>
 
-        <div class="notification-filter-group">
+            <div class="notification-filter-group">
             <label for="notification-read">
                 Status
             </label>
@@ -347,9 +351,9 @@
                     Read
                 </option>
             </select>
-        </div>
+            </div>
 
-        <div class="notification-filter-group">
+            <div class="notification-filter-group">
             <label for="notification-sort">
                 Sort
             </label>
@@ -372,9 +376,9 @@
                     Oldest
                 </option>
             </select>
-        </div>
+            </div>
 
-        <div class="notification-filter-actions">
+            <div class="notification-filter-actions">
             <button
                 type="submit"
                 class="notification-filter-button"
@@ -388,8 +392,34 @@
             >
                 Reset
             </a>
+            </div>
+        </form>
+
+        <div class="notifications-header-actions">
+            {% if request.user.is_admin and request.user.is_superuser %}
+                <a
+                    href="{% url 'notifications:create_system_notification' %}"
+                    class="create-notification-button"
+                >
+                    Create Notification
+                </a>
+            {% endif %}
+
+            <form
+                method="post"
+                action="{% url 'notifications:mark_all_read' %}"
+            >
+                {% csrf_token %}
+
+                <button
+                    type="submit"
+                    class="notification-reset-button"
+                >
+                    Mark All as Read
+                </button>
+            </form>
         </div>
-    </form>
+    </div>
 
     <div id="notification-list-container">
         {% include 'admin_staff_portal/notifications/_notifications_list.html' %}
