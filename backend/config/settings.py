@@ -4,15 +4,40 @@ from celery.schedules import crontab
 from datetime import timedelta
 import dj_database_url
 from dotenv import load_dotenv
+from django.core.exceptions import ImproperlyConfigured
 
 load_dotenv()
 
 # Core Paths
 BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.environ.get('SECRET_KEY')
-DEBUG = os.environ.get('DEBUG', 'False') == 'True'
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '').split(',') if os.environ.get('ALLOWED_HOSTS') else []
 
+SECRET_KEY = os.getenv("SECRET_KEY")
+
+if not SECRET_KEY:
+    raise ImproperlyConfigured('SECRET_KEY must be configured.')
+
+DEBUG = os.getenv('DEBUG', 'False').lower() in {'true', '1', 'yes'}
+
+def get_env_list(name):
+    return [
+        item.strip()
+        for item in os.getenv(name, "").split(",")
+        if item.strip()
+    ]
+
+ALLOWED_HOSTS = get_env_list('ALLOWED_HOSTS')
+
+RAILWAY_PUBLIC_DOMAIN = os.getenv('RAILWAY_PUBLIC_DOMAIN')
+
+if RAILWAY_PUBLIC_DOMAIN:
+    ALLOWED_HOSTS.append(RAILWAY_PUBLIC_DOMAIN)
+
+
+CSRF_TRUSTED_ORIGINS = get_env_list('CSRF_TRUSTED_ORIGINS')
+
+if RAILWAY_PUBLIC_DOMAIN:
+    CSRF_TRUSTED_ORIGINS.append(f"https://{RAILWAY_PUBLIC_DOMAIN}")
 
 # Applications
 INSTALLED_APPS = [
@@ -74,14 +99,20 @@ TEMPLATES = [
 
 
 # Database
+
+DATABASE_URL = os.getenv('DB_URL')
+
+if not DATABASE_URL:
+    raise ImproperlyConfigured('Database connection URL is not configured.')
+
+
 DATABASES = {
-    'default': dj_database_url.config(
-        default=os.environ.get('DB_URL'),
+    "default": dj_database_url.parse(
+        DATABASE_URL,
         conn_max_age=0,
-        ssl_require=True,
+        ssl_require=not DEBUG,
     )
 }
-
 
 # File storage (Supabase S3-compatible)
 STORAGES = {
@@ -152,32 +183,41 @@ AXES_RESET_COOL_OFF_ON_FAILURE_DURING_LOCKOUT = False
 
 
 # Email Transactional Provider
-EMAIL_BACKEND = 'anymail.backends.sendinblue.EmailBackend'
-ANYMAIL = {'SENDINBLUE_API_KEY': os.getenv('EMAIL_API_KEY')}
+EMAIL_BACKEND = 'anymail.backends.brevo.EmailBackend'
+ANYMAIL = {'BREVO_API_KEY': os.getenv('EMAIL_API_KEY')}
 DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL')
-EMAIL_USE_TLS = True
 
 
 # Security
 X_FRAME_OPTIONS = 'SAMEORIGIN'
-REDIS_HOST = os.getenv('REDIS_HOST', '127.0.0.1')
-REDIS_PORT = int(os.getenv('REDIS_PORT', '6379'))
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+SECURE_SSL_REDIRECT = not DEBUG
+SESSION_COOKIE_SECURE = not DEBUG
+CSRF_COOKIE_SECURE = not DEBUG
+SECURE_HSTS_SECONDS = int(os.getenv('SECURE_HSTS_SECONDS', '0'))
+
+# Redis Settings
+REDIS_URL = os.getenv('REDIS_URL')
+
+if not REDIS_URL:
+    REDIS_HOST = os.getenv('REDIS_HOST', '127.0.0.1')
+    REDIS_PORT = int(os.getenv('REDIS_PORT', '6379'))
+
+    REDIS_URL = f"redis://{REDIS_HOST}:{REDIS_PORT}/0"
+
 
 CHANNEL_LAYERS = {
-    'default': {
-        'BACKEND': 'channels_redis.core.RedisChannelLayer',
-        'CONFIG': {
-            'hosts': [(REDIS_HOST, REDIS_PORT)],
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [REDIS_URL],
         },
     },
 }
 
-# Celery Settings
-CELERY_BROKER_URL = os.getenv(
-    'CELERY_BROKER_URL',
-    f'redis://{REDIS_HOST}:{REDIS_PORT}/1',
-)
 
+# Celery Settings
+CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL', REDIS_URL)
 CELERY_TASK_IGNORE_RESULT = True
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_ACCEPT_CONTENT = ['json']
