@@ -152,7 +152,7 @@ class DraftUpload(models.Model):
         return self.DraftStatus.ATTACHED if self.draft_file else self.DraftStatus.NO_FILE
 
     def __str__(self):
-        return f'Draft: {self.requirement.requirement_title} by {self.faculty.username}'
+        return f'Draft: {self.requirement.requirement_title} by {self.faculty.get_full_name()}'
 
 
 class DocumentSubmission(models.Model):
@@ -233,7 +233,7 @@ class DocumentSubmission(models.Model):
         ]
 
     def __str__(self):
-        return f'Submission: {self.requirement.requirement_title} by {self.faculty.username}'
+        return f'Submission: {self.requirement.requirement_title} by {self.faculty.get_full_name()}'
 
 
 class DocumentRevision(models.Model):
@@ -288,7 +288,7 @@ class DocumentReview(models.Model):
     reviewed_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        reviewer = self.reviewed_by.username if self.reviewed_by else 'Unknown'
+        reviewer = self.reviewed_by.get_full_name() if self.reviewed_by else 'Unknown'
         return f'Review for {self.revision.submission.requirement.requirement_title} - Revision {self.revision.version_number} by {reviewer}'
 
 

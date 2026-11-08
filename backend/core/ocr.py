@@ -48,13 +48,21 @@ def _get_ocr_engine():
         ocr = PaddleOCR(
             lang='en',
             device='cpu',
+            
+            # Models
             text_detection_model_name='PP-OCRv5_mobile_det',
             text_recognition_model_name='PP-OCRv5_mobile_rec',
+            
+            # CPU configuration
             cpu_threads=2,
             enable_mkldnn=False,
+            
+            # Preprocessing options
             use_doc_orientation_classify=False,
             use_doc_unwarping=False,
             use_textline_orientation=False,
+            
+            # Detection image size options
             text_det_limit_side_len=1536,
             text_det_limit_type='max',
         )
