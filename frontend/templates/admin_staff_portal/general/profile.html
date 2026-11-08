@@ -25,8 +25,16 @@
                 {% if request.user.profile_picture %}
                     <img src="{{ request.user.profile_picture.url }}" alt="Profile photo">
                 {% else %}
-                    <img src="{% static 'images/profile.svg' %}" alt="Profile photo placeholder">
+                    <img src="{% static 'images/default profile.jpg' %}" alt="Default profile photo">
                 {% endif %}
+                <button
+                    type="button"
+                    class="profile-picture-edit"
+                    id="profile-picture-edit-button"
+                    aria-label="Change profile picture"
+                >
+                    <img src="{% static 'images/Edit Profile Picture.svg' %}" alt="">
+                </button>
             </div>
             <strong>{{ request.user.get_full_name }}</strong>
             <span>{{ request.user.get_role_display }}</span>
@@ -91,6 +99,21 @@ document.getElementById("profile-edit-button").addEventListener("click", functio
     form.hidden = !form.hidden;
     card.classList.toggle("is-editing", !form.hidden);
     this.textContent = form.hidden ? "Edit Profile" : "Cancel Editing";
+});
+
+document.getElementById("profile-picture-edit-button").addEventListener("click", function () {
+    const fileInput = document.querySelector("#profile-edit-form input[type='file']");
+    if (fileInput) {
+        fileInput.addEventListener("change", function () {
+            const form = document.getElementById("profile-edit-form");
+            const editButton = document.getElementById("profile-edit-button");
+            const card = editButton.closest(".profile-card");
+            form.hidden = false;
+            card.classList.add("is-editing");
+            editButton.textContent = "Cancel Editing";
+        }, { once: true });
+        fileInput.click();
+    }
 });
 </script>
 {% endblock %}

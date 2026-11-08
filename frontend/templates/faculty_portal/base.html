@@ -373,11 +373,11 @@
 
                     <div class="user-badge">
                         <div class="user-badge-avatar">
-                            <img
-                                src="{% static 'images/profile.svg' %}"
-                                alt="User profile"
-                                class="user-badge-img"
-                            >
+                            {% if request.user.profile_picture %}
+                                <img src="{{ request.user.profile_picture.url }}" alt="User profile" class="user-badge-img">
+                            {% else %}
+                                <img src="{% static 'images/default profile.jpg' %}" alt="Default user profile" class="user-badge-img">
+                            {% endif %}
                         </div>
 
                         <div>

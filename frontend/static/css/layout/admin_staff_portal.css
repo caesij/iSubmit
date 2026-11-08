@@ -625,9 +625,10 @@ select {
 }
 
 .user-badge-img {
-  width: 18px !important;
-  height: 18px !important;
-  filter: brightness(0) invert(1);
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover;
+  filter: none;
 }
 
 .user-badge-name {
