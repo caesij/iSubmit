@@ -230,7 +230,8 @@ def mark_under_review_view(request, submission_id):
                         f'Your submission for {submission.requirement.requirement_title} '
                         f'is now under review.'
                     ),
-                    link=reverse('faculty_portal:view_my_submitted_document', args=[submission.id])
+                    link=reverse('faculty_portal:view_my_submitted_document', args=[submission.id]),
+                    send_email_notification=False
                 )
             )
         )
@@ -275,7 +276,8 @@ def mark_reviewed_view(request, submission_id):
                         f'Your submission for {submission.requirement.requirement_title} '
                         f'has been reviewed and is now pending approval.'
                     ),
-                    link=reverse('faculty_portal:view_my_submitted_document', args=[submission.id])
+                    link=reverse('faculty_portal:view_my_submitted_document', args=[submission.id]),
+                    send_email_notification=False
                 )
             )
         )

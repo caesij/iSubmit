@@ -17,7 +17,8 @@ def create_notif(
     message,
     link='',
     email_subject=None,
-    email_message=None
+    email_message=None,
+    send_email_notification=True
 ):
     allowed_types = NotificationPreference.ROLE_TYPES.get(user.role, [])
 
@@ -63,7 +64,7 @@ def create_notif(
             }
         )
 
-    if preference.email_enabled:
+    if send_email_notification and preference.email_enabled:
         send_mail(
             subject=email_subject or title,
             message=email_message or message,

@@ -59,17 +59,7 @@ The first run can take a few minutes because Docker has to download and build ev
 
 ---
 
-### Step 5: Set Up the Database (first time only)
-
-Once the containers are running, run:
-
-```bash
-docker compose exec web python manage.py migrate
-```
-
----
-
-### Step 6: Open the Website
+### Step 5: Open the Website
 
 Go to:
 
@@ -112,14 +102,3 @@ You can also use GitHub Desktop and click **Pull origin**.
 ```bash
 docker compose up -d --build
 ```
-
-**3. Update the database (if needed)**
-
-If the update includes database changes, run this after the website has started:
-
-```bash
-docker compose exec web python manage.py migrate
-```
-
-
-> Run the migrate command **after** rebuilding. The running container needs the new code before it can see the new migrations.
