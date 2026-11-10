@@ -1,4 +1,5 @@
 {% extends 'faculty_portal/base.html' %}
+{% block css_modules %}submissions submission-complete-page{% endblock %}
 
 {% load static core_extras %}
 
@@ -11,168 +12,8 @@ Upload and manage academic documents
 {% endblock %}
 
 {% block extra_css %}
-    <link rel="stylesheet" href="{% static 'css/pages/submissions.css' %}">
-    <style>
-        .submission-complete-page .step-card {
-            display: none;
-        }
-        .submission-complete-page .tab-nav {
-            justify-content: flex-start;
-            align-items: stretch;
-            margin-bottom: 16px;
-        }
-        .submission-complete-page .tab-link,
-        .submission-complete-page .tab-link.active {
-            flex: 0 0 165px;
-            justify-content: center;
-            min-height: 40px;
-            padding: 8px;
-            font-size: 16px;
-            line-height: 1.2;
-        }
-        .submission-complete-page .section-title {
-            font-size: 16px;
-            margin-bottom: 3px;
-        }
-        .submission-complete-page .section-desc {
-            font-size: 13px;
-            margin-bottom: 14px;
-        }
-        .submission-complete-page .completion-header {
-            display: flex;
-            align-items: flex-start;
-            justify-content: space-between;
-            gap: 18px;
-        }
-        .submission-complete-page .completion-header .section-desc {
-            margin-bottom: 14px;
-        }
-        .submission-complete-page .completion-header .banner-success {
-            flex: 0 0 453px;
-            margin: 0 0 14px;
-            min-height: 52px;
-            padding: 10px 12px;
-        }
-        .submission-complete-page .banner-success .banner-title {
-            font-size: 11px;
-        }
-        .submission-complete-page .banner-success .banner-sub {
-            font-size: 11px;
-        }
-        .submission-complete-page .data-table {
-            table-layout: fixed;
-        }
-        .submission-complete-page .data-table th,
-        .submission-complete-page .data-table td {
-            padding: 11px 12px;
-            font-size: 13px;
-        }
-        .submission-complete-page .data-table th {
-            font-size: 11px;
-            white-space: nowrap;
-        }
-        .submission-complete-page .data-table th:first-child {
-            width: 42px;
-        }
-        .submission-complete-page .data-table th:nth-child(2) { width: 27%; }
-        .submission-complete-page .data-table th:nth-child(3) { width: 18%; }
-        .submission-complete-page .data-table th:nth-child(4) { width: 15%; }
-        .submission-complete-page .data-table th:nth-child(5) { width: 18%; }
-        .submission-complete-page .data-table th:nth-child(6) { width: 13%; }
-        .submission-complete-page .data-table th:nth-child(7) { width: 9%; }
-        .submission-complete-page .data-table td {
-            height: 56px;
-        }
-        .submission-complete-page .data-table input[type="checkbox"] {
-            width: 14px;
-            height: 14px;
-        }
-        .submission-complete-page .data-table .pill-complete {
-            min-width: 80px;
-            padding: 4px 8px;
-            background: #fffdf0;
-            color: #b08a00;
-            border: 1px solid #e6c928;
-            text-align: center;
-        }
-        .submission-complete-page .completion-info {
-            margin: 14px 0;
-            padding: 10px 14px;
-            min-height: 58px;
-            align-items: center;
-        }
-        .submission-complete-page .completion-info > div {
-            display: flex;
-            align-items: baseline;
-            gap: 18px;
-            flex-wrap: wrap;
-        }
-        .submission-complete-page .completion-info .banner-title,
-        .submission-complete-page .completion-info .banner-sub {
-            margin: 0;
-        }
-        .submission-complete-page .completion-info .banner-title {
-            font-size: 13px;
-        }
-        .submission-complete-page .completion-info .banner-sub {
-            font-size: 12px;
-        }
-        .submission-complete-page .next-steps {
-            margin-top: 0;
-            padding: 24px 40px 25px;
-            border: 1px solid #e1e1e1;
-            border-radius: 9px;
-            background: #fff;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
-        }
-        .submission-complete-page .next-steps h3 {
-            margin-bottom: 14px;
-            font-size: 16px;
-        }
-        .submission-complete-page .next-steps-grid {
-            grid-template-columns: repeat(3, minmax(0, 1fr));
-            gap: 68px;
-        }
-        .submission-complete-page .next-card {
-            min-height: 50px;
-            padding: 8px 12px;
-            border-color: #cfd3d8;
-        }
-        .submission-complete-page .next-card-icon {
-            width: 25px;
-            height: 25px;
-        }
-        .submission-complete-page .next-card-icon img {
-            width: 15px;
-            height: 15px;
-        }
-        .submission-complete-page .next-card-title {
-            font-size: 12px;
-        }
-        .submission-complete-page .next-card-sub {
-            font-size: 9px;
-        }
-        .submission-complete-page .next-card.track-card .next-card-title {
-            color: #b57600;
-        }
-        .submission-complete-page .next-card.upload-card .next-card-title {
-            color: #123f91;
-        }
-        .submission-complete-page .next-card.dashboard-card .next-card-title {
-            color: #08733d;
-        }
-        @media (max-width: 800px) {
-            .submission-complete-page .completion-header {
-                display: block;
-            }
-            .submission-complete-page .completion-header .banner-success {
-                width: 100%;
-            }
-            .submission-complete-page .next-steps-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-    </style>
+
+
 {% endblock %}
 
 {% block content %}
@@ -275,7 +116,7 @@ Upload and manage academic documents
                     <th>Deadline</th>
                     <th>Date Uploaded</th>
                     <th>Status</th>
-                    <th style="width: 76px; text-align: center;">
+                    <th class="submission-selection-column">
                         Action
                     </th>
                 </tr>

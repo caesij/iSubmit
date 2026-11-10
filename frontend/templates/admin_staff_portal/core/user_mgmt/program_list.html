@@ -1,15 +1,20 @@
 {% extends 'admin_staff_portal/base.html' %}
+{% block css_modules %}program-management{% endblock %}
 {% load static %}
 
 {% block title %}Program Management - iSubmit{% endblock %}
 {% block heading %}Program Management{% endblock %}
+
+{% block extra_css %}
+
+{% endblock %}
 
 {% block content %}
 <section class="program-page">
     <div class="program-page-header">
         <div>
             <a class="program-back-link" href="{% url 'admin_staff_portal:user_list' %}?role=FACULTY">
-                <span aria-hidden="true">&larr;</span>
+                <img src="{% static 'images/Back Arrow Left.svg' %}" alt="" width="20" height="20">
                 <span>Back</span>
             </a>
             <h2>Programs</h2>

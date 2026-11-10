@@ -307,7 +307,7 @@ button[type="submit"] {
   font-size: 13px;
 }
 
-button[type="submit"]:hover { 
+button[type="submit"]:hover {
   background: #F2DAD9;
   color: #6b0f0f;
 }
@@ -318,4 +318,13 @@ button[type="submit"]:hover {
   .auth-left { padding: 28px; }
   .auth-right { padding: 28px; }
   .auth-right-inner { width: 100%; }
+}
+
+/* Authentication messages and password-reset validation. */
+.auth-error {
+  color: red;
+}
+
+.auth-warning {
+  color: #b45309;
 }

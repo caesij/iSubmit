@@ -1,4 +1,5 @@
 {% extends 'admin_staff_portal/base.html' %}
+{% block css_modules %}submissions requirement-form-controls{% endblock %}
 {% load static %}
 
 {% block title %}
@@ -9,8 +10,8 @@
 {% block subtitle %}Supports document submission and monitoring of review status.{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/pages/submissions.css' %}">
-<link rel="stylesheet" href="{% static 'css/pages/requirement-form-controls.css' %}">
+
+
 {% endblock %}
 
 {% block content %}

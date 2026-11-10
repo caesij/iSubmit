@@ -1,4 +1,5 @@
 {% extends 'admin_staff_portal/base.html' %}
+{% block css_modules %}admin-dashboard{% endblock %}
 {% load static core_extras %}
 
 {% block title %}Dashboard - iSubmit{% endblock %}
@@ -6,7 +7,7 @@
 {% block subtitle %}Overview of system activities and updates{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/pages/admin_dashboard.css' %}">
+
 {% endblock %}
 
 {% block content %}
