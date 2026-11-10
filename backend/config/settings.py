@@ -12,8 +12,6 @@ load_dotenv()
 BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.environ.get('SECRET_KEY')
 
-SECRET_KEY = os.getenv("SECRET_KEY")
-
 if not SECRET_KEY:
     raise ImproperlyConfigured('SECRET_KEY must be configured.')
 
@@ -27,17 +25,8 @@ def get_env_list(name):
     ]
 
 ALLOWED_HOSTS = get_env_list('ALLOWED_HOSTS')
-
-RAILWAY_PUBLIC_DOMAIN = os.getenv('RAILWAY_PUBLIC_DOMAIN')
-
-if RAILWAY_PUBLIC_DOMAIN:
-    ALLOWED_HOSTS.append(RAILWAY_PUBLIC_DOMAIN)
-
-
 CSRF_TRUSTED_ORIGINS = get_env_list('CSRF_TRUSTED_ORIGINS')
 
-if RAILWAY_PUBLIC_DOMAIN:
-    CSRF_TRUSTED_ORIGINS.append(f"https://{RAILWAY_PUBLIC_DOMAIN}")
 
 # Applications
 INSTALLED_APPS = [
@@ -107,10 +96,10 @@ if not DATABASE_URL:
 
 
 DATABASES = {
-    "default": dj_database_url.parse(
+    'default': dj_database_url.parse(
         DATABASE_URL,
         conn_max_age=0,
-        ssl_require=not DEBUG,
+        ssl_require=os.getenv('DB_SSL_REQUIRE', 'True').lower() in {'true', '1', 'yes'}
     )
 }
 
@@ -190,14 +179,13 @@ DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL')
 
 # Security
 X_FRAME_OPTIONS = 'SAMEORIGIN'
-SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 SECURE_SSL_REDIRECT = not DEBUG
 SESSION_COOKIE_SECURE = not DEBUG
 CSRF_COOKIE_SECURE = not DEBUG
 SECURE_HSTS_SECONDS = int(os.getenv('SECURE_HSTS_SECONDS', '0'))
 
 # Redis Settings
-REDIS_URL = os.getenv('REDIS_URL')
+REDIS_URL = os.getenv('REDIS_URL', 'redis://redis:6379/0')
 
 if not REDIS_URL:
     REDIS_HOST = os.getenv('REDIS_HOST', '127.0.0.1')

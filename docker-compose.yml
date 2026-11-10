@@ -24,8 +24,7 @@ services:
     env_file:
       - .env
     environment:
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
+      REDIS_URL: redis://redis:6379/0
       CELERY_BROKER_URL: redis://redis:6379/1
 
   ocr-worker:
@@ -37,18 +36,32 @@ services:
     depends_on:
       redis:
         condition: service_healthy
-      web:
-        condition: service_started
     volumes:
       - .:/app
       - paddle_models:/root/.paddlex
     env_file:
       - .env
     environment:
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
+      REDIS_URL: redis://redis:6379/0
       CELERY_BROKER_URL: redis://redis:6379/1
       PADDLE_PDX_DISABLE_MODEL_SOURCE_CHECK: "True"
+
+  celery-beat:
+    image: isubmit-backend
+    pull_policy: never
+    working_dir: /app/backend
+    entrypoint: []
+    command: celery -A config beat --loglevel=info --schedule=/tmp/celerybeat-schedule
+    depends_on:
+      redis:
+        condition: service_healthy
+    volumes:
+      - .:/app
+    env_file:
+      - .env
+    environment:
+      REDIS_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/1
 
 volumes:
   staticfiles:
