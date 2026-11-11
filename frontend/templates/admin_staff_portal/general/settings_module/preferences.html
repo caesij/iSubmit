@@ -1,32 +1,14 @@
 {% extends 'admin_staff_portal/base.html' %}
+{% block css_modules %}settings preferences-page{% endblock %}
 {% load static %}
 
 {% block title %}Settings - iSubmit{% endblock %}
 {% block heading %}Settings{% endblock %}
 {% block subtitle %}Configure system preferences and default behaviors.{% endblock %}
-{% block extra_css %}<link rel="stylesheet" href="{% static 'css/pages/settings.css' %}">{% endblock %}
+{% block extra_css %}{% endblock %}
 
 {% block content %}
-<style>
-.settings-tabs { display: flex; gap: 28px; border-bottom: 1px solid #e5e7eb; margin-bottom: 20px; }
-.settings-tab { padding: 10px 2px; font-size: 15px; font-weight: 600; color: #6b7280; text-decoration: none; border-bottom: 2px solid transparent; }
-.settings-tab.active { color: #7f1d1d; border-bottom-color: #7f1d1d; font-weight: 700; }
 
-.settings-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 22px; }
-.settings-card h2 { font-size: 18px; font-weight: 700; margin: 0 0 2px; }
-.settings-card .card-sub { font-size: 14px; color: #6b7280; margin: 0 0 18px; }
-
-.pref-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px 32px; }
-.pref-field label { display: block; font-size: 14px; font-weight: 700; color: #374151; margin-bottom: 4px; }
-.pref-field .field-note { font-size: 13px; color: #9ca3af; margin-bottom: 8px; }
-.pref-field select, .pref-field input {
-    width: 100%; padding: 9px 12px; border: 1px solid #e5e7eb; border-radius: 8px;
-    font-size: 14px; box-sizing: border-box; color: #1a1a1a;
-}
-
-.settings-actions { margin-top: 22px; text-align: right; }
-.btn-save { padding: 9px 20px; background: #7f1d1d; color: #fff; border: none; border-radius: 8px; font-size: 14px; font-weight: 700; cursor: pointer; }
-</style>
 
 <div class="settings-tabs">
     <a href="{% url 'admin_staff_portal:preferences' %}" class="settings-tab active">Preferences</a>

@@ -1,41 +1,6 @@
 {% load core_extras %}
 
-<style>
-.docs-container { padding: 0; }
-.docs-tabs { display: flex; gap: 24px; border-bottom: 2px solid #d8d8d8; margin-bottom: 24px; }
-.docs-tab { padding: 12px 0; color: #232323; text-decoration: none; font-size: 16px; font-weight: 500; border-bottom: 3px solid transparent; }
-.docs-tab:hover { color: #232323; }
-.docs-tab.active { color: #232323; font-weight: 700; border-bottom-color: #ba1a1a; }
-.filter-card, .table-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; }
-.filter-card { padding: 16px; margin-bottom: 16px; }
-.filter-inputs { display: flex; gap: 12px; align-items: flex-start; flex-wrap: wrap; }
-.search-group { flex: 1 1 260px; min-width: 220px; }
-.search-group label, .select-wrap label, .search-help { display: block; font-size: 11px; color: #6b7280; margin-bottom: 4px; }
-.search-controls { display: flex; gap: 8px; flex-wrap: wrap; }
-.search-controls input, .select-wrap select { padding: 8px 10px; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 13px; }
-.search-controls input { box-sizing: border-box; min-width: 0; flex: 1 1 180px; }
-.select-wrap select { min-width: 140px; }
-.search-help { margin: 5px 0 0; line-height: 1.4; }
-.btn-search, .btn-action, .btn-clear { padding: 8px 14px; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; }
-.btn-search, .btn-action { border: 1px solid #7f1d1d; color: #fff; background: #7f1d1d; }
-.btn-clear { align-self: flex-start; margin-top: 21px; border: 1px solid #7f1d1d; color: #7f1d1d; background: #fff; text-decoration: none; white-space: nowrap; }
-.bulk-actions { display: flex; gap: 8px; align-items: center; padding: 12px 16px; border-bottom: 1px solid #f0f0f0; }
-.bulk-actions span { margin-right: auto; color: #6b7280; font-size: 12px; }
-.data-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-.data-table thead tr { background: #fbe4e4; }
-.data-table th { text-align: left; padding: 12px 16px; font-weight: 700; color: #374151; font-size: 12px; }
-.data-table td { padding: 14px 16px; border-top: 1px solid #f0f0f0; vertical-align: middle; color: #374151; }
-.checkbox-cell { width: 36px; }
-.fname-link { color: #1a1a1a; text-decoration: none; font-weight: 700; }
-.fname-link:hover { text-decoration: underline; }
-.text-sub { font-size: 11px; color: #9ca3af; }
-.pagination-footer { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; padding: 14px 0; font-size: 12px; color: #6b7280; }
-.pagination-controls { display: flex; grid-column: 2; gap: 6px; }
-.page-btn { width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border: 1px solid #e5e7eb; border-radius: 6px; text-decoration: none; color: #374151; font-size: 12px; }
-.page-btn.active { background: #7f1d1d; color: #fff; border-color: #7f1d1d; }
-.page-btn-disabled { border-color: transparent; color: #9ca3af; }
-@media (max-width: 900px) { .table-card { overflow-x: auto; } .data-table { min-width: 850px; } }
-</style>
+
 
 <div class="docs-container">
     <div class="docs-tabs">
@@ -122,7 +87,7 @@
                         </td>
                     </tr>
                 {% empty %}
-                    <tr><td colspan="7" style="text-align:center;padding:20px;">No {% if is_archive %}archived{% else %}approved{% endif %} documents to show.</td></tr>
+                    <tr><td colspan="7" class="table-empty-state">No {% if is_archive %}archived{% else %}approved{% endif %} documents to show.</td></tr>
                 {% endfor %}
             </tbody>
         </table>

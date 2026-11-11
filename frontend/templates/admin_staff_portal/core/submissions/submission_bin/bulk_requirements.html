@@ -1,4 +1,5 @@
 {% extends 'admin_staff_portal/base.html' %}
+{% block css_modules %}submissions{% endblock %}
 {% load static %}
 
 {% block title %}Create Submission Requirements - iSubmit{% endblock %}
@@ -9,7 +10,7 @@ Supports document submission and monitoring of review status.
 {% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/pages/submissions.css' %}">
+
 {% endblock %}
 
 {% block content %}
