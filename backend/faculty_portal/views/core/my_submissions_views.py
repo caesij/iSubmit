@@ -30,13 +30,10 @@ def submissions_list(request):
     submitted_documents = all_submissions.select_related('requirement', 'reviewed_by')
 
     submission_status = request.GET.get('status')
-    category = request.GET.get('category')
     sort_by = request.GET.get('sort', 'newest')
 
     if submission_status:
         submitted_documents = submitted_documents.filter(status=submission_status)
-    if category:
-        submitted_documents = submitted_documents.filter(requirement__category=category)
 
     if sort_by == 'oldest':
         submitted_documents = submitted_documents.order_by('initially_submitted_at')
@@ -48,8 +45,6 @@ def submissions_list(request):
     context = {
         'submitted_documents': submitted_documents,
         'stats': stats,
-        'categories': active_document_queryset().filter(faculty=request.user)
-            .values_list('requirement__category', flat=True).distinct(),
         'status_choices': DocumentSubmission.SubmissionStatus.choices
     }
     
@@ -88,14 +83,10 @@ def submissions_data_view(request):
     )
 
     submission_status = request.GET.get('status')
-    category = request.GET.get('category')
     sort_by = request.GET.get('sort', 'newest')
 
     if submission_status:
         submitted_documents = submitted_documents.filter(status=submission_status)
-
-    if category:
-        submitted_documents = submitted_documents.filter(requirement__category=category)
 
     if sort_by == 'oldest':
         submitted_documents = submitted_documents.order_by('initially_submitted_at')

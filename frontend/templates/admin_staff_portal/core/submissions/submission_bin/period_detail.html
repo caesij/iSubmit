@@ -1,0 +1,115 @@
+{% extends 'admin_staff_portal/base.html' %}
+{% load static core_extras %}
+
+{% block title %}{{ period }} - iSubmit{% endblock %}
+{% block heading %}Submissions{% endblock %}
+{% block subtitle %}Supports document submission and monitoring of review status.{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/pages/submissions.css' %}">
+<style>
+    .period-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; padding: 18px 20px; }
+    .period-header h1 { margin: 0 0 6px; font-size: 1.25rem; }
+    .period-facts { display: flex; align-items: center; gap: 8px 20px; flex-wrap: wrap; font-size: .85rem; color: #6b7280; }
+    .period-actions { display: flex; align-items: center; gap: 10px; }
+    .period-actions form { margin: 0; }
+    .period-button { display: inline-flex; align-items: center; justify-content: center; padding: 8px 16px; border: 1px solid #7f1d1d; border-radius: 4px; background: #fff; color: #7f1d1d; font-size: 13px; font-weight: 700; text-decoration: none; white-space: nowrap; cursor: pointer; }
+    .period-button-primary { background: #7f1d1d; color: #fff; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="submissions-container">
+
+    <div class="tab-nav">
+        <a href="{% url 'admin_staff_portal:requirements_list' %}" class="tab-link active">Submission Bin</a>
+        <a href="{% url 'admin_staff_portal:faculty_submissions_list' %}" class="tab-link">Faculty Submission</a>
+    </div>
+
+    <a href="{% url 'admin_staff_portal:requirements_list' %}" class="bulk-back-link">
+        <img src="{% static 'images/Back Arrow Left.svg' %}" alt="">
+        Back
+    </a>
+
+    <div class="bulk-breadcrumb">
+        <span>Submission Bin</span>
+        <span aria-hidden="true">&rsaquo;</span>
+        <span>{{ period }}</span>
+    </div>
+
+    <div class="table-card requirements-table-card">
+        <div class="period-header">
+            <div>
+                <h1>{{ period }}</h1>
+                <div class="period-facts">
+                    <span>Deadline: {{ period.deadline|display_date:request.user }}, {{ period.deadline|display_time:request.user }}</span>
+                    <span>{{ period.requirement_count }} requirement{{ period.requirement_count|pluralize }}</span>
+                    <span>{{ period.completion_progress }}% complete</span>
+                    <span class="status-badge {% if period.is_active %}status-active{% else %}status-inactive{% endif %}">{{ period.get_status_display }}</span>
+                </div>
+            </div>
+
+            <div class="period-actions">
+                <a href="{% url 'admin_staff_portal:edit_period' period.id %}" class="period-button period-button-primary">Edit Period</a>
+
+                <form action="{% url 'admin_staff_portal:toggle_period_status' period.id %}" method="POST">
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                    <button type="submit" class="period-button">{% if period.is_active %}Deactivate{% else %}Activate{% endif %}</button>
+                </form>
+            </div>
+        </div>
+
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Requirement</th>
+                    <th>Completion Progress</th>
+                    <th>Status</th>
+                    <th>Text Extraction</th>
+                    <th>NLP Validation</th>
+                    <th class="action-heading">Action</th>
+                </tr>
+            </thead>
+
+            <tbody data-live-container="requirements-table">
+                {% for req in requirements %}
+                    {% include 'admin_staff_portal/core/submissions/submission_bin/_requirement_row.html' %}
+                {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center py-4">This period has no requirements.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+</div>
+
+
+<script>
+    document.addEventListener("click", function (event) {
+        const trigger = event.target.closest(".dropdown .btn-icon");
+        const openMenus = document.querySelectorAll(".dropdown-menu.show");
+
+        function closeMenu(menu) {
+            menu.classList.remove("show");
+            menu.closest(".dropdown").querySelector(".btn-icon").setAttribute("aria-expanded", "false");
+        }
+
+        if (trigger) {
+            const menu = trigger.closest(".dropdown").querySelector(".dropdown-menu");
+            const shouldOpen = !menu.classList.contains("show");
+
+            openMenus.forEach(closeMenu);
+            menu.classList.toggle("show", shouldOpen);
+            trigger.setAttribute("aria-expanded", String(shouldOpen));
+            return;
+        }
+
+        if (!event.target.closest(".dropdown")) {
+            openMenus.forEach(closeMenu);
+        }
+    });
+</script>
+{% endblock %}

@@ -19,12 +19,10 @@ from admin_staff_portal.views.core.document_repo_views import (
 )
 
 from admin_staff_portal.views.core.requirement_management_views import (
-    bulk_requirements_view,
-    add_requirement_to_bulk,
-    delete_bulk_requirement,
-    post_bulk_requirements,
-    edit_requirement,
     requirements_list,
+    period_editor,
+    period_detail,
+    toggle_period_status,
     toggle_requirement_status,
 )
 
@@ -78,12 +76,10 @@ __all__ = [
     'bulk_permanently_delete_document_view',
     'document_file_view',
 
-    'bulk_requirements_view',
-    'add_requirement_to_bulk',
-    'delete_bulk_requirement',
-    'post_bulk_requirements',
-    'edit_requirement',
     'requirements_list',
+    'period_editor',
+    'period_detail',
+    'toggle_period_status',
     'toggle_requirement_status',
     
     'faculty_submissions_list',

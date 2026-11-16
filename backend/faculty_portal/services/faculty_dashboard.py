@@ -1,111 +1,64 @@
-from django.db.models import Q, Count
+from django.db.models import Count, Q
 from django.utils import timezone
 from core.date_formatting import format_display_date
-from submissions.models import Requirement, DocumentSubmission
+
+from submissions.models import DocumentSubmission, SubmissionPeriod, UploadSlot
 from submissions.querysets import active_document_queryset
-from submissions.helpers import get_faculty_assigned_requirements
+
+Status = DocumentSubmission.SubmissionStatus
 
 
 def get_dashboard_data(user):
-    active_requirements = get_faculty_assigned_requirements(user)
+    owed = UploadSlot.objects.active().required().filter(faculty=user)
+    total_requirements = owed.count()
 
-    total_requirements = active_requirements.count()
-
-    submissions = active_document_queryset().filter(faculty=user, requirement__in=active_requirements)
+    submissions = active_document_queryset().filter(faculty=user, slot__in=owed)
 
     counts = submissions.aggregate(
-        approved_count=Count(
-            'id',
-            filter=Q(status=DocumentSubmission.SubmissionStatus.APPROVED),
-        ),
-        submitted_count=Count(
-            'id',
-            filter=Q(
-                status__in=[
-                    DocumentSubmission.SubmissionStatus.SUBMITTED,
-                    DocumentSubmission.SubmissionStatus.RESUBMITTED,
-                ]
-            ),
-        ),
-        under_review_count=Count(
-            'id',
-            filter=Q(status=DocumentSubmission.SubmissionStatus.UNDER_REVIEW),
-        ),
-        pending_approval_count=Count(
-            'id',
-            filter=Q(status=DocumentSubmission.SubmissionStatus.PENDING_APPROVAL),
-        ),
-        returned_count=Count(
-            'id',
-            filter=Q(status=DocumentSubmission.SubmissionStatus.NEEDS_REVISION),
-        ),
-        total_submitted_count=Count(
-            'id',
-            filter=Q(
-                status__in=[
-                    DocumentSubmission.SubmissionStatus.APPROVED,
-                    DocumentSubmission.SubmissionStatus.SUBMITTED,
-                    DocumentSubmission.SubmissionStatus.RESUBMITTED,
-                    DocumentSubmission.SubmissionStatus.UNDER_REVIEW,
-                    DocumentSubmission.SubmissionStatus.PENDING_APPROVAL,
-                ]
-            ),
-        ),
+        approved_count=Count('id', filter=Q(status=Status.APPROVED)),
+        submitted_count=Count('id', filter=Q(status__in=[Status.SUBMITTED, Status.RESUBMITTED])),
+        under_review_count=Count('id', filter=Q(status=Status.UNDER_REVIEW)),
+        pending_approval_count=Count('id', filter=Q(status=Status.PENDING_APPROVAL)),
+        returned_count=Count('id', filter=Q(status=Status.NEEDS_REVISION)),
+        total_submitted_count=Count('id', filter=Q(status__in=[
+            Status.APPROVED,
+            Status.SUBMITTED,
+            Status.RESUBMITTED,
+            Status.UNDER_REVIEW,
+            Status.PENDING_APPROVAL,
+        ])),
     )
-
-    approved_count = counts['approved_count']
-    submitted_count = counts['submitted_count']
-    under_review_count = counts['under_review_count']
-    pending_approval_count = counts['pending_approval_count']
-    returned_count = counts['returned_count']
-    total_submitted_count = counts['total_submitted_count']
-
-    submitted_requirement_ids = (
-        submissions
-        .exclude(
-            status=DocumentSubmission.SubmissionStatus.NEEDS_REVISION
-        )
-        .values_list('requirement_id', flat=True)
-    )
-
-    deadline_queryset = (
-        active_requirements
-        .filter(
-            deadline__isnull=False,
-            deadline__gte=timezone.now(),
-        )
-        .exclude(id__in=submitted_requirement_ids)
-        .order_by('deadline')[:5]
-    )
-
-    upcoming_deadlines = [
-        {
-            'requirement_title': requirement.requirement_title,
-            'deadline': format_display_date(requirement.deadline, user),
-        }
-        for requirement in deadline_queryset
-    ]
 
     def percentage(count):
-        if not total_requirements:
-            return 0
-
-        return round((count / total_requirements) * 100)
+        return round(count / total_requirements * 100) if total_requirements else 0
 
     return {
         'total_requirements': total_requirements,
-        'total_submitted_count': total_submitted_count,
-        'approved_count': approved_count,
-        'submitted_count': submitted_count,
-        'under_review_count': under_review_count,
-        'pending_approval_count': pending_approval_count,
-        'returned_count': returned_count,
-        
-        'upcoming_deadlines': upcoming_deadlines,
-        
-        'approved_pct': percentage(approved_count),
-        'submitted_pct': percentage(submitted_count),
-        'under_review_pct': percentage(under_review_count),
-        'pending_approval_pct': percentage(pending_approval_count),
-        'returned_pct': percentage(returned_count)
+        **counts,
+        'upcoming_deadlines': get_upcoming_deadlines(owed, user),
+        'approved_pct': percentage(counts['approved_count']),
+        'submitted_pct': percentage(counts['submitted_count']),
+        'under_review_pct': percentage(counts['under_review_count']),
+        'pending_approval_pct': percentage(counts['pending_approval_count']),
+        'returned_pct': percentage(counts['returned_count']),
     }
+
+
+def get_upcoming_deadlines(owed, user):
+    rows = list(
+        owed
+        .filter(requirement__period__deadline__gte=timezone.now())
+        .filter(Q(submission__isnull=True) | Q(submission__status=Status.NEEDS_REVISION))
+        .values('requirement__period')
+        .annotate(left=Count('pk'))
+        .order_by('requirement__period__deadline')[:5]
+    )
+    periods = SubmissionPeriod.objects.in_bulk(row['requirement__period'] for row in rows)
+
+    return [
+        {
+            'title': f"{periods[row['requirement__period']]} ({row['left']} left)",
+            'deadline': format_display_date(periods[row['requirement__period']].deadline, user),
+        }
+        for row in rows
+    ]

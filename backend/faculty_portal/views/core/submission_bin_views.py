@@ -1,9 +1,6 @@
 from django.contrib import messages
 from django.db import transaction
-from django.http import HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
-from django.utils import timezone
-from submissions.helpers import get_target_faculty_queryset
 from django.views.decorators.http import require_http_methods
 
 from accounts.decorators import role_required
@@ -23,11 +20,12 @@ from submissions.models import (
     DocumentMetadata,
     DocumentSubmission,
     DraftUpload,
-    Requirement
+    UploadSlot
 )
 from submissions.querysets import active_document_queryset
 
 TEMPLATE_DIR = 'faculty_portal/core/submission_bin'
+
 
 @role_required('FACULTY')
 @require_http_methods(['GET'])
@@ -58,18 +56,17 @@ def submission_bins_view(request):
 
 @role_required('FACULTY')
 @require_http_methods(['POST'])
-def attach_document(request, requirement_id):
-    requirement = get_object_or_404(
-        Requirement,
-        pk=requirement_id,
-        status=Requirement.ReqStatus.ACTIVE,
-        deadline__gt=timezone.now(),
+def attach_document(request, slot_id):
+    slot = get_object_or_404(
+        UploadSlot.objects.active().select_related('requirement'),
+        pk=slot_id,
+        faculty=request.user,
     )
 
-    if not get_target_faculty_queryset(requirement).filter(pk=request.user.pk).exists():
-        return HttpResponseForbidden('This requirement is not available for your account.')
-
-    draft, _ = DraftUpload.objects.select_related('requirement').get_or_create(faculty=request.user, requirement=requirement)
+    draft, _ = DraftUpload.objects.select_related('requirement').get_or_create(
+        slot=slot,
+        defaults={'faculty': request.user, 'requirement': slot.requirement},
+    )
 
     return save_draft_form(
         request,
@@ -86,7 +83,6 @@ def replace_document(request, document_id):
         DraftUpload.objects.select_related('requirement'),
         pk=document_id,
         faculty=request.user,
-        requirement__deadline__gt=timezone.now(),
     )
 
     return save_draft_form(
@@ -104,7 +100,6 @@ def remove_document(request, document_id):
         DraftUpload,
         pk=document_id,
         faculty=request.user,
-        requirement__deadline__gt=timezone.now(),
     )
 
     if not draft.draft_file:
@@ -136,7 +131,6 @@ def retry_document_extraction(request, document_id):
         DraftUpload.objects.select_related('requirement'),
         pk=document_id,
         faculty=request.user,
-        requirement__deadline__gt=timezone.now(),
     )
 
     if not draft.draft_file:
@@ -156,12 +150,11 @@ def resubmit_document(request, submission_id):
         pk=submission_id,
         faculty=request.user,
         status=DocumentSubmission.SubmissionStatus.NEEDS_REVISION,
-        requirement__deadline__gt=timezone.now(),
     )
 
     draft, _ = DraftUpload.objects.select_related('requirement').get_or_create(
-        faculty=request.user,
-        requirement=submission.requirement
+        slot_id=submission.slot_id,
+        defaults={'faculty': request.user, 'requirement': submission.requirement},
     )
 
     return save_draft_form(
@@ -180,14 +173,14 @@ def submission_complete(request):
     submitted_documents = list(
         active_document_queryset()
         .filter(faculty=request.user, id__in=submitted_ids)
-        .select_related('requirement')
+        .select_related('requirement__period', 'slot__course', 'slot__program')
         .order_by('-initially_submitted_at')
     )
 
     if not submitted_documents:
         messages.info(request, 'No recent submission to show.')
         return redirect(UPLOAD_PAGE)
-    
+
     context = {'submitted_documents': submitted_documents}
 
     return render(
@@ -201,12 +194,13 @@ def submission_complete(request):
 @require_http_methods(['GET'])
 def view_document(request, document_id):
     uploaded_document = get_object_or_404(
-        DraftUpload.objects.select_related('requirement', 'document_metadata'),
+        DraftUpload.objects.select_related(
+            'requirement__period', 'document_metadata', 'slot__course', 'slot__program'
+        ),
         pk=document_id,
         faculty=request.user,
-        requirement__deadline__gt=timezone.now(),
     )
-    
+
     context = {
         'uploaded_document': uploaded_document,
         'metadata': getattr(uploaded_document, 'document_metadata', None),

@@ -150,7 +150,7 @@
           <h2>Document Details</h2>
           <div class="fdv-detail-row"><span class="dot"></span><div><span class="label">File Name</span><span class="value">{{ uploaded_document.draft_file.name|cut:"drafts/" }}</span></div></div>
           <div class="fdv-detail-row"><span class="dot"></span><div><span class="label">Requirement</span><span class="value">{{ uploaded_document.requirement.requirement_title }}</span></div></div>
-          <div class="fdv-detail-row"><span class="dot"></span><div><span class="label">Category</span><span class="value">{{ uploaded_document.requirement.category }}</span></div></div>
+          <div class="fdv-detail-row"><span class="dot"></span><div><span class="label">For</span><span class="value">{{ uploaded_document.slot.label }}</span></div></div>
           <div class="fdv-detail-row"><span class="dot"></span><div><span class="label">File Size</span><span class="value">{{ uploaded_document.draft_file.size|filesizeformat }}</span></div></div>
           <div class="fdv-detail-row"><span class="dot"></span><div><span class="label">Uploaded on</span><span class="value">{{ uploaded_document.draft_updated_at|display_date:request.user }} {{ uploaded_document.draft_updated_at|display_time:request.user }}</span></div></div>
         </div>
