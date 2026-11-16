@@ -1,4 +1,5 @@
 {% extends 'admin_staff_portal/base.html' %}
+{% block css_modules %}user-list-page{% endblock %}
 {% load static core_extras %}
 
 {% block title %}{{ page_title }} - iSubmit{% endblock %}
@@ -103,17 +104,17 @@
     <table class="data-table" aria-label="{{ page_title }} list">
         <thead>
             <tr>
-                <th style="width: 19%;">Name</th>
+                <th class="user-name-column">Name</th>
 
                 {% if current_role == 'FACULTY' %}
-                    <th style="width: 15%;">Faculty Type</th>
+                    <th class="user-faculty-type-column">Faculty Type</th>
                 {% endif %}
 
-                <th style="width: 20%;">Email</th>
-                <th style="width: 12%;">Account Status</th>
-                <th style="width: 17%;">Security Status</th>
-                <th style="width: 12%;">Last Active</th>
-                <th style="width: 8%; text-align: right;">Actions</th>
+                <th class="user-email-column">Email</th>
+                <th class="user-status-column">Account Status</th>
+                <th class="user-security-column">Security Status</th>
+                <th class="user-status-column">Last Active</th>
+                <th class="user-actions-column">Actions</th>
             </tr>
         </thead>
 
@@ -297,168 +298,7 @@
     </div>
 {% endif %}
 
-<style>
-    .pagination-footer {
-        display: grid;
-        grid-template-columns: 1fr auto 1fr;
-        align-items: center;
-        padding: 16px 20px;
-        border-top: 1px solid var(--submissions-border, #e5e7eb);
-        color: var(--submissions-muted, #6b7280);
-        font-size: 13px;
-    }
 
-    .pagination-info {
-        grid-column: 1;
-    }
-
-    .pagination-controls {
-        display: flex;
-        grid-column: 2;
-        gap: 8px;
-    }
-
-    .page-btn {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 8px 12px;
-        border: 1px solid var(--submissions-border, #e5e7eb);
-        border-radius: 6px;
-        background: var(--submissions-surface, #fff);
-        color: var(--submissions-text, #374151);
-        text-decoration: none;
-        font-size: 13px;
-    }
-
-    .page-btn:hover {
-        background: var(--submissions-soft, #f3f4f6);
-    }
-
-    .page-btn-disabled {
-        color: #9a9a9a;
-        cursor: default;
-    }
-
-    .page-btn.active {
-        border-color: var(--submissions-red-600, #7f1d1d);
-        background: var(--submissions-red-600, #7f1d1d);
-        color: #fff;
-    }
-
-    .table-actions {
-        position: relative;
-        overflow: visible;
-    }
-
-    .action-trigger {
-        background: none;
-        border: none;
-        cursor: pointer;
-        padding: 4px 8px;
-        font-size: 18px;
-        color: #666;
-    }
-
-    .action-menu {
-        position: fixed;
-        background: white;
-        border: 1px solid #ddd;
-        border-radius: 4px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-        min-width: 150px;
-        z-index: 100;
-    }
-
-    .action-menu-item {
-        display: block;
-        width: 100%;
-        box-sizing: border-box;
-        padding: 8px 12px;
-        text-align: left;
-        color: #333;
-        text-decoration: none;
-        border: none;
-        background: none;
-        cursor: pointer;
-        font-size: 14px;
-    }
-
-    .action-menu-item:hover {
-        background-color: #f5f5f5;
-    }
-
-    .action-menu form {
-        margin: 0;
-    }
-
-    .unlock-action {
-        color: #166534;
-    }
-
-    .last-active-time {
-        font-size: 12px;
-        color: #666;
-    }
-
-    .security-status {
-        display: inline-flex;
-        min-width: 80px;
-        align-items: center;
-        justify-content: center;
-        gap: 6px;
-        padding: 4px 10px;
-        border-radius: 999px;
-        font-size: 13px;
-        font-weight: 500;
-    }
-
-    .security-status-indicator {
-        width: 7px;
-        height: 7px;
-        border-radius: 50%;
-        flex-shrink: 0;
-    }
-
-    .security-status.locked {
-        background-color: #f8e7e7;
-        color: #b91c1c;
-    }
-
-    .security-status.locked .security-status-indicator {
-        background-color: #dc2626;
-    }
-
-    .security-status.unlocked {
-        background-color: #e8f5ec;
-        color: #15803d;
-    }
-
-    .security-status.unlocked .security-status-indicator {
-        background-color: #16a34a;
-    }
-
-    .lockout-expiry {
-        margin-top: 4px;
-        color: var(--submissions-muted, #6b7280);
-        font-size: 11px;
-        line-height: 1.4;
-    }
-
-    @media (max-width: 900px) {
-        .table-wrap {
-            overflow-x: auto;
-        }
-
-        .data-table {
-            min-width: 850px;
-        }
-
-        .table-toolbar .filters {
-            flex-wrap: wrap;
-        }
-    }
-</style>
 
 <script>
     function toggleActionMenu(event) {

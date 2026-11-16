@@ -1,4 +1,5 @@
 {% extends 'admin_staff_portal/base.html' %}
+{% block css_modules %}{% endblock %}
 {% load static %}
 
 {% block title %}{% if object %}Edit Staff{% else %}Add Staff{% endif %} - iSubmit{% endblock %}
@@ -20,9 +21,9 @@
 {% endif %}
 
 {% if form.errors %}
-    <div class="form-errors" style="margin-bottom: 16px; padding: 12px 14px; border: 1px solid #efb7b7; background: #fff4f4; color: #8b1d1d; border-radius: 8px;">
+    <div class="form-errors user-form-error-panel">
         <strong>Please correct the following:</strong>
-        <ul style="margin: 8px 0 0 18px;">
+        <ul class="user-form-error-list">
 {% for field, errors in form.errors.items %}
             <li>{{ field }}: {{ errors|join:", " }}</li>
 {% endfor %}
@@ -30,10 +31,10 @@
     </div>
 {% endif %}
 
-    <div class="form-grid" style="grid-template-columns: 1.35fr 1.35fr 1fr;">
-        <div class="form-card" style="grid-column: 1 / -1;">
+    <div class="form-grid user-form-columns">
+        <div class="form-card user-form-full-width">
             <h3><span class="step-badge">1</span> Basic Information</h3>
-            <div class="form-grid" style="grid-template-columns: repeat(3, minmax(200px, 1fr));">
+            <div class="form-grid user-form-basic-columns">
                 <div class="form-field">
                     <label for="id_first_name" class="label-required">First Name</label>
 {{ form.first_name }}

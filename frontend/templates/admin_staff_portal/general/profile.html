@@ -1,10 +1,11 @@
 {% extends 'admin_staff_portal/base.html' %}
+{% block css_modules %}profile{% endblock %}
 {% load static %}
 
 {% block title %}Profile - iSubmit{% endblock %}
 {% block heading %}Profile{% endblock %}
 {% block subtitle %}Manage your personal information and profile photo.{% endblock %}
-{% block extra_css %}<link rel="stylesheet" href="{% static 'css/pages/profile.css' %}">{% endblock %}
+{% block extra_css %}{% endblock %}
 
 {% block content %}
 <div class="profile-card">

@@ -1,9 +1,10 @@
 {% extends 'faculty_portal/base.html' %}
+{% block css_modules %}settings{% endblock %}
 {% load static %}
 {% block title %}Settings - iSubmit{% endblock %}
 {% block heading %}Settings{% endblock %}
 {% block topbar_subtitle %}Manage your preferences and notification settings.{% endblock %}
-{% block extra_css %}<link rel="stylesheet" href="{% static 'css/pages/settings.css' %}">{% endblock %}
+{% block extra_css %}{% endblock %}
 {% block content %}
 <div class="faculty-settings">
     {% include 'faculty_portal/general/settings_module/_settings_tabs.html' with active_tab='notification_settings' %}

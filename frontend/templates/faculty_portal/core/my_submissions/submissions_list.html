@@ -1,4 +1,5 @@
 {% extends 'faculty_portal/base.html' %}
+{% block css_modules %}submissions submissions-list-page{% endblock %}
 {% load static %}
 
 {% block title %}My Submissions - iSubmit{% endblock %}
@@ -9,141 +10,11 @@ Monitor submission progress and document status
 {% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/pages/submissions.css' %}">
+
 {% endblock %}
 
 {% block content %}
-<style>
-    .my-submissions-container {
-        padding: 20px 20px 28px;
-        font-family: 'Poppins', sans-serif;
-        color: #1a1a1a;
-    }
 
-    /* ---------- Page header ---------- */
-    .page-header { margin-bottom: 20px; }
-    .page-title-wrap { display: flex; align-items: center; gap: 12px; }
-    .page-icon img { width: 26px; height: 26px; }
-    .page-header h1 { font-size: 24px; font-weight: 700; margin: 0; }
-    .page-header .subtitle { margin: 2px 0 0; font-size: 14px; color: #6b7280; }
-
-    /* ---------- Stat cards ---------- */
-    .stat-grid {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 12px;
-        margin-bottom: 16px;
-    }
-    .stat-card {
-        display: flex;
-        align-items: center;
-        justify-content: flex-start;
-        gap: 12px;
-        background: #fff;
-        border: 1px solid #e1e5ea;
-        border-radius: 8px;
-        padding: 14px 18px;
-        min-height: 68px;
-        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
-    }
-    .stat-icon {
-        width: 32px;
-        height: 32px;
-        border-radius: 8px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 14px;
-        font-weight: 700;
-        flex-shrink: 0;
-    }
-    .stat-icon.orange { background: #FBFBD9; color: #E5E200; }
-    .stat-icon.blue { background: #DAE5FC; color: #054FE8; }
-    .stat-icon.green { background: #D9F2E3; color: #03A846; }
-    .stat-icon.red { background: #F2DAD9; color: #A60700; }
-
-    .stat-label { font-size: 16px; margin: 0; font-weight: 700; }
-    .stat-card:nth-child(1) .stat-label { color: #E5E200; }
-    .stat-card:nth-child(2) .stat-label { color: #03A846; }
-    .stat-card:nth-child(3) .stat-label { color: #054FE8; }
-    .stat-card:nth-child(4) .stat-label { color: #A60700; }
-
-    /* ---------- Layout and filters ---------- */
-    .layout { display: grid; grid-template-columns: 160px 1fr; gap: 18px; align-items: start; }
-
-    .filter-panel { background: #fff; border: 1px solid #e1e5ea; border-radius: 8px; padding: 12px 10px; box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05); }
-    .filter-group { margin-bottom: 14px; }
-    .filter-group label {
-        display: block;
-        font-size: 13px;
-        font-weight: 600;
-        color: #374151;
-        margin-bottom: 5px;
-    }
-    .filter-group select {
-        width: 100%;
-        padding: 8px 9px;
-        border: 1px solid #e1e5ea;
-        border-radius: 6px;
-        font-size: 13px;
-    }
-    .btn-reset {
-        width: 100%;
-        padding: 7px;
-        border: 1px solid #b91c1c;
-        color: #b91c1c;
-        background: #fff;
-        border-radius: 5px;
-        font-size: 13px;
-        font-weight: 700;
-        cursor: pointer;
-    }
-
-    /* ---------- Table ---------- */
-    .table-card { background: #fff; border: 1px solid #e1e5ea; border-radius: 8px; overflow: hidden; }
-    .data-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-    .data-table { table-layout: fixed; }
-    .data-table thead tr { background: #f4dddd; }
-    .data-table th { text-align: left; padding: 12px 14px; font-weight: 700; color: #1f2937; font-size: 13px; }
-    .data-table td {
-        padding: 13px 14px;
-        border-top: 1px solid #f0f0f0;
-        vertical-align: middle;
-        color: #374151;
-        font-size: 13px;
-    }
-    .data-table th:nth-child(1) { width: 34px; }
-    .data-table th:nth-child(2) { width: 24%; }
-    .data-table th:nth-child(3) { width: 15%; }
-    .data-table th:nth-child(4) { width: 14%; }
-    .data-table th:nth-child(5) { width: 14%; }
-    .data-table th:nth-child(6) { width: 13%; }
-    .data-table th:nth-child(7) { width: 17%; }
-    .data-table input[type="checkbox"] { width: 15px; height: 15px; accent-color: #7f1d1d; }
-
-    .file-cell { display: flex; align-items: center; gap: 8px; }
-    .file-link { color: inherit; text-decoration: none; }
-    .file-link:hover .file-name { color: #A60700; text-decoration: underline; }
-    .file-icon { width: 17px; height: 20px; object-fit: contain; }
-    .file-name { font-weight: 700; font-size: 13px; color: #1a1a1a; }
-    .file-size { font-size: 11px; color: #9ca3af; }
-    .text-sub { font-size: 11px; color: #9ca3af; }
-
-    /* ---------- Status pills ---------- */
-    .pill {
-        display: inline-block;
-        padding: 4px 10px;
-        border-radius: 5px;
-        font-size: 12px;
-        font-weight: 700;
-        border: 1px solid transparent;
-    }
-    .pill-review { background: #fff; color: #165be5; border-color: #5d8cff; }
-    .pill-approved { background: #d9f3e5; color: #079447; border-color: #a7e5c1; }
-    .pill-revision { background: #fee2e2; color: #b91c1c; border-color: #fecaca; }
-    .pill-submitted { background: #fffdf0; color: #b08a00; border-color: #e6c928; }
-
-</style>
 
 
 <div class="my-submissions-container">
@@ -245,8 +116,8 @@ Monitor submission progress and document status
 
                 <a
                     href="{% url 'faculty_portal:my_submissions' %}"
-                    class="btn-reset"
-                    style="display:block; text-align:center; text-decoration:none;"
+                    class="btn-reset submission-return-link"
+
                 >
                     Reset Filters
                 </a>

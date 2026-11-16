@@ -1,4 +1,5 @@
 {% extends 'faculty_portal/base.html' %}
+{% block css_modules %}all-documents-page{% endblock %}
 {% load static core_extras %}
 
 {% block title %}My Documents - iSubmit{% endblock %}
@@ -6,65 +7,7 @@
 {% block topbar_subtitle %}View and manage all your submitted documents{% endblock %}
 
 {% block content %}
-<style>
-.docs-header { margin-bottom: 20px; }
-.docs-header h1 { display: flex; align-items: center; gap: 8px; font-size: 22px; font-weight: 700; margin: 0; }
-.docs-sub { font-size: 13px; color: #6b7280; margin-top: 4px; }
 
-.docs-tabs { display: flex; gap: 28px; border-bottom: 1px solid #e5e7eb; margin-bottom: 20px; }
-.docs-tab { padding: 10px 2px; font-size: 16px; font-weight: 600; color: #6b7280; text-decoration: none; border-bottom: 2px solid transparent; }
-.docs-tab.active { color: #7f1d1d; border-bottom-color: #7f1d1d; }
-
-.docs-layout { display: grid; grid-template-columns: 160px minmax(0, 1fr); gap: 22px; align-items: start; }
-.docs-content { display: flex; flex-direction: column; gap: 0; }
-.filter-panel .search-group { display: none; }
-
-.filter-panel { background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 16px 10px; }
-.filter-group { margin-bottom: 18px; }
-.search-group { flex: 1 1 260px; min-width: 220px; }
-.search-group label, .search-help { display: block; font-size: 12px; color: #6b7280; margin-bottom: 4px; }
-.search-controls { display: flex; gap: 8px; flex-wrap: wrap; }
-.search-controls input { box-sizing: border-box; min-width: 0; padding: 8px 10px; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 13px; flex: 1 1 180px; }
-.btn-search { padding: 8px 14px; border: 1px solid #7f1d1d; color: #fff; background: #7f1d1d; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; }
-.search-help { margin-top: 5px; margin-bottom: 0; line-height: 1.4; }
-
-.filter-group label { display: block; font-size: 13px; font-weight: 600; color: #374151; margin-bottom: 6px; }
-.filter-group select { width: 100%; padding: 8px 10px; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 13px; box-sizing: border-box; }
-.btn-reset { display: block; width: 100%; text-align: center; padding: 9px; border: 1px solid #7f1d1d; color: #7f1d1d; background: #fff; border-radius: 8px; font-size: 13px; font-weight: 700; text-decoration: none; box-sizing: border-box; }
-
-.table-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; overflow: hidden; }
-.data-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-.data-table thead tr { background: #fbe4e4; }
-.data-table th { text-align: left; padding: 14px 16px; font-weight: 700; color: #374151; font-size: 13px; }
-.data-table td { padding: 17px 16px; border-top: 1px solid #f0f0f0; vertical-align: middle; color: #374151; }
-.font-bold { font-weight: 700; color: #1a1a1a; }
-.text-sub { font-size: 12px; color: #9ca3af; }
-
-.fname-cell { display: flex; align-items: center; gap: 10px; }
-.fname-link { color: #1a1a1a; text-decoration: none; }
-.fname-link:hover { text-decoration: underline; }
-.star-btn { display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 22px; border: none; background: none; cursor: pointer; padding: 0; line-height: 1; }
-.star-btn img { width: 16px; height: 16px; opacity: .8; }
-.star-btn.pinned img {
-    filter: brightness(0) saturate(100%) invert(68%) sepia(88%) saturate(1025%) hue-rotate(2deg) brightness(103%) contrast(101%);
-    opacity: 1;
-}
-
-.btn-icon { border: none; background: none; cursor: pointer; font-size: 16px; color: #6b7280; }
-
-.pagination-footer { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 16px; padding: 14px 0; margin-top: 12px; font-size: 14px; color: #6b7280; }
-.pagination-info { flex-shrink: 0; }
-.pagination-controls { display: flex; justify-content: center; gap: 10px; }
-.page-btn { width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; border: 1px solid #d1d5db; border-radius: 5px; text-decoration: none; color: #1f2937; font-size: 14px; background: #fff; }
-.page-btn.active { background: #7f1d1d; color: #fff; border-color: #7f1d1d; }
-.page-btn.disabled { color: #9ca3af; background: #f9fafb; pointer-events: none; }
-.pagination-controls .page-btn:first-child,
-.pagination-controls .page-btn:last-child {
-    width: 24px;
-    border: 0;
-    background: transparent;
-}
-</style>
 
 <div class="docs-tabs">
     <a href="{% url 'faculty_portal:all_documents' %}" class="docs-tab active">All Documents</a>
@@ -73,9 +16,9 @@
 
 <div class="docs-layout">
     <form method="GET" action="{% url 'faculty_portal:all_documents' %}" class="filter-panel">
-        <div class="search-group" style="margin-bottom:16px;">
+        <div class="search-group spacing-bottom-16">
             <label for="repo-search">Search documents</label>
-            <div class="search-controls" style="flex-direction:column;">
+            <div class="search-controls document-search-column">
                 <input id="repo-search" type="search" name="q" value="{{ search_query }}" placeholder="Search titles and document contents...">
                 <button type="submit" class="btn-search">Search</button>
             </div>
@@ -130,7 +73,7 @@
                     <tr>
                         <td>
                             <div class="fname-cell">
-                                <form method="post" action="{% url 'faculty_portal:toggle_pin' sub.id %}" style="display:inline;">
+                                <form method="post" action="{% url 'faculty_portal:toggle_pin' sub.id %}" class="document-pin-form">
                                     {% csrf_token %}
                                     <button type="submit" class="star-btn {% if sub.is_pinned %}pinned{% endif %}" title="{% if sub.is_pinned %}Remove from pinned{% else %}Pin this document{% endif %}">
                                         <img src="{% static 'images/Pinned.svg' %}" alt="{% if sub.is_pinned %}Pinned{% else %}Pin document{% endif %}">
@@ -165,7 +108,7 @@
                     </tr>
                 {% empty %}
                     <tr>
-                        <td colspan="6" style="text-align: center; padding: 20px;">No documents to show.</td>
+                        <td colspan="6" class="table-empty-state">No documents to show.</td>
                     </tr>
                 {% endfor %}
             </tbody>

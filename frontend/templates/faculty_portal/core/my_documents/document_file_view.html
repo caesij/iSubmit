@@ -1,4 +1,5 @@
 {% extends 'faculty_portal/base.html' %}
+{% block css_modules %}document-file-view-page{% endblock %}
 {% load static core_extras %}
 
 {% block title %}{{ document.requirement.requirement_title }} - iSubmit{% endblock %}
@@ -6,75 +7,7 @@
 {% block topbar_subtitle %}View and manage all your submitted documents{% endblock %}
 
 {% block content %}
-<style>
-  .dfv-wrap {
-    --gold: #c99a3d;
-    --ink: #211c1c;
-    --muted: #746b68;
-    --line: #e7e0dc;
-    --card: #fff;
-    color: var(--ink);
-    font-family: 'Poppins', sans-serif;
-  }
-  .dfv-back {
-    display: inline-flex; align-items: center; gap: 6px;
-    margin-bottom: 14px; padding: 7px 22px;
-    border: 1px solid #b40000; border-radius: 5px;
-    background: #b40000; color: #fff;
-    font-size: 13px; font-weight: 700; text-decoration: none;
-  }
-  .dfv-back:hover { background: #920000; border-color: #920000; }
-  .dfv-back img { width: 16px; height: 16px; }
-  .dfv-crumbs { margin-bottom: 14px; color: var(--muted); font-size: 13px; }
-  .dfv-crumbs a { color: var(--muted); text-decoration: none; }
-  .dfv-crumbs a:hover { color: #7a0c0c; text-decoration: underline; }
-  .dfv-crumbs .sep { margin: 0 6px; color: #c9bfba; }
-  .dfv-crumbs .current { color: var(--ink); font-weight: 500; }
-  .dfv-title-row { margin-bottom: 16px; }
-  .dfv-title-row h1 { margin: 0; font-size: 22px; font-weight: 700; }
-  .dfv-title-row .uploaded-by { margin-top: 2px; color: #9a9290; font-size: 12px; }
-  .dfv-grid { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 24px; align-items: start; }
-  .dfv-viewer { overflow: hidden; border: 1px solid var(--line); border-radius: 10px; background: var(--card); }
-  .dfv-viewer-header {
-    display: flex; align-items: center; justify-content: space-between; gap: 16px;
-    padding: 15px 18px; border-bottom: 1px solid var(--line);
-  }
-  .dfv-viewer-name { color: #716b69; font-size: 15px; font-weight: 500; }
-  .dfv-viewer-date { color: #aaa3a1; font-size: 12px; white-space: nowrap; }
-  .dfv-viewer-body { min-height: 560px; background: #5b5b5b; }
-  .dfv-page-area { height: 640px; display: flex; align-items: stretch; justify-content: center; overflow: auto; }
-  .dfv-page-area embed { width: 100%; height: 100%; border: 0; background: #fff; }
-  .dfv-panel { display: flex; flex-direction: column; gap: 16px; }
-  .dfv-card { padding: 18px 18px 20px; border: 1px solid var(--line); border-radius: 12px; background: var(--card); }
-  .dfv-card h2 { margin: 0 0 14px; color: var(--muted); font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
-  .dfv-detail-row { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 12px; font-size: 13.5px; }
-  .dfv-detail-row:last-child { margin-bottom: 0; }
-  .dfv-detail-row .dot { width: 6px; height: 6px; flex-shrink: 0; margin-top: 6px; border-radius: 50%; background: var(--gold); }
-  .dfv-detail-row .label { display: block; color: var(--muted); font-size: 11.5px; }
-  .dfv-detail-row .value { color: var(--ink); font-weight: 600; }
-  .dfv-status-box {
-    display: flex; align-items: flex-start; gap: 12px;
-    padding: 10px 12px; border: 1px solid #86d8a8; border-radius: 4px;
-    background: #e4f8eb;
-  }
-  .dfv-status-check {
-    display: flex; align-items: center; justify-content: center;
-    width: 18px; height: 18px; flex-shrink: 0; margin-top: 1px;
-    border-radius: 50%; background: #08a34a; color: #fff;
-    font-size: 12px; font-weight: 700;
-  }
-  .dfv-status-value { color: #087b3b; font-size: 13px; font-weight: 700; }
-  .dfv-status-note { margin-top: 2px; color: #16834a; font-size: 10px; line-height: 1.35; }
-  .dfv-review-item { margin-bottom: 12px; }
-  .dfv-review-item:last-child { margin-bottom: 0; }
-  .dfv-review-item .label, .dfv-empty { display: block; color: #b0aaa8; font-size: 11.5px; }
-  .dfv-review-item .value { display: block; margin-top: 3px; color: var(--ink); font-size: 12px; font-weight: 600; }
-  .dfv-empty { color: var(--muted); }
-  @media (max-width: 900px) {
-    .dfv-grid { grid-template-columns: 1fr; }
-    .dfv-viewer-date { white-space: normal; text-align: right; }
-  }
-</style>
+
 
 <div class="dfv-wrap">
   <a href="{% url back_url_name %}" class="dfv-back">

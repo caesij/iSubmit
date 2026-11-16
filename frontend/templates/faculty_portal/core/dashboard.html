@@ -1,4 +1,5 @@
 {% extends 'faculty_portal/base.html' %}
+{% block css_modules %}dashboard-page{% endblock %}
 {% load static core_extras %}
 
 {% block title %}Dashboard - iSubmit{% endblock %}
@@ -6,336 +7,7 @@
 {% block topbar_subtitle %}Overview of system activities and updates{% endblock %}
 
 {% block content %}
-<style>
-    /* ---------- Header ---------- */
-    .dash-header h1 {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        font-size: 22px;
-        font-weight: 700;
-        margin: 0;
-    }
-    .dash-sub { font-size: 13px; color: #6b7280; margin: 4px 0 20px; }
 
-    /* ---------- Welcome card ---------- */
-    .welcome-card {
-        background: #fff;
-        border: 1px solid #e5e7eb;
-        border-radius: 10px;
-        box-shadow: 0 1px 5px rgba(0, 0, 0, .12);
-        padding: 18px 16px 16px;
-        margin-bottom: 16px;
-    }
-    .welcome-label { font-size: 16px; color: #171717; font-weight: 700; margin-bottom: 2px; }
-    .welcome-name { font-size: 21px; font-weight: 400; color: #171717; }
-    .welcome-type { font-size: 12px; color: #b91c1c; font-weight: 600; margin: 2px 0 11px; }
-    .welcome-meta { display: flex; flex-wrap: wrap; gap: 9px; margin-bottom: 21px; }
-    .meta-chip {
-        display: inline-flex;
-        align-items: center;
-        gap: 7px;
-        min-height: 25px;
-        padding: 3px 13px;
-        border: 1px solid #e5e7eb;
-        border-radius: 999px;
-        box-shadow: 0 1px 4px rgba(0, 0, 0, .12);
-        color: #171717;
-        font-size: 11px;
-        font-weight: 600;
-    }
-    .meta-chip-icon { color: #b91c1c; font-size: 14px; line-height: 1; }
-
-    /* ---------- Stat cards ---------- */
-    .stat-row {
-        display: grid;
-        grid-template-columns: repeat(6, minmax(0, 1fr));
-        gap: 8px;
-        margin-bottom: 16px;
-    }
-    .stat-card {
-        display: flex;
-        align-items: center;
-        gap: 9px;
-        min-width: 0;
-        min-height: 59px;
-        padding: 10px 14px;
-        background: #fff;
-        border: 1px solid #e5e7eb;
-        border-radius: 9px;
-        box-shadow: 0 1px 4px rgba(0, 0, 0, .12);
-        transition: background-color .3s;
-    }
-    .stat-icon {
-        display: grid;
-        flex: 0 0 40px;
-        place-items: center;
-        width: 40px;
-        height: 40px;
-        border-radius: 8px;
-        font-size: 18px;
-        font-weight: 700;
-    }
-    .stat-content {  
-        min-width: 0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        text-align: center;
-    }
-
-    .stat-card .stat-num { font-size: 18px; font-weight: 700; display: block; }
-    .stat-card .stat-label { 
-        display: block; 
-        font-size: 11px; 
-        font-weight: 700; 
-        margin-top: 0; 
-        line-height: 1.1; 
-    }
-
-    .stat-total .stat-icon { background: #F2DAD9; }
-    .stat-total .stat-icon { color: #A60700; }
-    .stat-total .stat-num, .stat-total .stat-label { color: #A60700; }
-
-    .stat-approved .stat-icon { background: #D9F2E3; }
-    .stat-approved .stat-icon { color: #03A846; }
-    .stat-approved .stat-num, .stat-approved .stat-label { color: #03A846; }
-
-    .stat-submitted .stat-icon { background: #FBFBD9; }
-    .stat-submitted .stat-icon { color: #E5E200; }
-    .stat-submitted .stat-num, .stat-submitted .stat-label { color: #E5E200; }
-
-    .stat-under-review .stat-icon { background: #DAE5FC; }
-    .stat-under-review .stat-icon { color: #054FE8; }
-    .stat-under-review .stat-num, .stat-under-review .stat-label { color: #054FE8; }
-
-    .stat-pending-approval .stat-icon { background: #FDF0DA; }
-    .stat-pending-approval .stat-icon { color: #F09805; }
-    .stat-pending-approval .stat-num, .stat-pending-approval .stat-label { color: #F09805; }
-
-    .stat-returned .stat-icon { background: #F2DAD9; }
-    .stat-returned .stat-icon { color: #A60700; }
-    .stat-returned .stat-num, .stat-returned .stat-label { color: #A60700; }
-
-    /* Flash animation when a stat changes */
-    .stat-flash { animation: flash 0.6s ease; }
-    @keyframes flash {
-        0% { transform: scale(1); }
-        40% { transform: scale(1.05); }
-        100% { transform: scale(1); }
-    }
-
-    /* ---------- Action buttons ---------- */
-    .action-row { display: flex; gap: 18px; }
-    .action-row .btn-primary,
-    .action-row .btn-outline {
-        box-sizing: border-box;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 182px;
-        height: 28px;
-        padding: 0 12px;
-        gap: 6px;
-        border-radius: 4px;
-        font-size: 13px;
-        font-weight: 700;
-        line-height: 1;
-        text-decoration: none;
-        white-space: nowrap;
-    }
-    .action-row .btn-primary {
-        background: #7f1d1d;
-        color: #fff;
-        border: none;
-    }
-    .action-row .btn-outline {
-        background: #fff;
-        color: #7f1d1d;
-        border: 1px solid #7f1d1d;
-    }
-    .action-row .btn-icon {
-        width: 16px;
-        height: 16px;
-        flex: 0 0 16px;
-        object-fit: contain;
-    }
-    .action-row .btn-outline .btn-icon {
-        filter: brightness(0) saturate(100%) invert(17%) sepia(38%) saturate(2270%) hue-rotate(326deg) brightness(83%) contrast(104%);
-    }
-
-    /* ---------- Lower dashboard ---------- */
-    .dash-lower {
-        display: grid;
-        grid-template-columns: 1.5fr 1fr;
-        gap: 16px;
-        margin-top: 16px;
-        align-items: start;
-    }
-
-    /* ---------- Panel ---------- */
-    .panel-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 18px; }
-    .panel-card h2 { font-size: 15px; font-weight: 700; margin: 0 0 14px; }
-
-    /* ---------- Submission progress ---------- */
-    .progress-track {
-        display: flex;
-        height: 8px;
-        border-radius: 999px;
-        overflow: hidden;
-        background: #f0f0f0;
-    }
-    .progress-seg-approved { background: #03a846; transition: width .3s; }
-    .progress-seg-submitted { background: #e5e200; transition: width .3s; }
-    .progress-seg-under-review { background: #054fe8; transition: width .3s; }
-    .progress-seg-pending-approval { background: #f09805; transition: width .3s; }
-    .progress-seg-returned { background: #a60700; transition: width .3s; }
-
-    .progress-legend {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 14px;
-        margin-top: 10px;
-        font-size: 11.5px;
-        color: #6b7280;
-    }
-    .progress-legend .dot {
-        width: 8px;
-        height: 8px;
-        border-radius: 2px;
-        display: inline-block;
-        margin-right: 5px;
-    }
-
-    /* ---------- Overview tabs ---------- */
-    .overview-tabs {
-        display: flex;
-        gap: 18px;
-        border-bottom: 1px solid #e5e7eb;
-        margin-bottom: 12px;
-        overflow-x: auto;
-    }
-    .overview-tab {
-        padding: 6px 2px 10px;
-        font-size: 12.5px;
-        font-weight: 600;
-        color: #6b7280;
-        text-decoration: none;
-        border-bottom: 2px solid transparent;
-        white-space: nowrap;
-    }
-    .overview-tab.active { color: #7f1d1d; border-bottom-color: #7f1d1d; }
-    .overview-track-link {
-        font-size: 12.5px;
-        color: #7f1d1d;
-        text-decoration: none;
-        font-weight: 600;
-        float: right;
-    }
-
-    /* ---------- Submission rows ---------- */
-    .overview-row {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        min-height: 72px;
-        box-sizing: border-box;
-        padding: 11px 16px;
-        margin-bottom: 10px;
-        border: 1px solid #d1d5db;
-        border-radius: 8px;
-    }
-    .overview-row:last-child { margin-bottom: 0; }
-    .overview-file { display: flex; align-items: center; gap: 15px; min-width: 0; }
-    .overview-icon {
-        width: 45px;
-        height: 45px;
-        flex: 0 0 45px;
-        object-fit: contain;
-    }
-    .overview-name { font-weight: 600; font-size: 13.5px; color: #1a1a1a; }
-    .overview-when { font-size: 11.5px; color: #9ca3af; }
-
-    /* ---------- Status pills ---------- */
-    .pill {
-        min-width: 121px;
-        box-sizing: border-box;
-        padding: 4px 10px;
-        border-radius: 4px;
-        font-size: 11px;
-        font-weight: 700;
-        text-align: center;
-        white-space: nowrap;
-    }
-    .pill-approved { background: #fff; color: #03a846; border: 1px solid #03a846; }
-    .pill-submitted { background: #fff; color: #054fe8; border: 1px solid #054fe8; }
-    .pill-under-review { background: #fff; color: #6d28d9; border: 1px solid #6d28d9; }
-    .pill-pending-approval { background: #fff; color: #f09805; border: 1px solid #f09805; }
-    .pill-returned { background: #fff; color: #a60700; border: 1px solid #a60700; }
-
-    /* ---------- Deadlines ---------- */
-    .deadline-row {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        min-height: 84px;
-        box-sizing: border-box;
-        padding: 12px 18px;
-        margin-bottom: 12px;
-        border: 1px solid #d1d5db;
-        border-radius: 8px;
-    }
-    .deadline-row:last-child { margin-bottom: 0; }
-    .deadline-icon {
-        width: 43px;
-        height: 43px;
-        flex: 0 0 43px;
-        object-fit: contain;
-    }
-    .deadline-title { font-weight: 600; font-size: 13px; color: #1a1a1a; }
-    .deadline-date { font-size: 11.5px; color: #9ca3af; margin-left: auto; }
-    .deadline-upload {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 7px;
-        width: 100%;
-        box-sizing: border-box;
-        margin-top: 12px;
-        padding: 10px 14px;
-        background: #a60700;
-        color: #fff;
-        border-radius: 4px;
-        font-size: 13px;
-        font-weight: 700;
-        text-decoration: none;
-    }
-    .deadline-upload .btn-icon { width: 15px; height: 15px; }
-
-    /* ---------- Live indicator ---------- */
-    .live-dot {
-        display: inline-block;
-        width: 7px;
-        height: 7px;
-        border-radius: 50%;
-        background: #22c55e;
-        margin-left: 8px;
-        vertical-align: middle;
-    }
-
-    /* ---------- Responsive ---------- */
-    @media (max-width: 1100px) {
-        .stat-row { grid-template-columns: repeat(3, 1fr); }
-    }
-    @media (max-width: 800px) {
-        .dash-lower { grid-template-columns: 1fr; }
-    }
-    @media (max-width: 600px) {
-        .stat-row { grid-template-columns: repeat(2, 1fr); }
-        .action-row { flex-direction: column; }
-        .overview-tabs { gap: 12px; }
-    }
-</style>
 
 <!-- Welcome card -->
 <div class="welcome-card">
@@ -407,7 +79,7 @@
     <div>
 
         <!-- Submission progress -->
-        <div class="panel-card" style="margin-bottom: 16px;">
+        <div class="panel-card spacing-bottom-16">
             <h2>Submission Progress</h2>
 
             <div class="progress-track">
@@ -439,13 +111,13 @@
             </div>
 
             <div class="progress-legend">
-                <span><span class="dot" style="background:#03a846;"></span> Approved</span>
-                <span><span class="dot" style="background:#e5e200;"></span> Submitted</span>
-                <span><span class="dot" style="background:#054fe8;"></span> Under Review</span>
-                <span><span class="dot" style="background:#f09805;"></span> Pending Approval</span>
-                <span><span class="dot" style="background:#a60700;"></span> Returned</span>
+                <span><span class="dot legend-approved"></span> Approved</span>
+                <span><span class="dot legend-submitted"></span> Submitted</span>
+                <span><span class="dot legend-under-review"></span> Under Review</span>
+                <span><span class="dot legend-pending-approval"></span> Pending Approval</span>
+                <span><span class="dot legend-returned"></span> Returned</span>
                 <span>
-                    <span class="dot" style="background:#f0f0f0; border:1px solid #d1d5db;"></span>
+                    <span class="dot legend-unsubmitted"></span>
                     Unsubmitted
                 </span>
             </div>
@@ -532,7 +204,7 @@
                         {% endif %}
                     </div>
                 {% empty %}
-                    <div style="text-align:center; padding:20px; color:#9ca3af; font-size:13px;">
+                    <div class="dashboard-empty-state">
                         No submissions yet.
                     </div>
                 {% endfor %}
@@ -559,8 +231,8 @@
                 </div>
             {% empty %}
                 <div
-                    class="no-upcoming-deadlines"
-                    style="text-align:center; padding:16px; color:#9ca3af; font-size:13px;"
+                    class="no-upcoming-deadlines dashboard-empty-row"
+
                 >
                     No upcoming deadlines.
                 </div>

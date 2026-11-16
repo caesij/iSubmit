@@ -1,137 +1,16 @@
 {% load static %}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-portal="faculty" data-css="{% block css_modules %}{% endblock %}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}iSubmit - {{ request.user.get_role_display }} Portal{% endblock %}</title>
+
     <link rel="stylesheet" href="{% static 'css/layout/faculty_portal.css' %}">
     <script src="{% static 'js/global-search.js' %}" defer></script>
     {% block extra_css %}{% endblock %}
 
-    <style>
-    .notif-badge {
-        position: absolute;
-        top: -5px;
-        right: -7px;
-        min-width: 17px;
-        height: 17px;
-        padding: 0 4px;
-        display: none;
-        align-items: center;
-        justify-content: center;
-        border-radius: 999px;
-        background: #b91c1c;
-        color: #fff;
-        font-size: 10px;
-        font-weight: 700;
-        line-height: 1;
-    }
 
-    .notif-dropdown {
-        position: absolute;
-        top: calc(100% + 10px);
-        right: 0;
-        width: 360px;
-        max-width: calc(100vw - 32px);
-        background: #fff;
-        border: 1px solid #e5e7eb;
-        border-radius: 10px;
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-        overflow: hidden;
-        z-index: 1000;
-    }
-
-    .notif-dropdown-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 12px 14px;
-        border-bottom: 1px solid #e5e7eb;
-    }
-
-    .notif-dropdown-header strong {
-        font-size: 14px;
-        color: #1a1a1a;
-    }
-
-    .notif-dropdown-header span {
-        font-size: 11px;
-        color: #6b7280;
-    }
-
-    .notif-dropdown-list {
-        max-height: 320px;
-        overflow-y: auto;
-    }
-
-    .notif-dropdown-form {
-        margin: 0;
-    }
-
-    .notif-dropdown-item {
-        width: 100%;
-        display: block;
-        padding: 12px 14px;
-        border: none;
-        border-bottom: 1px solid #f3f4f6;
-        background: #fff;
-        text-align: left;
-        cursor: pointer;
-    }
-
-    .notif-dropdown-item:hover {
-        background: #fafafa;
-    }
-
-    .notif-dropdown-item.unread {
-        background: #fff7f7;
-    }
-
-    .notif-dropdown-item strong {
-        display: block;
-        margin-bottom: 4px;
-        font-size: 13px;
-        color: #1a1a1a;
-    }
-
-    .notif-dropdown-item p {
-        margin: 0 0 5px;
-        color: #6b7280;
-        font-size: 12px;
-        line-height: 1.4;
-    }
-
-    .notif-dropdown-item small {
-        color: #9ca3af;
-        font-size: 10px;
-    }
-
-    .notif-dropdown-empty {
-        padding: 28px 14px;
-        text-align: center;
-        color: #6b7280;
-        font-size: 12px;
-    }
-
-    .notif-dropdown-footer {
-        border-top: 1px solid #e5e7eb;
-    }
-
-    .notif-dropdown-footer a {
-        display: block;
-        padding: 11px;
-        color: #b91c1c;
-        text-align: center;
-        text-decoration: none;
-        font-size: 12px;
-        font-weight: 700;
-    }
-
-    .notif-dropdown-footer a:hover {
-        background: #fafafa;
-    }
-    </style>
 </head>
 
 <body>
@@ -341,17 +220,17 @@
                     </form>
 
                     <div
-                        class="notification-wrap"
+                        class="notification-wrap notification-position"
                         aria-label="Notifications"
-                        style="position: relative;"
+
                     >
                         <button
                             type="button"
                             id="notif-bell"
                             aria-label="Open notifications"
                             aria-expanded="false"
-                            style="background:none; border:none; cursor:pointer; padding:0; display:flex; align-items:center;"
-                        >
+
+                         class="notification-trigger">
                             <img
                                 src="{% static 'images/Icon - Notifications.svg' %}"
                                 alt="Notifications"
