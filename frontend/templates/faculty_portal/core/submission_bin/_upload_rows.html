@@ -1,15 +1,15 @@
 {% load static core_extras %}
 {% for row in rows %}
     <tr
-        data-requirement-id="{{ row.requirement.id }}"
+        data-slot-id="{{ row.slot.id }}"
         data-deadline="{{ row.requirement.deadline|date:'c' }}"
     >
         <td>
             {% if row.is_resubmission and row.draft and row.draft.draft_file %}
                 <input
                     type="checkbox"
-                    name="selected_requirements"
-                    value="{{ row.requirement.id }}"
+                    name="selected_slots"
+                    value="{{ row.slot.id }}"
                     form="selection-form"
                     class="requirement-checkbox"
                     data-text-required="{{ row.requirement.text_extraction_enabled|yesno:'true,false' }}"
@@ -24,8 +24,8 @@
             {% elif row.draft and row.draft.draft_file %}
                 <input
                     type="checkbox"
-                    name="selected_requirements"
-                    value="{{ row.requirement.id }}"
+                    name="selected_slots"
+                    value="{{ row.slot.id }}"
                     form="selection-form"
                     class="requirement-checkbox"
                     data-text-required="{{ row.requirement.text_extraction_enabled|yesno:'true,false' }}"
@@ -43,6 +43,7 @@
         <td class="font-bold">
             {{ forloop.counter }}.
             {{ row.requirement.requirement_title }}
+            {% if not row.requirement.is_required %}<span class="status-badge status-no-file">Optional</span>{% endif %}
             {% if row.requirement.validation_instructions %}
                 <details class="validation-details">
                     <summary>Required validation fields</summary>
@@ -52,7 +53,7 @@
         </td>
 
         <td>
-            {{ row.requirement.category }}
+            {{ row.slot.label }}
         </td>
 
         <td>
@@ -62,6 +63,7 @@
             <div class="text-sub">
                 {{ row.requirement.deadline|display_time:request.user }}
             </div>
+            {% if row.requirement.is_overdue %}<span class="status-badge status-inactive">Overdue</span>{% endif %}
         </td>
 
         {% if row.is_resubmission %}
@@ -91,7 +93,7 @@
                     </a>
                 {% else %}
                     <form
-                        action="{% url 'faculty_portal:attach_document' row.requirement.id %}"
+                        action="{% url 'faculty_portal:attach_document' row.slot.id %}"
                         method="post"
                         enctype="multipart/form-data"
                     >
@@ -99,13 +101,13 @@
                         <input
                             type="file"
                             name="draft_file"
-                            id="upload-file-{{ row.requirement.id }}"
+                            id="upload-file-{{ row.slot.id }}"
                             accept=".pdf,.docx,.xlsx"
                             hidden
                             onchange="this.form.requestSubmit()"
                         >
                         <label
-                            for="upload-file-{{ row.requirement.id }}"
+                            for="upload-file-{{ row.slot.id }}"
                             class="btn-outline-danger"
                         >
                             <img src="{% static 'images/upload.svg' %}" alt="" class="upload-button-icon">
@@ -193,7 +195,7 @@
 
             <td>
                 <form
-                    action="{% url 'faculty_portal:attach_document' row.requirement.id %}"
+                    action="{% url 'faculty_portal:attach_document' row.slot.id %}"
                     method="post"
                     enctype="multipart/form-data"
                 >
@@ -201,14 +203,14 @@
                     <input
                         type="file"
                         name="draft_file"
-                        id="upload-file-{{ row.requirement.id }}"
+                        id="upload-file-{{ row.slot.id }}"
                         accept=".pdf,.docx,.xlsx"
                         hidden
                         required
                         onchange="this.form.requestSubmit()"
                     >
                     <label
-                        for="upload-file-{{ row.requirement.id }}"
+                        for="upload-file-{{ row.slot.id }}"
                         class="btn-outline-danger"
                     >
                         <img src="{% static 'images/upload.svg' %}" alt="" class="upload-button-icon">

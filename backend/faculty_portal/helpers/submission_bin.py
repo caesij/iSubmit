@@ -28,9 +28,8 @@ from submissions.models import (
     DocumentRevision,
     DocumentSubmission,
     DraftUpload,
-    Requirement
+    UploadSlot
 )
-from submissions.helpers import get_faculty_assigned_requirements
 
 logger = logging.getLogger(__name__)
 User = get_user_model()
@@ -363,69 +362,37 @@ def retry_extraction(draft):
 # ---------------------------------------------------------------------------
 
 
-def get_available_requirements(user, requirement_ids=None):
-    purge_expired_drafts(user)
-
-    submitted_ids = (
-        DocumentSubmission.objects
+def get_available_slots(user, slot_ids=None):
+    slots = (
+        UploadSlot.objects.active()
         .filter(faculty=user)
-        .exclude(status=DocumentSubmission.SubmissionStatus.NEEDS_REVISION)
-        .values_list('requirement_id', flat=True)
-    )
-
-    requirements = get_faculty_assigned_requirements(user).filter(
-        deadline__gt=timezone.now()
-    ).exclude(id__in=submitted_ids)
-
-    if requirement_ids is not None:
-        requirements = requirements.filter(id__in=requirement_ids)
-
-    return list(requirements.order_by('deadline'))
-
-
-def purge_expired_drafts(user):
-    expired_drafts = list(
-        DraftUpload.objects
         .filter(
-            faculty=user,
-            requirement__deadline__lte=timezone.now(),
+            Q(submission__isnull=True)
+            | Q(submission__status=DocumentSubmission.SubmissionStatus.NEEDS_REVISION)
         )
-        .select_related('requirement')
+        .select_related('requirement__period', 'course', 'program')
     )
-
-    if not expired_drafts:
-        return
-
-    with transaction.atomic():
-        for draft in expired_drafts:
-            metadata = DocumentMetadata.objects.filter(draft=draft).first()
-            if metadata:
-                cancel_extraction(
-                    metadata.pk,
-                    metadata.text_extraction_request_id,
-                )
-                metadata.delete()
-
-            if draft.draft_file:
-                delete_file_after_commit(
-                    draft.draft_file.storage,
-                    draft.draft_file.name,
-                )
-            draft.delete()
+ 
+    if slot_ids is not None:
+        slots = slots.filter(id__in=slot_ids)
+ 
+    return list(slots.order_by(
+        'requirement__period__deadline', 'requirement__order', 'course__code', 'year_level', 'section'
+    ))
 
 
-def _load_drafts_with_metadata(user, requirements):
+def _load_drafts_with_metadata(user, slots):
     drafts = list(
         DraftUpload.objects
-        .filter(faculty=user, requirement__in=requirements)
+        .filter(faculty=user, slot__in=slots)
         .select_related('requirement')
     )
-
+ 
     metadata_by_draft = {
         m.draft_id: m
         for m in DocumentMetadata.objects.filter(draft_id__in=[d.pk for d in drafts])
     }
-
+ 
     for draft in drafts:
         if not draft.draft_file:
             DocumentMetadata.objects.filter(draft_id=draft.pk).delete()
@@ -440,35 +407,39 @@ def _load_drafts_with_metadata(user, requirements):
             schedule_extraction(metadata)
         else:
             schedule_validation(metadata)
+ 
+    return {d.slot_id: d for d in drafts}, metadata_by_draft
 
-    return {d.requirement_id: d for d in drafts}, metadata_by_draft
 
-
-def _load_needs_revision(user, requirements, include_history):
+def _load_needs_revision(user, slots, include_history):
     submissions = (
         DocumentSubmission.objects
         .filter(
             faculty=user,
-            requirement__in=requirements,
-            status=DocumentSubmission.SubmissionStatus.NEEDS_REVISION,
+            slot__in=slots,
+            status=DocumentSubmission.SubmissionStatus.NEEDS_REVISION
         )
         .select_related('requirement')
     )
+    
     if include_history:
         submissions = submissions.prefetch_related('revisions__reviews')
-    return {s.requirement_id: s for s in submissions}
+        
+    return {s.slot_id: s for s in submissions}
 
 
-def build_rows(user, requirements, include_history=True):
-    drafts, metadata_by_draft = _load_drafts_with_metadata(user, requirements)
-    returned = _load_needs_revision(user, requirements, include_history)
-
+def build_rows(user, slots, include_history=True):
+    drafts, metadata_by_draft = _load_drafts_with_metadata(user, slots)
+    returned = _load_needs_revision(user, slots, include_history)
+ 
     rows = []
-    for requirement in requirements:
-        draft = drafts.get(requirement.id)
-        submission = returned.get(requirement.id)
+    
+    for slot in slots:
+        draft = drafts.get(slot.id)
+        submission = returned.get(slot.id)
         rows.append({
-            'requirement': requirement,
+            'slot': slot,
+            'requirement': slot.requirement,
             'draft': draft,
             'metadata': metadata_by_draft.get(draft.pk) if draft else None,
             'submission': submission,
@@ -484,13 +455,14 @@ def build_rows(user, requirements, include_history=True):
                     == TextExtraction.FAILED
                     or is_extraction_stale(metadata_by_draft[draft.pk])
                 )
-            ),
+            )
         })
+        
     return rows
-
-
+ 
+ 
 def load_upload_rows(user):
-    return build_rows(user, get_available_requirements(user), include_history=False)
+    return build_rows(user, get_available_slots(user), include_history=False)
 
 
 # ---------------------------------------------------------------------------
@@ -591,7 +563,8 @@ def create_submissions(user, rows):
                 submission = DocumentSubmission.objects.create(
                     faculty=user,
                     requirement=row['requirement'],
-                    status=DocumentSubmission.SubmissionStatus.SUBMITTED,
+                    slot=row['slot'],
+                    status=DocumentSubmission.SubmissionStatus.SUBMITTED
                 )
                 _copy_draft_to_submission(draft, submission, original_name, save=True)
                 _transfer_metadata_to_submission(draft, submission, metadata)
@@ -603,40 +576,33 @@ def create_submissions(user, rows):
 
     return submissions
 
+
 def notify_if_faculty_completed_submissions(faculty_member):
-    active_requirements = get_faculty_assigned_requirements(faculty_member)
-
-    total_count = active_requirements.count()
-
+    owed = UploadSlot.objects.active().required().filter(faculty=faculty_member)
+ 
+    total_count = owed.count()
+ 
     if total_count == 0:
         return
-
+ 
     completed_count = (
-        DocumentSubmission.objects.filter(
-            faculty=faculty_member,
-            requirement__in=active_requirements,
-        )
-        .exclude(
-            status=DocumentSubmission.SubmissionStatus.NEEDS_REVISION
-        )
-        .values('requirement_id')
-        .distinct()
+        owed.filter(submission__isnull=False)
+        .exclude(submission__status=DocumentSubmission.SubmissionStatus.NEEDS_REVISION)
         .count()
     )
-
+ 
     if completed_count != total_count:
         return
-
+ 
     notify_roles(
         roles=[User.Role.ADMIN, User.Role.STAFF],
         notification_type=(NotificationPreference.NotificationType.SUBMISSION_NOTIFICATIONS),
         title='Completed Document Submission',
-        message=(
-            f'{faculty_member.get_full_name()} has submitted all required documents.'
-        ),
+        message=(f'{faculty_member.get_full_name()} has submitted all required documents.'),
         link=reverse('admin_staff_portal:faculty_submissions_list')
     )
-    
+
+
 def _send_submission_updates(user):
     try:
         refresh_admin_dashboard()
@@ -646,7 +612,7 @@ def _send_submission_updates(user):
         refresh_faculty_submission_bin(user)
     except Exception:
         logger.exception('Submission realtime update failed.')
-
+ 
     try:
         notify_if_faculty_completed_submissions(user)
     except Exception:
@@ -655,30 +621,33 @@ def _send_submission_updates(user):
 
 def process_submission(request):
     user = request.user
-
+ 
     posted_ids = {
         int(value)
-        for value in request.POST.getlist('selected_requirements')
+        for value in request.POST.getlist('selected_slots')
         if value.isdecimal()
     }
-
-    requirements = get_available_requirements(user, requirement_ids=posted_ids)
-
-    if not requirements:
+ 
+    slots = get_available_slots(user, slot_ids=posted_ids)
+ 
+    if not slots:
         messages.error(request, 'Please select at least one document to submit.')
+        
         return redirect(UPLOAD_PAGE)
-
-    rows = build_rows(user, requirements, include_history=False)
-
+ 
+    rows = build_rows(user, slots, include_history=False)
+ 
     if not all(row['is_ready'] for row in rows):
         messages.error(request, 'All selected documents must have an attached file.')
+        
         return redirect(UPLOAD_PAGE)
-
+ 
     block_reason = next(filter(None, map(_submission_block_reason, rows)), None)
+    
     if block_reason:
         messages.error(request, block_reason)
         return redirect(UPLOAD_PAGE)
-
+ 
     try:
         submissions = create_submissions(user, rows)
     except Exception:
@@ -687,11 +656,12 @@ def process_submission(request):
             request,
             'We could not submit your documents right now. Please try again.',
         )
+        
         return redirect(UPLOAD_PAGE)
-
-    request.session['recently_submitted_ids'] = [str(s.id) for s in submissions]        
+ 
+    request.session['recently_submitted_ids'] = [str(s.id) for s in submissions]
     transaction.on_commit(lambda: _send_submission_updates(user))
-
+ 
     messages.success(request, 'Selected documents submitted successfully.')
     return redirect('faculty_portal:submission_complete')
 

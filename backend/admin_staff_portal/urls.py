@@ -28,11 +28,10 @@ urlpatterns = [
     
     # Requirement Management (Submission Bin) URLs
     path('submissions/submission_bins/', views.requirements_list, name='requirements_list'),
-    path('submissions/submission_bins/bulk/', views.bulk_requirements_view, name='bulk_requirements'),
-    path('submissions/submission_bins/add/', views.add_requirement_to_bulk, name='add_requirement'),
-    path('submissions/submission_bins/bulk/delete/<int:index>/', views.delete_bulk_requirement, name='delete_bulk_requirement'),
-    path('submissions/submission_bins/bulk/post/', views.post_bulk_requirements, name='post_bulk_requirements'),
-    path('submissions/submission_bins/<int:requirement_id>/edit/', views.edit_requirement, name='edit_requirement'),
+    path('submissions/submission_bins/period/new/', views.period_editor, name='create_period'),
+    path('submissions/submission_bins/period/<int:period_id>/', views.period_detail, name='period_detail'),
+    path('submissions/submission_bins/period/<int:period_id>/edit/', views.period_editor, name='edit_period'),
+    path('submissions/submission_bins/period/<int:period_id>/toggle-status/', views.toggle_period_status, name='toggle_period_status'),
     path('submissions/submission_bins/<int:requirement_id>/toggle-status/', views.toggle_requirement_status, name='toggle_requirement_status'),
 
     # Faculty Submission URLs

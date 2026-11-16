@@ -1,409 +1,145 @@
-from django.shortcuts import render, redirect, get_object_or_404
-from django.views.decorators.http import require_http_methods
-from django.core.paginator import Paginator
-from django.contrib.auth import get_user_model
-from django.utils import timezone
 from django.contrib import messages
+from django.core.paginator import Paginator
 from django.db import transaction
+from django.db.models import Q
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
-from django.utils.dateparse import parse_datetime
+from django.utils import timezone
+from django.utils.http import url_has_allowed_host_and_scheme
+from django.views.decorators.http import require_http_methods
 
 from accounts.decorators import role_required, staff_permission_required
-from core.date_formatting import format_display_date, format_display_time
-from admin_staff_portal.realtime import refresh_admin_dashboard
-from admin_staff_portal.realtime import refresh_staff_dashboard
-from admin_staff_portal.realtime import refresh_submission_pages
-from notifications.services import create_notif
-from notifications.models import NotificationPreference
-
-from faculty_portal.realtime import (
-    refresh_faculty_dashboard,
-    refresh_faculty_submission_bin,
-    refresh_all_faculty_submission_bins
-)
-
-from submissions.models import Requirement
-
-from submissions.forms import RequirementForm
-from submissions.helpers import get_target_faculty_queryset
+from submissions.helpers import get_requirement_rows
+from submissions.models import Requirement, SubmissionPeriod
+from submissions.services import publish_updates, save_requirements
+from submissions.forms import PeriodForm, RequirementFormSet
+from submissions.slots import sync_upload_slots
 
 TEMPLATE_DIR = 'admin_staff_portal/core/submissions/submission_bin/'
+PERIODS_PER_PAGE = 10
 
-User = get_user_model()
 
+def manage_bins_only(view):
+    return role_required('ADMIN', 'STAFF')(staff_permission_required('manage_submission_bins')(view))
 
-@role_required('ADMIN', 'STAFF')
-@staff_permission_required('manage_submission_bins')
-@require_http_methods(['GET'])
-def bulk_requirements_view(request):
-    bulk_requirements = request.session.get('bulk_requirements', [])
 
-    display_requirements = []
-
-    assigned_labels = dict(Requirement.AssignedFacultyType.choices)
-    semester_labels = dict(Requirement.Semester.choices)
-    status_labels = dict(Requirement.ReqStatus.choices)
-
-    for index, item in enumerate(bulk_requirements):
-        display_item = item.copy()
-
-        deadline = parse_datetime(item.get('deadline', ''))
-
-        if deadline:
-            display_item['deadline_date'] = format_display_date(deadline, request.user)
-            display_item['deadline_time'] = format_display_time(deadline, request.user)
-        else:
-            display_item['deadline_date'] = ''
-            display_item['deadline_time'] = ''
-
-        display_item['assigned_faculty_type_display'] = (
-            assigned_labels.get(
-                item.get('assigned_faculty_type'),
-                'Selected faculty' if item.get('assigned_faculty_member_ids') else 'All Faculty',
-            )
-        )
-        if item.get('assigned_program_ids'):
-            display_item['assigned_faculty_type_display'] = 'Selected programs'
-
-        display_item['semester_display'] = (
-            semester_labels.get(
-                item.get('semester'),
-                item.get('semester', '')
-            )
-        )
-
-        display_item['status_display'] = (
-            status_labels.get(
-                item.get('status'),
-                item.get('status', '')
-            )
-        )
-        display_item['text_extraction_enabled'] = item.get('text_extraction_enabled', False)
-
-        display_item['index'] = index
-
-        display_requirements.append(display_item)
-
-    context = {'bulk_requirements': display_requirements,}
-
-    return render(
-        request,
-        f'{TEMPLATE_DIR}/bulk_requirements.html',
-        context
-    )
-
-
-@role_required('ADMIN', 'STAFF')
-@staff_permission_required('manage_submission_bins')
-@require_http_methods(['GET', 'POST'])
-def add_requirement_to_bulk(request):
-    if request.method == 'POST':
-        form = RequirementForm(request.POST)
-
-        if form.is_valid():
-            bulk_requirements = request.session.get('bulk_requirements', [])
-
-            requirement_title = (form.cleaned_data['requirement_title'])
-            academic_year = (form.cleaned_data['academic_year'])
-            semester = (form.cleaned_data['semester'])
-            validation_instructions = form.cleaned_data['validation_instructions']
-
-            staged_key = (
-                requirement_title.casefold(),
-                academic_year,
-                semester,
-                validation_instructions.casefold() if validation_instructions else '',
-            )
-
-            existing_keys = {
-                (
-                    item['requirement_title'].casefold(),
-                    item['academic_year'],
-                    item['semester'],
-                    item.get('validation_instructions', '').casefold(),
-                )
-                for item in bulk_requirements
-            }
-
-            if staged_key in existing_keys:
-                form.add_error(
-                    'requirement_title',
-                    'This requirement is already in the current list.'
-                )
-            else:
-                deadline = form.cleaned_data['deadline']
-
-                bulk_requirements.append({
-                    'requirement_title': requirement_title,
-                    'category': form.cleaned_data['category'],
-                    'assigned_faculty_type': form.cleaned_data['assigned_faculty_type'],
-                    'assigned_program_ids': [str(pk) for pk in form.cleaned_data['assigned_programs'].values_list('pk', flat=True)],
-                    'assigned_faculty_member_ids': [str(pk) for pk in form.cleaned_data['assigned_faculty_member'].values_list('pk', flat=True)],
-                    'academic_year': academic_year,
-                    'semester': semester,
-                    'status': form.cleaned_data['status'],
-                    'deadline': deadline.strftime('%Y-%m-%dT%H:%M'),
-                    'text_extraction_enabled': form.cleaned_data['text_extraction_enabled'],
-                    'validation_enabled': form.cleaned_data['validation_enabled'],
-                    'validation_instructions': validation_instructions,
-                })
-
-                request.session['bulk_requirements'] = (bulk_requirements)
-                request.session.modified = True
-
-                return redirect('admin_staff_portal:bulk_requirements')
-    else:
-        form = RequirementForm()
-
-    context = {'form': form}
-
-    return render(
-        request,
-        f'{TEMPLATE_DIR}/requirement_forms.html',
-        context
-    )
-
-
-@role_required('ADMIN', 'STAFF')
-@staff_permission_required('manage_submission_bins')
-@require_http_methods(['POST'])
-def delete_bulk_requirement(request, index):
-    bulk_requirements = request.session.get('bulk_requirements', [])
-
-    if 0 <= index < len(bulk_requirements):
-        bulk_requirements.pop(index)
-        request.session['bulk_requirements'] = bulk_requirements
-        request.session.modified = True
-
-    return redirect('admin_staff_portal:bulk_requirements')
-
-
-@role_required('ADMIN', 'STAFF')
-@staff_permission_required('manage_submission_bins')
-@require_http_methods(['POST'])
-def post_bulk_requirements(request):
-    bulk_requirements = request.session.get('bulk_requirements', [])
-
-    if not bulk_requirements:
-        messages.error(request, 'There are no requirements waiting to be posted.')
-        return redirect('admin_staff_portal:bulk_requirements')
-
-    try:
-        with transaction.atomic():
-            created_requirements = []
-
-            for item in bulk_requirements:
-                form = RequirementForm(data={
-                    'requirement_title': item['requirement_title'],
-                    'category': item['category'],
-                    'assigned_faculty_type': item.get('assigned_faculty_type'),
-                    'assigned_programs': item.get('assigned_program_ids', []),
-                    'assigned_faculty_member': item.get('assigned_faculty_member_ids', []),
-                    'academic_year': item['academic_year'],
-                    'semester': item['semester'],
-                    'status': item['status'],
-                    'deadline': item['deadline'],
-                    'text_extraction_enabled': item.get('text_extraction_enabled', False),
-                    'validation_enabled': item.get('validation_enabled', False),
-                    'validation_instructions': item.get('validation_instructions', ''),
-                })
-
-                if not form.is_valid():
-                    raise ValueError('One or more staged requirements are invalid.')
-
-                requirement = form.save()
-                created_requirements.append(requirement)
-
-            active_requirements = [
-                requirement
-                for requirement in created_requirements
-                if requirement.status == Requirement.ReqStatus.ACTIVE
-            ]
-
-            def publish_bulk_updates():
-                try:
-                    refresh_admin_dashboard()
-                    refresh_staff_dashboard()
-                    refresh_submission_pages()
-
-                    if not active_requirements:
-                        return
-
-                    faculty_users = User.objects.filter(role=User.Role.FACULTY, is_active=True)
-
-                    for faculty_member in faculty_users:
-                        matching_requirements = [
-                            requirement
-                            for requirement in active_requirements
-                            if faculty_member in get_target_faculty_queryset(requirement)
-                        ]
-
-                        if not matching_requirements:
-                            continue
-
-                        refresh_faculty_dashboard(faculty_member)
-                        refresh_faculty_submission_bin(faculty_member)
-
-                        titles = '\n'.join(
-                            (
-                                f"• {requirement.requirement_title} — "
-                                f"Deadline: "
-                                f"{format_display_date(requirement.deadline, faculty_member)}"
-                                if requirement.deadline
-                                else f"• {requirement.requirement_title} — No deadline set"
-                            )
-                            for requirement in matching_requirements
-                        )
-
-                        create_notif(
-                            user=faculty_member,
-                            notification_type=(NotificationPreference.NotificationType.SYSTEM_NOTIFICATIONS),
-                            title='New Submission Requirements',
-                            message=(
-                                f'{len(matching_requirements)} new '
-                                f'submission requirement(s) have been '
-                                f'posted:\n\n'
-                                f'{titles}'
-                            ),
-                            link=reverse('faculty_portal:upload_files')
-                        )
-
-                except Exception as e:
-                    print('BULK REQUIREMENT REALTIME ERROR:', repr(e))
-
-            transaction.on_commit(publish_bulk_updates)
-
-        request.session.pop('bulk_requirements', None)
-        request.session.modified = True
-
-        messages.success(
-            request,
-            f'{len(created_requirements)} requirement(s) posted successfully.'
-        )
-
-        return redirect('admin_staff_portal:requirements_list')
-
-    except Exception as e:
-        print('BULK REQUIREMENT ERROR:', repr(e))
-
-        messages.error(
-            request,
-            'We could not post these requirements. Please review the staged entries and try again.'
-        )
-
-        return redirect('admin_staff_portal:bulk_requirements')
-
-
-@role_required('ADMIN', 'STAFF')
-@staff_permission_required('manage_submission_bins')
-@require_http_methods(['GET', 'POST'])
-def edit_requirement(request, requirement_id):
-    requirement = get_object_or_404(Requirement, pk=requirement_id)
-
-    if request.method == 'POST':
-        form = RequirementForm(request.POST, instance=requirement)
-
-        if form.is_valid():
-            requirement = form.save()
-
-            refresh_admin_dashboard()
-            refresh_staff_dashboard()
-            refresh_submission_pages()
-            refresh_all_faculty_submission_bins()
-
-            refresh_all_faculty_submission_bins()
-
-            return redirect('admin_staff_portal:requirements_list')
-    else:
-        form = RequirementForm(instance=requirement)
-
-    context = {
-        'form': form,
-        'requirement': requirement,
-    }
-
-    return render(
-        request,
-        f'{TEMPLATE_DIR}/requirement_forms.html',
-        context
-    )
-
-
+# List of all submission periods
 @role_required('ADMIN', 'STAFF')
 @require_http_methods(['GET'])
 def requirements_list(request):
-    requirements = Requirement.objects.all().order_by('-deadline')
+    periods = SubmissionPeriod.objects.with_progress()
 
     query = request.GET.get('q')
-    category = request.GET.get('category')
-    assigned_faculty_type = request.GET.get('assigned_faculty_type')
     semester = request.GET.get('semester')
     academic_year = request.GET.get('academic_year')
 
     if query:
-        requirements = requirements.filter(requirement_title__icontains=query)
-    if category:
-        requirements = requirements.filter(category=category)
-    if assigned_faculty_type:
-        requirements = requirements.filter(assigned_faculty_type=assigned_faculty_type)
+        matching_requirements = Requirement.objects.filter(requirement_title__icontains=query)
+        periods = periods.filter(
+            Q(academic_year__icontains=query) | Q(pk__in=matching_requirements.values('period'))
+        )
     if semester:
-        requirements = requirements.filter(semester=semester)
+        periods = periods.filter(semester=semester)
     if academic_year:
-        requirements = requirements.filter(academic_year=f'A.Y. {academic_year}')
+        periods = periods.filter(academic_year=academic_year)
 
-    paginator = Paginator(requirements, 7)
-    page_obj = paginator.get_page(request.GET.get('page'))
+    page_obj = Paginator(periods, PERIODS_PER_PAGE).get_page(request.GET.get('page'))
+
+    filters = request.GET.copy()
+    filters.pop('page', None)
 
     context = {
-        'requirements': page_obj,
+        'periods': page_obj,
         'page_obj': page_obj,
         'is_paginated': page_obj.has_other_pages(),
-        'categories': Requirement.objects.values_list('category', flat=True).distinct(),
-        'assigned_faculty_type_choices': [
-            c for c in Requirement.AssignedFacultyType.choices if c[0] != 'ALL'
-        ],
-        'academic_years': [
-            year.replace('A.Y. ', '')
-            for year in Requirement.objects.values_list('academic_year', flat=True).distinct().order_by('-academic_year')
-        ],
+        'query_string': filters.urlencode(),
+        'semester_choices': SubmissionPeriod.Semester.choices,
+        'academic_years': SubmissionPeriod.objects.values_list('academic_year', flat=True).distinct().order_by('-academic_year'),
     }
 
-    return render(
-        request,
-        f'{TEMPLATE_DIR}/requirements_list.html',
-        context
-    )
+    return render(request, TEMPLATE_DIR + 'requirements_list.html', context)
 
 
+# List of every requirement
 @role_required('ADMIN', 'STAFF')
-@staff_permission_required('manage_submission_bins')
+@require_http_methods(['GET'])
+def period_detail(request, period_id):
+    period = get_object_or_404(SubmissionPeriod.objects.with_progress(), pk=period_id)
+
+    context = {
+        'period': period,
+        'requirements': period.requirements.with_progress(),
+    }
+
+    return render(request, TEMPLATE_DIR + 'period_detail.html', context)
+
+
+@manage_bins_only
+@require_http_methods(['GET', 'POST'])
+def period_editor(request, period_id=None):
+    # Create or edit a submission period
+    period = get_object_or_404(SubmissionPeriod, pk=period_id) if period_id else None
+    posted = request.POST or None
+
+    period_form = PeriodForm(posted, instance=period)
+    formset = RequirementFormSet(posted, initial=get_requirement_rows(period))
+
+    if request.method == 'POST' and all([period_form.is_valid(), formset.is_valid()]):
+        is_new = period is None
+        deadline_changed = 'deadline' in period_form.changed_data
+        notice = 'created' if is_new else 'deadline_changed' if deadline_changed else None
+
+        with transaction.atomic():
+            period = period_form.save(commit=False)
+            if is_new:
+                period.created_by = request.user
+            period.save()
+
+            save_requirements(period, formset.cleaned_data)
+            sync_upload_slots(period)
+            transaction.on_commit(lambda: publish_updates(period, notice))
+
+        messages.success(request, f'{period} saved.')
+        if period.deadline < timezone.now():
+            messages.warning(request, 'This deadline has already passed. Faculty will see the requirements as overdue.')
+
+        return redirect('admin_staff_portal:period_detail', period_id=period.pk)
+
+    context = {
+        'period': period,
+        'period_form': period_form,
+        'formset': formset,
+    }
+
+    return render(request, TEMPLATE_DIR + 'period_editor.html', context)
+
+
+def _toggle_status(request, model, pk, message):
+    with transaction.atomic():
+        obj = get_object_or_404(model.objects.select_for_update(), pk=pk)
+        obj.toggle_status()
+        transaction.on_commit(publish_updates)
+
+    messages.success(request, message)
+    return obj
+
+
+def _redirect_back(request, fallback_url):
+    next_url = request.POST.get('next', '')
+    if url_has_allowed_host_and_scheme(next_url, allowed_hosts={request.get_host()}):
+        return redirect(next_url)
+    return redirect(fallback_url)
+
+
+@manage_bins_only
+@require_http_methods(['POST'])
+def toggle_period_status(request, period_id):
+    _toggle_status(request, SubmissionPeriod, period_id, 'Period status updated.')
+    return _redirect_back(request, reverse('admin_staff_portal:requirements_list'))
+
+
+@manage_bins_only
 @require_http_methods(['POST'])
 def toggle_requirement_status(request, requirement_id):
-    with transaction.atomic():
-        requirement = get_object_or_404(
-            Requirement.objects.select_for_update(),
-            pk=requirement_id,
-        )
-        requirement.status = (
-            Requirement.ReqStatus.INACTIVE
-            if requirement.status == Requirement.ReqStatus.ACTIVE
-            else Requirement.ReqStatus.ACTIVE
-        )
-        requirement.save(update_fields=['status', 'updated_at'])
-
-        faculty_qs = User.objects.filter(role=User.Role.FACULTY)
-        faculty_qs = get_target_faculty_queryset(requirement)
-
-        def publish_requirement_updates():
-            refresh_admin_dashboard()
-            refresh_staff_dashboard()
-            refresh_submission_pages({'requirement_id': str(requirement.id)})
-            refresh_all_faculty_submission_bins()
-            for faculty_member in faculty_qs:
-                refresh_faculty_dashboard(faculty_member)
-
-        transaction.on_commit(publish_requirement_updates)
-
-    messages.success(request, 'Requirement status updated.')
-
-    return redirect('admin_staff_portal:requirements_list')
+    requirement = _toggle_status(request, Requirement, requirement_id, 'Requirement status updated.')
+    return _redirect_back(request, reverse('admin_staff_portal:period_detail', args=[requirement.period_id]))

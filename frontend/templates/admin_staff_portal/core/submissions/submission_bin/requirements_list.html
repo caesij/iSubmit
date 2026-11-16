@@ -1,13 +1,18 @@
 {% extends 'admin_staff_portal/base.html' %}
-{% block css_modules %}submissions{% endblock %}
-{% load static %}
+{% load static core_extras %}
 
 {% block title %}Submissions - iSubmit{% endblock %}
 {% block heading %}Submissions{% endblock %}
 {% block subtitle %}Manage and access all approved documents across the system.{% endblock %}
 
 {% block extra_css %}
-
+<link rel="stylesheet" href="{% static 'css/pages/submissions.css' %}">
+<style>
+    .clickable-row { cursor: pointer; }
+    .clickable-row:hover { background: #fafafa; }
+    .period-name { color: inherit; font-weight: 700; text-decoration: none; }
+    .period-name:hover { text-decoration: underline; }
+</style>
 {% endblock %}
 
 {% block content %}
@@ -15,105 +20,43 @@
 
     <!-- Tabs -->
     <div class="tab-nav">
-        <a
-            href="{% url 'admin_staff_portal:requirements_list' %}"
-            class="tab-link {% if request.resolver_match.url_name == 'requirements_list' %}active{% endif %}"
-        >
-            Submission Bin
-        </a>
-
-        <a
-            href="{% url 'admin_staff_portal:faculty_submissions_list' %}"
-            class="tab-link {% if request.resolver_match.url_name == 'faculty_submissions_list' %}active{% endif %}"
-        >
-            Faculty Submission
-        </a>
+        <a href="{% url 'admin_staff_portal:requirements_list' %}" class="tab-link active">Submission Bin</a>
+        <a href="{% url 'admin_staff_portal:faculty_submissions_list' %}" class="tab-link">Faculty Submission</a>
     </div>
 
 
     <!-- Filters -->
     <div class="filter-card">
-        <form
-            method="GET"
-            action="{% url 'admin_staff_portal:requirements_list' %}"
-            class="filter-form"
-        >
+        <form method="GET" action="{% url 'admin_staff_portal:requirements_list' %}" class="filter-form">
             <span class="search-icon">
                 <img src="{% static 'images/search.svg' %}" alt="Search">
             </span>
 
             <div class="search-input-wrap">
-                <input
-                    type="text"
-                    name="q"
-                    value="{{ request.GET.q|default:'' }}"
-                    placeholder="Search requirements, documents, or submissions..."
-                >
-            </div>
-
-            <div class="select-wrap">
-                <label>Category</label>
-
-                <select name="category" onchange="this.form.submit()">
-                    <option value="">All Category</option>
-
-                    {% for cat in categories %}
-                        <option value="{{ cat }}" {% if request.GET.category == cat %}selected{% endif %}>
-                            {{ cat }}
-                        </option>
-                    {% endfor %}
-                </select>
-            </div>
-
-            <div class="select-wrap">
-                <label>Assigned Faculty Type</label>
-
-                <select name="assigned_faculty_type" onchange="this.form.submit()">
-                    <option value="">All Faculties</option>
-
-                    {% for value, label in assigned_faculty_type_choices %}
-                        <option value="{{ value }}" {% if request.GET.assigned_faculty_type == value %}selected{% endif %}>
-                            {{ label }}
-                        </option>
-                    {% endfor %}
-                </select>
+                <input type="text" name="q" value="{{ request.GET.q|default:'' }}" placeholder="Search by academic year or requirement...">
             </div>
 
             <div class="select-wrap">
                 <label>Semester</label>
-
                 <select name="semester" onchange="this.form.submit()">
                     <option value="">All Semesters</option>
-
-                    <option value="FIRST_SEM" {% if request.GET.semester == 'FIRST_SEM' %}selected{% endif %}>
-                        First Semester
-                    </option>
-
-                    <option value="SECOND_SEM" {% if request.GET.semester == 'SECOND_SEM' %}selected{% endif %}>
-                        Second Semester
-                    </option>
-
-                    <option value="SUMMER" {% if request.GET.semester == 'SUMMER' %}selected{% endif %}>
-                        Summer
-                    </option>
+                    {% for value, label in semester_choices %}
+                        <option value="{{ value }}" {% if request.GET.semester == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
                 </select>
             </div>
 
             <div class="select-wrap">
                 <label>Academic Year</label>
-
                 <select name="academic_year" onchange="this.form.submit()">
                     <option value="">All Years</option>
-
                     {% for year in academic_years %}
-                        <option value="{{ year }}" {% if request.GET.academic_year == year %}selected{% endif %}>
-                            {{ year }}
-                        </option>
+                        <option value="{{ year }}" {% if request.GET.academic_year == year %}selected{% endif %}>{{ year }}</option>
                     {% endfor %}
                 </select>
             </div>
 
-            {% if request.GET.q or request.GET.category or request.GET.assigned_faculty_type or request.GET.semester or request.GET.academic_year %}
+            {% if request.GET.q or request.GET.semester or request.GET.academic_year %}
                 <a href="{% url 'admin_staff_portal:requirements_list' %}" class="btn-clear">
                     <img src="{% static 'images/Clear Filters.svg' %}" alt="">
                     Clear Filters
@@ -125,73 +68,102 @@
 
     <!-- Actions -->
     <div class="submission-actions">
-        <a href="{% url 'admin_staff_portal:bulk_requirements' %}" class="btn-add-bin">
+        <a href="{% url 'admin_staff_portal:create_period' %}" class="btn-add-bin">
             <span class="plus-icon">+</span>
-            Add Bin
+            Post Requirements
         </a>
     </div>
 
 
-    <!-- Requirements table -->
+    <!-- One row per period. Click a row to see its requirements. -->
     <div class="table-card requirements-table-card">
         <table class="data-table">
             <thead>
                 <tr>
-                    <th class="select-column">
-                        <input type="checkbox" aria-label="Select all requirement bins">
-                    </th>
-                    <th>Bin Title</th>
-                    <th>Category</th>
-                    <th>Assigned To</th>
                     <th>Academic Term</th>
                     <th>Deadline</th>
+                    <th>Requirements</th>
                     <th>Completion Progress</th>
                     <th>Status</th>
-                    <th>Text Extraction</th>
                     <th class="action-heading">Action</th>
                 </tr>
             </thead>
 
             <tbody data-live-container="requirements-table">
-                {% for req in requirements %}
-                    {% include 'admin_staff_portal/core/submissions/submission_bin/_requirement_row.html' %}
+                {% for period in periods %}
+                    <tr class="clickable-row" data-href="{% url 'admin_staff_portal:period_detail' period.id %}">
+                        <td>
+                            <a href="{% url 'admin_staff_portal:period_detail' period.id %}" class="period-name">{{ period.academic_year_display }}</a>
+                            <div class="text-sub">{{ period.get_semester_display }}</div>
+                        </td>
+
+                        <td>
+                            <div>{{ period.deadline|display_date:request.user }}</div>
+                            <div class="text-sub">{{ period.deadline|display_time:request.user }}</div>
+                        </td>
+
+                        <td>{{ period.requirement_count }} requirement{{ period.requirement_count|pluralize }}</td>
+
+                        <td>
+                            <div class="progress-wrap">
+                                <span>{{ period.completion_progress }}%</span>
+                            </div>
+                        </td>
+
+                        <td>
+                            <span class="status-badge {% if period.is_active %}status-active{% else %}status-inactive{% endif %}">
+                                {{ period.get_status_display }}
+                            </span>
+                        </td>
+
+                        <td class="action-cell">
+                            <div class="dropdown">
+                                <button type="button" class="btn-icon" aria-label="Actions" aria-expanded="false">⋮</button>
+
+                                <div class="dropdown-menu">
+                                    <a href="{% url 'admin_staff_portal:period_detail' period.id %}">View Requirements</a>
+                                    <a href="{% url 'admin_staff_portal:edit_period' period.id %}">Edit Period</a>
+
+                                    <form action="{% url 'admin_staff_portal:toggle_period_status' period.id %}" method="POST">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                                        <button type="submit">{% if period.is_active %}Deactivate{% else %}Activate{% endif %}</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
                 {% empty %}
                     <tr>
-                        <td colspan="10" class="text-center py-4">No requirement bins found.</td>
+                        <td colspan="6" class="text-center py-4">No submission periods found.</td>
                     </tr>
                 {% endfor %}
             </tbody>
         </table>
-
-
     </div>
+
 
     <!-- Pagination -->
     {% if is_paginated or page_obj %}
         <div class="pagination-footer requirements-pagination" data-live-container="requirements-pagination">
             <span class="pagination-info">
                 Showing {{ page_obj.start_index }} to {{ page_obj.end_index }}
-                of {{ page_obj.paginator.count }} documents
+                of {{ page_obj.paginator.count }} periods
             </span>
 
             <div class="pagination-controls">
                 {% if page_obj.has_previous %}
-                    <a href="?page={{ page_obj.previous_page_number }}" class="page-btn">&lt;</a>
+                    <a href="?page={{ page_obj.previous_page_number }}&{{ query_string }}" class="page-btn">&lt;</a>
                 {% else %}
                     <span class="page-btn page-btn-disabled" aria-disabled="true">&lt;</span>
                 {% endif %}
 
                 {% for page_num in page_obj.paginator.page_range %}
-                    <a
-                        href="?page={{ page_num }}"
-                        class="page-btn {% if page_obj.number == page_num %}active{% endif %}"
-                    >
-                        {{ page_num }}
-                    </a>
+                    <a href="?page={{ page_num }}&{{ query_string }}" class="page-btn {% if page_obj.number == page_num %}active{% endif %}">{{ page_num }}</a>
                 {% endfor %}
 
                 {% if page_obj.has_next %}
-                    <a href="?page={{ page_obj.next_page_number }}" class="page-btn">&gt;</a>
+                    <a href="?page={{ page_obj.next_page_number }}&{{ query_string }}" class="page-btn">&gt;</a>
                 {% else %}
                     <span class="page-btn page-btn-disabled" aria-disabled="true">&gt;</span>
                 {% endif %}
@@ -203,39 +175,36 @@
 
 
 <script>
+    // Clicking anywhere on a row (except its links and buttons) opens the period.
+    document.addEventListener("click", function (event) {
+        const row = event.target.closest("tr[data-href]");
+
+        if (row && !event.target.closest("a, button, form, .dropdown")) {
+            window.location.href = row.dataset.href;
+        }
+    });
+
     document.addEventListener("click", function (event) {
         const trigger = event.target.closest(".dropdown .btn-icon");
         const openMenus = document.querySelectorAll(".dropdown-menu.show");
 
+        function closeMenu(menu) {
+            menu.classList.remove("show");
+            menu.closest(".dropdown").querySelector(".btn-icon").setAttribute("aria-expanded", "false");
+        }
+
         if (trigger) {
-            const dropdown = trigger.closest(".dropdown");
-            const menu = dropdown.querySelector(".dropdown-menu");
+            const menu = trigger.closest(".dropdown").querySelector(".dropdown-menu");
             const shouldOpen = !menu.classList.contains("show");
 
-            openMenus.forEach(function (openMenu) {
-                openMenu.classList.remove("show");
-
-                openMenu
-                    .closest(".dropdown")
-                    .querySelector(".btn-icon")
-                    .setAttribute("aria-expanded", "false");
-            });
-
+            openMenus.forEach(closeMenu);
             menu.classList.toggle("show", shouldOpen);
             trigger.setAttribute("aria-expanded", String(shouldOpen));
-
             return;
         }
 
         if (!event.target.closest(".dropdown")) {
-            openMenus.forEach(function (openMenu) {
-                openMenu.classList.remove("show");
-
-                openMenu
-                    .closest(".dropdown")
-                    .querySelector(".btn-icon")
-                    .setAttribute("aria-expanded", "false");
-            });
+            openMenus.forEach(closeMenu);
         }
     });
 </script>

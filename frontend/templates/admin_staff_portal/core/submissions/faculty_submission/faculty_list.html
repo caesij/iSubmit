@@ -37,10 +37,10 @@
 
             <div class="select-wrap">
                 <label>Completion</label>
-                <select name="category" onchange="this.form.submit()">
+                <select name="completion" onchange="this.form.submit()">
                     <option value="">All</option>
-                    {% for category in categories %}
-                        <option value="{{ category }}" {% if request.GET.category == category %}selected{% endif %}>{{ category }}</option>
+                    {% for value, label in completion_choices %}
+                        <option value="{{ value }}" {% if request.GET.completion == value %}selected{% endif %}>{{ label }}</option>
                     {% endfor %}
                 </select>
             </div>
@@ -80,20 +80,20 @@
                         <td>
                             <div class="faculty-cell">
                                 <div class="faculty-avatar">
-                                    {% if row.faculty.profile_picture %}
-                                        <img src="{{ row.faculty.profile_picture.url }}" alt="{{ row.faculty.get_full_name }} profile photo">
+                                    {% if row.profile_picture %}
+                                        <img src="{{ row.profile_picture.url }}" alt="{{ row.get_full_name }} profile photo">
                                     {% else %}
                                         <img src="{% static 'images/default profile.jpg' %}" alt="Default profile photo">
                                     {% endif %}
                                 </div>
                                 <div>
-                                    <div class="font-bold">{{ row.faculty.get_full_name }}</div>
-                                    <div class="text-sub">{{ row.faculty.email }}</div>
+                                    <div class="font-bold">{{ row.get_full_name }}</div>
+                                    <div class="text-sub">{{ row.email }}</div>
                                 </div>
                             </div>
                         </td>
                         <td>
-                            <span class="faculty-type-badge">{{ row.faculty.get_faculty_type_display }}</span>
+                            <span class="faculty-type-badge">{{ row.get_faculty_type_display }}</span>
                         </td>
                         <td>
                             {{ row.submitted_count }} of {{ row.total_count }} Documents
@@ -108,15 +108,15 @@
                             {% endif %}
                         </td>
                         <td>
-                            {% if row.latest_submission %}
-                                <div>                                                                {{ row.latest_submission.initially_submitted_at|display_date:request.user }}</div>
-                                <div class="text-sub">                                                                {{ row.latest_submission.initially_submitted_at|display_time:request.user }}</div>
+                            {% if row.latest_submitted_at %}
+                                <div>{{ row.latest_submitted_at|display_date:request.user }}</div>
+                                <div class="text-sub">{{ row.latest_submitted_at|display_time:request.user }}</div>
                             {% else %}
                                 <span class="text-sub">No Submissions</span>
                             {% endif %}
                         </td>
                         <td class="action-cell">
-                            <a href="{% url 'admin_staff_portal:faculty_submission_bins_view' row.faculty.id %}" class="view-bins-link">View Bins <span aria-hidden="true">&rarr;</span></a>
+                            <a href="{% url 'admin_staff_portal:faculty_submission_bins_view' row.id %}" class="view-bins-link">View Bins <span aria-hidden="true">&rarr;</span></a>
                         </td>
                     </tr>
                 {% empty %}
@@ -133,15 +133,15 @@
             <span class="pagination-info">Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }} faculty members</span>
             <div class="pagination-controls">
                 {% if page_obj.has_previous %}
-                    <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.faculty_type %}&faculty_type={{ request.GET.faculty_type }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}" class="page-btn">&lt;</a>
+                    <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.faculty_type %}&faculty_type={{ request.GET.faculty_type }}{% endif %}{% if request.GET.completion %}&completion={{ request.GET.completion }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}" class="page-btn">&lt;</a>
                 {% else %}
                     <span class="page-btn page-btn-disabled" aria-disabled="true">&lt;</span>
                 {% endif %}
                 {% for page_num in page_obj.paginator.page_range %}
-                    <a href="?page={{ page_num }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.faculty_type %}&faculty_type={{ request.GET.faculty_type }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}" class="page-btn {% if page_obj.number == page_num %}active{% endif %}">{{ page_num }}</a>
+                    <a href="?page={{ page_num }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.faculty_type %}&faculty_type={{ request.GET.faculty_type }}{% endif %}{% if request.GET.completion %}&completion={{ request.GET.completion }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}" class="page-btn {% if page_obj.number == page_num %}active{% endif %}">{{ page_num }}</a>
                 {% endfor %}
                 {% if page_obj.has_next %}
-                    <a href="?page={{ page_obj.next_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.faculty_type %}&faculty_type={{ request.GET.faculty_type }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}" class="page-btn">&gt;</a>
+                    <a href="?page={{ page_obj.next_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.faculty_type %}&faculty_type={{ request.GET.faculty_type }}{% endif %}{% if request.GET.completion %}&completion={{ request.GET.completion }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}" class="page-btn">&gt;</a>
                 {% else %}
                     <span class="page-btn page-btn-disabled" aria-disabled="true">&gt;</span>
                 {% endif %}

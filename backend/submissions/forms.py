@@ -1,163 +1,158 @@
 import os
-import datetime
 from django import forms
+from django.forms import BaseFormSet, formset_factory
+from django.utils import timezone
 from django.core.exceptions import ValidationError
 from django.contrib.auth import get_user_model
+from collections import Counter
 
-from submissions.models import Requirement, DraftUpload, DocumentReview
+from submissions.models import SubmissionPeriod, DraftUpload, DocumentReview
 
 User = get_user_model()
 
 ALLOWED_EXTENSIONS = {'.pdf', '.docx', '.xlsx'}
 MAX_UPLOAD_SIZE = 10 * 1024 * 1024
 
-def _academic_year_choices():
-    current_year = datetime.date.today().year
-    return [
-        (f'{y}-{y + 1}', f'{y}-{y + 1}')
-        for y in range(current_year - 1, current_year + 6)
-    ]
+from collections import Counter
 
-class RequirementForm(forms.ModelForm):
-    academic_year = forms.ChoiceField(choices=_academic_year_choices, label="Academic Year")
+from django import forms
+from django.core.exceptions import ValidationError
+from django.forms import BaseFormSet, formset_factory
+from django.utils import timezone
+
+from submissions.models import Requirement, SubmissionPeriod
+
+LOCKED_FIELDS = ('unit', 'applies_to', 'text_extraction_enabled', 'validation_enabled', 'validation_instructions')
+
+
+def current_academic_start_year():
+    today = timezone.localdate()
+    return today.year if today.month >= 6 else today.year - 1
+
+
+def academic_year_choices():
+    start = current_academic_start_year()
+    return [(f'{year}-{year + 1}', f'{year}-{year + 1}') for year in range(start - 1, start + 4)]
+
+
+class PeriodForm(forms.ModelForm):
+    academic_year = forms.ChoiceField(choices=academic_year_choices, label='Academic Year')
 
     class Meta:
-        model = Requirement
-        fields = [
-            'requirement_title',
-            'category',
-            'assigned_faculty_type',
-            'assigned_programs',
-            'assigned_faculty_member',
-            'academic_year',
-            'semester',
-            'status',
-            'deadline',
-            'text_extraction_enabled',
-            'validation_enabled',
-            'validation_instructions'
-        ]
-
+        model = SubmissionPeriod
+        fields = ['academic_year', 'semester', 'deadline']
         widgets = {
             'deadline': forms.DateTimeInput(
                 attrs={'type': 'datetime-local'},
                 format='%Y-%m-%dT%H:%M'
             ),
-            'text_extraction_enabled': forms.CheckboxInput,
-        }
-
-        error_messages = {
-            'unique_together': 'A requirement with this title already exists for the selected academic year and semester.'
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['validation_enabled'].label = 'Enable NLP validation'
-        self.fields['text_extraction_enabled'].label = 'Enable text extraction'
-        self.fields['validation_instructions'].label = 'Required validation fields'
-        self.fields['validation_instructions'].help_text = ('One per line using only: Field name: required')
         self.fields['deadline'].input_formats = ['%Y-%m-%dT%H:%M']
-        self.fields['requirement_title'].label = 'Requirement Title'
-        faculty_field = self.fields['assigned_faculty_member']
-        faculty_field.queryset = User.objects.filter(role=User.Role.FACULTY, is_active=True).order_by('last_name', 'first_name')
-        faculty_field.label_from_instance = lambda user: user.get_full_name()
-        self.fields['category'].widget.attrs['placeholder'] = 'Category'
-        self.fields['requirement_title'].widget.attrs['placeholder'] = 'Requirement Title'
 
-        if self.instance and self.instance.pk and self.instance.academic_year:
-            parsed = self._parse_academic_year(self.instance.academic_year)
-            if parsed:
-                start_year, end_year = parsed
-                self.fields['academic_year'].initial = f'{start_year}-{end_year}'
+        if self.instance.pk:
+            del self.fields['academic_year'], self.fields['semester']
+        else:
+            start = current_academic_start_year()
+            self.fields['academic_year'].initial = f'{start}-{start + 1}'
 
-    @staticmethod
-    def _parse_academic_year(value):
-        try:
-            years_part = value.replace('A.Y.', '').strip()
-            start_str, end_str = years_part.split('-')
-            return int(start_str.strip()), int(end_str.strip())
-        except (ValueError, AttributeError):
-            return None
+    def clean_deadline(self):
+        deadline = self.cleaned_data['deadline']
+        if not self.instance.pk and deadline <= timezone.now():
+            raise ValidationError('The deadline must be in the future.')
+        return deadline
+
+class RequirementRowForm(forms.Form):
+    use_required_attribute = False
+
+    id = forms.IntegerField(required=False, widget=forms.HiddenInput)
+    include = forms.BooleanField(required=False, initial=True)
+    
+    requirement_title = forms.CharField(
+        max_length=255,
+        label='Requirement Title',
+        widget=forms.TextInput(attrs={'placeholder': 'Requirement title'}),
+    )
+    
+    is_required = forms.BooleanField(required=False, initial=True, label='Required')
+    
+    unit = forms.ChoiceField(
+        choices=Requirement.Unit.choices,
+        initial=Requirement.Unit.PER_YEAR_LEVEL,
+        label='Uploads owed',
+    )
+    
+    applies_to = forms.ChoiceField(
+        choices=Requirement.AppliesTo.choices,
+        initial=Requirement.AppliesTo.ALL,
+        label='Applies to',
+    )
+    
+    text_extraction_enabled = forms.BooleanField(required=False, label='Enable text extraction')
+    validation_enabled = forms.BooleanField(required=False, label='Enable NLP validation')
+    validation_instructions = forms.CharField(
+        required=False,
+        label='Required validation fields',
+        help_text='One per line using only: Field name: required',
+        widget=forms.Textarea(attrs={'rows': 3}),
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.empty_permitted = True
+
+        self.locked = bool(self.initial.get('locked'))
+        if self.locked:
+            for name in LOCKED_FIELDS:
+                self.fields[name].disabled = True
+
+    def has_changed(self):
+        return bool(self['include'].data or self['id'].data)
 
     def clean_requirement_title(self):
-        title = self.cleaned_data.get('requirement_title', '').strip().upper()
-
-        if not title:
-            raise ValidationError('Please enter a requirement title.')
-        return title
-
-    def clean_category(self):
-        category = self.cleaned_data.get('category', '').strip().upper()
-
-        if not category:
-            raise ValidationError('Please enter a category.')
-        return category
-
-    def clean_validation_instructions(self):
-        from core.document_validation import parse_validation_instructions
-
-        instructions = self.cleaned_data.get('validation_instructions', '').strip()
-        fields, errors = parse_validation_instructions(instructions)
-        if errors:
-            raise ValidationError(errors)
-        if self.cleaned_data.get('validation_enabled') and not fields:
-            raise ValidationError(
-                'Add at least one required field when NLP validation is enabled.'
-            )
-        return instructions
-
-    def clean_academic_year(self):
-        academic_year = self.cleaned_data.get('academic_year', '')
-        try:
-            start_str, end_str = academic_year.split('-')
-            start_year, end_year = int(start_str), int(end_str)
-        except (ValueError, AttributeError):
-            raise ValidationError('Please select a valid academic year.')
-
-        if end_year != start_year + 1:
-            raise ValidationError('Please select an academic year with consecutive years.')
-
-        return academic_year
+        return ' '.join(self.cleaned_data['requirement_title'].split())
 
     def clean(self):
-        cleaned_data = super().clean()
-        selected_faculty = cleaned_data.get('assigned_faculty_member')
+        from core.document_validation import parse_validation_instructions
 
-        if selected_faculty:
-            cleaned_data['assigned_faculty_type'] = None
-            cleaned_data['assigned_programs'] = self.fields['assigned_programs'].queryset.none()
+        cleaned = super().clean()
+        instructions = cleaned.get('validation_instructions', '').strip()
+        cleaned['validation_instructions'] = instructions
 
-        title = cleaned_data.get('requirement_title')
-        academic_year = cleaned_data.get('academic_year')
-        semester = cleaned_data.get('semester')
+        if cleaned.get('validation_enabled') and not cleaned.get('text_extraction_enabled'):
+            self.add_error('validation_enabled', 'NLP validation needs text extraction to be enabled.')
 
-        if title and academic_year and semester:
-            normalized_academic_year = f'A.Y. {academic_year}'
-
-            duplicates = Requirement.objects.filter(
-                requirement_title=title,
-                academic_year=normalized_academic_year,
-                semester=semester
+        fields, errors = parse_validation_instructions(instructions)
+        if errors:
+            self.add_error('validation_instructions', errors)
+        elif cleaned.get('validation_enabled') and not fields:
+            self.add_error(
+                'validation_instructions',
+                'Add at least one required field when NLP validation is enabled.'
             )
 
-            if self.instance.pk:
-                duplicates = duplicates.exclude(pk=self.instance.pk)
+        return cleaned
 
-            if duplicates.exists():
-                self.add_error(
-                    None,
-                    'A requirement with this title already exists for the selected academic year and semester.'
-                )
 
-        return cleaned_data
+class BaseRequirementFormSet(BaseFormSet):
+    def clean(self):
+        if any(self.errors):
+            return
 
-    def save(self, commit=True):
-        instance = super().save(commit=False)
-        instance.academic_year = f'A.Y. {self.cleaned_data["academic_year"]}'
-        if commit:
-            instance.save()
-            self.save_m2m()
-        return instance
+        rows = [form.cleaned_data for form in self.forms if form.cleaned_data]
+
+        if not any(row['include'] for row in rows):
+            raise ValidationError('Select at least one requirement.')
+
+        title_counts = Counter(row['requirement_title'].lower() for row in rows)
+        duplicates = [title for title, count in title_counts.items() if count > 1]
+        if duplicates:
+            raise ValidationError('Requirement titles must be unique. Duplicated: ' + ', '.join(duplicates))
+
+
+RequirementFormSet = formset_factory(RequirementRowForm, formset=BaseRequirementFormSet, extra=0)
 
 class DraftUploadForm(forms.ModelForm):
     class Meta:

@@ -16,7 +16,7 @@ urlpatterns = [
     # Submission Bin URLs
     path('submission_bin/upload_files/', views.submission_bins_view, name='upload_files'),
     path('submission_bin/data/', views.submission_bin_data_view, name='submission_bin_data'),
-    path('submission_bin/attach/<int:requirement_id>/', views.attach_document, name='attach_document'),
+    path('submission_bin/attach/<int:slot_id>/', views.attach_document, name='attach_document'),
     path('submission_bin/replace/<uuid:document_id>/', views.replace_document, name='replace_document'),
     path('submission_bin/remove/<uuid:document_id>/', views.remove_document, name='remove_document'),
     path('submission_bin/retry/<uuid:document_id>/', views.retry_document_extraction, name='retry_document_extraction'),

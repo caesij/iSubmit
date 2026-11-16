@@ -108,7 +108,6 @@ def _visible_requirements(user):
 
         return (
             get_faculty_assigned_requirements(user)
-            .filter(deadline__gt=timezone.now())
             .exclude(id__in=submitted_requirement_ids)
         )
 

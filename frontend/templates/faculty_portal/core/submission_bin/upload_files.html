@@ -108,7 +108,7 @@
                         >
                     </th>
                     <th>Bin Title</th>
-                    <th>Category</th>
+                    <th>For</th>
                     <th>Deadline</th>
                     <th>Status</th>
                     <th>File</th>
@@ -303,14 +303,14 @@ document.addEventListener("DOMContentLoaded", function () {
 
         const deadlines = Array.from(
             document.querySelectorAll(
-                "#submission-bin-body tr[data-requirement-id][data-deadline]"
+                "#submission-bin-body tr[data-slot-id][data-deadline]"
             )
         )
             .map(function (row) {
                 return Date.parse(row.dataset.deadline);
             })
             .filter(function (deadline) {
-                return Number.isFinite(deadline);
+                return Number.isFinite(deadline) && deadline > Date.now();
             });
 
         if (!deadlines.length) return;
@@ -385,14 +385,14 @@ document.addEventListener("DOMContentLoaded", function () {
             const refreshedBody = document.createElement("tbody");
             refreshedBody.innerHTML = html;
             const refreshedRows = new Map(
-                Array.from(refreshedBody.querySelectorAll("tr[data-requirement-id]"))
+                Array.from(refreshedBody.querySelectorAll("tr[data-slot-id]"))
                     .map(function (row) {
-                        return [row.dataset.requirementId, row];
+                        return [row.dataset.slotId, row];
                     })
             );
 
-            tableBody.querySelectorAll("tr[data-requirement-id]").forEach(function (row) {
-                const refreshedRow = refreshedRows.get(row.dataset.requirementId);
+            tableBody.querySelectorAll("tr[data-slot-id]").forEach(function (row) {
+                const refreshedRow = refreshedRows.get(row.dataset.slotId);
                 const hasActiveFile = Array.from(
                     row.querySelectorAll('input[type="file"]')
                 ).some(function (input) {
@@ -420,17 +420,17 @@ document.addEventListener("DOMContentLoaded", function () {
 
             const existingIds = new Set(
                 Array.from(
-                    tableBody.querySelectorAll("tr[data-requirement-id]")
+                    tableBody.querySelectorAll("tr[data-slot-id]")
                 ).map(function (row) {
-                    return row.dataset.requirementId;
+                    return row.dataset.slotId;
                 })
             );
-            refreshedRows.forEach(function (row, requirementId) {
-                if (!existingIds.has(requirementId)) {
+            refreshedRows.forEach(function (row, slotId) {
+                if (!existingIds.has(slotId)) {
                     tableBody.appendChild(row.cloneNode(true));
                 }
             });
-            tableBody.querySelectorAll("tr:not([data-requirement-id])").forEach(function (row) {
+            tableBody.querySelectorAll("tr:not([data-slot-id])").forEach(function (row) {
                 row.remove();
             });
             if (!refreshedRows.size && !tableBody.querySelector("tr")) {
@@ -476,7 +476,7 @@ document.addEventListener("DOMContentLoaded", function () {
             "#submission-bin-body label[for^='resubmit-']"
         );
         if (uploadLabel) {
-            activeUploadRow = uploadLabel.closest("tr[data-requirement-id]");
+            activeUploadRow = uploadLabel.closest("tr[data-slot-id]");
         }
     }, true);
 

@@ -1,0 +1,39 @@
+{% comment %} One row of the checklist. `removable` is only set for rows added with the "Add custom requirement" button. {% endcomment %}
+<div class="checklist-row" data-row>
+    {{ form.id }}
+
+    <label class="checklist-include" title="Include this requirement">{{ form.include }}</label>
+
+    <div class="checklist-body">
+        {{ form.requirement_title }}
+
+        <div class="checklist-options">
+            <label>{{ form.is_required }} Required</label>
+            <label>{{ form.text_extraction_enabled }} Text extraction</label>
+            <label>{{ form.validation_enabled }} NLP validation</label>
+            <label>{{ form.unit.label }} {{ form.unit }}</label>
+            <label>{{ form.applies_to.label }} {{ form.applies_to }}</label>
+        </div>
+
+        {% if form.locked %}
+            <small class="checklist-note">Text extraction, NLP and the upload rules are locked because faculty already uploaded files for this requirement.</small>
+        {% endif %}
+
+        <div class="checklist-validation" data-validation-box hidden>
+            {% include 'admin_staff_portal/core/submissions/submission_bin/_field.html' with field=form.validation_instructions %}
+            <div class="validation-format-note" role="note">
+                <strong>Important:</strong> Each field must follow this exact format on a new line:
+                <span>[Field name]: required</span>
+                <span>(e.g., Course code: required)</span>
+            </div>
+        </div>
+
+        {% for messages in form.errors.values %}
+            {% for message in messages %}<span class="field-error">{{ message }}</span>{% endfor %}
+        {% endfor %}
+    </div>
+
+    {% if removable %}
+        <button type="button" class="checklist-remove" data-remove-row aria-label="Remove requirement">&times;</button>
+    {% endif %}
+</div>
