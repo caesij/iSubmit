@@ -1,5 +1,7 @@
+{% load static %}
 <tr data-row-id="{{ req.id }}">
-    <td class="font-bold">
+    <td class="selection-column"><input type="checkbox" class="requirement-select" aria-label="Select {{ req.requirement_title }}"></td>
+    <td class="requirement-title">
         {{ req.requirement_title }}
         {% if not req.is_required %}<span class="status-badge status-inactive">Optional</span>{% endif %}
     </td>
@@ -29,16 +31,13 @@
     </td>
 
     <td class="action-cell">
-        <div class="dropdown">
-            <button type="button" class="btn-icon" aria-label="Actions" aria-expanded="false">⋮</button>
-
-            <div class="dropdown-menu">
-                <form action="{% url 'admin_staff_portal:toggle_requirement_status' req.id %}" method="POST">
-                    {% csrf_token %}
-                    <input type="hidden" name="next" value="{{ request.get_full_path }}">
-                    <button type="submit">{% if req.is_active %}Deactivate{% else %}Activate{% endif %}</button>
-                </form>
-            </div>
+        <div class="requirement-actions">
+            <form action="{% url 'admin_staff_portal:toggle_requirement_status' req.id %}" method="POST">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                <button type="submit" class="requirement-toggle">{% if req.is_active %}Deactivate{% else %}Activate{% endif %}</button>
+            </form>
+            <a class="requirement-edit" data-edit-requirement="{% url 'admin_staff_portal:edit_requirement' req.id %}" href="{% url 'admin_staff_portal:edit_period' period.id %}#requirement-{{ req.id }}" aria-label="Edit {{ req.requirement_title }}"><img src="{% static 'images/Edit Submission.svg' %}" alt=""> Edit</a>
         </div>
     </td>
 </tr>

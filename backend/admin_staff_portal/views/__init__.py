@@ -24,6 +24,7 @@ from admin_staff_portal.views.core.requirement_management_views import (
     period_detail,
     toggle_period_status,
     toggle_requirement_status,
+    edit_requirement,
 )
 
 from admin_staff_portal.views.core.faculty_submission_views import (
@@ -67,6 +68,7 @@ __all__ = [
     'period_detail',
     'toggle_period_status',
     'toggle_requirement_status',
+    'edit_requirement',
     
     'faculty_submissions_list',
     'faculty_submission_bins_view',

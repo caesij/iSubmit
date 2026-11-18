@@ -29,6 +29,7 @@ urlpatterns = [
     
     # Requirement Management (Submission Bin) URLs
     path('submissions/submission_bins/', views.requirements_list, name='requirements_list'),
+    path('submissions/submission_bins/<int:requirement_id>/edit/', views.edit_requirement, name='edit_requirement'),
     path('submissions/submission_bins/period/new/', views.period_editor, name='create_period'),
     path('submissions/submission_bins/period/<int:period_id>/', views.period_detail, name='period_detail'),
     path('submissions/submission_bins/period/<int:period_id>/edit/', views.period_editor, name='edit_period'),

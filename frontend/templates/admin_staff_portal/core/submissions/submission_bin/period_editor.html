@@ -5,32 +5,7 @@
 {% block heading %}Submissions{% endblock %}
 {% block subtitle %}Supports document submission and monitoring of review status.{% endblock %}
 
-{% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/pages/submissions.css' %}">
-<link rel="stylesheet" href="{% static 'css/pages/requirement-form-controls.css' %}">
-<style>
-/* Extra styles for the period editor and the grouped requirements list.
-   Colours are neutral: swap in your own design tokens if you have them. */
-
-/* Period fields (year, semester, deadline) */
-.period-fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 16px; }
-.period-readonly { margin: 0; font-weight: 600; }
-
-/* Checklist */
-.checklist-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; font-weight: 600; }
-.checklist-row { display: flex; align-items: flex-start; gap: 12px; padding: 12px 0; border-top: 1px solid #e5e7eb; }
-.checklist-row.is-excluded .checklist-body { opacity: .5; }
-.checklist-include input { width: 18px; height: 18px; margin-top: 10px; }
-.checklist-body { flex: 1; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
-.checklist-body input[type="text"], .checklist-validation textarea { width: 100%; }
-.checklist-options { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 20px; font-size: .9rem; }
-.checklist-options label { display: inline-flex; align-items: center; gap: 6px; }
-.checklist-note { color: #6b7280; }
-.checklist-remove { background: none; border: 0; font-size: 1.5rem; line-height: 1; cursor: pointer; color: #6b7280; }
-.checklist-remove:hover, .checklist-remove:focus-visible { color: #b91c1c; }
-#add-requirement { margin-top: 12px; width: auto; min-width: max-content; white-space: nowrap; padding-left: 16px; padding-right: 16px; }
-</style>
-{% endblock %}
+{% block css_modules %}submissions{% endblock %}
 
 {% block content %}
 <div class="submissions-container requirement-editor">
@@ -39,7 +14,7 @@
         <a href="{% url 'admin_staff_portal:faculty_submissions_list' %}" class="tab-link">Faculty Submission</a>
     </div>
 
-    <a href="{% url 'admin_staff_portal:requirements_list' %}" class="bulk-back-link">
+    <a href="{% if period %}{% url 'admin_staff_portal:period_detail' period.id %}{% else %}{% url 'admin_staff_portal:requirements_list' %}{% endif %}" class="bulk-back-link">
         <img src="{% static 'images/Back Arrow Left.svg' %}" alt="">
         Back
     </a>
@@ -50,7 +25,7 @@
         <span>{% if period %}Edit Period{% else %}Post Requirements{% endif %}</span>
     </div>
 
-    <h1 class="requirement-editor-title">{% if period %}Edit {{ period }}{% else %}Post Requirements{% endif %}</h1>
+    <h1 class="requirement-editor-title">{% if period %}Edit {{ period }}{% else %}Add Submission{% endif %}</h1>
 
     <form class="requirement-form" method="POST">
         {% csrf_token %}
@@ -62,6 +37,8 @@
                 {% for error in formset.non_form_errors %}<span class="field-error">{{ error }}</span>{% endfor %}
             </div>
         {% endif %}
+
+        <p class="editor-intro">Set the submission period and choose the requirements faculty need to submit.</p>
 
         <!-- Applies to the whole list -->
         <section class="requirement-editor-card period-fields">
@@ -82,10 +59,11 @@
         </section>
 
         <!-- The checklist -->
-        <section class="requirement-editor-card">
+        <section class="requirement-editor-card checklist-card">
+            <div class="checklist-heading"><h2>Submission requirements</h2><p>Choose which requirements to include and configure their submission rules.</p></div>
             <div class="checklist-header">
                 <label><input type="checkbox" id="toggle-all"> Select all</label>
-                <span class="text-sub">Untick a requirement to leave it out. Titles can be edited.</span>
+                <span class="text-sub">Uncheck a requirement to leave it out. Use Edit title to rename it.</span>
             </div>
 
             <div id="checklist">
@@ -103,8 +81,8 @@
         </section>
 
         <div class="requirement-editor-actions">
-            <button type="submit" class="requirement-save-button">Save</button>
-            <a href="{% url 'admin_staff_portal:requirements_list' %}" class="requirement-cancel-button">Cancel</a>
+            <button type="submit" class="requirement-save-button"><img src="{% static 'images/Save Button.svg' %}" alt=""> Save</button>
+            <a href="{% if period %}{% url 'admin_staff_portal:period_detail' period.id %}{% else %}{% url 'admin_staff_portal:requirements_list' %}{% endif %}" class="requirement-cancel-button">Cancel</a>
         </div>
     </form>
 
@@ -131,13 +109,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function refreshRow(row) {
         row.classList.toggle('is-excluded', !field(row, 'include').checked);
-        row.querySelector('[data-validation-box]').hidden = !field(row, 'validation_enabled').checked;
+        const extraction = field(row, 'text_extraction_enabled');
+        const validation = field(row, 'validation_enabled');
+        if (!validation.dataset.serverLocked) validation.dataset.serverLocked = String(validation.disabled);
+        const locked = validation.dataset.serverLocked === 'true';
+        if (!extraction.checked && !locked) validation.checked = false;
+        validation.disabled = locked || !extraction.checked;
+        row.querySelector('[data-nlp-option]').classList.toggle('is-unavailable', validation.disabled);
+        row.querySelector('[data-nlp-hint]').hidden = extraction.checked || locked;
+        row.querySelector('[data-validation-box]').hidden = !validation.checked;
     }
 
     function refreshAll() {
         const rows = [...list.querySelectorAll('[data-row]')];
         rows.forEach(refreshRow);
-        toggleAll.checked = rows.length > 0 && rows.every(row => field(row, 'include').checked);
+        const selected = rows.filter(row => field(row, 'include').checked).length;
+        toggleAll.checked = rows.length > 0 && selected === rows.length;
+        toggleAll.indeterminate = selected > 0 && selected < rows.length;
     }
 
     // Any tick/untick inside the list updates the rows.
@@ -146,6 +134,17 @@ document.addEventListener('DOMContentLoaded', () => {
     // Remove button (only exists on custom rows). Gaps in the numbering are fine:
     // the server ignores rows that are missing.
     list.addEventListener('click', event => {
+        const editButton = event.target.closest('[data-edit-title]');
+        if (editButton) {
+            const input = field(editButton.closest('[data-row]'), 'requirement_title');
+            input.readOnly = !input.readOnly;
+            input.tabIndex = input.readOnly ? -1 : 0;
+            editButton.querySelector('span').textContent = input.readOnly ? 'Edit title' : 'Done';
+            editButton.setAttribute('aria-expanded', String(!input.readOnly));
+            if (!input.readOnly) { input.focus(); input.select(); }
+            else { editButton.focus(); }
+            return;
+        }
         const removeButton = event.target.closest('[data-remove-row]');
         if (!removeButton) return;
         removeButton.closest('[data-row]').remove();
@@ -163,10 +162,35 @@ document.addEventListener('DOMContentLoaded', () => {
         list.querySelector('[data-empty-note]')?.remove();
         list.insertAdjacentHTML('beforeend', rowTemplate.innerHTML.replaceAll('__prefix__', index));
         totalForms.value = index + 1;
+        prepareTitles(list.lastElementChild);
         refreshAll();
-        list.lastElementChild.querySelector('input[type="text"]').focus();
+        list.lastElementChild.querySelector('[data-edit-title]').focus();
     });
 
+    function prepareTitles(scope) {
+        scope.querySelectorAll('[name$="-applies_to"] option[value="REGULAR"]').forEach(option => {
+            option.textContent = 'Regular courses';
+        });
+        scope.querySelectorAll('[name$="-requirement_title"]').forEach(input => {
+            input.readOnly = true;
+            input.tabIndex = -1;
+            input.setAttribute('aria-label', 'Requirement title');
+        });
+        scope.querySelectorAll('[name$="-include"]').forEach(input => input.setAttribute('aria-label', 'Include requirement'));
+    }
+    list.addEventListener('keydown', event => {
+        if (event.key === 'Enter' && event.target.matches('[name$="-requirement_title"]')) {
+            event.preventDefault();
+            const row = event.target.closest('[data-row]');
+            event.target.readOnly = true;
+            event.target.tabIndex = -1;
+            const button = row.querySelector('[data-edit-title]');
+            button.querySelector('span').textContent = 'Edit title';
+            button.setAttribute('aria-expanded', 'false');
+            button.focus();
+        }
+    });
+    prepareTitles(list);
     refreshAll();
 });
 </script>

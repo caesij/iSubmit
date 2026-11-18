@@ -1,0 +1,33 @@
+{% load static %}
+<form method="post" action="{% url 'admin_staff_portal:edit_requirement' requirement.id %}" class="requirement-modal-form">
+    {% csrf_token %}
+    {{ form.id }}
+    <h2 id="requirement-modal-title">Edit {{ requirement.requirement_title }}</h2>
+    <p class="modal-intro">Update this requirement’s title and submission settings.</p>
+    <div class="modal-settings-card">
+        {% include 'admin_staff_portal/core/submissions/submission_bin/_field.html' with field=form.requirement_title %}
+        <div class="modal-switches checklist-options">
+            <label class="requirement-switch"><span>Required</span>{{ form.is_required }}</label>
+            <label class="requirement-switch"><span>Text extraction</span>{{ form.text_extraction_enabled }}</label>
+            <label class="requirement-switch" data-nlp-option><span>NLP validation</span>{{ form.validation_enabled }}</label>
+        </div>
+        <small class="nlp-hint" data-nlp-hint>Enable Text extraction to use NLP validation.</small>
+        {% for error in form.text_extraction_enabled.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+        {% for error in form.validation_enabled.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+        <div class="modal-selects">
+            {% include 'admin_staff_portal/core/submissions/submission_bin/_field.html' with field=form.unit %}
+            {% include 'admin_staff_portal/core/submissions/submission_bin/_field.html' with field=form.applies_to %}
+        </div>
+        {% if form.locked %}<p class="checklist-note">Text extraction, NLP and upload rules are locked because faculty have already uploaded files.</p>{% endif %}
+        <div class="checklist-validation" data-validation-box hidden>
+            {% include 'admin_staff_portal/core/submissions/submission_bin/_field.html' with field=form.validation_instructions %}
+            <p class="checklist-note">Use one field per line, for example: Course code: required</p>
+        </div>
+        {% for error in form.non_field_errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+    </div>
+    <p class="modal-error" role="alert" hidden></p>
+    <div class="requirement-editor-actions">
+        <button type="submit" class="requirement-save-button"><img src="{% static 'images/Save Button.svg' %}" alt=""> Save</button>
+        <button type="button" class="requirement-cancel-button" data-close-modal>Cancel</button>
+    </div>
+</form>

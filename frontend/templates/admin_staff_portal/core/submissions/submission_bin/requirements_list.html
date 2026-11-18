@@ -3,20 +3,12 @@
 
 {% block title %}Submissions - iSubmit{% endblock %}
 {% block heading %}Submissions{% endblock %}
-{% block subtitle %}Manage and access all approved documents across the system.{% endblock %}
+{% block subtitle %}Supports document submission and monitoring of review status.{% endblock %}
 
-{% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/pages/submissions.css' %}">
-<style>
-    .clickable-row { cursor: pointer; }
-    .clickable-row:hover { background: #fafafa; }
-    .period-name { color: inherit; font-weight: 700; text-decoration: none; }
-    .period-name:hover { text-decoration: underline; }
-</style>
-{% endblock %}
+{% block css_modules %}submissions{% endblock %}
 
 {% block content %}
-<div class="submissions-container">
+<div class="submissions-container submission-bin-page">
 
     <!-- Tabs -->
     <div class="tab-nav">
@@ -28,17 +20,11 @@
     <!-- Filters -->
     <div class="filter-card">
         <form method="GET" action="{% url 'admin_staff_portal:requirements_list' %}" class="filter-form">
-            <span class="search-icon">
-                <img src="{% static 'images/search.svg' %}" alt="Search">
-            </span>
-
-            <div class="search-input-wrap">
-                <input type="text" name="q" value="{{ request.GET.q|default:'' }}" placeholder="Search by academic year or requirement...">
-            </div>
+            {% if request.GET.q %}<input type="hidden" name="q" value="{{ request.GET.q }}">{% endif %}
 
             <div class="select-wrap">
-                <label>Semester</label>
-                <select name="semester" onchange="this.form.submit()">
+                <label for="bin-semester">Semester</label>
+                <select id="bin-semester" name="semester" onchange="this.form.submit()">
                     <option value="">All Semesters</option>
                     {% for value, label in semester_choices %}
                         <option value="{{ value }}" {% if request.GET.semester == value %}selected{% endif %}>{{ label }}</option>
@@ -47,8 +33,8 @@
             </div>
 
             <div class="select-wrap">
-                <label>Academic Year</label>
-                <select name="academic_year" onchange="this.form.submit()">
+                <label for="bin-year">Academic Year</label>
+                <select id="bin-year" name="academic_year" onchange="this.form.submit()">
                     <option value="">All Years</option>
                     {% for year in academic_years %}
                         <option value="{{ year }}" {% if request.GET.academic_year == year %}selected{% endif %}>{{ year }}</option>
@@ -56,22 +42,14 @@
                 </select>
             </div>
 
-            {% if request.GET.q or request.GET.semester or request.GET.academic_year %}
                 <a href="{% url 'admin_staff_portal:requirements_list' %}" class="btn-clear">
                     <img src="{% static 'images/Clear Filters.svg' %}" alt="">
                     Clear Filters
                 </a>
-            {% endif %}
+            <a href="{% url 'admin_staff_portal:create_period' %}" class="btn-add-bin">
+                <span aria-hidden="true">+</span> Add Submission
+            </a>
         </form>
-    </div>
-
-
-    <!-- Actions -->
-    <div class="submission-actions">
-        <a href="{% url 'admin_staff_portal:create_period' %}" class="btn-add-bin">
-            <span class="plus-icon">+</span>
-            Post Requirements
-        </a>
     </div>
 
 
@@ -80,10 +58,11 @@
         <table class="data-table">
             <thead>
                 <tr>
-                    <th>Academic Term</th>
+                    <th>Academic Year</th>
+                    <th>Semester</th>
                     <th>Deadline</th>
                     <th>Requirements</th>
-                    <th>Completion Progress</th>
+                    <th>Completion<br>Progress</th>
                     <th>Status</th>
                     <th class="action-heading">Action</th>
                 </tr>
@@ -93,9 +72,9 @@
                 {% for period in periods %}
                     <tr class="clickable-row" data-href="{% url 'admin_staff_portal:period_detail' period.id %}">
                         <td>
-                            <a href="{% url 'admin_staff_portal:period_detail' period.id %}" class="period-name">{{ period.academic_year_display }}</a>
-                            <div class="text-sub">{{ period.get_semester_display }}</div>
+                            <a href="{% url 'admin_staff_portal:period_detail' period.id %}" class="period-name">{{ period.academic_year }}</a>
                         </td>
+                        <td>{{ period.get_semester_display }}</td>
 
                         <td>
                             <div>{{ period.deadline|display_date:request.user }}</div>
@@ -117,25 +96,12 @@
                         </td>
 
                         <td class="action-cell">
-                            <div class="dropdown">
-                                <button type="button" class="btn-icon" aria-label="Actions" aria-expanded="false">⋮</button>
-
-                                <div class="dropdown-menu">
-                                    <a href="{% url 'admin_staff_portal:period_detail' period.id %}">View Requirements</a>
-                                    <a href="{% url 'admin_staff_portal:edit_period' period.id %}">Edit Period</a>
-
-                                    <form action="{% url 'admin_staff_portal:toggle_period_status' period.id %}" method="POST">
-                                        {% csrf_token %}
-                                        <input type="hidden" name="next" value="{{ request.get_full_path }}">
-                                        <button type="submit">{% if period.is_active %}Deactivate{% else %}Activate{% endif %}</button>
-                                    </form>
-                                </div>
-                            </div>
+                            <a class="view-all-link" href="{% url 'admin_staff_portal:period_detail' period.id %}">View All <span aria-hidden="true">&rarr;</span></a>
                         </td>
                     </tr>
                 {% empty %}
                     <tr>
-                        <td colspan="6" class="text-center py-4">No submission periods found.</td>
+                        <td colspan="7" class="text-center py-4">No submission periods found.</td>
                     </tr>
                 {% endfor %}
             </tbody>
@@ -144,7 +110,7 @@
 
 
     <!-- Pagination -->
-    {% if is_paginated or page_obj %}
+    {% if is_paginated %}
         <div class="pagination-footer requirements-pagination" data-live-container="requirements-pagination">
             <span class="pagination-info">
                 Showing {{ page_obj.start_index }} to {{ page_obj.end_index }}
@@ -184,28 +150,5 @@
         }
     });
 
-    document.addEventListener("click", function (event) {
-        const trigger = event.target.closest(".dropdown .btn-icon");
-        const openMenus = document.querySelectorAll(".dropdown-menu.show");
-
-        function closeMenu(menu) {
-            menu.classList.remove("show");
-            menu.closest(".dropdown").querySelector(".btn-icon").setAttribute("aria-expanded", "false");
-        }
-
-        if (trigger) {
-            const menu = trigger.closest(".dropdown").querySelector(".dropdown-menu");
-            const shouldOpen = !menu.classList.contains("show");
-
-            openMenus.forEach(closeMenu);
-            menu.classList.toggle("show", shouldOpen);
-            trigger.setAttribute("aria-expanded", String(shouldOpen));
-            return;
-        }
-
-        if (!event.target.closest(".dropdown")) {
-            openMenus.forEach(closeMenu);
-        }
-    });
 </script>
 {% endblock %}

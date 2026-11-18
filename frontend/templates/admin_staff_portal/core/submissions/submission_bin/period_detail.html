@@ -5,21 +5,10 @@
 {% block heading %}Submissions{% endblock %}
 {% block subtitle %}Supports document submission and monitoring of review status.{% endblock %}
 
-{% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/pages/submissions.css' %}">
-<style>
-    .period-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; padding: 18px 20px; }
-    .period-header h1 { margin: 0 0 6px; font-size: 1.25rem; }
-    .period-facts { display: flex; align-items: center; gap: 8px 20px; flex-wrap: wrap; font-size: .85rem; color: #6b7280; }
-    .period-actions { display: flex; align-items: center; gap: 10px; }
-    .period-actions form { margin: 0; }
-    .period-button { display: inline-flex; align-items: center; justify-content: center; padding: 8px 16px; border: 1px solid #7f1d1d; border-radius: 4px; background: #fff; color: #7f1d1d; font-size: 13px; font-weight: 700; text-decoration: none; white-space: nowrap; cursor: pointer; }
-    .period-button-primary { background: #7f1d1d; color: #fff; }
-</style>
-{% endblock %}
+{% block css_modules %}submissions{% endblock %}
 
 {% block content %}
-<div class="submissions-container">
+<div class="submissions-container period-detail-page">
 
     <div class="tab-nav">
         <a href="{% url 'admin_staff_portal:requirements_list' %}" class="tab-link active">Submission Bin</a>
@@ -34,23 +23,23 @@
     <div class="bulk-breadcrumb">
         <span>Submission Bin</span>
         <span aria-hidden="true">&rsaquo;</span>
-        <span>{{ period }}</span>
+        <span>{{ period.academic_year_display }}</span>
     </div>
 
-    <div class="table-card requirements-table-card">
+    <div class="period-summary-card">
         <div class="period-header">
             <div>
-                <h1>{{ period }}</h1>
+                <h1>{{ period.academic_year_display }}, {{ period.get_semester_display }}</h1>
                 <div class="period-facts">
-                    <span>Deadline: {{ period.deadline|display_date:request.user }}, {{ period.deadline|display_time:request.user }}</span>
-                    <span>{{ period.requirement_count }} requirement{{ period.requirement_count|pluralize }}</span>
-                    <span>{{ period.completion_progress }}% complete</span>
+                    <span><strong>Deadline:</strong> {{ period.deadline|display_date:request.user }}</span>
+                    <span><strong>Requirements:</strong> {{ period.requirement_count }}</span>
+                    <span><strong>Submission Progress:</strong> {{ period.completion_progress }}%</span><span><strong>Submission Status:</strong></span>
                     <span class="status-badge {% if period.is_active %}status-active{% else %}status-inactive{% endif %}">{{ period.get_status_display }}</span>
                 </div>
             </div>
 
             <div class="period-actions">
-                <a href="{% url 'admin_staff_portal:edit_period' period.id %}" class="period-button period-button-primary">Edit Period</a>
+                <a href="{% url 'admin_staff_portal:edit_period' period.id %}" class="period-button period-button-primary"><img src="{% static 'images/Edit Submission.svg' %}" alt=""> Edit</a>
 
                 <form action="{% url 'admin_staff_portal:toggle_period_status' period.id %}" method="POST">
                     {% csrf_token %}
@@ -60,10 +49,14 @@
             </div>
         </div>
 
+    </div>
+
+    <div class="table-card period-requirements-card">
         <table class="data-table">
             <thead>
                 <tr>
-                    <th>Requirement</th>
+                    <th class="selection-column"><input type="checkbox" id="select-all-requirements" aria-label="Select all requirements"></th>
+                    <th>Bin Title</th>
                     <th>Completion Progress</th>
                     <th>Status</th>
                     <th>Text Extraction</th>
@@ -77,7 +70,7 @@
                     {% include 'admin_staff_portal/core/submissions/submission_bin/_requirement_row.html' %}
                 {% empty %}
                     <tr>
-                        <td colspan="6" class="text-center py-4">This period has no requirements.</td>
+                        <td colspan="7" class="text-center py-4">This period has no requirements.</td>
                     </tr>
                 {% endfor %}
             </tbody>
@@ -86,30 +79,24 @@
 
 </div>
 
-
+<p class="requirement-save-status" role="status" aria-live="polite"></p>
+<dialog class="requirement-dialog requirement-editor" aria-labelledby="requirement-modal-title">
+    <button type="button" class="modal-close" data-close-modal aria-label="Close requirement editor">&times;</button>
+    <div class="modal-content"></div>
+</dialog>
+<script src="{% static 'js/requirement-modal.js' %}" defer></script>
 <script>
-    document.addEventListener("click", function (event) {
-        const trigger = event.target.closest(".dropdown .btn-icon");
-        const openMenus = document.querySelectorAll(".dropdown-menu.show");
-
-        function closeMenu(menu) {
-            menu.classList.remove("show");
-            menu.closest(".dropdown").querySelector(".btn-icon").setAttribute("aria-expanded", "false");
-        }
-
-        if (trigger) {
-            const menu = trigger.closest(".dropdown").querySelector(".dropdown-menu");
-            const shouldOpen = !menu.classList.contains("show");
-
-            openMenus.forEach(closeMenu);
-            menu.classList.toggle("show", shouldOpen);
-            trigger.setAttribute("aria-expanded", String(shouldOpen));
-            return;
-        }
-
-        if (!event.target.closest(".dropdown")) {
-            openMenus.forEach(closeMenu);
-        }
+(() => {
+    const all = document.getElementById('select-all-requirements');
+    const table = document.querySelector('.period-requirements-card');
+    const boxes = () => [...table.querySelectorAll('.requirement-select')];
+    all.addEventListener('change', () => boxes().forEach(box => { box.checked = all.checked; }));
+    table.addEventListener('change', event => {
+        if (!event.target.matches('.requirement-select')) return;
+        const selected = boxes().filter(box => box.checked).length;
+        all.checked = boxes().length > 0 && selected === boxes().length;
+        all.indeterminate = selected > 0 && !all.checked;
     });
+})();
 </script>
 {% endblock %}

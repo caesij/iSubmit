@@ -1,19 +1,25 @@
+{% load static %}
 {% comment %} One row of the checklist. `removable` is only set for rows added with the "Add custom requirement" button. {% endcomment %}
-<div class="checklist-row" data-row>
+<div class="checklist-row" data-row{% if form.id.value %} id="requirement-{{ form.id.value }}"{% endif %}>
     {{ form.id }}
 
     <label class="checklist-include" title="Include this requirement">{{ form.include }}</label>
 
     <div class="checklist-body">
-        {{ form.requirement_title }}
+        <div class="checklist-title-row">
+            <input type="text" name="{{ form.requirement_title.html_name }}" id="{{ form.requirement_title.id_for_label }}" value="{{ form.requirement_title.value|default_if_none:'' }}" maxlength="255" placeholder="Requirement title" aria-label="Requirement title" readonly tabindex="-1">
+            <button type="button" class="edit-title-button" data-edit-title aria-expanded="false" aria-controls="{{ form.requirement_title.id_for_label }}"><img src="{% static 'images/Edit Submission.svg' %}" alt=""><span>Edit title</span></button>
+        </div>
 
         <div class="checklist-options">
-            <label>{{ form.is_required }} Required</label>
-            <label>{{ form.text_extraction_enabled }} Text extraction</label>
-            <label>{{ form.validation_enabled }} NLP validation</label>
-            <label>{{ form.unit.label }} {{ form.unit }}</label>
-            <label>{{ form.applies_to.label }} {{ form.applies_to }}</label>
+            <label class="requirement-switch"><span>Required</span>{{ form.is_required }}</label>
+            <label class="requirement-switch"><span>Text extraction</span>{{ form.text_extraction_enabled }}</label>
+            <label class="requirement-switch" data-nlp-option><span>NLP validation</span>{{ form.validation_enabled }}</label>
+            <label class="checklist-select">{{ form.unit.label }} {{ form.unit }}</label>
+            <label class="checklist-select">{{ form.applies_to.label }} {{ form.applies_to }}</label>
         </div>
+
+        <small class="nlp-hint" data-nlp-hint>Enable Text extraction to use NLP validation.</small>
 
         {% if form.locked %}
             <small class="checklist-note">Text extraction, NLP and the upload rules are locked because faculty already uploaded files for this requirement.</small>

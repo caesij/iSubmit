@@ -4,21 +4,21 @@
 
 {% block title %}Program Management - iSubmit{% endblock %}
 {% block heading %}Program Management{% endblock %}
+{% block subtitle %}Manage academic programs, sections, and curriculum courses.{% endblock %}
 
 {% block extra_css %}
 
 {% endblock %}
 
 {% block content %}
-<section class="program-page">
+<section class="program-page program-list-page">
     <div class="program-page-header">
-        <h2>Programs</h2>
-        <p>Manage academic programs, their sections, and curriculum courses.</p>
+        <div>
+            <h2>Programs</h2>
+            <p>Organize program details, sections, and course assignments.</p>
+        </div>
+        <a href="{% url 'programs:course_list' %}" class="program-courses-link">Manage Courses <span aria-hidden="true">&rarr;</span></a>
     </div>
-
-    <a href="{% url 'programs:course_list' %}" class="btn">
-        Manage Courses
-    </a>
 
     {% if messages %}
         <div class="program-toast-stack" aria-live="polite">
@@ -31,6 +31,8 @@
         </div>
     {% endif %}
 
+    <div class="program-create-card">
+    <div class="program-create-heading"><h3>Add a program</h3><p>Enter the program details to get started.</p></div>
     <form method="post"
         action="{% url 'programs:add_program' %}"
         class="program-add-card">
@@ -73,10 +75,11 @@
         </div>
 
         <button type="submit" class="btn program-add-button">
-            Add Program
+            <span aria-hidden="true">+</span> Add Program
         </button>
 
     </form>
+    </div>
 
     <div class="program-table-card">
         <table class="data-table program-table">
@@ -93,8 +96,9 @@
 
             <tbody>
                 {% for program in programs %}
-                    <tr>
+                    <tr data-program-row>
                         <td>
+                            <span class="program-name-display" data-program-display="program_name" hidden>{{ program.program_name }}</span>
                             <input
                                 name="program_name"
                                 value="{{ program.program_name }}"
@@ -105,6 +109,7 @@
                         </td>
 
                         <td>
+                            <span class="program-abbreviation" data-program-display="short_name" hidden>{{ program.short_name }}</span>
                             <input
                                 name="short_name"
                                 value="{{ program.short_name }}"
@@ -115,6 +120,7 @@
                         </td>
 
                         <td>
+                            <span data-program-display="duration_years" hidden>{{ program.duration_years }} years</span>
                             <input
                                 type="number"
                                 name="duration_years"
@@ -134,11 +140,12 @@
                             <div class="program-actions">
                                 <a
                                     href="{% url 'programs:program_detail' program.id %}"
-                                    class="program-action-button"
+                                    class="program-action-button program-manage-link"
                                 >
                                     Manage
                                 </a>
 
+                                <button type="button" class="program-action-button program-edit-button" data-program-edit hidden aria-label="Edit {{ program.short_name }}"><img src="{% static 'images/Edit Submission.svg' %}" alt=""> Edit</button>
                                 <form
                                     id="update-program-{{ program.id }}"
                                     method="post"
@@ -150,20 +157,21 @@
                                         type="submit"
                                         class="program-action-button program-save-button"
                                     >
-                                        Save
+                                        <img src="{% static 'images/Save Button.svg' %}" alt=""> Save
                                     </button>
-
+                                    <button type="button" class="program-action-button" data-program-cancel hidden>Cancel</button>
                                 </form>
 
                                 <form
                                     method="post"
                                     action="{% url 'programs:delete_program' program.id %}"
+                                    class="program-delete-form"
                                 >
                                     {% csrf_token %}
 
                                     <button
                                         type="submit"
-                                        class="program-action-button program-delete-button"
+                                        class="program-action-button program-delete-button" aria-label="Delete {{ program.short_name }}"
                                     >
                                         Delete
                                     </button>
@@ -233,6 +241,40 @@
             const button = this.querySelector("button[type='submit']");
             button.disabled = true;
             button.textContent = "Adding...";
+        });
+
+        document.querySelectorAll('[data-program-row]').forEach(row => {
+            const fields = [...row.querySelectorAll('input[form]')];
+            const original = fields.map(input => input.value);
+            const edit = row.querySelector('[data-program-edit]');
+            const cancel = row.querySelector('[data-program-cancel]');
+            const save = row.querySelector('.program-save-button');
+            const manage = row.querySelector('.program-manage-link');
+            const deletion = row.querySelector('.program-delete-form');
+            fields.forEach(input => {
+                input.id = `${input.form.id}-${input.name}`;
+                input.setAttribute('aria-label', input.name.replaceAll('_', ' '));
+            });
+            function setEditing(editing) {
+                row.classList.toggle('is-editing', editing);
+                fields.forEach(input => { input.hidden = !editing; input.disabled = !editing; });
+                row.querySelectorAll('[data-program-display]').forEach(text => { text.hidden = editing; });
+                edit.hidden = editing;
+                manage.hidden = editing;
+                deletion.hidden = editing;
+                save.hidden = !editing;
+                cancel.hidden = !editing;
+            }
+            edit.addEventListener('click', () => { setEditing(true); fields[0].focus(); });
+            cancel.addEventListener('click', () => {
+                fields.forEach((input, index) => { input.value = original[index]; });
+                setEditing(false);
+                edit.focus();
+            });
+            row.addEventListener('keydown', event => {
+                if (event.key === 'Escape' && row.classList.contains('is-editing')) { event.preventDefault(); cancel.click(); }
+            });
+            setEditing(false);
         });
 
         document.querySelectorAll("[id^='update-program-']").forEach(function (form) {

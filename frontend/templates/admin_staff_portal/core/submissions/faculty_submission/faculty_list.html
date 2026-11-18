@@ -8,7 +8,7 @@
 {% block extra_css %}{% endblock %}
 
 {% block content %}
-<div class="submissions-container">
+<div class="submissions-container faculty-overview-page">
     <div class="tab-nav">
         <a href="{% url 'admin_staff_portal:requirements_list' %}" class="tab-link {% if request.resolver_match.url_name == 'requirements_list' %}active{% endif %}">Submission Bin</a>
         <a href="{% url 'admin_staff_portal:faculty_submissions_list' %}" class="tab-link {% if request.resolver_match.url_name == 'faculty_submissions_list' %}active{% endif %}">Faculty Submission</a>
