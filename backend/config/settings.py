@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'axes',
     'anymail',
     'accounts',
+    'user_management',
     'programs',
     'submissions',
     'notifications.apps.NotificationsConfig',
@@ -88,7 +89,6 @@ TEMPLATES = [
 
 
 # Database
-
 DATABASE_URL = os.getenv('DB_URL')
 
 if not DATABASE_URL:
@@ -105,11 +105,11 @@ DATABASES = {
 
 # File storage (Supabase S3-compatible)
 STORAGES = {
-    "default": {
-        "BACKEND": "storages.backends.s3.S3Storage",
+    'default': {
+        'BACKEND': 'storages.backends.s3.S3Storage',
     },
-    "staticfiles": {
-        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    'staticfiles': {
+        'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage',
     },
 }
 

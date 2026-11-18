@@ -1,5 +1,10 @@
 from submissions.helpers import get_target_faculty_queryset
-from submissions.models import ClassAssignment, Requirement, UploadSlot
+from submissions.models import (
+    ClassAssignment,
+    Requirement,
+    UploadSlot,
+    SubmissionPeriod
+)
 
 Unit = Requirement.Unit
 
@@ -55,3 +60,19 @@ def sync_upload_slots(period):
 
     stale_ids = [existing[parts] for parts in existing.keys() - expected]
     UploadSlot.objects.filter(pk__in=stale_ids, draft__isnull=True, submission__isnull=True).delete()
+    
+def sync_course_periods(course_id):
+
+    terms = (
+        ClassAssignment.objects
+        .filter(course_id=course_id)
+        .values_list('academic_year', 'semester')
+        .distinct()
+    )
+
+    for academic_year, semester in terms:
+
+        period = SubmissionPeriod.objects.filter(academic_year=academic_year, semester=semester).first()
+
+        if period:
+            sync_upload_slots(period)

@@ -12,15 +12,13 @@
 {% block content %}
 <section class="program-page">
     <div class="program-page-header">
-        <div>
-            <a class="program-back-link" href="{% url 'admin_staff_portal:user_list' %}?role=FACULTY">
-                <img src="{% static 'images/Back Arrow Left.svg' %}" alt="" width="20" height="20">
-                <span>Back</span>
-            </a>
-            <h2>Programs</h2>
-            <p>Add and manage the programs available for faculty accounts.</p>
-        </div>
+        <h2>Programs</h2>
+        <p>Manage academic programs, their sections, and curriculum courses.</p>
     </div>
+
+    <a href="{% url 'programs:course_list' %}" class="btn">
+        Manage Courses
+    </a>
 
     {% if messages %}
         <div class="program-toast-stack" aria-live="polite">
@@ -33,28 +31,70 @@
         </div>
     {% endif %}
 
-    <form method="post" action="{% url 'admin_staff_portal:add_program' %}" class="program-add-card">
+    <form method="post"
+        action="{% url 'programs:add_program' %}"
+        class="program-add-card">
+
         {% csrf_token %}
+
         <div class="program-form-field">
             <label for="id_program_name">Program name</label>
-            <input id="id_program_name" name="program_name" maxlength="150" required>
+            <input
+                id="id_program_name"
+                name="program_name"
+                maxlength="150"
+                placeholder="e.g. Bachelor of Science in Information Technology"
+                required
+            >
         </div>
+
         <div class="program-form-field">
             <label for="id_short_name">Abbreviation</label>
-            <input id="id_short_name" name="short_name" maxlength="20" required>
+            <input
+                id="id_short_name"
+                name="short_name"
+                maxlength="20"
+                placeholder="e.g. BSIT"
+                required
+            >
         </div>
-        <button type="submit" class="btn program-add-button">Add program</button>
+
+        <div class="program-form-field">
+            <label for="id_duration_years">Program duration (years)</label>
+            <input
+                id="id_duration_years"
+                type="number"
+                name="duration_years"
+                min="1"
+                max="10"
+                value="4"
+                required
+            >
+        </div>
+
+        <button type="submit" class="btn program-add-button">
+            Add Program
+        </button>
+
     </form>
 
     <div class="program-table-card">
         <table class="data-table program-table">
-        <thead>
-            <tr><th>Program</th><th>Abbreviation</th><th>Actions</th></tr>
-        </thead>
-        <tbody>
-            {% for program in programs %}
+            <thead>
                 <tr>
-                    <td>
+                    <th>Program</th>
+                    <th>Abbreviation</th>
+                    <th>Duration</th>
+                    <th>Sections</th>
+                    <th>Courses</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for program in programs %}
+                    <tr>
+                        <td>
                             <input
                                 name="program_name"
                                 value="{{ program.program_name }}"
@@ -62,8 +102,9 @@
                                 required
                                 form="update-program-{{ program.id }}"
                             >
-                    </td>
-                    <td>
+                        </td>
+
+                        <td>
                             <input
                                 name="short_name"
                                 value="{{ program.short_name }}"
@@ -71,26 +112,73 @@
                                 required
                                 form="update-program-{{ program.id }}"
                             >
-                    </td>
-                    <td>
-                        <form
-                            id="update-program-{{ program.id }}"
-                            method="post"
-                            action="{% url 'admin_staff_portal:update_program' program.id %}"
-                        >
-                            {% csrf_token %}
-                            <button type="submit" class="program-action-button program-save-button">Save</button>
-                        </form>
-                        <form method="post" action="{% url 'admin_staff_portal:delete_program' program.id %}">
-                            {% csrf_token %}
-                            <button type="submit" class="program-action-button program-delete-button">Delete</button>
-                        </form>
-                    </td>
-                </tr>
-            {% empty %}
-                <tr><td colspan="3">No programs have been added.</td></tr>
-            {% endfor %}
-        </tbody>
+                        </td>
+
+                        <td>
+                            <input
+                                type="number"
+                                name="duration_years"
+                                value="{{ program.duration_years }}"
+                                min="1"
+                                max="10"
+                                required
+                                form="update-program-{{ program.id }}"
+                            >
+                        </td>
+
+                        <td>{{ program.section_count }}</td>
+
+                        <td>{{ program.course_count }}</td>
+
+                        <td>
+                            <div class="program-actions">
+                                <a
+                                    href="{% url 'programs:program_detail' program.id %}"
+                                    class="program-action-button"
+                                >
+                                    Manage
+                                </a>
+
+                                <form
+                                    id="update-program-{{ program.id }}"
+                                    method="post"
+                                    action="{% url 'programs:update_program' program.id %}"
+                                >
+                                    {% csrf_token %}
+
+                                    <button
+                                        type="submit"
+                                        class="program-action-button program-save-button"
+                                    >
+                                        Save
+                                    </button>
+
+                                </form>
+
+                                <form
+                                    method="post"
+                                    action="{% url 'programs:delete_program' program.id %}"
+                                >
+                                    {% csrf_token %}
+
+                                    <button
+                                        type="submit"
+                                        class="program-action-button program-delete-button"
+                                    >
+                                        Delete
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+
+                {% empty %}
+                    <tr>
+                        <td colspan="6">No programs have been added.</td>
+                    </tr>
+                {% endfor %}
+
+            </tbody>
         </table>
     </div>
 
@@ -115,7 +203,8 @@
         <div class="program-confirm-icon" aria-hidden="true">!</div>
         <h2 id="delete-confirm-title">Delete program?</h2>
         <p id="delete-confirm-message">
-            This program will be permanently deleted. This action cannot be undone.
+            This will delete the program and its configured sections and course
+            associations. Programs with existing faculty assignments cannot be deleted.
         </p>
         <div class="program-confirm-actions">
             <button type="button" class="program-confirm-cancel" data-confirm-cancel>

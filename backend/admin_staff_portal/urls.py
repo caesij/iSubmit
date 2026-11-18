@@ -1,4 +1,4 @@
-from django.urls import path
+from django.urls import include, path
 from admin_staff_portal import views
 from core.global_search_views import global_search_results, global_search_suggestions
 
@@ -14,6 +14,7 @@ urlpatterns = [
     path('admin-dashboard/data/', views.admin_dashboard_data_view, name='admin_dashboard_data'),
     path('staff-dashboard/', views.staff_dashboard_view, name='staff_dashboard'),
     path('staff-dashboard/data/', views.staff_dashboard_data_view, name='staff_dashboard_data'),
+    
     
     # Document Repo URLs
     path('documents/document_repository/', views.document_repo_view, name='document_repo'),
@@ -44,17 +45,7 @@ urlpatterns = [
     path('faculty-submissions/<uuid:faculty_id>/approve-selected/', views.approve_selected_submissions_view, name='approve_selected_submissions'),
     
     # User Management URLs
-    path('users/', views.user_list_view, name='user_list'),
-    path('users/add/', views.user_create_view, name='user_create'),
-    path('users/<uuid:pk>/edit/', views.user_update_view, name='user_edit'),
-    path('users/<uuid:pk>/toggle-acc-status/', views.user_toggle_acc_status_view, name='user_toggle_acc_status'),
-    path('users/<uuid:pk>/unlock/', views.user_unlock_view, name='user_unlock'),
-    
-    # Program Management URLs
-    path('programs/', views.program_list, name='program_list'),
-    path('programs/add/', views.add_program, name='add_program'),
-    path('programs/<int:program_id>/update/', views.update_program, name='update_program'),
-    path('programs/<int:program_id>/delete/', views.delete_program, name='delete_program'),
+    path('users/', include('user_management.urls')),
 
     # Settings URLs
     path('settings/preferences/', views.preferences_view, name='preferences'),

@@ -36,14 +36,6 @@ from admin_staff_portal.views.core.faculty_submission_views import (
     approve_selected_submissions_view,
 )
 
-from admin_staff_portal.views.core.user_management_views import (
-    user_list_view,
-    user_create_view,
-    user_update_view,
-    user_toggle_acc_status_view,
-    user_unlock_view,
-)
-
 from admin_staff_portal.views.general.settings_views import (
     preferences_view,
     notification_settings_view,
@@ -52,12 +44,6 @@ from admin_staff_portal.views.general.settings_views import (
 )
 
 from admin_staff_portal.views.general.profile_views import profile_view
-from admin_staff_portal.views.core.program_management_views import (
-    program_list,
-    add_program,
-    update_program,
-    delete_program,
-)
 
 __all__ = [
     'admin_dashboard_data_view',
@@ -90,20 +76,10 @@ __all__ = [
     'mark_reviewed_view',
     'approve_selected_submissions_view',
     
-    'user_list_view',
-    'user_create_view',
-    'user_update_view',
-    'user_toggle_acc_status_view',
-    'user_unlock_view',
-    
     'preferences_view',
     'notification_settings_view',
     'account_and_security_view',
     'staff_permissions_view',
     
     'profile_view',
-    'program_list',
-    'add_program',
-    'update_program',
-    'delete_program',
 ]

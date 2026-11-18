@@ -1,0 +1,79 @@
+
+{% extends 'admin_staff_portal/base.html' %}
+
+{% block title %}Course Catalogue - iSubmit{% endblock %}
+{% block heading %}Course Catalogue{% endblock %}
+
+{% block content %}
+
+<section class="course-page">
+
+    <a href="{% url 'programs:program_list' %}">
+        Back to Programs
+    </a>
+
+    <h2>Course Catalogue</h2>
+    <p>Create and manage reusable courses and their classifications.</p>
+
+    <!-- ADD COURSE -->
+
+    <form method="post"
+          action="{% url 'programs:add_course' %}">
+
+        {% csrf_token %}
+
+        {{ course_form.as_p }}
+
+        <button type="submit">Add Course</button>
+
+    </form>
+
+    <!-- COURSE LIST -->
+
+    <table class="data-table">
+
+        <thead>
+            <tr>
+                <th>Course Code</th>
+                <th>Course Title</th>
+                <th>Classification</th>
+                <th>Programs</th>
+            </tr>
+        </thead>
+
+        <tbody>
+
+            {% for course in courses %}
+
+                <tr>
+                    <td>{{ course.code }}</td>
+                    <td>{{ course.title }}</td>
+
+                    <td>
+                        {% if course.is_ojt %}
+                            OJT
+                        {% elif course.has_lab %}
+                            Laboratory
+                        {% else %}
+                            Regular
+                        {% endif %}
+                    </td>
+
+                    <td>{{ course.program_count }}</td>
+                </tr>
+
+            {% empty %}
+
+                <tr>
+                    <td colspan="4">No courses available.</td>
+                </tr>
+
+            {% endfor %}
+
+        </tbody>
+
+    </table>
+
+</section>
+
+{% endblock %}
