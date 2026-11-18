@@ -4,31 +4,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>{% block title %}iSubmit - {{ request.user.get_role_display }} Portal{% endblock %}</title>
 
     <link rel="stylesheet" href="{% static 'css/layout/admin_staff_portal.css' %}">
     <script src="{% static 'js/global-search.js' %}" defer></script>
+
     {% block extra_css %}{% endblock %}
-
-
 </head>
 
 <body>
+    {% with current_url=request.resolver_match.url_name %}
     <div class="admin-shell">
+
         <!-- Sidebar -->
         <aside class="sidebar">
+
             <div class="brand-box">
                 <div class="brand-mark">
-                    <img
-                        src="{% static 'images/logo.svg' %}"
-                        alt="iSubmit logo"
-                        class="brand-symbol"
-                    >
+                    <img src="{% static 'images/logo.svg' %}" alt="iSubmit logo" class="brand-symbol">
                 </div>
 
                 <div>
                     <div class="brand-name">iSubmit</div>
-
                     <div class="brand-sub">
                         Polytechnic University of the Philippines<br>
                         Santa Rosa Campus
@@ -37,93 +35,82 @@
             </div>
 
             <nav class="sidebar-nav" aria-label="Main navigation">
+
                 <div class="nav-section-title">Main</div>
 
                 <ul class="nav-list">
+
+                    <!-- Dashboard -->
                     <li class="nav-item">
                         <a
-                            class="nav-link {% if request.resolver_match.url_name == 'admin_dashboard' or request.resolver_match.url_name == 'staff_dashboard' %}active{% endif %}"
+                            class="nav-link {% if current_url == 'admin_dashboard' or current_url == 'staff_dashboard' %}active{% endif %}"
                             href="{% if request.user.is_admin %}{% url 'admin_staff_portal:admin_dashboard' %}{% else %}{% url 'admin_staff_portal:staff_dashboard' %}{% endif %}"
                         >
                             <span class="icon">
-                                <img
-                                    src="{% static 'images/dashboard.svg' %}"
-                                    alt="Dashboard icon"
-                                >
+                                <img src="{% static 'images/dashboard.svg' %}" alt="Dashboard icon">
                             </span>
                             <span>Dashboard</span>
                         </a>
                     </li>
 
+                    <!-- Documents -->
                     <li class="nav-item">
                         <a
-                            class="nav-link {% if request.resolver_match.url_name == 'document_repo' or request.resolver_match.url_name == 'document_archive' or request.resolver_match.url_name == 'document_file_view' %}active{% endif %}"
+                            class="nav-link {% if current_url == 'document_repo' or current_url == 'document_archive' or current_url == 'document_file_view' %}active{% endif %}"
                             href="{% url 'admin_staff_portal:document_repo' %}"
                         >
                             <span class="icon">
-                                <img
-                                    src="{% static 'images/documents.svg' %}"
-                                    alt="Documents icon"
-                                >
+                                <img src="{% static 'images/documents.svg' %}" alt="Documents icon">
                             </span>
                             <span>Documents</span>
                         </a>
                     </li>
 
+                    <!-- Submissions -->
                     <li class="nav-item">
                         <a
-                            class="nav-link {% if request.resolver_match.url_name in 'requirements_list,bulk_requirements,add_requirement,edit_requirement,faculty_submissions_list,faculty_submission_bins_view,review_submission' %}active{% endif %}"
+                            class="nav-link {% if current_url == 'requirements_list' or current_url == 'period_detail' or current_url == 'create_period' or current_url == 'edit_period' or current_url == 'toggle_period_status' or current_url == 'toggle_requirement_status' or current_url == 'faculty_submissions_list' or current_url == 'faculty_submission_bins_view' or current_url == 'review_submission' or current_url == 'mark_under_review' or current_url == 'mark_needs_revision' or current_url == 'mark_reviewed' or current_url == 'approve_selected_submissions' %}active{% endif %}"
                             href="{% url 'admin_staff_portal:requirements_list' %}"
                         >
                             <span class="icon">
-                                <img
-                                    src="{% static 'images/submissions.svg' %}"
-                                    alt="Submissions icon"
-                                >
+                                <img src="{% static 'images/submissions.svg' %}" alt="Submissions icon">
                             </span>
                             <span>Submissions</span>
                         </a>
                     </li>
 
-                    <li class="nav-item user-management-nav {% if request.resolver_match.url_name in 'user_list,user_create,user_edit,user_toggle_acc_status,user_unlock,program_list,add_program,update_program,delete_program' %}is-open{% endif %}">
-                        <button
-                            type="button"
-                            class="nav-link nav-toggle {% if request.resolver_match.url_name in 'user_list,user_create,user_edit,user_toggle_acc_status,user_unlock,program_list,add_program,update_program,delete_program' %}active{% endif %}"
-                            aria-expanded="{% if request.resolver_match.url_name in 'user_list,user_create,user_edit,user_toggle_acc_status,user_unlock,program_list,add_program,update_program,delete_program' %}true{% else %}false{% endif %}"
+                    <!-- Program Management -->
+                    <li class="nav-item">
+                        <a
+                            class="nav-link {% if current_url == 'program_list' or current_url == 'program_detail' or current_url == 'add_program_section' or current_url == 'update_program_section' or current_url == 'delete_program_section' or current_url == 'attach_program_course' or current_url == 'remove_program_course' or current_url == 'course_list' or current_url == 'add_course' or current_url == 'update_course' or current_url == 'delete_course' %}active{% endif %}"
+                            href="{% url 'programs:program_list' %}"
                         >
                             <span class="icon">
-                                <img
-                                    src="{% static 'images/usermanagement.svg' %}"
-                                    alt="User management icon"
-                                >
+                                <img src="{% static 'images/usermanagement.svg' %}" alt="Program Management icon">
                             </span>
-                            <span>User Management</span>
-                        </button>
-
-                        <ul class="subnav-list">
-                            {% if request.user.is_admin %}
-                                <li class="subnav-item">
-                                    <a
-                                        class="subnav-link {% if request.GET.role == 'STAFF' %}active{% endif %}"
-                                        href="{% url 'admin_staff_portal:user_list' %}?role=STAFF"
-                                    >
-                                        Staff Management
-                                    </a>
-                                </li>
-                            {% endif %}
-
-                            {% if request.user.is_admin or request.user.is_staff_role %}
-                                <li class="subnav-item">
-                                    <a
-                                        class="subnav-link {% if request.GET.role == 'FACULTY' or request.resolver_match.url_name in 'program_list,add_program,update_program,delete_program' %}active{% endif %}"
-                                        href="{% url 'admin_staff_portal:user_list' %}?role=FACULTY"
-                                    >
-                                        Faculty Management
-                                    </a>
-                                </li>
-                            {% endif %}
-                        </ul>
+                            <span>Program Management</span>
+                        </a>
                     </li>
+
+                    <!-- User Management -->
+                    {% if request.user.is_admin or request.user.is_staff_role %}
+                        <li class="nav-item">
+                            <a
+                                href="{% url 'user_management:user_list' %}"
+                                class="nav-link {% if current_url == 'user_list' or current_url == 'user_create' or current_url == 'user_edit' or current_url == 'user_toggle_acc_status' or current_url == 'user_unlock' %}active{% endif %}"
+                            >
+                                <span class="icon">
+                                    <img
+                                        src="{% static 'images/usermanagement.svg' %}"
+                                        alt="User management icon"
+                                    >
+                                </span>
+
+                                <span>User Management</span>
+                            </a>
+                        </li>
+                    {% endif %}
+
                 </ul>
 
                 <div class="sidebar-divider"></div>
@@ -131,138 +118,114 @@
                 <div class="nav-section-title">General</div>
 
                 <ul class="nav-list">
+
+                    <!-- Notifications -->
                     <li class="nav-item">
                         <a
-                            class="nav-link {% if request.resolver_match.url_name in 'notifications,notification_list' %}active{% endif %}"
+                            class="nav-link {% if current_url == 'notifications' or current_url == 'notification_list' %}active{% endif %}"
                             href="{% url 'notifications:notification_list' %}"
                         >
                             <span class="icon">
-                                <img
-                                    src="{% static 'images/Icon - Notifications.svg' %}"
-                                    alt="Notifications icon"
-                                >
+                                <img src="{% static 'images/Icon - Notifications.svg' %}" alt="Notifications icon">
                             </span>
                             <span>Notifications</span>
                         </a>
                     </li>
 
+                    <!-- Settings -->
                     <li class="nav-item">
                         <a
-                            class="nav-link {% if request.resolver_match.url_name in 'preferences,notification_settings,account_and_security,staff_permissions' %}active{% endif %}"
+                            class="nav-link {% if current_url == 'preferences' or current_url == 'notification_settings' or current_url == 'account_and_security' or current_url == 'staff_permissions' %}active{% endif %}"
                             href="{% url 'admin_staff_portal:preferences' %}"
                         >
                             <span class="icon">
-                                <img
-                                    src="{% static 'images/settings.svg' %}"
-                                    alt="Settings icon"
-                                >
+                                <img src="{% static 'images/settings.svg' %}" alt="Settings icon">
                             </span>
                             <span>Settings</span>
                         </a>
                     </li>
 
+                    <!-- Profile -->
                     <li class="nav-item">
                         <a
-                            class="nav-link {% if request.resolver_match.url_name == 'profile' %}active{% endif %}"
+                            class="nav-link {% if current_url == 'profile' %}active{% endif %}"
                             href="{% url 'admin_staff_portal:profile' %}"
                         >
                             <span class="icon">
-                                <img
-                                    src="{% static 'images/profile.svg' %}"
-                                    alt="Profile icon"
-                                >
+                                <img src="{% static 'images/profile.svg' %}" alt="Profile icon">
                             </span>
                             <span>Profile</span>
                         </a>
                     </li>
 
+                    <!-- Logout -->
                     <li class="nav-item">
-                        <a
-                            class="nav-link"
-                            href="{% url 'accounts:logout' %}"
-                        >
+                        <a class="nav-link" href="{% url 'accounts:logout' %}">
                             <span class="icon">
-                                <img
-                                    src="{% static 'images/logout.svg' %}"
-                                    alt="Logout icon"
-                                >
+                                <img src="{% static 'images/logout.svg' %}" alt="Logout icon">
                             </span>
                             <span>Logout</span>
                         </a>
                     </li>
+
                 </ul>
+
             </nav>
+
         </aside>
+
 
         <!-- Main area -->
         <main class="main-area">
+
             <header class="topbar">
+
                 <div>
                     <div class="topbar-title-wrap">
-                        {% if request.resolver_match.url_name == 'admin_dashboard' or request.resolver_match.url_name == 'staff_dashboard' %}
+                        {% if current_url == 'admin_dashboard' or current_url == 'staff_dashboard' %}
                             <span class="page-icon">
-                                <img
-                                    src="{% static 'images/dashboard.svg' %}"
-                                    alt="Dashboard icon"
-                                >
+                                <img src="{% static 'images/dashboard.svg' %}" alt="Dashboard icon">
                             </span>
-
-                        {% elif request.resolver_match.url_name in 'user_list,user_create,user_edit,user_toggle_acc_status,user_unlock,program_list,add_program,update_program,delete_program' %}
+                        {% elif current_url == 'user_list' or current_url == 'user_create' or current_url == 'user_edit' or current_url == 'user_toggle_acc_status' or current_url == 'user_unlock' %}
                             <span class="page-icon">
-                                <img
-                                    src="{% static 'images/usermanagement.svg' %}"
-                                    alt="User management icon"
-                                >
+                                <img src="{% static 'images/usermanagement.svg' %}" alt="User management icon">
                             </span>
-
-                        {% elif request.resolver_match.url_name in 'requirements_list,bulk_requirements,add_requirement,edit_requirement,faculty_submissions_list,faculty_submission_bins_view,review_submission' %}
+                        {% elif current_url == 'program_list' or current_url == 'program_detail' or current_url == 'add_program_section' or current_url == 'update_program_section' or current_url == 'delete_program_section' or current_url == 'attach_program_course' or current_url == 'remove_program_course' or current_url == 'course_list' or current_url == 'add_course' or current_url == 'update_course' or current_url == 'delete_course' %}
                             <span class="page-icon">
-                                <img
-                                    src="{% static 'images/submissions.svg' %}"
-                                    alt="Submissions icon"
-                                >
+                                <img src="{% static 'images/usermanagement.svg' %}" alt="Program Management icon">
                             </span>
-
-                        {% elif request.resolver_match.url_name == 'document_repo' or request.resolver_match.url_name == 'document_archive' or request.resolver_match.url_name == 'document_file_view' %}
+                        {% elif current_url == 'requirements_list' or current_url == 'period_detail' or current_url == 'create_period' or current_url == 'edit_period' or current_url == 'toggle_period_status' or current_url == 'toggle_requirement_status' or current_url == 'faculty_submissions_list' or current_url == 'faculty_submission_bins_view' or current_url == 'review_submission' or current_url == 'mark_under_review' or current_url == 'mark_needs_revision' or current_url == 'mark_reviewed' or current_url == 'approve_selected_submissions' %}
                             <span class="page-icon">
-                                <img
-                                    src="{% static 'images/documents.svg' %}"
-                                    alt="Documents icon"
-                                >
+                                <img src="{% static 'images/submissions.svg' %}" alt="Submissions icon">
                             </span>
-
-                        {% elif request.resolver_match.url_name in 'preferences,notification_settings,account_and_security,staff_permissions' %}
+                        {% elif current_url == 'document_repo' or current_url == 'document_archive' or current_url == 'document_file_view' or current_url == 'archive_document' or current_url == 'restore_document' or current_url == 'permanently_delete_document' %}
                             <span class="page-icon">
-                                <img
-                                    src="{% static 'images/settings.svg' %}"
-                                    alt="Settings icon"
-                                >
+                                <img src="{% static 'images/documents.svg' %}" alt="Documents icon">
                             </span>
-
+                        {% elif current_url == 'preferences' or current_url == 'notification_settings' or current_url == 'account_and_security' or current_url == 'staff_permissions' %}
+                            <span class="page-icon">
+                                <img src="{% static 'images/settings.svg' %}" alt="Settings icon">
+                            </span>
                         {% else %}
                             <span class="page-icon">
-                                <img
-                                    src="{% static 'images/profile.svg' %}"
-                                    alt="Page icon"
-                                >
+                                <img src="{% static 'images/profile.svg' %}" alt="Page icon">
                             </span>
                         {% endif %}
 
                         <h1 class="topbar-title">
-                            {% block heading %}
-                                {{ page_title|default:'User Management' }}
-                            {% endblock %}
+                            {% block heading %}{{ page_title|default:'User Management' }}{% endblock %}
                         </h1>
                     </div>
 
                     <div class="topbar-subtitle">
-                        {% block subtitle %}
-                            Manage and access all approved documents across the system.
-                        {% endblock %}
+                        {% block subtitle %}Manage and access all approved documents across the system.{% endblock %}
                     </div>
                 </div>
 
+
                 <div class="topbar-controls">
+
+                    <!-- Global search -->
                     <form
                         class="global-search"
                         data-global-search
@@ -272,10 +235,7 @@
                         autocomplete="off"
                     >
                         <span class="icon">
-                            <img
-                                src="{% static 'images/search.svg' %}"
-                                alt="Search icon"
-                            >
+                            <img src="{% static 'images/search.svg' %}" alt="Search icon">
                         </span>
 
                         <input
@@ -302,16 +262,12 @@
                                     <span>Find specific records using filters.</span>
                                 </div>
 
-                                <!-- Document filters -->
                                 <section class="global-search-filter-section">
                                     <h3>Documents</h3>
 
                                     <div class="global-search-filter-grid">
                                         <div class="global-search-filter-field">
-                                            <label for="global-faculty-name">
-                                                Faculty Name
-                                            </label>
-
+                                            <label for="global-faculty-name">Faculty Name</label>
                                             <input
                                                 type="text"
                                                 id="global-faculty-name"
@@ -321,10 +277,7 @@
                                         </div>
 
                                         <div class="global-search-filter-field">
-                                            <label for="global-document-title">
-                                                Document Title
-                                            </label>
-
+                                            <label for="global-document-title">Document Title</label>
                                             <input
                                                 type="text"
                                                 id="global-document-title"
@@ -336,9 +289,7 @@
                                 </section>
 
                                 <div class="global-search-actions">
-                                    <button type="submit">
-                                        Search
-                                    </button>
+                                    <button type="submit">Search</button>
                                 </div>
 
                             </div>
@@ -352,46 +303,44 @@
                         </div>
                     </form>
 
-                    <div
-                        class="notification-wrap notification-position"
-                        aria-label="Notifications"
-
-                    >
+                    <!-- Notifications -->
+                    <div class="notification-wrap notification-position" aria-label="Notifications">
                         <button
                             type="button"
                             id="notif-bell"
-
                             aria-label="Open notifications"
                             aria-expanded="false"
-                         class="notification-trigger">
+                            class="notification-trigger"
+                        >
                             <img
                                 src="{% static 'images/Icon - Notifications.svg' %}"
                                 alt="Notifications"
                                 class="icon"
                             >
 
-                            <span
-                                class="notif-badge"
-                                id="notif-badge"
-                                style="display:none;"
-                            >
+                            <span class="notif-badge" id="notif-badge" style="display:none;">
                                 0
                             </span>
                         </button>
 
-                        <div
-                            class="notif-dropdown"
-                            id="notif-dropdown"
-                            style="display:none;"
-                        ></div>
+                        <div class="notif-dropdown" id="notif-dropdown" style="display:none;"></div>
                     </div>
 
+                    <!-- User profile -->
                     <div class="user-badge">
                         <div class="user-badge-avatar">
                             {% if request.user.profile_picture %}
-                                <img src="{{ request.user.profile_picture.url }}" alt="User profile" class="user-badge-img">
+                                <img
+                                    src="{{ request.user.profile_picture.url }}"
+                                    alt="User profile"
+                                    class="user-badge-img"
+                                >
                             {% else %}
-                                <img src="{% static 'images/default profile.jpg' %}" alt="Default user profile" class="user-badge-img">
+                                <img
+                                    src="{% static 'images/default profile.jpg' %}"
+                                    alt="Default user profile"
+                                    class="user-badge-img"
+                                >
                             {% endif %}
                         </div>
 
@@ -399,358 +348,310 @@
                             <div class="user-badge-name">
                                 {{ request.user.get_full_name|default:request.user.email }}
                             </div>
-
-                            <span class="user-badge-meta">
-                                {{ request.user.get_role_display }}
-                            </span>
+                            <span class="user-badge-meta">{{ request.user.get_role_display }}</span>
                         </div>
                     </div>
+
                 </div>
+
             </header>
 
+
+            <!-- Page content -->
             <div class="content-shell">
                 {% block content %}{% endblock %}
             </div>
+
         </main>
+
     </div>
+    {% endwith %}
+
 
     <!-- Sidebar toggle -->
     <script>
-    document.addEventListener("click", function (event) {
-        const toggle =
-            event.target.closest(
-                ".user-management-nav .nav-toggle"
-            );
+        document.addEventListener("click", function (event) {
+            const toggle = event.target.closest(".user-management-nav .nav-toggle");
 
-        if (!toggle) {
-            return;
-        }
+            if (!toggle) return;
 
-        const navItem =
-            toggle.closest(".user-management-nav");
+            const navItem = toggle.closest(".user-management-nav");
+            const isOpen = navItem.classList.toggle("is-open");
 
-        const isOpen =
-            navItem.classList.toggle("is-open");
-
-        toggle.setAttribute(
-            "aria-expanded",
-            String(isOpen)
-        );
-    });
+            toggle.setAttribute("aria-expanded", String(isOpen));
+        });
     </script>
+
 
     <!-- Realtime WebSocket -->
     <script>
-    (function () {
-        const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-        const refreshableContainers = [
-            "[data-live-container='requirements-table']",
-            "[data-live-container='requirements-pagination']",
-            "[data-live-container='faculty-submissions-table']",
-            "[data-live-container='faculty-submissions-pagination']",
-            "[data-live-container='faculty-overview-table']",
-            "[data-live-container='faculty-overview-pagination']",
-            "[data-live-panel]"
-        ];
-        let socket;
-        let reconnectAttempt = 0;
-        let refreshInProgress = false;
-        let refreshTimer;
+        (function () {
+            const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
 
-        function refreshCurrentPage() {
-            if (refreshInProgress || !refreshableContainers.some(function (selector) {
-                return document.querySelector(selector);
-            })) {
-                return;
-            }
+            const refreshableContainers = [
+                "[data-live-container='requirements-table']",
+                "[data-live-container='requirements-pagination']",
+                "[data-live-container='faculty-submissions-table']",
+                "[data-live-container='faculty-submissions-pagination']",
+                "[data-live-container='faculty-overview-table']",
+                "[data-live-container='faculty-overview-pagination']",
+                "[data-live-panel]"
+            ];
 
-            if (document.activeElement && document.activeElement.closest("form")) {
-                clearTimeout(refreshTimer);
-                refreshTimer = setTimeout(refreshCurrentPage, 3000);
-                return;
-            }
+            let socket;
+            let reconnectAttempt = 0;
+            let refreshInProgress = false;
+            let refreshTimer;
 
-            refreshInProgress = true;
-            fetch(window.location.href, {
-                headers: {"X-Requested-With": "XMLHttpRequest"},
-                cache: "no-store"
-            })
-                .then(function (response) {
-                    if (!response.ok) {
-                        throw new Error("Realtime refresh failed.");
-                    }
-                    return response.text();
-                })
-                .then(function (html) {
-                    const parsed = new DOMParser().parseFromString(html, "text/html");
-                    refreshableContainers.forEach(function (selector) {
-                        const current = document.querySelector(selector);
-                        const updated = parsed.querySelector(selector);
-                        if (current && updated) {
-                            current.replaceWith(updated);
-                        }
-                    });
-                    document.dispatchEvent(new CustomEvent("submissions-refreshed"));
-                })
-                .catch(function (error) {
-                    console.error("Realtime page refresh failed:", error);
-                })
-                .finally(function () {
-                    refreshInProgress = false;
-                });
-        }
-
-        function connect() {
-            socket = new WebSocket(`${protocol}//${window.location.host}/ws/realtime/`);
-            socket.addEventListener("open", function () {
-                reconnectAttempt = 0;
-            });
-            socket.addEventListener("message", function (event) {
-                const message = JSON.parse(event.data);
-                if (message.event === "submissions.update") {
-                    if (window.location.pathname.includes("/documents/")) {
-                        window.location.reload();
-                        return;
-                    }
-                    refreshCurrentPage();
-                }
-                if (message.event === "admin-dashboard.update") {
-                    document.dispatchEvent(new CustomEvent("admin-dashboard-update"));
-                }
-                if (message.event === "staff-dashboard.update") {
-                    document.dispatchEvent(new CustomEvent("staff-dashboard-update"));
-                }
-                if (message.event === "security.activity-updated") {
-                    document.dispatchEvent(new CustomEvent("security-activity-updated"));
-                }
-                if (message.event === "security.session-revoked") {
-                    const notice = document.createElement("div");
-                    notice.textContent = "This browser session was logged out from another browser.";
-                    notice.style.cssText = "position:fixed;top:20px;right:20px;z-index:9999;background:#7f1d1d;color:#fff;padding:12px 16px;border-radius:8px;font:13px sans-serif;";
-                    document.body.appendChild(notice);
-                    setTimeout(function () {
-                        window.location.href = "{% url 'accounts:login' %}";
-                    }, 1200);
-                }
-                if (message.event === "notification.new") {
-                    document.dispatchEvent(new CustomEvent("notification-new", {detail: message.data}));
-                }
-            });
-            socket.addEventListener("close", function () {
-                const delay = Math.min(30000, 1000 * (2 ** reconnectAttempt));
-                reconnectAttempt += 1;
-                setTimeout(connect, delay);
-            });
-        }
-
-        connect();
-        setInterval(function () {
-            if (document.visibilityState === "visible" && (!socket || socket.readyState !== WebSocket.OPEN)) {
-                refreshCurrentPage();
-            }
-        }, 30000);
-    })();
-    </script>
-
-    <!-- Notifications -->
-    <script>
-    document.addEventListener("DOMContentLoaded", function () {
-        const bell =
-            document.getElementById("notif-bell");
-
-        const badge =
-            document.getElementById("notif-badge");
-
-        const dropdown =
-            document.getElementById("notif-dropdown");
-
-        const listContainer =
-            document.getElementById(
-                "notification-list-container"
-            );
-
-        if (!bell || !badge || !dropdown) {
-            return;
-        }
-
-        let dropdownLoading = false;
-        let listLoading = false;
-
-        function updateBadge(count) {
-            const unreadCount = Math.max(
-                0,
-                Number(count) || 0
-            );
-
-            if (unreadCount > 0) {
-                badge.textContent = unreadCount;
-                badge.style.display = "flex";
-            } else {
-                badge.textContent = "0";
-                badge.style.display = "none";
-            }
-        }
-
-        async function loadNotificationDropdown() {
-            if (dropdownLoading) {
-                return;
-            }
-
-            dropdownLoading = true;
-
-            try {
-                const response = await fetch(
-                    "{% url 'notifications:dropdown' %}",
-                    {
-                        method: "GET",
-                        cache: "no-store",
-                        headers: {
-                            "X-Requested-With":
-                                "XMLHttpRequest"
-                        }
-                    }
-                );
-
-                if (!response.ok) {
-                    throw new Error(
-                        "We couldn't load your notifications."
-                    );
-                }
-
-                const data =
-                    await response.json();
-
-                dropdown.innerHTML = data.html;
-
-                updateBadge(
-                    data.unread_count
-                );
-            } catch (error) {
-                console.error(
-                    "Notification dropdown failed:",
-                    error
-                );
-
-                dropdown.innerHTML = `
-                    <div class="notif-dropdown-empty">
-                        We couldn't load your notifications. Please try again.
-                    </div>
-                `;
-            } finally {
-                dropdownLoading = false;
-            }
-        }
-
-        async function loadNotificationList() {
-            if (!listContainer || listLoading) {
-                return;
-            }
-
-            listLoading = true;
-
-            try {
-                const response = await fetch(
-                    "{% url 'notifications:list_data' %}" +
-                    window.location.search,
-                    {
-                        method: "GET",
-                        cache: "no-store",
-                        headers: {
-                            "X-Requested-With":
-                                "XMLHttpRequest"
-                        }
-                    }
-                );
-
-                if (!response.ok) {
-                    throw new Error(
-                        "We couldn't refresh your notifications."
-                    );
-                }
-
-                const data =
-                    await response.json();
-
-                listContainer.innerHTML =
-                    data.html;
-            } catch (error) {
-                console.error(
-                    "Notification list refresh failed:",
-                    error
-                );
-            } finally {
-                listLoading = false;
-            }
-        }
-
-        bell.addEventListener(
-            "click",
-            function (event) {
-                event.stopPropagation();
-
-                const isOpen =
-                    dropdown.style.display ===
-                    "block";
-
-                if (isOpen) {
-                    dropdown.style.display =
-                        "none";
-
-                    bell.setAttribute(
-                        "aria-expanded",
-                        "false"
-                    );
-
+            function refreshCurrentPage() {
+                if (
+                    refreshInProgress ||
+                    !refreshableContainers.some(function (selector) {
+                        return document.querySelector(selector);
+                    })
+                ) {
                     return;
                 }
 
-                dropdown.style.display =
-                    "block";
+                if (document.activeElement && document.activeElement.closest("form")) {
+                    clearTimeout(refreshTimer);
+                    refreshTimer = setTimeout(refreshCurrentPage, 3000);
+                    return;
+                }
 
-                bell.setAttribute(
-                    "aria-expanded",
-                    "true"
-                );
+                refreshInProgress = true;
+
+                fetch(window.location.href, {
+                    headers: { "X-Requested-With": "XMLHttpRequest" },
+                    cache: "no-store"
+                })
+                    .then(function (response) {
+                        if (!response.ok) {
+                            throw new Error("Realtime refresh failed.");
+                        }
+
+                        return response.text();
+                    })
+                    .then(function (html) {
+                        const parsed = new DOMParser().parseFromString(html, "text/html");
+
+                        refreshableContainers.forEach(function (selector) {
+                            const current = document.querySelector(selector);
+                            const updated = parsed.querySelector(selector);
+
+                            if (current && updated) current.replaceWith(updated);
+                        });
+
+                        document.dispatchEvent(new CustomEvent("submissions-refreshed"));
+                    })
+                    .catch(function (error) {
+                        console.error("Realtime page refresh failed:", error);
+                    })
+                    .finally(function () {
+                        refreshInProgress = false;
+                    });
+            }
+
+
+            function connect() {
+                socket = new WebSocket(`${protocol}//${window.location.host}/ws/realtime/`);
+
+                socket.addEventListener("open", function () {
+                    reconnectAttempt = 0;
+                });
+
+                socket.addEventListener("message", function (event) {
+                    const message = JSON.parse(event.data);
+
+                    if (message.event === "submissions.update") {
+                        if (window.location.pathname.includes("/documents/")) {
+                            window.location.reload();
+                            return;
+                        }
+
+                        refreshCurrentPage();
+                    }
+
+                    if (message.event === "admin-dashboard.update") {
+                        document.dispatchEvent(new CustomEvent("admin-dashboard-update"));
+                    }
+
+                    if (message.event === "staff-dashboard.update") {
+                        document.dispatchEvent(new CustomEvent("staff-dashboard-update"));
+                    }
+
+                    if (message.event === "security.activity-updated") {
+                        document.dispatchEvent(new CustomEvent("security-activity-updated"));
+                    }
+
+                    if (message.event === "security.session-revoked") {
+                        const notice = document.createElement("div");
+
+                        notice.textContent = "This browser session was logged out from another browser.";
+
+                        notice.style.cssText =
+                            "position:fixed;top:20px;right:20px;z-index:9999;background:#7f1d1d;color:#fff;padding:12px 16px;border-radius:8px;font:13px sans-serif;";
+
+                        document.body.appendChild(notice);
+
+                        setTimeout(function () {
+                            window.location.href = "{% url 'accounts:login' %}";
+                        }, 1200);
+                    }
+
+                    if (message.event === "notification.new") {
+                        document.dispatchEvent(
+                            new CustomEvent("notification-new", { detail: message.data })
+                        );
+                    }
+                });
+
+                socket.addEventListener("close", function () {
+                    const delay = Math.min(30000, 1000 * (2 ** reconnectAttempt));
+
+                    reconnectAttempt += 1;
+                    setTimeout(connect, delay);
+                });
+            }
+
+
+            connect();
+
+            setInterval(function () {
+                if (
+                    document.visibilityState === "visible" &&
+                    (!socket || socket.readyState !== WebSocket.OPEN)
+                ) {
+                    refreshCurrentPage();
+                }
+            }, 30000);
+        })();
+    </script>
+
+
+    <!-- Notifications -->
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const bell = document.getElementById("notif-bell");
+            const badge = document.getElementById("notif-badge");
+            const dropdown = document.getElementById("notif-dropdown");
+            const listContainer = document.getElementById("notification-list-container");
+
+            if (!bell || !badge || !dropdown) return;
+
+            let dropdownLoading = false;
+            let listLoading = false;
+
+            function updateBadge(count) {
+                const unreadCount = Math.max(0, Number(count) || 0);
+
+                if (unreadCount > 0) {
+                    badge.textContent = unreadCount;
+                    badge.style.display = "flex";
+                } else {
+                    badge.textContent = "0";
+                    badge.style.display = "none";
+                }
+            }
+
+            async function loadNotificationDropdown() {
+                if (dropdownLoading) return;
+
+                dropdownLoading = true;
+
+                try {
+                    const response = await fetch("{% url 'notifications:dropdown' %}", {
+                        method: "GET",
+                        cache: "no-store",
+                        headers: { "X-Requested-With": "XMLHttpRequest" }
+                    });
+
+                    if (!response.ok) {
+                        throw new Error("We couldn't load your notifications.");
+                    }
+
+                    const data = await response.json();
+
+                    dropdown.innerHTML = data.html;
+                    updateBadge(data.unread_count);
+                } catch (error) {
+                    console.error("Notification dropdown failed:", error);
+
+                    dropdown.innerHTML = `
+                        <div class="notif-dropdown-empty">
+                            We couldn't load your notifications. Please try again.
+                        </div>
+                    `;
+                } finally {
+                    dropdownLoading = false;
+                }
+            }
+
+            async function loadNotificationList() {
+                if (!listContainer || listLoading) return;
+
+                listLoading = true;
+
+                try {
+                    const response = await fetch(
+                        "{% url 'notifications:list_data' %}" + window.location.search,
+                        {
+                            method: "GET",
+                            cache: "no-store",
+                            headers: { "X-Requested-With": "XMLHttpRequest" }
+                        }
+                    );
+
+                    if (!response.ok) {
+                        throw new Error("We couldn't refresh your notifications.");
+                    }
+
+                    const data = await response.json();
+
+                    listContainer.innerHTML = data.html;
+                } catch (error) {
+                    console.error("Notification list refresh failed:", error);
+                } finally {
+                    listLoading = false;
+                }
+            }
+
+            bell.addEventListener("click", function (event) {
+                event.stopPropagation();
+
+                const isOpen = dropdown.style.display === "block";
+
+                if (isOpen) {
+                    dropdown.style.display = "none";
+                    bell.setAttribute("aria-expanded", "false");
+                    return;
+                }
+
+                dropdown.style.display = "block";
+                bell.setAttribute("aria-expanded", "true");
 
                 dropdown.innerHTML = `
-                    <div class="notif-dropdown-empty">
-                        Loading notifications...
-                    </div>
+                    <div class="notif-dropdown-empty">Loading notifications...</div>
                 `;
 
                 loadNotificationDropdown();
-            }
-        );
+            });
 
-        document.addEventListener(
-            "click",
-            function (event) {
-                if (
-                    !event.target.closest(
-                        ".notification-wrap"
-                    )
-                ) {
-                    dropdown.style.display =
-                        "none";
-
-                    bell.setAttribute(
-                        "aria-expanded",
-                        "false"
-                    );
+            document.addEventListener("click", function (event) {
+                if (!event.target.closest(".notification-wrap")) {
+                    dropdown.style.display = "none";
+                    bell.setAttribute("aria-expanded", "false");
                 }
-            }
-        );
+            });
 
-        document.addEventListener(
-            "notification-new",
-            function () {
+            document.addEventListener("notification-new", function () {
                 loadNotificationDropdown();
                 loadNotificationList();
-            }
-        );
+            });
 
-        loadNotificationDropdown();
-    });
+            loadNotificationDropdown();
+        });
     </script>
+
 </body>
 </html>

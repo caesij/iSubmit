@@ -10,6 +10,7 @@ from django.db.models.functions import Lower
 from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
 from django.utils import timezone
+from django.core.exceptions import ValidationError
 
 
 def draft_upload_path(instance, filename):
@@ -279,7 +280,7 @@ class ClassAssignment(models.Model):
 
     faculty = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='class_assignments')
     course = models.ForeignKey(Course, on_delete=models.PROTECT, related_name='class_assignments')
-    program = models.ForeignKey('programs.Program', on_delete=models.CASCADE, related_name='class_assignments')
+    program = models.ForeignKey('programs.Program', on_delete=models.PROTECT, related_name='class_assignments')
 
     year_level = models.PositiveSmallIntegerField()
     section = models.CharField(max_length=10, help_text='The part after the year level. For section 1-4 enter 4.')
@@ -291,6 +292,50 @@ class ClassAssignment(models.Model):
                 name='unique_class_assignment'
             )
         ]
+    
+    def clean(self):
+        super().clean()
+
+        if not self.program_id:
+            return
+
+        errors = {}
+
+        program = self.program
+
+        # Validate year level against program duration
+        if (self.year_level is not None and self.year_level > program.duration_years):
+            errors['year_level'] = ('The selected year level exceeds the program duration.')
+
+        # Validate section number before converting it
+        section = (self.section or '').strip()
+
+        if not section.isascii() or not section.isdecimal() or int(section) < 1:
+            errors['section'] = 'Enter a valid section number.'
+
+        else:
+            section_number = int(section)
+            self.section = str(section_number)
+
+            section_exists = self.program.sections.filter(
+                academic_year=self.academic_year,
+                year_level=self.year_level,
+                section=section_number,
+            ).exists()
+
+            if not section_exists:
+                errors['section'] = (
+                    'This section does not exist for the selected program, academic year, and year level.'
+                )
+
+        # Validate whether the course belongs to the selected program
+        if self.course_id and not program.courses.filter(
+            pk=self.course_id,
+        ).exists():
+            errors['course'] = ('This course is not included in the selected program.')
+
+        if errors:
+            raise ValidationError(errors)
 
     def __str__(self):
         return f'{self.faculty} - {self.course.code} - {self.program.short_name} {self.year_level}-{self.section}'

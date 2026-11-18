@@ -7,11 +7,11 @@
 {% block content %}
 <div class="panel-header">
     <div class="section-tabs">
-        <a href="{% url 'admin_staff_portal:user_list' %}?role={{ current_role }}"
+        <a href="{% url 'user_management:user_list' %}?role={{ current_role }}"
            class="tab-link active">
             {{ page_title }}
         </a>
-        <a href="{% url 'admin_staff_portal:user_create' %}?role={{ current_role }}"
+        <a href="{% url 'user_management:user_create' %}?role={{ current_role }}"
            class="tab-link">
             Add {{ page_title|cut:' Management' }}
         </a>
@@ -19,16 +19,12 @@
 </div>
 
 <div class="table-toolbar">
-    <form method="GET"
-          class="filters"
-          action="{% url 'admin_staff_portal:user_list' %}">
 
-        <input type="hidden" name="role" value="{{ current_role }}">
+    <form method="GET"
+          action="{% url 'user_management:user_list' %}"
+          class="filters">
 
         <div class="search-field">
-            <span class="icon">
-                <img src="{% static 'images/search.svg' %}" alt="Search icon">
-            </span>
             <input
                 type="text"
                 name="q"
@@ -38,96 +34,138 @@
         </div>
 
         <div class="status-filter">
+            <span class="status-label">Role</span>
+
+            <select name="role" class="filter-select">
+                {% for value, label in role_choices %}
+                    <option value="{{ value }}"
+                        {% if selected_role == value %}selected{% endif %}>
+                        {{ label }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        {% if show_faculty_type %}
+            <div class="status-filter">
+                <span class="status-label">Faculty Type</span>
+
+                <select name="faculty_type" class="filter-select">
+                    <option value="">All Faculty Types</option>
+
+                    {% for value, label in faculty_type_choices %}
+                        <option value="{{ value }}"
+                            {% if faculty_type_param == value %}selected{% endif %}>
+                            {{ label }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+        {% endif %}
+
+        <div class="status-filter">
             <span class="status-label">Account Status</span>
-            <select class="filter-select" name="status">
+
+            <select name="status" class="filter-select">
                 <option value="">All Statuses</option>
+
                 <option value="active"
-                    {% if request.GET.status == 'active' %}selected{% endif %}>
+                    {% if status_param == 'active' %}selected{% endif %}>
                     Active
                 </option>
+
                 <option value="inactive"
-                    {% if request.GET.status == 'inactive' %}selected{% endif %}>
-                    Deactivated
+                    {% if status_param == 'inactive' %}selected{% endif %}>
+                    Inactive
                 </option>
             </select>
         </div>
 
         <div class="status-filter">
             <span class="status-label">Security Status</span>
-            <select class="filter-select" name="lockout">
+
+            <select name="lockout" class="filter-select">
                 <option value="">All Security Statuses</option>
+
                 <option value="unlocked"
                     {% if lockout_param == 'unlocked' %}selected{% endif %}>
-                    Not Locked
+                    Not locked
                 </option>
+
                 <option value="locked"
                     {% if lockout_param == 'locked' %}selected{% endif %}>
-                    Locked Out
+                    Locked out
                 </option>
             </select>
         </div>
 
-        {% if request.GET.q or request.GET.faculty_type or request.GET.status or lockout_param %}
-            <a class="btn btn-ghost clear-button"
-               href="{% url 'admin_staff_portal:user_list' %}?role={{ current_role }}">
-                <span class="clear-icon">⟲</span>
-                <span>Clear Filters</span>
-            </a>
-        {% endif %}
-
-        <button type="submit" class="btn btn-ghost">
+        <button type="submit" class="action-button">
             Apply Filters
         </button>
 
-        {% if current_role == 'FACULTY' %}
-            <a
-                href="{% url 'admin_staff_portal:program_list' %}"
-                class="action-button manage-program-button"
-            >
-                Manage Programs
-            </a>
-        {% endif %}
-
-        <a class="action-button"
-           href="{% url 'admin_staff_portal:user_create' %}?role={{ current_role }}">
-            <img
-                src="{% static 'images/add.svg' %}"
-                alt="Add user"
-                class="action-button-icon"
-            >
-            <span>Add User</span>
+        <a href="{% url 'user_management:user_list' %}"
+           class="btn btn-ghost clear-button">
+            Clear Filters
         </a>
+
     </form>
+
+    <a href="{% url 'user_management:user_create' %}"
+       class="action-button">
+        Add User
+    </a>
+
 </div>
 
 <div class="table-wrap">
-    <table class="data-table" aria-label="{{ page_title }} list">
+
+    <table class="data-table" aria-label="User management list">
+
         <thead>
             <tr>
-                <th class="user-name-column">Name</th>
-
-                {% if current_role == 'FACULTY' %}
-                    <th class="user-faculty-type-column">Faculty Type</th>
-                {% endif %}
-
-                <th class="user-email-column">Email</th>
-                <th class="user-status-column">Account Status</th>
-                <th class="user-security-column">Security Status</th>
-                <th class="user-status-column">Last Active</th>
-                <th class="user-actions-column">Actions</th>
+                <th>Name</th>
+                <th>Role</th>
+                <th>Faculty Type</th>
+                <th>Assigned Programs</th>
+                <th>Email</th>
+                <th>Account Status</th>
+                <th>Security Status</th>
+                <th>Last Active</th>
+                <th>Actions</th>
             </tr>
         </thead>
 
         <tbody>
-            {% for managed_user in users %}
-                <tr>
-                    <td>{{ managed_user.get_full_name|default:"-" }}</td>
 
-                    {% if current_role == 'FACULTY' %}
-                        <td>
+            {% for managed_user in users %}
+
+                <tr>
+
+                    <td>{{ managed_user.get_full_name }}</td>
+
+                    <td>{{ managed_user.get_role_display }}</td>
+
+                    <td>
+                        {% if managed_user.role == 'FACULTY' %}
                             {{ managed_user.get_faculty_type_display|default:"-" }}
-                        </td>
-                    {% endif %}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+
+                    <td>
+                        {% if managed_user.role == 'FACULTY' %}
+
+                            {% for program in managed_user.assigned_programs.all %}
+                                {{ program.short_name }}{% if not forloop.last %}, {% endif %}
+                            {% empty %}
+                                -
+                            {% endfor %}
+
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
 
                     <td>{{ managed_user.email }}</td>
 
@@ -136,30 +174,28 @@
                             {% if managed_user.is_active %}
                                 Active
                             {% else %}
-                                Deactivated
+                                Inactive
                             {% endif %}
                         </span>
                     </td>
 
                     <td>
                         {% if managed_user.is_locked_out %}
-                            <div class="security-status locked">
-                                <span class="security-status-indicator"></span>
-                                Locked
-                            </div>
+                            <span class="account-status locked">
+                                Locked out
+                            </span>
 
                             {% if managed_user.locked_out_until %}
                                 <div class="lockout-expiry">
-                                    Until
-                                    {{ managed_user.locked_out_until|display_date:request.user }}
+                                    Until {{ managed_user.locked_out_until|display_date:request.user }}
                                     {{ managed_user.locked_out_until|display_time:request.user }}
                                 </div>
                             {% endif %}
+
                         {% else %}
-                            <div class="security-status unlocked">
-                                <span class="security-status-indicator"></span>
-                                Not Locked
-                            </div>
+                            <span class="account-status unlocked">
+                                Not locked
+                            </span>
                         {% endif %}
                     </td>
 
@@ -177,76 +213,81 @@
                     </td>
 
                     <td>
-                        <div class="table-actions">
-                            <button
-                                type="button"
-                                class="action-trigger"
-                                aria-label="Actions for {{ managed_user.get_full_name|default:managed_user.email }}"
-                                aria-expanded="false"
-                                onclick="toggleActionMenu(event)"
-                            >
-                                ⋮
-                            </button>
 
-                            <div class="action-menu" style="display: none;">
-                                <a
-                                    href="{% url 'admin_staff_portal:user_edit' managed_user.pk %}"
-                                    class="action-menu-item"
-                                >
-                                    Edit
-                                </a>
+                        {% if managed_user.role in manageable_roles %}
 
-                                <form
-                                    method="POST"
-                                    action="{% url 'admin_staff_portal:user_toggle_acc_status' managed_user.pk %}"
-                                    onsubmit="return confirm('{% if managed_user.is_active %}Are you sure you want to deactivate this account?{% else %}Are you sure you want to activate this account?{% endif %}');"
-                                >
-                                    {% csrf_token %}
+                            <div class="table-actions">
 
-                                    <button
-                                        type="submit"
-                                        class="action-menu-item"
-                                    >
-                                        {% if managed_user.is_active %}
-                                            Deactivate
-                                        {% else %}
-                                            Activate
-                                        {% endif %}
-                                    </button>
-                                </form>
+                                <button
+                                    type="button"
+                                    class="action-trigger"
+                                    aria-label="User actions"
+                                    onclick="toggleActionMenu(event)">
+                                    ⋮
+                                </button>
 
-                                {% if managed_user.is_locked_out %}
-                                    <form
-                                        method="POST"
-                                        action="{% url 'admin_staff_portal:user_unlock' managed_user.pk %}"
-                                        onsubmit="return confirm('Unlock this account now? This will clear the login lockout but will not change whether the account is active or deactivated.');"
-                                    >
+                                <div class="action-menu" style="display: none;">
+
+                                    <a href="{% url 'user_management:user_edit' managed_user.pk %}"
+                                       class="action-menu-item">
+                                        Edit
+                                    </a>
+
+                                    <form method="POST"
+                                          action="{% url 'user_management:user_toggle_acc_status' managed_user.pk %}">
                                         {% csrf_token %}
 
-                                        <button
-                                            type="submit"
-                                            class="action-menu-item unlock-action"
-                                        >
-                                            Unlock
+                                        <button type="submit" class="action-menu-item">
+                                            {% if managed_user.is_active %}
+                                                Deactivate
+                                            {% else %}
+                                                Activate
+                                            {% endif %}
                                         </button>
                                     </form>
-                                {% endif %}
+
+                                    {% if managed_user.is_locked_out and request.user.is_admin %}
+
+                                        <form method="POST"
+                                              action="{% url 'user_management:user_unlock' managed_user.pk %}">
+                                            {% csrf_token %}
+
+                                            <button type="submit"
+                                                    class="action-menu-item unlock-action">
+                                                Unlock now
+                                            </button>
+                                        </form>
+
+                                    {% endif %}
+
+                                </div>
+
                             </div>
-                        </div>
+
+                        {% else %}
+
+                            <span class="text-muted">-</span>
+
+                        {% endif %}
+
                     </td>
+
                 </tr>
+
             {% empty %}
+
                 <tr>
-                    <td
-                        colspan="{% if current_role == 'FACULTY' %}7{% else %}6{% endif %}"
-                        class="empty-row"
-                    >
+                    <td colspan="9" class="empty-row">
                         No accounts found.
                     </td>
                 </tr>
+
             {% endfor %}
+
         </tbody>
+
     </table>
+
 </div>
 
 {% if is_paginated %}

@@ -1,0 +1,632 @@
+{% extends 'admin_staff_portal/base.html' %}
+{% load static %}
+
+{% block title %}{{ page_title }} - iSubmit{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/layout/admin_staff_portal.css' %}">
+
+<style>
+    /* Teaching assignment list */
+    #assignment-forms {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        margin-top: 20px;
+        margin-bottom: 20px;
+    }
+
+    /* Individual assignment card */
+    .assignment-form {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 16px 20px;
+
+        padding: 20px;
+        border: 1px solid #d8dee8;
+        border-radius: 10px;
+        background-color: #ffffff;
+    }
+
+    /* Field groups */
+    .assignment-form .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        margin: 0;
+    }
+
+    .assignment-form .form-group label {
+        font-size: 14px;
+        font-weight: 600;
+        color: #374151;
+    }
+
+    /* Dropdowns */
+    .assignment-form .form-group select {
+        width: 100%;
+        min-height: 40px;
+        padding: 8px 12px;
+
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
+        background-color: #ffffff;
+
+        font-size: 14px;
+        box-sizing: border-box;
+    }
+
+    .assignment-form .form-group select:focus {
+        outline: none;
+        border-color: #2563eb;
+    }
+
+    /* Hide Django's technical DELETE checkbox.
+       JavaScript can still check it before submission. */
+    #assignment-forms input[name$="-DELETE"] {
+        display: none;
+    }
+
+    /* Remove Row button */
+    .remove-assignment {
+        grid-column: 1 / -1;
+        justify-self: end;
+
+        padding: 8px 14px;
+        border: 1px solid #dc2626;
+        border-radius: 6px;
+
+        background-color: #ffffff;
+        color: #dc2626;
+
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+    }
+
+    .remove-assignment:hover {
+        background-color: #fef2f2;
+    }
+
+    /* Add Teaching Assignment button */
+    #add-assignment {
+        padding: 10px 16px;
+        border: 1px solid #2563eb;
+        border-radius: 6px;
+
+        background-color: #2563eb;
+        color: #ffffff;
+
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+    }
+
+    #add-assignment:hover {
+        background-color: #1d4ed8;
+    }
+
+    /* Keep hidden rows hidden */
+    .assignment-form[hidden] {
+        display: none !important;
+    }
+
+    /* Responsive layout */
+    @media (max-width: 600px) {
+        .assignment-form {
+            grid-template-columns: 1fr;
+            padding: 14px;
+        }
+
+        .remove-assignment {
+            grid-column: 1;
+            justify-self: stretch;
+        }
+
+        #add-assignment {
+            width: 100%;
+        }
+    }
+</style>
+
+{% endblock %}
+
+{% block content %}
+
+<div class="panel-header">
+    <div>
+        <h2>{{ page_title }}</h2>
+        <p>Manage user account information.</p>
+    </div>
+
+    <a href="{% url 'user_management:user_list' %}"
+       class="btn btn-ghost">
+        Back to Users
+    </a>
+</div>
+
+<div class="form-container">
+
+    <form method="POST">
+        {% csrf_token %}
+
+        {{ form.non_field_errors }}
+
+        <div class="form-group">
+            {{ form.role.label_tag }}
+            {{ form.role }}
+            {{ form.role.errors }}
+        </div>
+
+        <h3>Personal Information</h3>
+
+        <div class="form-group">
+            {{ form.first_name.label_tag }}
+            {{ form.first_name }}
+            {{ form.first_name.errors }}
+        </div>
+
+        <div class="form-group">
+            {{ form.middle_name.label_tag }}
+            {{ form.middle_name }}
+            {{ form.middle_name.errors }}
+        </div>
+
+        <div class="form-group">
+            {{ form.last_name.label_tag }}
+            {{ form.last_name }}
+            {{ form.last_name.errors }}
+        </div>
+
+        <div class="form-group">
+            {{ form.employee_ID.label_tag }}
+            {{ form.employee_ID }}
+            {{ form.employee_ID.errors }}
+        </div>
+
+        <div class="form-group">
+            {{ form.email.label_tag }}
+            {{ form.email }}
+            {{ form.email.errors }}
+        </div>
+
+        <div id="faculty-fields"
+             data-options-url="{% url 'user_management:assignment_options' %}"
+             {% if not show_faculty_fields %}hidden{% endif %}>
+
+            <h3>Faculty Information</h3>
+
+            <div class="form-group">
+                {{ form.faculty_type.label_tag }}
+                {{ form.faculty_type }}
+                {{ form.faculty_type.errors }}
+            </div>
+
+            <div class="form-group">
+                {{ form.assigned_programs.label_tag }}
+                {{ form.assigned_programs }}
+                {{ form.assigned_programs.errors }}
+
+                <small>
+                    Select the programs assigned to this faculty member.
+                    Only these programs will be available in the teaching assignments below.
+                </small>
+            </div>
+
+            <h3>Teaching Assignments</h3>
+
+            <p>
+                Add the courses and sections assigned to this faculty member.
+                Each row represents one teaching assignment.
+            </p>
+
+            {{ assignment_formset.management_form }}
+            {{ assignment_formset.non_form_errors }}
+
+            <div id="assignment-forms">
+
+                {% for assignment_form in assignment_formset %}
+
+                    <div class="assignment-form">
+
+                        {{ assignment_form.id }}
+                        {{ assignment_form.year_level }}
+                        {{ assignment_form.section }}
+
+                        {{ assignment_form.non_field_errors }}
+
+                        <div class="form-group">
+                            {{ assignment_form.program.label_tag }}
+                            {{ assignment_form.program }}
+                            {{ assignment_form.program.errors }}
+                        </div>
+
+                        <div class="form-group">
+                            {{ assignment_form.academic_year.label_tag }}
+                            {{ assignment_form.academic_year }}
+                            {{ assignment_form.academic_year.errors }}
+                        </div>
+
+                        <div class="form-group">
+                            {{ assignment_form.semester.label_tag }}
+                            {{ assignment_form.semester }}
+                            {{ assignment_form.semester.errors }}
+                        </div>
+
+                        <div class="form-group">
+                            {{ assignment_form.program_section.label_tag }}
+                            {{ assignment_form.program_section }}
+                            {{ assignment_form.program_section.errors }}
+                        </div>
+
+                        <div class="form-group">
+                            {{ assignment_form.course.label_tag }}
+                            {{ assignment_form.course }}
+                            {{ assignment_form.course.errors }}
+                        </div>
+
+                        {% if assignment_formset.can_delete %}
+                            {{ assignment_form.DELETE }}
+                        {% endif %}
+
+                        <button type="button" class="remove-assignment">
+                            Remove Row
+                        </button>
+
+                    </div>
+
+                {% endfor %}
+
+            </div>
+
+            <button type="button" id="add-assignment">
+                Add Teaching Assignment
+            </button>
+
+            {% with empty_form=assignment_formset.empty_form %}
+
+                <template id="empty-assignment-form">
+
+                    <div class="assignment-form">
+
+                        {{ empty_form.id }}
+                        {{ empty_form.year_level }}
+                        {{ empty_form.section }}
+
+                        {{ empty_form.non_field_errors }}
+
+                        <div class="form-group">
+                            {{ empty_form.program.label_tag }}
+                            {{ empty_form.program }}
+                            {{ empty_form.program.errors }}
+                        </div>
+
+                        <div class="form-group">
+                            {{ empty_form.academic_year.label_tag }}
+                            {{ empty_form.academic_year }}
+                            {{ empty_form.academic_year.errors }}
+                        </div>
+
+                        <div class="form-group">
+                            {{ empty_form.semester.label_tag }}
+                            {{ empty_form.semester }}
+                            {{ empty_form.semester.errors }}
+                        </div>
+
+                        <div class="form-group">
+                            {{ empty_form.program_section.label_tag }}
+                            {{ empty_form.program_section }}
+                            {{ empty_form.program_section.errors }}
+                        </div>
+
+                        <div class="form-group">
+                            {{ empty_form.course.label_tag }}
+                            {{ empty_form.course }}
+                            {{ empty_form.course.errors }}
+                        </div>
+
+                        {% if assignment_formset.can_delete %}
+                            {{ assignment_form.DELETE }}
+                        {% endif %}
+
+                        <button type="button" class="remove-assignment">
+                            Remove Row
+                        </button>
+
+                    </div>
+
+                </template>
+
+            {% endwith %}
+
+        </div>
+
+        <h3>Account Settings</h3>
+
+        <div class="form-group">
+            {{ form.is_active.label_tag }}
+            {{ form.is_active }}
+            {{ form.is_active.errors }}
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="action-button">
+                {% if is_update %}
+                    Save Changes
+                {% else %}
+                    Create Account
+                {% endif %}
+            </button>
+        </div>
+
+    </form>
+
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+    const roleField = document.getElementById('id_role');
+    const facultyFields = document.getElementById('faculty-fields');
+
+    const assignedPrograms = document.getElementById('id_assigned_programs');
+    const assignmentForms = document.getElementById('assignment-forms');
+    const addAssignmentButton = document.getElementById('add-assignment');
+
+    const emptyTemplate = document.getElementById('empty-assignment-form');
+    const totalForms = document.getElementById('id_assignments-TOTAL_FORMS');
+
+    const optionsUrl = facultyFields.dataset.optionsUrl;
+
+
+    function populateSelect(select, options, placeholder, selectedValue = '') {
+
+        select.innerHTML = '';
+
+        select.add(new Option(placeholder, ''));
+
+        options.forEach(function (item) {
+            select.add(new Option(item.label, item.value));
+        });
+
+        const selectedOptionExists = options.some(function (item) {
+            return String(item.value) === String(selectedValue);
+        });
+
+        select.value = selectedOptionExists ? String(selectedValue) : '';
+    }
+
+
+    function getRowFields(row) {
+
+        return {
+            program: row.querySelector('select[name$="-program"]'),
+            academicYear: row.querySelector('select[name$="-academic_year"]'),
+            semester: row.querySelector('select[name$="-semester"]'),
+            section: row.querySelector('select[name$="-program_section"]'),
+            course: row.querySelector('select[name$="-course"]'),
+        };
+    }
+
+
+    function clearDependentFields(row) {
+
+        const fields = getRowFields(row);
+
+        populateSelect(
+            fields.academicYear,
+            [],
+            'Select an academic year'
+        );
+
+        populateSelect(
+            fields.section,
+            [],
+            'Select a section'
+        );
+
+        populateSelect(
+            fields.course,
+            [],
+            'Select a course'
+        );
+    }
+
+
+    async function loadAssignmentOptions(row) {
+
+        const fields = getRowFields(row);
+
+        if (!fields.program.value) {
+            clearDependentFields(row);
+            return;
+        }
+
+        const selectedYear = fields.academicYear.value;
+        const selectedSection = fields.section.value;
+        const selectedCourse = fields.course.value;
+
+        const params = new URLSearchParams({
+            program: fields.program.value,
+            academic_year: selectedYear,
+        });
+
+        try {
+
+            const response = await fetch(
+                `${optionsUrl}?${params.toString()}`,
+                {
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                }
+            );
+
+            if (!response.ok) {
+                throw new Error('Unable to load assignment options.');
+            }
+
+            const data = await response.json();
+
+            populateSelect(
+                fields.academicYear,
+                data.academic_years,
+                'Select an academic year',
+                selectedYear
+            );
+
+            const validYear = fields.academicYear.value;
+
+            populateSelect(
+                fields.section,
+                validYear ? data.sections : [],
+                'Select a section',
+                selectedSection
+            );
+
+            populateSelect(
+                fields.course,
+                data.courses,
+                'Select a course',
+                selectedCourse
+            );
+
+        } catch (error) {
+            console.error(error);
+        }
+    }
+
+
+    function refreshProgramOptions(row) {
+
+        const fields = getRowFields(row);
+
+        const previousProgram = fields.program.value;
+
+        const selectedPrograms = Array.from(
+            assignedPrograms.selectedOptions
+        ).map(function (option) {
+            return {
+                value: option.value,
+                label: option.textContent,
+            };
+        });
+
+        populateSelect(
+            fields.program,
+            selectedPrograms,
+            'Select a program',
+            previousProgram
+        );
+
+        if (fields.program.value) {
+            loadAssignmentOptions(row);
+        } else {
+            clearDependentFields(row);
+        }
+    }
+
+
+    function bindAssignmentRow(row) {
+
+        const fields = getRowFields(row);
+
+        fields.program.addEventListener('change', function () {
+
+            clearDependentFields(row);
+
+            loadAssignmentOptions(row);
+        });
+
+        fields.academicYear.addEventListener('change', function () {
+
+            const selectedCourse = fields.course.value;
+
+            populateSelect(
+                fields.section,
+                [],
+                'Select a section'
+            );
+
+            loadAssignmentOptions(row);
+        });
+
+        const removeButton = row.querySelector('.remove-assignment');
+
+        removeButton.addEventListener('click', function () {
+
+            const deleteCheckbox = row.querySelector(
+                'input[name$="-DELETE"]'
+            );
+
+            if (deleteCheckbox) {
+                deleteCheckbox.checked = true;
+            }
+
+            row.hidden = true;
+        });
+
+        refreshProgramOptions(row);
+    }
+
+
+    function updateFacultyFields() {
+
+        const isFaculty = roleField.value === 'FACULTY';
+
+        facultyFields.hidden = !isFaculty;
+
+        if (isFaculty) {
+            assignmentForms.querySelectorAll('.assignment-form').forEach(
+                refreshProgramOptions
+            );
+        }
+    }
+
+
+    assignedPrograms.addEventListener('change', function () {
+
+        assignmentForms.querySelectorAll('.assignment-form').forEach(
+            refreshProgramOptions
+        );
+
+    });
+
+
+    addAssignmentButton.addEventListener('click', function () {
+
+        const formIndex = parseInt(totalForms.value, 10);
+
+        const formHTML = emptyTemplate.innerHTML.replace(
+            /__prefix__/g,
+            formIndex
+        );
+
+        const wrapper = document.createElement('div');
+        wrapper.innerHTML = formHTML.trim();
+
+        const newRow = wrapper.firstElementChild;
+
+        assignmentForms.appendChild(newRow);
+
+        totalForms.value = formIndex + 1;
+
+        bindAssignmentRow(newRow);
+
+    });
+
+
+    assignmentForms.querySelectorAll('.assignment-form').forEach(
+        bindAssignmentRow
+    );
+
+    roleField.addEventListener('change', updateFacultyFields);
+
+    updateFacultyFields();
+
+});
+</script>
+
+{% endblock %}

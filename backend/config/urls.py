@@ -19,6 +19,8 @@ urlpatterns = [
     # Custom App Endpoints
     path('auth/', include('accounts.urls')),
     path('admin-portal/', include('admin_staff_portal.urls')),
+    path('admin-portal/users/', include('user_management.urls')),
+    path('admin-portal/programs/', include('programs.urls')),
     path('faculty-portal/', include('faculty_portal.urls')),
     path('notifications/', include('notifications.urls')),
 ]
