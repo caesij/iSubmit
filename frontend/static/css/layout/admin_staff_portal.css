@@ -1250,10 +1250,14 @@ html:where([data-portal="admin-staff"]),
 }
 
 :where([data-portal="admin-staff"]) .notif-dropdown-item strong {
-    display: block;
+    display: -webkit-box;
     margin-bottom: 4px;
     font-size: 13px;
     color: #1a1a1a;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+    overflow-wrap: anywhere;
 }
 
 :where([data-portal="admin-staff"]) .notif-dropdown-item p {
@@ -1261,6 +1265,11 @@ html:where([data-portal="admin-staff"]),
     color: #6b7280;
     font-size: 12px;
     line-height: 1.4;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+    overflow-wrap: anywhere;
 }
 
 :where([data-portal="admin-staff"]) .notif-dropdown-item small {
@@ -8369,4 +8378,40 @@ html:has(.program-list-page) .content-shell { background: #fff; }
     .program-list-page .program-page-header { flex-direction: column; align-items: flex-start; }
     .program-list-page .program-add-card { grid-template-columns: 1fr; }
     .program-list-page .program-courses-link { min-height: 42px; }
+}
+
+/* Keep admin/staff profile viewing and editing in the same compact panel. */
+:where([data-css~="profile"]) .admin-profile-card .profile-summary {
+  min-height: 280px;
+  grid-template-columns: 190px minmax(0, 1fr);
+}
+:where([data-css~="profile"]) .admin-profile-card .profile-details[hidden],
+:where([data-css~="profile"]) .admin-profile-card input[hidden] {
+  display: none;
+}
+:where([data-css~="profile"]) .admin-profile-card .profile-form {
+  align-content: center;
+  margin: 0;
+  padding: 20px 0;
+  border: 0;
+}
+:where([data-css~="profile"]) .admin-profile-card .profile-field input {
+  box-sizing: border-box;
+  min-width: 0;
+}
+:where([data-css~="profile"]) .admin-profile-card .profile-save img {
+  width: 18px;
+  height: 18px;
+}
+:where([data-css~="profile"]) .admin-profile-card .profile-detail strong {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 768px) {
+  :where([data-css~="profile"]) .admin-profile-card .profile-summary {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  :where([data-css~="profile"]) .admin-profile-card .profile-form {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }

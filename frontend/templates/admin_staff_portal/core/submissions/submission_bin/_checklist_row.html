@@ -27,11 +27,7 @@
 
         <div class="checklist-validation" data-validation-box hidden>
             {% include 'admin_staff_portal/core/submissions/submission_bin/_field.html' with field=form.validation_instructions %}
-            <div class="validation-format-note" role="note">
-                <strong>Important:</strong> Each field must follow this exact format on a new line:
-                <span>[Field name]: required</span>
-                <span>(e.g., Course code: required)</span>
-            </div>
+            {% include 'admin_staff_portal/core/submissions/submission_bin/_validation_format_note.html' %}
         </div>
 
         {% for messages in form.errors.values %}

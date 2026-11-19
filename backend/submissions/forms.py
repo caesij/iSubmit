@@ -95,8 +95,10 @@ class RequirementRowForm(forms.Form):
     validation_instructions = forms.CharField(
         required=False,
         label='Required validation fields',
-        help_text='One per line using only: Field name: required',
-        widget=forms.Textarea(attrs={'rows': 3}),
+        widget=forms.Textarea(attrs={
+            'rows': 5,
+            'placeholder': 'Examples only — enter your own fields:\nCourse code: required\nCourse title: required\nSection: required\nAcademic year: required',
+        }),
     )
 
     def __init__(self, *args, **kwargs):

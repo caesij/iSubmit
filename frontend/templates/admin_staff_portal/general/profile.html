@@ -8,7 +8,7 @@
 {% block extra_css %}{% endblock %}
 
 {% block content %}
-<div class="profile-card">
+<div class="profile-card admin-profile-card">
     <div class="profile-section-heading">
         <div>
             <h2>Profile Information</h2>
@@ -16,7 +16,7 @@
         </div>
         <button type="button" class="profile-edit" id="profile-edit-button">
             <img src="{% static 'images/Edit Profile.svg' %}" alt="">
-            Edit Profile
+            <span id="profile-edit-label">Edit Profile</span>
         </button>
     </div>
 
@@ -44,28 +44,12 @@
 
         <div class="profile-details">
             <div class="profile-detail">
-                <span><img src="{% static 'images/Faculty ID Profile.svg' %}" alt="">Faculty ID</span>
+                <span><img src="{% static 'images/Faculty ID Profile.svg' %}" alt="">Employee ID</span>
                 <strong>{{ request.user.employee_ID|default:'Not provided' }}</strong>
             </div>
             <div class="profile-detail">
                 <span><img src="{% static 'images/Email Profile.svg' %}" alt="">Institutional Email Address</span>
                 <strong>{{ request.user.email }}</strong>
-            </div>
-            <div class="profile-detail">
-                <span><img src="{% static 'images/Program Department Profile.svg' %}" alt="">Program / Department</span>
-                <strong>Not provided</strong>
-            </div>
-            <div class="profile-detail">
-                <span><img src="{% static 'images/Contact Numbe Profile.svg' %}" alt="">Contact Number</span>
-                <strong>Not provided</strong>
-            </div>
-            <div class="profile-detail">
-                <span><img src="{% static 'images/Position Profile.svg' %}" alt="">Position</span>
-                <strong>{{ request.user.get_role_display }}</strong>
-            </div>
-            <div class="profile-detail">
-                <span><img src="{% static 'images/Faculty Type Profile.svg' %}" alt="">Faculty Type</span>
-                <strong>{% if request.user.faculty_type %}{{ request.user.get_faculty_type_display }}{% else %}Not applicable{% endif %}</strong>
             </div>
             <div class="profile-detail">
                 <span><img src="{% static 'images/Account role.svg' %}" alt="">Account Role</span>
@@ -76,45 +60,66 @@
                 <strong>{{ request.user.is_active|yesno:'Active,Inactive' }}</strong>
             </div>
         </div>
-    </div>
 
-    <form method="POST" enctype="multipart/form-data" class="profile-form" id="profile-edit-form" hidden>
+    <form method="POST" enctype="multipart/form-data" class="profile-form" id="profile-edit-form"{% if not form.errors %} hidden{% endif %}>
         {% csrf_token %}
+        {{ form.non_field_errors }}
+        <input type="file" name="profile_picture" id="id_profile_picture" accept="image/*" hidden>
+        {% for error in form.profile_picture.errors %}<span class="profile-error">{{ error }}</span>{% endfor %}
         {% for field in form.visible_fields %}
+            {% if field.name != 'profile_picture' %}
             <div class="profile-field{% if field.errors %} has-error{% endif %}">
                 {{ field.label_tag }}
                 {{ field }}
                 {% for error in field.errors %}<span class="profile-error">{{ error }}</span>{% endfor %}
             </div>
+            {% endif %}
         {% endfor %}
         <div class="profile-actions">
-            <button type="submit" class="profile-save">Save Changes</button>
+            <button type="submit" class="profile-save"><img src="{% static 'images/Save Button.svg' %}" alt="">Save Changes</button>
         </div>
     </form>
+    </div>
 </div>
 
 <script>
-document.getElementById("profile-edit-button").addEventListener("click", function () {
+(() => {
     const form = document.getElementById("profile-edit-form");
-    const card = this.closest(".profile-card");
-    form.hidden = !form.hidden;
-    card.classList.toggle("is-editing", !form.hidden);
-    this.textContent = form.hidden ? "Edit Profile" : "Cancel Editing";
-});
-
-document.getElementById("profile-picture-edit-button").addEventListener("click", function () {
-    const fileInput = document.querySelector("#profile-edit-form input[type='file']");
-    if (fileInput) {
-        fileInput.addEventListener("change", function () {
-            const form = document.getElementById("profile-edit-form");
-            const editButton = document.getElementById("profile-edit-button");
-            const card = editButton.closest(".profile-card");
-            form.hidden = false;
-            card.classList.add("is-editing");
-            editButton.textContent = "Cancel Editing";
-        }, { once: true });
-        fileInput.click();
+    const editButton = document.getElementById("profile-edit-button");
+    const label = document.getElementById("profile-edit-label");
+    const card = editButton.closest(".profile-card");
+    const details = card.querySelector(".profile-details");
+    const photo = card.querySelector(".profile-avatar > img");
+    const originalPhoto = photo.src;
+    const fileInput = document.getElementById("id_profile_picture");
+    let previewUrl;
+    function setEditing(editing) {
+        form.hidden = !editing;
+        details.hidden = editing;
+        card.classList.toggle("is-editing", editing);
+        label.textContent = editing ? "Cancel Editing" : "Edit Profile";
+        editButton.setAttribute("aria-expanded", String(editing));
     }
-});
+    editButton.setAttribute("aria-controls", form.id);
+    setEditing(!form.hidden);
+    editButton.addEventListener("click", () => {
+        const editing = form.hidden;
+        if (!editing) {
+            form.reset();
+            photo.src = originalPhoto;
+            if (previewUrl) URL.revokeObjectURL(previewUrl);
+        }
+        setEditing(editing);
+        if (editing) form.querySelector("input:not([hidden])").focus();
+    });
+    document.getElementById("profile-picture-edit-button").addEventListener("click", () => fileInput.click());
+    fileInput.addEventListener("change", () => {
+        if (!fileInput.files.length) return;
+        if (previewUrl) URL.revokeObjectURL(previewUrl);
+        previewUrl = URL.createObjectURL(fileInput.files[0]);
+        photo.src = previewUrl;
+        setEditing(true);
+    });
+})();
 </script>
 {% endblock %}
