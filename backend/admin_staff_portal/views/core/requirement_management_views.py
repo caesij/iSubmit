@@ -17,7 +17,7 @@ from submissions.services import publish_updates, save_requirements
 from submissions.forms import PeriodForm, RequirementFormSet, RequirementRowForm
 from submissions.slots import sync_upload_slots
 
-TEMPLATE_DIR = 'admin_staff_portal/core/submissions/submission_bin/'
+TEMPLATE_DIR = 'admin_staff_portal/core/submissions/submission_bin'
 PERIODS_PER_PAGE = 10
 
 
@@ -31,15 +31,9 @@ def manage_bins_only(view):
 def requirements_list(request):
     periods = SubmissionPeriod.objects.with_progress()
 
-    query = request.GET.get('q')
     semester = request.GET.get('semester')
     academic_year = request.GET.get('academic_year')
-
-    if query:
-        matching_requirements = Requirement.objects.filter(requirement_title__icontains=query)
-        periods = periods.filter(
-            Q(academic_year__icontains=query) | Q(pk__in=matching_requirements.values('period'))
-        )
+    
     if semester:
         periods = periods.filter(semester=semester)
     if academic_year:
@@ -59,7 +53,7 @@ def requirements_list(request):
         'academic_years': SubmissionPeriod.objects.values_list('academic_year', flat=True).distinct().order_by('-academic_year'),
     }
 
-    return render(request, TEMPLATE_DIR + 'requirements_list.html', context)
+    return render(request, f'{TEMPLATE_DIR}/requirements_list.html', context)
 
 
 # List of every requirement
@@ -73,7 +67,7 @@ def period_detail(request, period_id):
         'requirements': period.requirements.with_progress(),
     }
 
-    return render(request, TEMPLATE_DIR + 'period_detail.html', context)
+    return render(request, f'{TEMPLATE_DIR}/period_detail.html', context)
 
 
 @manage_bins_only
@@ -113,34 +107,43 @@ def period_editor(request, period_id=None):
         'formset': formset,
     }
 
-    return render(request, TEMPLATE_DIR + 'period_editor.html', context)
+    return render(request, f'{TEMPLATE_DIR}/period_editor.html', context)
 
 
 @manage_bins_only
 @require_http_methods(['GET', 'POST'])
 def edit_requirement(request, requirement_id):
-    # Lock the period too, so simultaneous row edits cannot introduce duplicate titles.
+    # Lock the period too, so simultaneous row edits cannot introduce duplicate titles
     with transaction.atomic():
         requirement = get_object_or_404(Requirement, pk=requirement_id)
         period = get_object_or_404(SubmissionPeriod.objects.select_for_update(), pk=requirement.period_id)
         requirement.refresh_from_db()
         initial = next(row for row in get_requirement_rows(period) if row['id'] == requirement.pk)
+        
         form = RequirementRowForm(request.POST if request.method == 'POST' else None, initial=initial)
         form.empty_permitted = False
+        
         if request.method == 'POST' and form.is_valid():
             title = form.cleaned_data['requirement_title']
+            
             if period.requirements.exclude(pk=requirement.pk).filter(requirement_title__iexact=title).exists():
                 form.add_error('requirement_title', 'A requirement with this title already exists in this period.')
             else:
                 for name in Requirement.SETTING_FIELDS:
                     setattr(requirement, name, form.cleaned_data[name])
+                    
                 requirement.save(update_fields=[*Requirement.SETTING_FIELDS, 'updated_at'])
                 sync_upload_slots(period)
                 transaction.on_commit(publish_updates)
+                
                 return JsonResponse({'saved': True})
-        html = render_to_string(TEMPLATE_DIR + '_requirement_modal.html', {
-            'form': form, 'requirement': requirement,
-        }, request=request)
+            
+        html = render_to_string(
+            f'{TEMPLATE_DIR}/_requirement_modal.html', 
+            {'form': form,  'requirement': requirement}, 
+            request=request
+        )
+        
         return JsonResponse({'html': html}, status=422 if request.method == 'POST' else 200)
 
 

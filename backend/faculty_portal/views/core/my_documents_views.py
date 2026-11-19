@@ -55,6 +55,7 @@ def toggle_pin_view(request, document_id):
 
     document.is_pinned = not document.is_pinned
     document.save(update_fields=['is_pinned'])
+    
     return redirect(request.META.get('HTTP_REFERER', 'faculty_portal:all_documents'))
 
 

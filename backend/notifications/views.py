@@ -16,6 +16,10 @@ from notifications.helpers import get_role_based_notifications
 
 User = get_user_model()
 
+ADMIN_TEMPLATE_DIR = 'admin_staff_portal/notifications'
+FACULTY_TEMPLATE_DIR = 'faculty_portal/notifications'
+
+
 @role_required('ADMIN')
 @require_http_methods(['GET', 'POST'])
 def create_system_notification_view(request):
@@ -45,11 +49,7 @@ def create_system_notification_view(request):
         
     context = {'form': form}
 
-    return render(
-        request,
-        'admin_staff_portal/notifications/create_notification.html',
-        context
-    )
+    return render(request, f'{ADMIN_TEMPLATE_DIR}/create_notification.html', context)
 
 
 @login_required
@@ -66,9 +66,9 @@ def notification_list_data_view(request):
     })
 
     if request.user.is_faculty:
-        template = 'faculty_portal/notifications/_notifications_list.html'
+        template = f'{FACULTY_TEMPLATE_DIR}/_notifications_list.html'
     else:
-        template = 'admin_staff_portal/notifications/_notifications_list.html'
+        template = f'{ADMIN_TEMPLATE_DIR}/_notifications_list.html'
 
     html = render_to_string(template, context, request=request)
 
@@ -94,16 +94,15 @@ def notification_list_view(request):
 
     context.update({
         'notifications': page_obj,
-        'page_obj': page_obj,
+        'page_obj': page_obj
     })
 
     if request.user.is_faculty:
-        template = 'faculty_portal/notifications/notifications_list.html'
+        template = f'{FACULTY_TEMPLATE_DIR}/notifications_list.html'
     else:
-        template = 'admin_staff_portal/notifications/notifications_list.html'
+        template = f'{ADMIN_TEMPLATE_DIR}/notifications_list.html'
 
     return render(request, template, context)
-
 
 
 @login_required
@@ -128,9 +127,9 @@ def notification_dropdown_view(request):
     }
 
     if request.user.is_faculty:
-        template = 'faculty_portal/notifications/notif_dropdown.html'
+        template = f'{FACULTY_TEMPLATE_DIR}/notif_dropdown.html'
     else:
-        template = 'admin_staff_portal/notifications/notif_dropdown.html'
+        template = f'{ADMIN_TEMPLATE_DIR}/notif_dropdown.html'
 
     html = render_to_string(template, context, request=request)
 
@@ -138,7 +137,6 @@ def notification_dropdown_view(request):
         'html': html,
         'unread_count': unread_count
     })
-
 
 
 @login_required

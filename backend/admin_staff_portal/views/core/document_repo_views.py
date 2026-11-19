@@ -28,10 +28,7 @@ User = get_user_model()
 @role_required('ADMIN', 'STAFF')
 @require_http_methods(['GET'])
 def document_repo_view(request):
-    return render_document_list(
-        request,
-        template_name=f'{TEMPLATE_DIR}/document_repo.html',
-    )
+    return render_document_list(request, template_name=f'{TEMPLATE_DIR}/document_repo.html')
 
 
 @role_required('ADMIN')
@@ -53,19 +50,24 @@ def bulk_archive_document_view(request):
         return _document_redirect(False)
 
     now = timezone.now()
+    
     documents = DocumentSubmission.objects.filter(
         id__in=document_ids,
         status=DocumentSubmission.SubmissionStatus.APPROVED,
         is_archived=False,
     )
+    
     faculty_ids = list(documents.values_list('faculty_id', flat=True))
+    
     updated = documents.update(
         is_archived=True,
         archived_at=now,
         archive_expires_at=now + timedelta(days=30),
     )
+    
     refresh_document_surfaces(faculty_ids)
     messages.success(request, f'{updated} document(s) archived.')
+    
     return _document_redirect(False)
 
 
@@ -83,14 +85,18 @@ def bulk_restore_document_view(request):
         is_archived=True,
         archive_expires_at__gt=timezone.now(),
     )
+    
     faculty_ids = list(documents.values_list('faculty_id', flat=True))
+    
     updated = documents.update(
         is_archived=False,
         archived_at=None,
         archive_expires_at=None,
     )
+    
     refresh_document_surfaces(faculty_ids)
     messages.success(request, f'{updated} document(s) restored.')
+    
     return _document_redirect(True)
 
 
@@ -108,6 +114,7 @@ def bulk_permanently_delete_document_view(request):
             status=DocumentSubmission.SubmissionStatus.APPROVED,
             is_archived=True,
         ))
+        
         faculty_ids = [document.faculty_id for document in documents]
         storage = DocumentSubmission._meta.get_field('document_file').storage
         file_names = [document.document_file.name for document in documents]
@@ -131,6 +138,7 @@ def bulk_permanently_delete_document_view(request):
     refresh_document_surfaces(faculty_ids)
 
     messages.success(request, f'{len(documents)} document(s) permanently deleted.')
+    
     return _document_redirect(True)
 
 
@@ -174,8 +182,4 @@ def document_file_view(request, document_id):
         ).order_by('-version_number').first()
     }
 
-    return render(
-        request,
-        f'{TEMPLATE_DIR}/document_file_view.html',
-        context
-    )
+    return render(request, f'{TEMPLATE_DIR}/document_file_view.html', context)

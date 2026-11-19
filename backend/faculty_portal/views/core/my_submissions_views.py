@@ -48,18 +48,12 @@ def submissions_list(request):
         'status_choices': DocumentSubmission.SubmissionStatus.choices
     }
     
-    return render(
-        request,
-        f'{TEMPLATE_DIR}/submissions_list.html',
-        context
-    )
+    return render(request, f'{TEMPLATE_DIR}/submissions_list.html', context)
 
 @role_required('FACULTY')
 @require_http_methods(['GET'])
 def submissions_data_view(request):
-    all_submissions = active_document_queryset().filter(
-        faculty=request.user
-    )
+    all_submissions = active_document_queryset().filter(faculty=request.user)
 
     stats = all_submissions.aggregate(
         total_submitted=Count('id'),
@@ -74,13 +68,10 @@ def submissions_data_view(request):
         returned=Count(
             'id',
             filter=Q(status=DocumentSubmission.SubmissionStatus.NEEDS_REVISION)
-        ),
+        )
     )
 
-    submitted_documents = all_submissions.select_related(
-        'requirement',
-        'reviewed_by'
-    )
+    submitted_documents = all_submissions.select_related('requirement', 'reviewed_by')
 
     submission_status = request.GET.get('status')
     sort_by = request.GET.get('sort', 'newest')
@@ -122,8 +113,4 @@ def view_my_submitted_document(request, document_id):
     
     context = {'submitted_document': submitted_document}
     
-    return render(
-        request,
-        f'{TEMPLATE_DIR}/view_my_submitted_document.html',
-        context
-    )
+    return render(request, f'{TEMPLATE_DIR}/view_my_submitted_document.html', context)

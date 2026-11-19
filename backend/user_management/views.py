@@ -33,7 +33,6 @@ TEMPLATE_DIR = 'admin_staff_portal/core/user_mgmt'
 @role_required('ADMIN', 'STAFF')
 @require_http_methods(['GET'])
 def user_list_view(request):
-
     if request.user.is_admin:
         visible_roles = User.Role.values
         manageable_roles = [User.Role.STAFF, User.Role.FACULTY]
@@ -59,9 +58,7 @@ def user_list_view(request):
     if lockout not in ('locked', 'unlocked'):
         lockout = ''
 
-    users = User.objects.filter(
-        role__in=visible_roles
-    ).prefetch_related('assigned_programs')
+    users = User.objects.filter(role__in=visible_roles).prefetch_related('assigned_programs')
 
     if selected_role != 'ALL':
         users = users.filter(role=selected_role)
@@ -78,10 +75,7 @@ def user_list_view(request):
         )
 
     if faculty_type and selected_role in ('ALL', User.Role.FACULTY):
-        users = users.filter(
-            role=User.Role.FACULTY,
-            faculty_type=faculty_type
-        )
+        users = users.filter(role=User.Role.FACULTY, faculty_type=faculty_type)
 
     if status == 'active':
         users = users.filter(is_active=True)
@@ -95,9 +89,7 @@ def user_list_view(request):
 
     users = users.order_by('last_name', 'first_name', 'pk')
 
-    page_obj = Paginator(users, 7).get_page(
-        request.GET.get('page')
-    )
+    page_obj = Paginator(users, 7).get_page(request.GET.get('page'))
 
     pagination_params = request.GET.copy()
     pagination_params.pop('page', None)
@@ -131,31 +123,22 @@ def user_list_view(request):
         'search_query': search_query,
         'faculty_type_param': faculty_type,
         'status_param': status,
-        'lockout_param': lockout,
+        'lockout_param': lockout
     }
 
-    return render(
-        request,
-        f'{TEMPLATE_DIR}/user_list.html',
-        context
-    )
+    return render(request, f'{TEMPLATE_DIR}/user_list.html', context)
 
 
 @role_required('ADMIN', 'STAFF')
 @require_http_methods(['GET', 'POST'])
 def user_form_view(request, pk=None):
-
     if request.user.is_admin:
         manageable_roles = [User.Role.STAFF, User.Role.FACULTY]
     else:
         manageable_roles = [User.Role.FACULTY]
 
     if pk:
-        target_user = get_object_or_404(
-            User,
-            pk=pk,
-            role__in=manageable_roles
-        )
+        target_user = get_object_or_404(User, pk=pk, role__in=manageable_roles)
     else:
         target_user = User()
 
@@ -165,16 +148,13 @@ def user_form_view(request, pk=None):
             instance=target_user,
             request_user=request.user
         )
+        
         form_valid = form.is_valid()
-
     else:
         initial = {}
 
         if not pk:
-            selected_role = request.GET.get(
-                'role',
-                User.Role.FACULTY
-            ).strip().upper()
+            selected_role = request.GET.get('role', User.Role.FACULTY).strip().upper()
 
             if selected_role not in manageable_roles:
                 selected_role = User.Role.FACULTY
@@ -186,13 +166,14 @@ def user_form_view(request, pk=None):
             request_user=request.user,
             initial=initial
         )
+        
         form_valid = False
 
-    # Determine the role currently selected in the form.
+    # Determine the role currently selected in the form
     selected_role = form['role'].value()
     show_faculty_fields = selected_role == User.Role.FACULTY
 
-    # Determine which programs are available to the assignment formset.
+    # Determine which programs are available to the assignment formset
     if request.method == 'POST':
         if form_valid and show_faculty_fields:
             allowed_programs = form.cleaned_data.get(
@@ -212,7 +193,7 @@ def user_form_view(request, pk=None):
     else:
         allowed_programs = Program.objects.none()
 
-    # Only load existing assignments that belong to the selected programs.
+    # Only load existing assignments that belong to the selected programs
     if target_user.pk and show_faculty_fields:
         assignment_queryset = (
             ClassAssignment.objects.filter(
@@ -284,7 +265,7 @@ def user_form_view(request, pk=None):
                 assignment_formset.save()
 
             else:
-                # Non-faculty accounts must not retain teaching assignments.
+                # Non-faculty accounts must not retain teaching assignments
                 user.class_assignments.all().delete()
 
         if is_new:
@@ -339,21 +320,12 @@ def user_form_view(request, pk=None):
         'show_faculty_fields': show_faculty_fields,
     }
 
-    return render(
-        request,
-        f'{TEMPLATE_DIR}/user_form.html',
-        context
-    )
+    return render(request, f'{TEMPLATE_DIR}/user_form.html', context)
 
 
 @role_required('ADMIN', 'STAFF')
 @require_GET
 def assignment_options_view(request):
-    """
-    Return the available academic years, sections, and courses
-    for the selected program.
-    """
-
     program_id = request.GET.get('program')
     academic_year = request.GET.get('academic_year', '')
 
@@ -397,6 +369,7 @@ def assignment_options_view(request):
             'value': str(course.pk),
             'label': f'{course.code} - {course.title}',
         }
+        
         for course in program.courses.order_by('code')
     ]
 
@@ -409,33 +382,26 @@ def assignment_options_view(request):
             for year in academic_years
         ],
         'sections': sections,
-        'courses': courses,
+        'courses': courses
     })
 
 
 @role_required('ADMIN', 'STAFF')
 @require_http_methods(['POST'])
 def user_toggle_status_view(request, pk):
-
     if request.user.is_admin:
         manageable_roles = [User.Role.STAFF, User.Role.FACULTY]
     else:
         manageable_roles = [User.Role.FACULTY]
 
-    target_user = get_object_or_404(
-        User,
-        pk=pk,
-        role__in=manageable_roles
-    )
+    target_user = get_object_or_404(User, pk=pk, role__in=manageable_roles)
 
     url = reverse('user_management:user_list')
     redirect_url = f'{url}?role={target_user.role}'
 
     if request.user.pk == target_user.pk:
-        messages.error(
-            request,
-            'You cannot deactivate your own account while signed in.'
-        )
+        messages.error(request, 'You cannot deactivate your own account while signed in.')
+        
         return redirect(redirect_url)
 
     target_user.is_active = not target_user.is_active
@@ -443,10 +409,7 @@ def user_toggle_status_view(request, pk):
 
     status_label = 'activated' if target_user.is_active else 'deactivated'
 
-    messages.success(
-        request,
-        f'The account has been {status_label}.'
-    )
+    messages.success(request, f'The account has been {status_label}.')
 
     return redirect(redirect_url)
 

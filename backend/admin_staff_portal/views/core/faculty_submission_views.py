@@ -88,11 +88,7 @@ def faculty_submissions_list(request):
         'status_choices': DocumentSubmission.SubmissionStatus.choices
     }
 
-    return render(
-        request,
-        f'{TEMPLATE_DIR}/faculty_list.html',
-        context
-    )
+    return render(request, f'{TEMPLATE_DIR}/faculty_list.html', context)
 
 
 @role_required('ADMIN', 'STAFF')
@@ -142,11 +138,7 @@ def faculty_submission_bins_view(request, faculty_id):
         'not_ready_count': not_ready_count
     }
     
-    return render(
-        request,
-        f'{TEMPLATE_DIR}/faculty_submission_bins.html',
-        context
-    )
+    return render(request, f'{TEMPLATE_DIR}/faculty_submission_bins.html', context)
     
     
 @role_required('ADMIN', 'STAFF')
@@ -166,11 +158,7 @@ def review_submission(request, submission_id):
         )
     }
     
-    return render(
-        request,
-        f'{TEMPLATE_DIR}/review_submission.html',
-        context
-    )
+    return render(request, f'{TEMPLATE_DIR}/review_submission.html', context)
     
     
 @role_required('ADMIN', 'STAFF')

@@ -4,6 +4,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_http_methods
 
 from accounts.decorators import role_required
+from submissions.querysets import active_document_queryset
 
 from faculty_portal.helpers.submission_bin import (
     UPLOAD_PAGE,
@@ -22,7 +23,6 @@ from submissions.models import (
     DraftUpload,
     UploadSlot
 )
-from submissions.querysets import active_document_queryset
 
 TEMPLATE_DIR = 'faculty_portal/core/submission_bin'
 
@@ -35,7 +35,9 @@ def submission_bin_data_view(request):
         f'{TEMPLATE_DIR}/_upload_rows.html',
         {'rows': load_upload_rows(request.user)},
     )
+    
     response['Cache-Control'] = 'no-store'
+    
     return response
 
 
@@ -47,11 +49,7 @@ def submission_bins_view(request):
 
     context = {'rows': load_upload_rows(request.user)}
 
-    return render(
-        request,
-        f'{TEMPLATE_DIR}/upload_files.html',
-        context
-    )
+    return render(request, f'{TEMPLATE_DIR}/upload_files.html', context)
 
 
 @role_required('FACULTY')
@@ -60,12 +58,12 @@ def attach_document(request, slot_id):
     slot = get_object_or_404(
         UploadSlot.objects.active().select_related('requirement'),
         pk=slot_id,
-        faculty=request.user,
+        faculty=request.user
     )
 
     draft, _ = DraftUpload.objects.select_related('requirement').get_or_create(
         slot=slot,
-        defaults={'faculty': request.user, 'requirement': slot.requirement},
+        defaults={'faculty': request.user, 'requirement': slot.requirement}
     )
 
     return save_draft_form(
@@ -82,7 +80,7 @@ def replace_document(request, document_id):
     draft = get_object_or_404(
         DraftUpload.objects.select_related('requirement'),
         pk=document_id,
-        faculty=request.user,
+        faculty=request.user
     )
 
     return save_draft_form(
@@ -99,7 +97,7 @@ def remove_document(request, document_id):
     draft = get_object_or_404(
         DraftUpload,
         pk=document_id,
-        faculty=request.user,
+        faculty=request.user
     )
 
     if not draft.draft_file:
@@ -116,11 +114,10 @@ def remove_document(request, document_id):
         DocumentMetadata.objects.filter(draft=draft).delete()
         delete_file_after_commit(old_storage, old_file_name)
         draft.delete()
-        transaction.on_commit(
-            lambda: dispatch_pending_extractions(request.user.pk)
-        )
+        transaction.on_commit(lambda: dispatch_pending_extractions(request.user.pk))
 
     messages.success(request, 'File removed successfully.')
+    
     return redirect(UPLOAD_PAGE)
 
 
@@ -130,7 +127,7 @@ def retry_document_extraction(request, document_id):
     draft = get_object_or_404(
         DraftUpload.objects.select_related('requirement'),
         pk=document_id,
-        faculty=request.user,
+        faculty=request.user
     )
 
     if not draft.draft_file:
@@ -139,6 +136,7 @@ def retry_document_extraction(request, document_id):
 
     retry_extraction(draft)
     messages.success(request, 'Text extraction was queued again.')
+    
     return redirect(UPLOAD_PAGE)
 
 
@@ -183,11 +181,7 @@ def submission_complete(request):
 
     context = {'submitted_documents': submitted_documents}
 
-    return render(
-        request,
-        f'{TEMPLATE_DIR}/submission_complete.html',
-        context
-    )
+    return render(request, f'{TEMPLATE_DIR}/submission_complete.html', context)
 
 
 @role_required('FACULTY')
@@ -198,7 +192,7 @@ def view_document(request, document_id):
             'requirement__period', 'document_metadata', 'slot__course', 'slot__program'
         ),
         pk=document_id,
-        faculty=request.user,
+        faculty=request.user
     )
 
     context = {
@@ -206,8 +200,4 @@ def view_document(request, document_id):
         'metadata': getattr(uploaded_document, 'document_metadata', None),
     }
 
-    return render(
-        request,
-        f'{TEMPLATE_DIR}/view_uploaded_document.html',
-        context
-    )
+    return render(request, f'{TEMPLATE_DIR}/view_uploaded_document.html', context)

@@ -35,21 +35,17 @@ def program_list(request):
 
     programs = Program.objects.annotate(
         section_count=Count('sections', distinct=True),
-        course_count=Count('program_courses', distinct=True),
+        course_count=Count('program_courses', distinct=True)
     )
 
     page_obj = Paginator(programs, PROGRAMS_PER_PAGE).get_page(request.GET.get('page'))
     
     context = {
         'programs': page_obj,
-        'page_obj': page_obj,
+        'page_obj': page_obj
     }
 
-    return render(
-        request,
-        f'{TEMPLATE_DIR}/program_list.html',
-       context
-    )
+    return render(request, f'{TEMPLATE_DIR}/program_list.html', context)
 
 
 @role_required('ADMIN', 'STAFF')
@@ -101,6 +97,7 @@ def delete_program(request, program_id):
 
     return redirect('programs:program_list')
 
+
 # Program Details
 @role_required('ADMIN', 'STAFF')
 @require_http_methods(['GET'])
@@ -136,11 +133,7 @@ def program_detail(request, program_id):
         'course_form': ProgramCourseForm(program=program)
     }
 
-    return render(
-        request,
-        f'{TEMPLATE_DIR}/program_detail.html',
-        context
-    )
+    return render(request, f'{TEMPLATE_DIR}/program_detail.html', context)
 
 
 # Program Section Management
@@ -260,11 +253,7 @@ def course_list(request):
         'course_form': CourseForm(),
     }
 
-    return render(
-        request,
-        f'{TEMPLATE_DIR}/course_list.html',
-        context
-    )
+    return render(request, f'{TEMPLATE_DIR}/course_list.html', context)
 
 
 @role_required('ADMIN', 'STAFF')
