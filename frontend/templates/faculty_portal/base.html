@@ -8,6 +8,7 @@
 
     <link rel="stylesheet" href="{% static 'css/layout/faculty_portal.css' %}">
     <script src="{% static 'js/global-search.js' %}" defer></script>
+    <script src="{% static 'js/portal-responsive.js' %}" defer></script>
     {% block extra_css %}{% endblock %}
 
 
@@ -15,7 +16,8 @@
 
 <body>
     <div class="admin-shell">
-        <aside class="sidebar">
+        <aside class="sidebar" id="portal-sidebar" aria-label="Navigation">
+            <button type="button" class="mobile-nav-close" aria-label="Close navigation">&times;</button>
             <div class="brand-box">
                 <div class="brand-mark">
                     <img src="{% static 'images/logo.svg' %}" alt="iSubmit logo" class="brand-symbol">
@@ -130,8 +132,10 @@
             </nav>
         </aside>
 
+        <button type="button" class="mobile-nav-overlay" aria-label="Close navigation" hidden></button>
         <main class="main-area">
             <header class="topbar">
+                <button type="button" class="mobile-nav-toggle" aria-controls="portal-sidebar" aria-expanded="false" aria-label="Open navigation"><span aria-hidden="true">&#9776;</span></button>
                 <div>
                     <div class="topbar-title-wrap">
                         {% if request.resolver_match.url_name == 'upload_files' or request.resolver_match.url_name == 'submission_complete' or request.resolver_match.url_name == 'view_uploaded_document' %}

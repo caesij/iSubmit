@@ -6172,3 +6172,105 @@ html:where([data-css~="submissions"]),
                 width: 100%;
             }
         }
+
+/* Responsive portal shell. Desktop rules above remain the baseline. */
+:where([data-portal="faculty"]) :is(.mobile-nav-toggle, .mobile-nav-close, .mobile-nav-overlay) { display: none; }
+@media (max-width: 1024px) {
+  :where([data-portal="faculty"]) .admin-shell { display: block; }
+  :where([data-portal="faculty"]) .main-area { margin-left: 0; width: 100%; }
+  :where([data-portal="faculty"]) .sidebar { position: static; width: 100%; height: auto; }
+  .portal-enhanced:where([data-portal="faculty"]) .sidebar {
+    position: fixed; inset: 0 auto 0 0; width: min(280px, calc(100vw - 48px));
+    height: 100vh; height: 100dvh; overflow-y: auto; overscroll-behavior: contain;
+    z-index: 100; visibility: hidden; transform: translateX(-100%);
+  }
+  :where([data-portal="faculty"]) .mobile-nav-open { overflow: hidden; }
+  :where([data-portal="faculty"]) .mobile-nav-open .sidebar { visibility: visible; transform: none; }
+  .portal-enhanced:where([data-portal="faculty"]) .mobile-nav-toggle {
+    display: inline-flex; align-items: center; justify-content: center; flex: 0 0 44px;
+    width: 44px; height: 44px; border: 1px solid #d8d8d8; border-radius: 6px;
+    background: #fff; color: #7e0c0c; font: inherit; font-size: 24px; cursor: pointer;
+  }
+  .portal-enhanced:where([data-portal="faculty"]) .mobile-nav-close {
+    display: block; position: absolute; top: 8px; right: 8px; width: 44px; height: 44px;
+    border: 0; background: transparent; color: #fff; font-size: 30px; cursor: pointer;
+  }
+  :where([data-portal="faculty"]) .mobile-nav-overlay:not([hidden]) {
+    display: block; position: fixed; inset: 0; width: 100%; height: 100%; z-index: 90;
+    padding: 0; margin: 0; border: 0; background: rgba(0,0,0,.45); cursor: pointer;
+  }
+  :where([data-portal="faculty"]) .topbar {
+    position: relative; display: flex; flex-wrap: wrap; align-items: center;
+    gap: 12px; padding: 16px; min-height: 0;
+  }
+  :where([data-portal="faculty"]) .topbar > div:first-of-type { flex: 1; min-width: 0; }
+  :where([data-portal="faculty"]) .topbar-title { font-size: clamp(1.25rem, 3vw, 1.9rem); overflow-wrap: anywhere; }
+  :where([data-portal="faculty"]) .topbar-controls {
+    display: flex; flex-wrap: wrap; width: 100%; min-width: 0; gap: 12px; margin-left: 0;
+  }
+  :where([data-portal="faculty"]) .global-search { flex: 1 1 240px; width: auto; min-width: 0; max-width: none; }
+  :where([data-portal="faculty"]) .user-badge { min-width: 0; max-width: 100%; }
+  :where([data-portal="faculty"]) .user-badge > div:last-child { min-width: 0; overflow-wrap: anywhere; }
+  :where([data-portal="faculty"]) .content-shell { padding: 20px 16px; min-width: 0; }
+  :where([data-portal="faculty"]) .content-shell > * { min-width: 0; max-width: 100%; }
+  :where([data-portal="faculty"]) .content-shell :is(.table-card, .table-wrap, .requirements-table-card, .period-requirements-card) { min-width: 0; max-width: 100%; overflow-x: auto; }
+  :where([data-portal="faculty"]) .responsive-table-scroll { min-width: 0; max-width: 100%; overflow-x: auto; overscroll-behavior-x: contain; }
+  :where([data-portal="faculty"]) .responsive-table-scroll > table { min-width: 680px; }
+  :where([data-portal="faculty"]) .content-shell :is(.pagination-footer) { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; }
+  :where([data-portal="faculty"]) .content-shell :is(.settings-tabs, .docs-tabs, .tab-nav) { display: flex; flex-wrap: wrap; gap: 12px; }
+  :where([data-portal="faculty"]) .content-shell :is(.settings-tab, .docs-tab, .tab-link) { white-space: normal; }
+  :where([data-portal="faculty"]) .content-shell :is(.profile-summary, .faculty-profile-card .profile-summary) { grid-template-columns: 160px minmax(0, 1fr); }
+  :where([data-portal="faculty"]) .content-shell :is(.profile-details, .profile-form) { min-width: 0; }
+  :where([data-portal="faculty"]) .content-shell :is(.profile-detail, .profile-field) { min-width: 0; }
+  :where([data-portal="faculty"]) .content-shell .profile-detail strong { white-space: normal; overflow-wrap: anywhere; }
+  :where([data-portal="faculty"]) .content-shell :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea) { min-width: 0; max-width: 100%; box-sizing: border-box; }
+  :where([data-portal="faculty"]) .content-shell :is(.fdv-grid, .dfv-grid) { grid-template-columns: minmax(0, 1fr); }
+  :where([data-portal="faculty"]) .content-shell :is(.fdv-page-area, .dfv-page-area) { height: min(640px, 65vh); }
+  :where([data-portal="faculty"]) .content-shell :is(.fdv-viewer-body, .dfv-viewer-body) { min-height: 0; }
+  :where([data-portal="faculty"]) :is(button, a, input, select, textarea, [tabindex]):focus-visible { outline: 2px solid #a60700; outline-offset: 3px; }
+  :where([data-portal="faculty"]) .sidebar :is(button, a):focus-visible { outline-color: #fff; }
+  :where([data-portal="faculty"]) .content-shell :is(.docs-layout, .layout, .dash-lower) { grid-template-columns: minmax(0, 1fr); }
+  :where([data-portal="faculty"]) .content-shell :is(.filter-panel, .panel-card, .welcome-card, .step-card) { min-width: 0; max-width: 100%; }
+  :where([data-portal="faculty"]) .content-shell .filter-panel { width: 100%; }
+  :where([data-css~="submissions-list-page"]) .content-shell .stat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 600px) {
+  :where([data-portal="faculty"]) .content-shell { padding: 16px 12px; }
+  :where([data-portal="faculty"]) .topbar-controls .global-search { flex: 1 0 100%; order: 3; }
+  :where([data-portal="faculty"]) .notification-trigger { position: relative; }
+  :where([data-portal="faculty"]) .notification-wrap { margin-left: auto; position: static; }
+  :where([data-portal="faculty"]) .notif-dropdown { left: 12px; right: 12px; top: 100%; width: auto; max-width: none; }
+  :where([data-portal="faculty"]) .notif-dropdown-list { max-height: min(320px, 45dvh); }
+  :where([data-portal="faculty"]) .content-shell :is(.profile-card, .settings-card) { padding: 18px 14px; }
+  :where([data-portal="faculty"]) .content-shell :is(.profile-section-heading, .page-header, .panel-header) { flex-wrap: wrap; gap: 12px; }
+  :where([data-portal="faculty"]) .content-shell :is(.profile-summary, .faculty-profile-card .profile-summary, .profile-details, .profile-form, .pref-grid) { grid-template-columns: minmax(0, 1fr); }
+  :where([data-portal="faculty"]) .content-shell .profile-identity { border-right: 0; border-bottom: 1px solid #e5e7eb; padding-bottom: 20px; }
+  :where([data-portal="faculty"]) .content-shell .profile-form { padding-left: 0; padding-right: 0; }
+  :where([data-portal="faculty"]) .content-shell :is(.notification-row) { flex-wrap: wrap; gap: 10px; }
+  :where([data-portal="faculty"]) :is(.notification-trigger, .action-trigger, .page-btn) { min-width: 44px; min-height: 44px; }
+  :where([data-portal="faculty"]) :is(.nav-link) { min-height: 44px; }
+  :where([data-portal="faculty"]) .content-shell :is(input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]), select, textarea) { font-size: 16px; }
+  :where([data-portal="faculty"]) .content-shell :is(.btn, .btn-primary, .btn-outline, .btn-save, .profile-save, .profile-edit, .btn-search, .btn-clear) { min-height: 44px; height: auto; }
+  :where([data-portal="faculty"]) .content-shell :is(.step-card, .action-row, .overview-row, .deadline-row) { flex-wrap: wrap; gap: 12px; }
+  :where([data-portal="faculty"]) .content-shell .step-divider { display: none; }
+  :where([data-portal="faculty"]) .content-shell .step-item { flex-basis: 100%; }
+  :where([data-portal="faculty"]) .content-shell .deadline-date { margin-left: 0; }
+  :where([data-portal="faculty"]) .content-shell :is(.overview-name, .deadline-title, .welcome-name) { overflow-wrap: anywhere; }
+  :where([data-portal="faculty"]) :is(#static-presentation, .notification-position) { position: static; }
+  :where([data-portal="faculty"]) .content-shell .notifications-page { padding: 12px 0; }
+  :where([data-portal="faculty"]) .content-shell :is(.notification-card, .notifications-header) { flex-direction: column; align-items: stretch; }
+  :where([data-portal="faculty"]) .content-shell .notification-card-content { width: 100%; overflow-wrap: anywhere; }
+  :where([data-portal="faculty"]) .content-shell .notification-card-actions { flex-wrap: wrap; justify-content: flex-end; }
+  :where([data-portal="faculty"]) .content-shell .notification-filter-group { flex: 1 1 100%; min-width: 0; }
+  :where([data-portal="faculty"]) .content-shell :is(.notification-card-actions button, .notification-card-actions a, .notification-filter-button, .notification-reset-button) { min-height: 44px; display: inline-flex; align-items: center; }
+  :where([data-portal="faculty"]) .submission-confirmation { padding: 12px; }
+  :where([data-portal="faculty"]) .submission-confirmation-card { padding: 20px 16px; max-height: calc(100dvh - 24px); overflow-y: auto; }
+  :where([data-portal="faculty"]) .submission-confirmation-actions { flex-wrap: wrap; }
+  :where([data-portal="faculty"]) .content-shell :is(.channel-header, .channel-row) { grid-template-columns: minmax(0, 1fr) 64px 64px; gap: 8px; }
+  :where([data-portal="faculty"]) .content-shell .channel-option-heading { flex-direction: column; align-items: flex-start; overflow-wrap: anywhere; }
+  :where([data-portal="faculty"]) .content-shell .channel-switch { padding-left: 0; min-width: 44px; min-height: 44px; }
+  :where([data-css~="submissions-list-page"]) .content-shell .stat-card { padding: 12px; flex-wrap: wrap; }
+  :where([data-css~="submissions-list-page"]) .content-shell .stat-label { font-size: 14px; overflow-wrap: anywhere; }
+  :where([data-portal="faculty"]) .content-shell button { min-height: 44px; }
+  :where([data-portal="faculty"]) .content-shell :is(.star-btn, .btn-icon, .profile-picture-edit) { min-width: 44px; min-height: 44px; }
+}

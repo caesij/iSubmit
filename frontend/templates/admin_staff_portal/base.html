@@ -9,6 +9,7 @@
 
     <link rel="stylesheet" href="{% static 'css/layout/admin_staff_portal.css' %}">
     <script src="{% static 'js/global-search.js' %}" defer></script>
+    <script src="{% static 'js/portal-responsive.js' %}" defer></script>
 
     {% block extra_css %}{% endblock %}
 </head>
@@ -18,7 +19,8 @@
     <div class="admin-shell">
 
         <!-- Sidebar -->
-        <aside class="sidebar">
+        <aside class="sidebar" id="portal-sidebar" aria-label="Navigation">
+            <button type="button" class="mobile-nav-close" aria-label="Close navigation">&times;</button>
 
             <div class="brand-box">
                 <div class="brand-mark">
@@ -176,9 +178,11 @@
 
 
         <!-- Main area -->
+        <button type="button" class="mobile-nav-overlay" aria-label="Close navigation" hidden></button>
         <main class="main-area">
 
             <header class="topbar">
+                <button type="button" class="mobile-nav-toggle" aria-controls="portal-sidebar" aria-expanded="false" aria-label="Open navigation"><span aria-hidden="true">&#9776;</span></button>
 
                 <div>
                     <div class="topbar-title-wrap">
