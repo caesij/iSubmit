@@ -8009,3 +8009,364 @@ html:where([data-css~="submissions"]),
                 width: 100%;
             }
         }
+
+/* admin_staff_portal/core/submissions/submission_bin/requirements_list.html */
+/* Submission-bin list only; other submission screens retain their styles. */
+html:has(.submission-bin-page) .main-area,
+html:has(.submission-bin-page) .content-shell,
+html:has(.submission-bin-page) body { background: #fff; }
+.submission-bin-page .tab-nav { margin-bottom: 24px; }
+.submission-bin-page .filter-card {
+    padding: 16px; margin-bottom: 24px; border: 1px solid #e5e5e5;
+    border-radius: 9px; box-shadow: 0 1px 4px #0000000d;
+}
+.submission-bin-page .filter-form { justify-content: flex-start; gap: 18px; margin: 0; }
+.submission-bin-page .select-wrap { min-width: 0; width: 170px; flex: 0 0 auto; }
+.submission-bin-page .select-wrap label { font-size: 13px; color: #555; }
+.submission-bin-page .select-wrap select {
+    width: 100%; height: 38px; padding: 6px 10px; border: 1px solid #ddd;
+    border-radius: 5px; background: #fff; color: #666; font-size: 14px;
+}
+.submission-bin-page .btn-clear, .submission-bin-page .btn-add-bin {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    width: auto; min-width: max-content; flex: 0 0 auto;
+    height: 38px; padding: 0 18px; border: 1px solid #ddd; border-radius: 4px;
+    font-size: 14px; text-decoration: none; white-space: nowrap;
+}
+.submission-bin-page .btn-clear { color: #888; background: #fff; }
+.submission-bin-page .btn-clear img { width: 14px; height: 14px; flex-shrink: 0; }
+.submission-bin-page .btn-add-bin > span { flex-shrink: 0; }
+.submission-bin-page .btn-add-bin { background: #ad0800; border-color: #ad0800; color: #fff; font-weight: 700; }
+.submission-bin-page .btn-add-bin:hover { background: #850600; }
+.submission-bin-page .requirements-table-card { overflow-x: auto; border: 1px solid #d4d4d4; border-radius: 9px; }
+.submission-bin-page .requirements-table-card .data-table { min-width: 760px; width: 100%; border-collapse: collapse; table-layout: fixed; }
+.submission-bin-page .requirements-table-card .data-table th,
+.submission-bin-page .requirements-table-card .data-table td { text-align: left; padding: 24px 18px; }
+.submission-bin-page .requirements-table-card .data-table th { background: #f1dada; color: #111; font-size: 17px; font-weight: 500; line-height: 1.1; border: 0; }
+.submission-bin-page .requirements-table-card .data-table td { height: 86px; font-size: 15px; color: #606060; border-top: 1px solid #d8d8d8; }
+.submission-bin-page .requirements-table-card .data-table th:nth-child(1),
+.submission-bin-page .requirements-table-card .data-table td:nth-child(1) { width: 19%; padding-left: 40px; }
+.submission-bin-page .requirements-table-card .data-table th:nth-child(2) { width: 14%; }
+.submission-bin-page .requirements-table-card .data-table th:nth-child(3) { width: 14%; }
+.submission-bin-page .requirements-table-card .data-table th:nth-child(4) { width: 17%; }
+.submission-bin-page .requirements-table-card .data-table th:nth-child(5) { width: 14%; }
+.submission-bin-page .requirements-table-card .data-table th:nth-child(6) { width: 11%; }
+.submission-bin-page .requirements-table-card .data-table th:nth-child(7) { width: 11%; }
+.submission-bin-page .requirements-table-card .data-table tbody tr { background: #fff; cursor: pointer; }
+.submission-bin-page .requirements-table-card .data-table tbody tr:hover,
+.submission-bin-page .requirements-table-card .data-table tbody tr:focus-within { background: #f7eaea; box-shadow: inset 3px 0 #b20b06; }
+.submission-bin-page .period-name { color: #111; font-weight: 700; text-decoration: none; }
+.submission-bin-page .requirements-table-card .text-sub { font-size: 13px; color: #666; }
+.submission-bin-page .requirements-table-card .status-badge { min-width: 70px; padding: 7px 10px; font-size: 13px; font-weight: 600; }
+.submission-bin-page .view-all-link { color: #ad0800; font-size: 14px; font-weight: 700; text-decoration: none; white-space: nowrap; }
+.submission-bin-page .view-all-link span { margin-left: 5px; }
+.submission-bin-page a:focus-visible, .submission-bin-page select:focus-visible { outline: 2px solid #ad0800; outline-offset: 3px; }
+@media (max-width: 600px) {
+    .submission-bin-page .filter-form { gap: 12px; }
+    .submission-bin-page .select-wrap { width: calc(50% - 6px); }
+    .submission-bin-page .btn-clear, .submission-bin-page .btn-add-bin { flex: 1; padding: 0 12px; }
+}
+/* Submission period details */
+html:has(.period-detail-page) .main-area,
+html:has(.period-detail-page) .content-shell { background: #fff; }
+.period-detail-page .tab-nav { margin-bottom: 16px; }
+.period-detail-page .bulk-back-link { margin-bottom: 18px; }
+.period-detail-page .bulk-breadcrumb { margin: 0 0 18px; font-size: 13px; color: #666; }
+.period-detail-page .period-summary-card { border: 1px solid #e1e1e1; border-radius: 9px; background: #fff; box-shadow: 0 1px 4px #0000000d; margin-bottom: 18px; }
+.period-detail-page .period-header { display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap; padding: 18px 22px; }
+.period-detail-page .period-header h1 { margin: 0 0 10px; font-size: 22px; color: #111; line-height: 1.3; }
+.period-detail-page .period-facts { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; font-size: 12px; color: #666; }
+.period-detail-page .period-facts > span + span:not(.status-badge) { border-left: 1px solid #ccc; padding-left: 12px; }
+.period-detail-page .period-actions { display: flex; gap: 8px; }
+.period-detail-page form { margin: 0; }
+.period-detail-page .period-button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-width: 110px; padding: 9px 16px; border: 1px solid #ccc; border-radius: 4px; background: #fff; color: #666; font: inherit; font-size: 13px; text-decoration: none; cursor: pointer; }
+.period-detail-page .period-button-primary { background: #ad0800; border-color: #ad0800; color: #fff; }
+.period-detail-page .period-button img { width: 18px; height: 18px; filter: brightness(0) invert(1); }
+.period-detail-page .period-requirements-card { max-height: 600px; overflow: auto; border: 1px solid #d4d4d4; border-radius: 9px; }
+.period-detail-page .data-table { width: 100%; min-width: 950px; table-layout: fixed; border-collapse: separate; border-spacing: 0; }
+.period-detail-page .data-table thead th { position: sticky; top: 0; z-index: 1; padding: 22px 12px; background: #f1dada; color: #111; border: 0; text-align: center; font-size: 15px; font-weight: 500; }
+.period-detail-page .data-table tbody td { padding: 18px 12px; height: 66px; border: 0; border-top: 1px solid #d8d8d8; font-size: 13px; text-align: center; vertical-align: middle; }
+.period-detail-page .data-table tbody tr:nth-child(n) { background: #fff; }
+.period-detail-page .data-table tbody tr:hover { background: #fcf7f7; }
+.period-detail-page .data-table .selection-column { width: 40px; padding-left: 16px; padding-right: 4px; }
+.period-detail-page .data-table th:nth-child(2) { width: 25%; text-align: left; }
+.period-detail-page .data-table th:nth-child(3) { width: 17%; }
+.period-detail-page .data-table th:nth-child(4) { width: 12%; }
+.period-detail-page .data-table th:nth-child(5),
+.period-detail-page .data-table th:nth-child(6) { width: 14%; }
+.period-detail-page .data-table th:nth-child(7) { width: 200px; }
+.period-detail-page .data-table .requirement-title { text-align: left; color: #111; font-weight: 500; }
+.period-detail-page input[type='checkbox'] { width: 15px; height: 15px; accent-color: #ad0800; cursor: pointer; }
+.period-detail-page .status-badge,
+.period-detail-page .ocr-badge { display: inline-flex; align-items: center; justify-content: center; min-width: 74px; padding: 6px 10px; border-radius: 4px; font-size: 12px; font-weight: 500; line-height: 1.2; }
+.period-detail-page .status-active,
+.period-detail-page .ocr-enabled { background: #d9f2e3; color: #03a846; }
+.period-detail-page .status-inactive,
+.period-detail-page .ocr-disabled { background: #f2dad9; color: #a60700; }
+.period-detail-page .requirement-actions { display: flex; align-items: center; justify-content: center; gap: 20px; }
+.period-detail-page .requirement-toggle { padding: 6px 12px; border: 0; border-radius: 4px; background: #ad0800; color: #fff; font: inherit; font-size: 12px; font-weight: 600; cursor: pointer; }
+.period-detail-page .requirement-edit { display: inline-flex; align-items: center; gap: 4px; color: #a60700; font-size: 13px; text-decoration: none; white-space: nowrap; }
+.period-detail-page .requirement-edit img { width: 18px; height: 18px; }
+.period-detail-page .period-button,
+.period-detail-page .requirement-toggle,
+.period-detail-page .requirement-edit {
+    transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease, box-shadow 150ms ease;
+}
+.period-detail-page .period-button:hover {
+    background: #f7eaea;
+    border-color: #a60700;
+    color: #a60700;
+    box-shadow: 0 2px 5px #a6070026;
+}
+.period-detail-page .period-button-primary:hover,
+.period-detail-page .requirement-toggle:hover {
+    background: #850600;
+    border-color: #850600;
+    color: #fff;
+    box-shadow: 0 2px 5px #a6070033;
+}
+.period-detail-page .requirement-edit { padding: 6px 8px; border-radius: 4px; }
+.period-detail-page .requirement-edit:hover {
+    background: #f7e3e3;
+    color: #850600;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+.period-detail-page a:focus-visible, .period-detail-page button:focus-visible { outline: 2px solid #ad0800; outline-offset: 3px; }
+@media (prefers-reduced-motion: reduce) {
+    .period-detail-page .period-button,
+    .period-detail-page .requirement-toggle,
+    .period-detail-page .requirement-edit { transition: none; }
+}
+.checklist-row[id^='requirement-'] { scroll-margin-top: 24px; }
+.checklist-row[id^='requirement-']:target { outline: 2px solid #ad0800; outline-offset: 4px; }
+@media (max-width: 700px) {
+    .period-detail-page .period-header { padding: 16px; }
+    .period-detail-page .period-header h1 { font-size: 19px; }
+    .period-detail-page .period-requirements-card { max-height: 65vh; }
+}
+/* Submission period editor: create and edit share the same form. */
+html:has(.requirement-editor) .main-area,
+html:has(.requirement-editor) .content-shell { background: #fff; }
+.requirement-editor { color: #252525; }
+.requirement-editor .tab-nav { margin-bottom: 18px; }
+.requirement-editor .bulk-breadcrumb { margin: 18px 0; color: #707070; font-size: 13px; }
+.requirement-editor .requirement-editor-title { margin: 0 0 6px; font-size: 24px; line-height: 1.4; }
+.requirement-editor .editor-intro { margin: 0 0 22px; font-size: 14px; color: #737373; }
+.requirement-editor .requirement-editor-card { padding: 24px; border: 1px solid #e2dede; border-radius: 10px; background: #fff; box-shadow: 0 2px 5px #00000008; margin-bottom: 22px; }
+.requirement-editor .period-fields { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 24px; border-top: 3px solid #ad0800; }
+.requirement-editor .requirement-field { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.requirement-editor .requirement-field label { color: #383838; font-size: 13px; font-weight: 600; }
+.requirement-editor .period-readonly { margin: 0; padding: 12px 0; font-size: 15px; font-weight: 600; }
+.requirement-editor input:not([type='checkbox']):not([type='hidden']),
+.requirement-editor select,
+.requirement-editor textarea { box-sizing: border-box; max-width: 100%; border: 1px solid #d9d9df; border-radius: 6px; padding: 10px 12px; background: #fff; color: #333; font: inherit; font-size: 14px; }
+.requirement-editor .period-fields select,
+.requirement-editor .period-fields input { width: 100%; min-height: 44px; }
+.requirement-editor input[type='checkbox'] { width: 17px; height: 17px; margin: 0; flex-shrink: 0; accent-color: #ad0800; cursor: pointer; }
+.requirement-editor input:disabled,
+.requirement-editor select:disabled { cursor: not-allowed; background: #f3f3f3; color: #888; }
+.requirement-editor .checklist-heading h2 { margin: 0 0 6px; font-size: 19px; }
+.requirement-editor .checklist-heading p { margin: 0 0 20px; font-size: 13px; color: #777; }
+.requirement-editor .checklist-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 14px 16px; border-radius: 6px; background: #f7eaea; margin-bottom: 18px; }
+.requirement-editor .checklist-header label { display: inline-flex; align-items: center; gap: 9px; font-size: 14px; font-weight: 600; white-space: nowrap; }
+.requirement-editor .checklist-header .text-sub { font-size: 12px; color: #716262; }
+.requirement-editor .checklist-row { display: flex; align-items: flex-start; gap: 14px; padding: 18px; margin-bottom: 14px; border: 1px solid #e5e1e1; border-radius: 8px; background: #fff; }
+.requirement-editor .checklist-row:focus-within { border-color: #c99c9c; }
+.requirement-editor .checklist-row.is-excluded { background: #fafafa; }
+.requirement-editor .checklist-row.is-excluded .checklist-body { opacity: .6; }
+.requirement-editor .checklist-include { display: flex; padding-top: 12px; }
+.requirement-editor .checklist-body { display: flex; flex: 1; flex-direction: column; gap: 14px; min-width: 0; }
+.requirement-editor .checklist-title-row { display: flex; align-items: center; gap: 12px; }
+.requirement-editor .checklist-title-row input { flex: 1; min-width: 0; width: 100%; font-size: 16px !important; font-weight: 600; }
+.requirement-editor .checklist-title-row input[readonly] { border-color: transparent; padding-left: 0; background: transparent; cursor: default; }
+.requirement-editor .edit-title-button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; flex-shrink: 0; padding: 8px 10px; border: 1px solid #ead4d4; border-radius: 5px; background: #fff; color: #a60700; font: inherit; font-size: 13px; cursor: pointer; white-space: nowrap; }
+.requirement-editor .edit-title-button img { width: 17px; height: 17px; }
+.requirement-editor .checklist-options { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 24px; }
+.requirement-editor .checklist-options label { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; }
+.requirement-editor .checklist-options .checklist-select { flex-direction: column; align-items: flex-start; gap: 6px; font-size: 12px; color: #666; flex: 0 0 280px; width: 280px; max-width: 100%; }
+.requirement-editor .checklist-select select { width: 100%; min-width: 0; }
+.requirement-editor .checklist-options .is-unavailable { color: #999; cursor: not-allowed; }
+.requirement-editor .nlp-hint,
+.requirement-editor .checklist-note { color: #777; font-size: 12px; }
+.requirement-editor [hidden] { display: none !important; }
+.requirement-editor .checklist-validation { padding: 18px; background: #fcf8f8; border: 1px solid #ebdada; border-radius: 6px; }
+.requirement-editor .checklist-validation textarea { width: 100%; min-height: 110px; resize: vertical; }
+.requirement-editor .validation-format-note { margin-top: 12px; color: #786565; font-size: 12px; line-height: 1.8; }
+.requirement-editor .validation-format-note span { display: block; }
+.requirement-editor .checklist-remove { border: 0; border-radius: 4px; padding: 6px; background: transparent; color: #a60700; cursor: pointer; font-size: 24px; line-height: 1; }
+.requirement-editor #add-requirement { display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: auto; height: auto; margin-top: 4px; padding: 11px 16px; border: 1px solid #a60700; border-radius: 5px; background: #fff; color: #a60700; font-size: 14px; font-weight: 600; }
+.requirement-editor .requirement-editor-actions { display: flex; justify-content: flex-end; gap: 12px; padding: 0 0 24px; border-top: 0; }
+.requirement-editor .requirement-save-button,
+.requirement-editor .requirement-cancel-button { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-width: 110px; height: 38px; padding: 8px 18px; border: 1px solid #bdbdbd; border-radius: 5px; background: #fff; color: #777; font: inherit; font-size: 14px; font-weight: 600; text-decoration: none; cursor: pointer; }
+.requirement-editor .requirement-save-button img { width: 18px; height: 18px; flex-shrink: 0; }
+.requirement-editor .requirement-save-button { background: #ad0800; border-color: #ad0800; color: #fff; font-weight: 600; }
+.requirement-editor .requirement-save-button:hover { background: #850600; }
+.requirement-editor .edit-title-button:hover,
+.requirement-editor #add-requirement:hover,
+.requirement-editor .requirement-cancel-button:hover,
+.requirement-editor .checklist-remove:hover { background: #f7eaea; border-color: #a60700; color: #a60700; }
+.requirement-editor :is(input,select,textarea,button,a):focus-visible { outline: 2px solid #ad0800; outline-offset: 3px; }
+@media (max-width: 850px) {
+    .requirement-editor .period-fields { grid-template-columns: 1fr; gap: 16px; }
+    .requirement-editor .checklist-header { align-items: flex-start; flex-direction: column; gap: 8px; }
+    .requirement-editor .requirement-editor-card { padding: 16px; }
+}
+@media (max-width: 500px) {
+    .requirement-editor .checklist-row { padding: 12px; gap: 10px; }
+    .requirement-editor .checklist-title-row { flex-wrap: wrap; gap: 6px; }
+    .requirement-editor .checklist-title-row input { flex-basis: 100%; }
+    .requirement-editor .checklist-options { flex-direction: column; align-items: flex-start; }
+    .requirement-editor .checklist-select,
+    .requirement-editor .checklist-select select { width: 100%; min-width: 0; }
+    .requirement-editor .checklist-options .checklist-select { flex: 0 0 auto; width: 100%; }
+    .requirement-editor .requirement-editor-actions > * { flex: 1; min-width: 0; }
+}
+/* Native, keyboard-accessible dropdown menus using the portal palette. */
+@supports (appearance: base-select) {
+    .requirement-editor select,
+    .requirement-editor select::picker(select) { appearance: base-select; }
+    .requirement-editor select { display: inline-flex; align-items: center; justify-content: space-between; gap: 12px; cursor: pointer; }
+    .requirement-editor select::picker-icon { color: #777; transition: rotate 150ms ease; }
+    .requirement-editor select:open { border-color: #a60700; box-shadow: 0 0 0 3px #a6070012; }
+    .requirement-editor select:open::picker-icon { rotate: 180deg; color: #a60700; }
+    .requirement-editor select::picker(select) {
+        margin-top: 6px; padding: 6px; border: 1px solid #e5d7d7; border-radius: 8px;
+        background: #fff; box-shadow: 0 6px 20px #4500001a;
+        max-height: 280px; overflow-y: auto;
+    }
+    .requirement-editor select option {
+        display: flex; align-items: center; gap: 10px; padding: 10px 12px;
+        border-radius: 5px; background: #fff; color: #444; font: inherit;
+        font-size: 14px; cursor: pointer;
+    }
+    .requirement-editor select option:hover,
+    .requirement-editor select option:focus { background: #f7eaea; color: #a60700; outline: none; }
+    .requirement-editor select option:checked { background: #f3dede; color: #a60700; font-weight: 600; }
+    .requirement-editor select option::checkmark { color: #a60700; }
+    .requirement-editor select:disabled { cursor: not-allowed; }
+    @media (prefers-reduced-motion: reduce) {
+        .requirement-editor select::picker-icon { transition: none; }
+    }
+}
+/* Faculty overview uses the same type scale as the Submission Bin list. */
+.faculty-overview-page .faculty-list-filters .select-wrap label { font-size: 13px; }
+.faculty-overview-page .faculty-list-filters .select-wrap select,
+.faculty-overview-page .faculty-list-filters .search-input-wrap input { font-size: 14px; }
+.faculty-overview-page .faculty-list-filters .btn-search,
+.faculty-overview-page .faculty-list-filters .btn-clear { font-size: 14px; height: 38px; min-height: 38px; width: auto; min-width: max-content; padding: 0 16px; flex-shrink: 0; }
+.faculty-overview-page .faculty-list-filters .select-wrap select { min-height: 38px; }
+.faculty-overview-page .faculty-list-filters .filter-form { flex-wrap: wrap; }
+.faculty-overview-page .faculty-list-filters + .table-card { overflow-x: auto; }
+.faculty-overview-page .faculty-list-filters + .table-card .data-table { min-width: 1000px; }
+.faculty-overview-page .faculty-list-filters + .table-card .data-table th { font-size: 17px; line-height: 1.25; padding-top: 24px; padding-bottom: 24px; white-space: normal; }
+.faculty-overview-page .faculty-list-filters + .table-card .data-table td { font-size: 15px; line-height: 1.4; padding-top: 24px; padding-bottom: 24px; }
+.faculty-overview-page .data-table .text-sub { font-size: 13px; overflow-wrap: anywhere; }
+.faculty-overview-page .data-table .faculty-type-badge,
+.faculty-overview-page .data-table .faculty-status { font-size: 13px; }
+.faculty-overview-page .data-table .view-bins-link { font-size: 14px; }
+/* Requirement switches retain native checkbox keyboard and form behavior. */
+.requirement-editor .checklist-options .requirement-switch { gap: 12px; font-size: 13px; font-weight: 600; cursor: pointer; }
+.requirement-editor .requirement-switch input[type='checkbox'] {
+    appearance: none; position: relative; box-sizing: border-box;
+    width: 54px; height: 28px; margin: 0; padding: 0;
+    border: 1px solid #d6d6d6; border-radius: 999px;
+    background: #d9d9d9; flex: 0 0 54px; cursor: pointer;
+    transition: background-color 150ms ease, border-color 150ms ease;
+}
+.requirement-editor .requirement-switch input[type='checkbox']::before {
+    content: ''; position: absolute; top: 2px; left: 2px;
+    width: 22px; height: 22px; border-radius: 50%;
+    background: #fff; box-shadow: 0 1px 3px #0000001a;
+    transition: transform 150ms ease;
+}
+.requirement-editor .requirement-switch input[type='checkbox']:checked { background: #ad0800; border-color: #ad0800; }
+.requirement-editor .requirement-switch input[type='checkbox']:checked::before { transform: translateX(26px); }
+.requirement-editor .requirement-switch input[type='checkbox']:not(:disabled):hover { box-shadow: 0 0 0 3px #a6070014; }
+.requirement-editor .requirement-switch input[type='checkbox']:disabled { opacity: .55; cursor: not-allowed; }
+.requirement-editor .requirement-switch:has(input:disabled) { color: #999; cursor: not-allowed; }
+@media (prefers-reduced-motion: reduce) {
+    .requirement-editor .requirement-switch input[type='checkbox'],
+    .requirement-editor .requirement-switch input[type='checkbox']::before { transition: none; }
+}
+.requirement-editor .checklist-title-row input[readonly] { pointer-events: none; }
+/* Edit a single requirement without leaving the period table. */
+.requirement-dialog { width: min(760px, calc(100vw - 32px)); max-height: calc(100dvh - 48px); padding: 32px; border: 0; border-radius: 16px; background: #fff; box-shadow: 0 20px 70px #0004; overflow: auto; }
+.requirement-dialog::backdrop { background: #0009; }
+.requirement-dialog .modal-close { position: absolute; top: 12px; right: 14px; width: 32px; height: 32px; padding: 0; border: 0; border-radius: 5px; background: transparent; color: #777; font-size: 28px; cursor: pointer; }
+.requirement-dialog .modal-close:hover { color: #a60700; background: #f7eaea; }
+.requirement-dialog h2 { margin: 6px 32px 8px 0; color: #111; font-size: 22px; overflow-wrap: anywhere; }
+.requirement-dialog .modal-intro { margin: 0 0 22px; color: #777; font-size: 13px; }
+.requirement-dialog .modal-settings-card { padding: 22px; border: 1px solid #e3dfdf; border-radius: 9px; box-shadow: 0 1px 4px #0000000a; }
+.requirement-dialog .requirement-field input { width: 100%; }
+.requirement-dialog .modal-switches { display: flex; justify-content: space-between; gap: 20px; margin: 24px 0 12px; }
+.requirement-dialog .modal-selects { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 18px; margin-top: 22px; }
+.requirement-dialog .modal-selects select { width: 100%; }
+.requirement-dialog .checklist-validation { margin-top: 18px; }
+.requirement-dialog .requirement-editor-actions { margin-top: 20px; padding: 0; }
+.requirement-dialog .modal-error { color: #a60700; font-size: 14px; }
+.requirement-dialog .requirement-save-button:disabled { opacity: .6; cursor: wait; }
+.requirement-save-status { margin: 12px 0 0; font-size: 13px; color: #267044; }
+body:has(.requirement-dialog[open]) { overflow: hidden; }
+@media (max-width: 600px) {
+    .requirement-dialog { padding: 24px 16px; }
+    .requirement-dialog .modal-settings-card { padding: 16px; }
+    .requirement-dialog .modal-selects { grid-template-columns: 1fr; }
+    .requirement-dialog .modal-switches { align-items: flex-start; flex-direction: column; }
+}
+/* Program overview: consistent portal surfaces, readable rows, grouped actions. */
+html:has(.program-list-page) .main-area,
+html:has(.program-list-page) .content-shell { background: #fff; }
+.program-list-page .program-page-header { align-items: center; gap: 20px; margin-bottom: 24px; }
+.program-list-page .program-page-header h2 { margin: 0 0 6px; font-size: 24px; }
+.program-list-page .program-page-header p { font-size: 14px; }
+.program-list-page .program-courses-link { display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-height: 38px; padding: 0 16px; border: 1px solid #dccbcb; border-radius: 5px; background: #fff; color: #a60700; font-size: 14px; font-weight: 600; text-decoration: none; white-space: nowrap; }
+.program-list-page .program-create-card { margin-bottom: 24px; padding: 22px; border: 1px solid #e3dede; border-radius: 9px; box-shadow: 0 1px 4px #00000008; background: #fff; }
+.program-list-page .program-create-heading h3 { margin: 0 0 5px; font-size: 18px; color: #222; }
+.program-list-page .program-create-heading p { margin: 0 0 18px; color: #777; font-size: 13px; }
+.program-list-page .program-add-card { display: grid; grid-template-columns: minmax(0,2.5fr) minmax(120px,1fr) minmax(140px,1fr) auto; gap: 18px; margin: 0; padding: 0; border: 0; border-radius: 0; box-shadow: none; }
+.program-list-page .program-form-field { min-width: 0; }
+.program-list-page .program-form-field input { height: 42px; border-color: #d9d9df; border-radius: 6px; font: inherit; font-size: 14px; }
+.program-list-page .program-form-field label { font-size: 13px; }
+.program-list-page .program-add-button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 42px; padding: 10px 18px; background: #ad0800; border-radius: 5px; font-size: 14px; }
+.program-list-page .program-table-card { border-color: #d8d8d8; border-radius: 9px; }
+.program-list-page .program-table { width: 100%; min-width: 1080px; table-layout: fixed; }
+.program-list-page .program-table thead th { padding: 22px 18px; background: #f1dada; color: #111; font-size: 17px; font-weight: 500; }
+.program-list-page .program-table tbody td { padding: 22px 18px; color: #555; font-size: 15px; vertical-align: middle; overflow-wrap: anywhere; }
+.program-list-page .program-table tbody td:first-child { width: auto; }
+.program-list-page .program-table tbody td:nth-child(2),
+.program-list-page .program-table tbody td:last-child { width: auto; }
+.program-list-page .program-table th:nth-child(1) { width: 35%; }
+.program-list-page .program-table th:nth-child(2) { width: 11%; }
+.program-list-page .program-table th:nth-child(3) { width: 10%; }
+.program-list-page .program-table th:nth-child(4),
+.program-list-page .program-table th:nth-child(5) { width: 8%; }
+.program-list-page .program-table th:nth-child(6) { width: 28%; text-align: center; }
+.program-list-page .program-table tbody tr:nth-child(n) { background: #fff; }
+.program-list-page .program-table tbody tr:hover { background: #fcf8f8; }
+.program-list-page .program-table tbody tr.is-editing { background: #fff7f7; box-shadow: inset 3px 0 #ad0800; }
+.program-list-page .program-name-display { color: #222; font-weight: 600; line-height: 1.5; }
+.program-list-page .program-abbreviation { display: inline-block; padding: 4px 9px; background: #f4f1f1; border-radius: 4px; color: #625050; font-size: 13px; font-weight: 600; }
+.program-list-page .program-actions { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 8px; }
+.program-list-page .program-actions form { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin: 0; }
+.program-list-page .program-actions .program-action-button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; width: auto; min-width: 0; min-height: 36px; margin: 0; padding: 7px 12px; border: 1px solid #d9d9d9; border-radius: 5px; background: #fff; color: #555; font: inherit; font-size: 13px; font-weight: 600; text-decoration: none; white-space: nowrap; cursor: pointer; }
+.program-list-page .program-action-button img { width: 16px; height: 16px; }
+.program-list-page .program-actions .program-manage-link { border-color: #e5c9c9; color: #a60700; }
+.program-list-page .program-actions .program-save-button { background: #ad0800; border-color: #ad0800; color: #fff; }
+.program-list-page .program-actions .program-delete-form { padding-left: 8px; border-left: 1px solid #e6dede; }
+.program-list-page .program-actions .program-delete-button { border-color: transparent; color: #a60700; background: transparent; }
+.program-list-page .program-actions .program-action-button:hover,
+.program-list-page .program-courses-link:hover { border-color: #a60700; color: #a60700; background: #f7eaea; }
+.program-list-page .program-actions .program-save-button:hover,
+.program-list-page .program-add-button:hover { background: #850600; color: #fff; }
+.program-list-page [hidden] { display: none !important; }
+.program-list-page :is(button,a,input):focus-visible { outline: 2px solid #a60700; outline-offset: 3px; }
+@media (max-width: 1050px) {
+    .program-list-page .program-add-card { grid-template-columns: repeat(2,minmax(0,1fr)); }
+    .program-list-page .program-create-card { padding: 18px; }
+}
+@media (max-width: 600px) {
+    .program-list-page .program-page-header { flex-direction: column; align-items: flex-start; }
+    .program-list-page .program-add-card { grid-template-columns: 1fr; }
+    .program-list-page .program-courses-link { min-height: 42px; }
+}

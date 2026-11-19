@@ -79,19 +79,6 @@
                         </a>
                     </li>
 
-                    <!-- Program Management -->
-                    <li class="nav-item">
-                        <a
-                            class="nav-link {% if current_url == 'program_list' or current_url == 'program_detail' or current_url == 'add_program_section' or current_url == 'update_program_section' or current_url == 'delete_program_section' or current_url == 'attach_program_course' or current_url == 'remove_program_course' or current_url == 'course_list' or current_url == 'add_course' or current_url == 'update_course' or current_url == 'delete_course' %}active{% endif %}"
-                            href="{% url 'programs:program_list' %}"
-                        >
-                            <span class="icon">
-                                <img src="{% static 'images/usermanagement.svg' %}" alt="Program Management icon">
-                            </span>
-                            <span>Program Management</span>
-                        </a>
-                    </li>
-
                     <!-- User Management -->
                     {% if request.user.is_admin or request.user.is_staff_role %}
                         <li class="nav-item">
@@ -110,6 +97,19 @@
                             </a>
                         </li>
                     {% endif %}
+
+                    <!-- Program Management -->
+                    <li class="nav-item">
+                        <a
+                            class="nav-link {% if current_url == 'program_list' or current_url == 'program_detail' or current_url == 'add_program_section' or current_url == 'update_program_section' or current_url == 'delete_program_section' or current_url == 'attach_program_course' or current_url == 'remove_program_course' or current_url == 'course_list' or current_url == 'add_course' or current_url == 'update_course' or current_url == 'delete_course' %}active{% endif %}"
+                            href="{% url 'programs:program_list' %}"
+                        >
+                            <span class="icon">
+                                <img src="{% static 'images/Program Management.svg' %}" alt="Program Management icon">
+                            </span>
+                            <span>Program Management</span>
+                        </a>
+                    </li>
 
                 </ul>
 
@@ -192,7 +192,7 @@
                             </span>
                         {% elif current_url == 'program_list' or current_url == 'program_detail' or current_url == 'add_program_section' or current_url == 'update_program_section' or current_url == 'delete_program_section' or current_url == 'attach_program_course' or current_url == 'remove_program_course' or current_url == 'course_list' or current_url == 'add_course' or current_url == 'update_course' or current_url == 'delete_course' %}
                             <span class="page-icon">
-                                <img src="{% static 'images/usermanagement.svg' %}" alt="Program Management icon">
+                                <img src="{% static 'images/Program Management.svg' %}" alt="Program Management icon">
                             </span>
                         {% elif current_url == 'requirements_list' or current_url == 'period_detail' or current_url == 'create_period' or current_url == 'edit_period' or current_url == 'toggle_period_status' or current_url == 'toggle_requirement_status' or current_url == 'faculty_submissions_list' or current_url == 'faculty_submission_bins_view' or current_url == 'review_submission' or current_url == 'mark_under_review' or current_url == 'mark_needs_revision' or current_url == 'mark_reviewed' or current_url == 'approve_selected_submissions' %}
                             <span class="page-icon">

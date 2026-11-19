@@ -3,6 +3,8 @@ from django.core.paginator import Paginator
 from django.db import transaction
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
+from django.http import JsonResponse
+from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.http import url_has_allowed_host_and_scheme
@@ -12,7 +14,7 @@ from accounts.decorators import role_required, staff_permission_required
 from submissions.helpers import get_requirement_rows
 from submissions.models import Requirement, SubmissionPeriod
 from submissions.services import publish_updates, save_requirements
-from submissions.forms import PeriodForm, RequirementFormSet
+from submissions.forms import PeriodForm, RequirementFormSet, RequirementRowForm
 from submissions.slots import sync_upload_slots
 
 TEMPLATE_DIR = 'admin_staff_portal/core/submissions/submission_bin/'
@@ -112,6 +114,34 @@ def period_editor(request, period_id=None):
     }
 
     return render(request, TEMPLATE_DIR + 'period_editor.html', context)
+
+
+@manage_bins_only
+@require_http_methods(['GET', 'POST'])
+def edit_requirement(request, requirement_id):
+    # Lock the period too, so simultaneous row edits cannot introduce duplicate titles.
+    with transaction.atomic():
+        requirement = get_object_or_404(Requirement, pk=requirement_id)
+        period = get_object_or_404(SubmissionPeriod.objects.select_for_update(), pk=requirement.period_id)
+        requirement.refresh_from_db()
+        initial = next(row for row in get_requirement_rows(period) if row['id'] == requirement.pk)
+        form = RequirementRowForm(request.POST if request.method == 'POST' else None, initial=initial)
+        form.empty_permitted = False
+        if request.method == 'POST' and form.is_valid():
+            title = form.cleaned_data['requirement_title']
+            if period.requirements.exclude(pk=requirement.pk).filter(requirement_title__iexact=title).exists():
+                form.add_error('requirement_title', 'A requirement with this title already exists in this period.')
+            else:
+                for name in Requirement.SETTING_FIELDS:
+                    setattr(requirement, name, form.cleaned_data[name])
+                requirement.save(update_fields=[*Requirement.SETTING_FIELDS, 'updated_at'])
+                sync_upload_slots(period)
+                transaction.on_commit(publish_updates)
+                return JsonResponse({'saved': True})
+        html = render_to_string(TEMPLATE_DIR + '_requirement_modal.html', {
+            'form': form, 'requirement': requirement,
+        }, request=request)
+        return JsonResponse({'html': html}, status=422 if request.method == 'POST' else 200)
 
 
 def _toggle_status(request, model, pk, message):
