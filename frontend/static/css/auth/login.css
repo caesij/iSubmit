@@ -313,11 +313,38 @@ button[type="submit"]:hover {
 }
 
 @media (max-width: 900px) {
+  .auth-page, .auth-page * { box-sizing: border-box; }
   .auth-page { flex-direction: column; }
   .auth-left, .auth-right { flex: none; width: 100%; }
   .auth-left { padding: 28px; }
   .auth-right { padding: 28px; }
-  .auth-right-inner { width: 100%; }
+  .auth-left-inner { min-height: 0; max-width: none; gap: 20px; }
+  .auth-header { margin: 0; }
+  .auth-copy { max-width: none; }
+  .tagline { font-size: 26px; line-height: 1.2; }
+  .lead { margin: 0; }
+  .auth-right-inner { width: 100%; max-width: 460px; min-width: 0; }
+  .role-button { flex: 1; width: auto; min-height: 44px; padding: 10px; }
+  .input-with-icon input { min-width: 0; font-size: 16px; }
+  .password-row input { padding-right: 54px; }
+  .password-toggle { width: 44px; height: 44px; right: 4px; }
+  .auth-button-link, button[type="submit"] { height: auto; min-height: 44px; padding: 12px 18px; }
+  .forgot-password { bottom: -32px; min-height: 28px; }
+  .auth-error, .auth-warning, .errorlist { overflow-wrap: anywhere; }
+}
+
+@media (max-width: 480px) {
+  .auth-left, .auth-right { padding: 24px 20px; }
+  .auth-left-inner { gap: 14px; }
+  .auth-logo { width: 44px; }
+  .tagline { font-size: 22px; margin-bottom: 10px; }
+  .lead { font-size: 13px; }
+  .auth-footer { font-size: 11px; }
+  .auth-subtitle { font-size: 14px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .role-button, .eye-icon, .auth-button-link, button[type="submit"] { transition: none; }
 }
 
 /* Authentication messages and password-reset validation. */

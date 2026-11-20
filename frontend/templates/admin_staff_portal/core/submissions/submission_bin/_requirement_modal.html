@@ -21,7 +21,7 @@
         {% if form.locked %}<p class="checklist-note">Text extraction, NLP and upload rules are locked because faculty have already uploaded files.</p>{% endif %}
         <div class="checklist-validation" data-validation-box hidden>
             {% include 'admin_staff_portal/core/submissions/submission_bin/_field.html' with field=form.validation_instructions %}
-            <p class="checklist-note">Use one field per line, for example: Course code: required</p>
+            {% include 'admin_staff_portal/core/submissions/submission_bin/_validation_format_note.html' %}
         </div>
         {% for error in form.non_field_errors %}<p class="field-error">{{ error }}</p>{% endfor %}
     </div>
