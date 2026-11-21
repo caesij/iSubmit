@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'axes',
     'anymail',
     'accounts',
+    'role_management.apps.RoleManagementConfig',
     'user_management',
     'programs',
     'submissions',

@@ -1,4 +1,4 @@
-from django.urls import include, path
+from django.urls import path
 from admin_staff_portal import views
 from core.global_search_views import global_search_results, global_search_suggestions
 
@@ -14,7 +14,6 @@ urlpatterns = [
     path('admin-dashboard/data/', views.admin_dashboard_data_view, name='admin_dashboard_data'),
     path('staff-dashboard/', views.staff_dashboard_view, name='staff_dashboard'),
     path('staff-dashboard/data/', views.staff_dashboard_data_view, name='staff_dashboard_data'),
-    
     
     # Document Repo URLs
     path('documents/document_repository/', views.document_repo_view, name='document_repo'),
@@ -44,15 +43,11 @@ urlpatterns = [
     path('faculty-submissions/<uuid:submission_id>/mark-needs-revision/', views.mark_needs_revision_view, name='mark_needs_revision'),
     path('faculty-submissions/<uuid:submission_id>/mark-reviewed/', views.mark_reviewed_view, name='mark_reviewed'),
     path('faculty-submissions/<uuid:faculty_id>/approve-selected/', views.approve_selected_submissions_view, name='approve_selected_submissions'),
-    
-    # User Management URLs
-    path('users/', include('user_management.urls')),
 
     # Settings URLs
     path('settings/preferences/', views.preferences_view, name='preferences'),
     path('settings/notification_settings/', views.notification_settings_view, name='notification_settings'),
     path('settings/account_and_security/', views.account_and_security_view, name='account_and_security'),
-    path('settings/staff_permissions/', views.staff_permissions_view, name='staff_permissions'),
     
     # Profile URL
     path('profile/', views.profile_view, name='profile'),

@@ -3,12 +3,12 @@ from django.views.decorators.http import require_http_methods
 from django.urls import reverse
 from django.http import JsonResponse
 
-from accounts.decorators import role_required
+from accounts.decorators import access_required
 from admin_staff_portal.services.admin_dashboard import get_admin_dashboard_data
 from admin_staff_portal.services.staff_dashboard import get_staff_dashboard_data
 from core.date_formatting import format_display_date
 
-@role_required('ADMIN')
+@access_required('access_admin_dashboard')
 @require_http_methods(['GET'])
 def admin_dashboard_data_view(request):
     data = get_admin_dashboard_data()
@@ -50,23 +50,19 @@ def admin_dashboard_data_view(request):
         'not_submitted_percentage': data['not_submitted_percentage'],
 
         'submission_trends': data['submission_trends'],
-        'documents_overview': documents_overview,
+        'documents_overview': documents_overview
     })
 
 
-@role_required('ADMIN')
+@access_required('access_admin_dashboard')
 @require_http_methods(['GET'])
 def admin_dashboard_view(request):
     context = get_admin_dashboard_data()
 
-    return render(
-        request,
-        'admin_staff_portal/core/admin_dashboard.html',
-        context
-    )
+    return render(request, 'admin_staff_portal/core/admin_dashboard.html', context)
     
 
-@role_required('STAFF')
+@access_required('access_staff_dashboard')
 @require_http_methods(['GET'])
 def staff_dashboard_data_view(request):
     data = get_staff_dashboard_data()
@@ -108,13 +104,9 @@ def staff_dashboard_data_view(request):
     })
 
 
-@role_required('STAFF')
+@access_required('access_staff_dashboard')
 @require_http_methods(['GET'])
 def staff_dashboard_view(request):
     context = get_staff_dashboard_data()
 
-    return render(
-        request,
-        'admin_staff_portal/core/staff_dashboard.html',
-        context
-    )
+    return render(request, 'admin_staff_portal/core/staff_dashboard.html', context)

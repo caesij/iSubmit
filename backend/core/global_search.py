@@ -38,8 +38,7 @@ _NAVIGATION = {
         ('Settings > Preferences', 'admin_staff_portal:preferences', ('preferences',)),
         ('Settings > Notification Settings', 'admin_staff_portal:notification_settings', ('notification settings',)),
         ('Settings > Accounts and Security', 'admin_staff_portal:account_and_security', ('accounts and security',)),
-        ('Settings > Staff Permissions', 'admin_staff_portal:staff_permissions', ('staff permissions',)),
-        
+
         ('Profile', 'admin_staff_portal:profile', ('profile',))
     ),
     

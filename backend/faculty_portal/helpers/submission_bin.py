@@ -7,7 +7,7 @@ from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.core.files import File
 from django.db import transaction
-from django.db.models import Max, Q
+from django.db.models import Count, Max, Q
 from django.shortcuts import redirect
 from django.utils import timezone
 from django.urls import reverse
@@ -19,7 +19,7 @@ from admin_staff_portal.realtime import (
 )
 
 from faculty_portal.realtime import refresh_faculty_dashboard, refresh_faculty_submission_bin
-from notifications.services import notify_roles
+from notifications.services import notify_role_subscribers
 from notifications.models import NotificationPreference
 from submissions.forms import DraftUploadForm
 
@@ -577,44 +577,91 @@ def create_submissions(user, rows):
     return submissions
 
 
-def notify_if_faculty_completed_submissions(faculty_member):
-    owed = UploadSlot.objects.active().required().filter(faculty=faculty_member)
- 
-    total_count = owed.count()
- 
-    if total_count == 0:
-        return
- 
-    completed_count = (
-        owed.filter(submission__isnull=False)
-        .exclude(submission__status=DocumentSubmission.SubmissionStatus.NEEDS_REVISION)
-        .count()
+def _has_completed_required_submissions(faculty_member):
+    counts = (
+        UploadSlot.objects.active()
+        .required()
+        .filter(faculty=faculty_member)
+        .aggregate(
+            total=Count('pk'),
+            incomplete=Count(
+                'pk',
+                filter=(
+                    Q(submission__isnull=True)
+                    | Q(submission__status=DocumentSubmission.SubmissionStatus.NEEDS_REVISION)
+                ),
+            ),
+        )
     )
- 
-    if completed_count != total_count:
-        return
- 
-    notify_roles(
-        roles=[User.Role.ADMIN, User.Role.STAFF],
-        notification_type=(NotificationPreference.NotificationType.SUBMISSION_NOTIFICATIONS),
-        title='Completed Document Submission',
-        message=(f'{faculty_member.get_full_name()} has submitted all required documents.'),
-        link=reverse('admin_staff_portal:faculty_submissions_list')
+
+    return counts['total'] > 0 and counts['incomplete'] == 0
+
+
+def notify_if_faculty_completed_submissions(faculty_member, was_complete_before=False):
+    if was_complete_before or not _has_completed_required_submissions(faculty_member):
+        return 0
+
+    faculty_name = faculty_member.get_full_name() or faculty_member.email
+
+    return notify_role_subscribers(
+        notification_type=NotificationPreference.NotificationType.ALL_REQUIREMENTS_COMPLETED,
+        title='Faculty Completed All Required Documents',
+        message=f'{faculty_name} has submitted all required documents.',
+        link=reverse('admin_staff_portal:faculty_submissions_list'),
     )
 
 
-def _send_submission_updates(user):
+def _send_submission_updates(
+    faculty_member,
+    new_submission_count,
+    resubmission_count,
+    was_complete_before,
+):
     try:
         refresh_admin_dashboard()
         refresh_staff_dashboard()
         refresh_submission_pages()
-        refresh_faculty_dashboard(user)
-        refresh_faculty_submission_bin(user)
+        refresh_faculty_dashboard(faculty_member)
+        refresh_faculty_submission_bin(faculty_member)
     except Exception:
         logger.exception('Submission realtime update failed.')
- 
+
+    faculty_name = faculty_member.get_full_name() or faculty_member.email
+    faculty_link = reverse('admin_staff_portal:faculty_submissions_list')
+
+    if new_submission_count:
+        try:
+            notify_role_subscribers(
+                notification_type=NotificationPreference.NotificationType.NEW_DOCUMENT_SUBMITTED,
+                title='New Document Submission',
+                message=(
+                    f'{faculty_name} submitted {new_submission_count} '
+                    f'new document(s).'
+                ),
+                link=faculty_link,
+            )
+        except Exception:
+            logger.exception('Could not send new document submission notifications.')
+
+    if resubmission_count:
+        try:
+            notify_role_subscribers(
+                notification_type=NotificationPreference.NotificationType.DOCUMENT_RESUBMITTED,
+                title='Document Resubmitted',
+                message=(
+                    f'{faculty_name} resubmitted {resubmission_count} '
+                    f'document(s).'
+                ),
+                link=faculty_link,
+            )
+        except Exception:
+            logger.exception('Could not send document resubmission notifications.')
+
     try:
-        notify_if_faculty_completed_submissions(user)
+        notify_if_faculty_completed_submissions(
+            faculty_member,
+            was_complete_before=was_complete_before,
+        )
     except Exception:
         logger.exception('Could not send faculty completion notification.')
 
@@ -648,6 +695,10 @@ def process_submission(request):
         messages.error(request, block_reason)
         return redirect(UPLOAD_PAGE)
  
+    was_complete_before = _has_completed_required_submissions(user)
+    new_submission_count = sum(not row['is_resubmission'] for row in rows)
+    resubmission_count = len(rows) - new_submission_count
+
     try:
         submissions = create_submissions(user, rows)
     except Exception:
@@ -660,7 +711,14 @@ def process_submission(request):
         return redirect(UPLOAD_PAGE)
  
     request.session['recently_submitted_ids'] = [str(s.id) for s in submissions]
-    transaction.on_commit(lambda: _send_submission_updates(user))
+    transaction.on_commit(
+        lambda: _send_submission_updates(
+            user,
+            new_submission_count,
+            resubmission_count,
+            was_complete_before,
+        )
+    )
  
     messages.success(request, 'Selected documents submitted successfully.')
     return redirect('faculty_portal:submission_complete')

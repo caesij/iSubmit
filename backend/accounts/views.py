@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect
-from django.contrib.auth import login, logout
+from django.contrib.auth import get_user_model, login, logout
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -7,6 +7,7 @@ from django.http import Http404
 
 from accounts.forms import CustomLoginForm
 from accounts.utils import validate_portal_access
+from role_management.models import Role
 
 from accounts.security import (
     DEVICE_COOKIE_NAME,
@@ -23,15 +24,77 @@ from accounts.security import (
 
 from accounts.models import SecurityLoginRecord
 
+User = get_user_model()
+
 
 def redirect_user_by_role(user):
-    if user.is_faculty:
-        return redirect('faculty_portal:dashboard')
-    elif user.is_admin:
-        return redirect('admin_staff_portal:admin_dashboard')
-    elif user.is_staff_role:
-        return redirect('admin_staff_portal:staff_dashboard')
-    return redirect('accounts:login')
+    preferred_dashboards = {
+        Role.Code.ADMIN: (
+            ('accounts.access_admin_dashboard', 'admin_staff_portal:admin_dashboard'),
+            ('accounts.access_staff_dashboard', 'admin_staff_portal:staff_dashboard'),
+            ('accounts.access_faculty_dashboard', 'faculty_portal:dashboard'),
+        ),
+        
+        Role.Code.STAFF: (
+            ('accounts.access_staff_dashboard', 'admin_staff_portal:staff_dashboard'),
+            ('accounts.access_admin_dashboard', 'admin_staff_portal:admin_dashboard'),
+            ('accounts.access_faculty_dashboard', 'faculty_portal:dashboard'),
+        ),
+        
+        Role.Code.FACULTY: (
+            ('accounts.access_faculty_dashboard', 'faculty_portal:dashboard'),
+            ('accounts.access_admin_dashboard', 'admin_staff_portal:admin_dashboard'),
+            ('accounts.access_staff_dashboard', 'admin_staff_portal:staff_dashboard'),
+        )
+    }
+
+    for permission, url_name in preferred_dashboards.get(user.role, ()):
+        if user.has_perm(permission):
+            return redirect(url_name)
+
+    shared_pages = (
+        ('accounts.access_user_management', 'user_management:user_list'),
+        ('accounts.access_program_management', 'programs:program_list'),
+        ('accounts.access_submission_requirements', 'admin_staff_portal:requirements_list'),
+        ('accounts.access_faculty_submissions', 'admin_staff_portal:faculty_submissions_list'),
+        ('accounts.access_document_repository', 'admin_staff_portal:document_repo'),
+        ('accounts.access_document_archive', 'admin_staff_portal:document_archive'),
+        ('accounts.access_faculty_submission_bin', 'faculty_portal:upload_files'),
+        ('accounts.access_my_submissions', 'faculty_portal:my_submissions'),
+        ('accounts.access_my_documents', 'faculty_portal:my_documents'),
+    )
+
+    personal_pages = {
+        Role.Code.ADMIN: (
+            ('accounts.access_preferences', 'admin_staff_portal:preferences'),
+            ('accounts.access_notification_settings', 'admin_staff_portal:notification_settings'),
+            ('accounts.access_account_security', 'admin_staff_portal:account_and_security'),
+            ('accounts.access_profile', 'admin_staff_portal:profile'),
+        ),
+        
+        Role.Code.STAFF: (
+            ('accounts.access_preferences', 'admin_staff_portal:preferences'),
+            ('accounts.access_notification_settings', 'admin_staff_portal:notification_settings'),
+            ('accounts.access_account_security', 'admin_staff_portal:account_and_security'),
+            ('accounts.access_profile', 'admin_staff_portal:profile'),
+        ),
+        
+        Role.Code.FACULTY: (
+            ('accounts.access_preferences', 'faculty_portal:preferences'),
+            ('accounts.access_notification_settings', 'faculty_portal:notification_settings'),
+            ('accounts.access_account_security', 'faculty_portal:account_and_security'),
+            ('accounts.access_profile', 'faculty_portal:profile'),
+        ),
+    }
+
+    fallback_pages = shared_pages + personal_pages.get(user.role, ())
+
+    for permission, url_name in fallback_pages:
+        if user.has_perm(permission):
+            return redirect(url_name)
+
+    from django.core.exceptions import PermissionDenied
+    raise PermissionDenied('No page access has been configured for this account.')
 
 
 def login_view(request):

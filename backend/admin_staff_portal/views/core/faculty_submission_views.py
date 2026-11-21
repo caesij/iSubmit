@@ -10,13 +10,14 @@ from django.contrib import messages
 from django.db import transaction
 from django.urls import reverse
 
-from accounts.decorators import role_required, staff_permission_required
+from accounts.decorators import access_required
 from admin_staff_portal.realtime import refresh_admin_dashboard
 from admin_staff_portal.realtime import refresh_staff_dashboard
 from admin_staff_portal.realtime import refresh_submission_pages
-from notifications.services import build_approval_email, create_notif
+from notifications.services import build_approval_email, notify_user
 from notifications.models import NotificationPreference
 from submissions.models import DocumentSubmission, DocumentRevision, active_q
+from role_management.models import Role
 
 from submissions.helpers import (
     COMPLIANCE_CHOICES,
@@ -25,7 +26,6 @@ from submissions.helpers import (
 )
 
 from submissions.forms import DocumentReviewForm
-from accounts.models import StaffPermission
 
 from faculty_portal.realtime import (
     refresh_faculty_dashboard,
@@ -39,7 +39,8 @@ TITLE_RELATED = ('requirement__period', 'slot__course', 'slot__program')
 
 User = get_user_model()
 
-@role_required('ADMIN', 'STAFF')
+
+@access_required('access_faculty_submissions')
 @require_http_methods(['GET'])
 def faculty_submissions_list(request):
     query = request.GET.get('q')
@@ -91,13 +92,14 @@ def faculty_submissions_list(request):
     return render(request, f'{TEMPLATE_DIR}/faculty_list.html', context)
 
 
-@role_required('ADMIN', 'STAFF')
+@access_required('access_faculty_submissions')
 @require_http_methods(['GET'])
 def faculty_submission_bins_view(request, faculty_id):
     faculty_member = get_object_or_404(
         User, 
         pk=faculty_id, 
-        role=User.Role.FACULTY
+        role__code=Role.Code.FACULTY,
+        role__is_default=True
     )
 
     all_submissions = DocumentSubmission.objects.filter(active_q('requirement__'), faculty=faculty_member)
@@ -125,7 +127,11 @@ def faculty_submission_bins_view(request, faculty_id):
     
     not_ready_count = counts['not_ready']
     pending_approval_count = counts['pending_approval']
-    can_approve_all = not_ready_count == 0 and pending_approval_count > 0
+    can_approve_all = (
+        request.user.has_perm('accounts.approve_submissions')
+        and not_ready_count == 0
+        and pending_approval_count > 0
+    )
 
     context = {
         'faculty_member': faculty_member,
@@ -141,8 +147,7 @@ def faculty_submission_bins_view(request, faculty_id):
     return render(request, f'{TEMPLATE_DIR}/faculty_submission_bins.html', context)
     
     
-@role_required('ADMIN', 'STAFF')
-@staff_permission_required('review_faculty_submissions')
+@access_required('access_faculty_submissions')
 @require_http_methods(['GET'])
 def review_submission(request, submission_id):
     submission = get_object_or_404(
@@ -152,17 +157,14 @@ def review_submission(request, submission_id):
     
     context = {
         'submission': submission,
-        'can_return_for_revisions': (
-            request.user.is_admin
-            or StaffPermission.get_solo().is_effectively_enabled('return_for_revisions')
-        )
+        'can_review_submissions': request.user.has_perm('accounts.review_faculty_submissions'),
+        'can_return_for_revisions': request.user.has_perm('accounts.return_for_revisions'),
     }
     
     return render(request, f'{TEMPLATE_DIR}/review_submission.html', context)
     
     
-@role_required('ADMIN', 'STAFF')
-@staff_permission_required('review_faculty_submissions')
+@access_required('access_faculty_submissions', 'review_faculty_submissions')
 @require_http_methods(['POST'])
 def mark_under_review_view(request, submission_id):
     with transaction.atomic():
@@ -186,16 +188,15 @@ def mark_under_review_view(request, submission_id):
                 refresh_submission_pages({'submission_id': str(submission.id)}),
                 refresh_faculty_dashboard(submission.faculty),
                 refresh_faculty_my_submissions(submission.faculty),
-                create_notif(
+                notify_user(
                     user=submission.faculty,
-                    notification_type=NotificationPreference.NotificationType.SUBMISSION_NOTIFICATIONS,
+                    notification_type=NotificationPreference.NotificationType.SUBMISSION_UNDER_REVIEW,
                     title='Document Submission Under Review',
                     message=(
                         f'Your submission for {submission.requirement.requirement_title} '
                         f'is now under review.'
                     ),
                     link=reverse('faculty_portal:view_my_submitted_document', args=[submission.id]),
-                    send_email_notification=False
                 )
             )
         )
@@ -203,8 +204,7 @@ def mark_under_review_view(request, submission_id):
     return redirect('admin_staff_portal:review_submission', submission_id=submission.id)
 
 
-@role_required('ADMIN', 'STAFF')
-@staff_permission_required('review_faculty_submissions')
+@access_required('access_faculty_submissions', 'review_faculty_submissions')
 @require_http_methods(['POST'])
 def mark_reviewed_view(request, submission_id):
     with transaction.atomic():
@@ -227,16 +227,15 @@ def mark_reviewed_view(request, submission_id):
                 refresh_submission_pages({'submission_id': str(submission.id)}),
                 refresh_faculty_dashboard(submission.faculty),
                 refresh_faculty_my_submissions(submission.faculty),
-                create_notif(
+                notify_user(
                     user=submission.faculty,
-                    notification_type=NotificationPreference.NotificationType.SUBMISSION_NOTIFICATIONS,
+                    notification_type=NotificationPreference.NotificationType.SUBMISSION_REVIEWED,
                     title='Document Submission Reviewed',
                     message=(
                         f'Your submission for {submission.requirement.requirement_title} '
                         f'has been reviewed and is now pending approval.'
                     ),
                     link=reverse('faculty_portal:view_my_submitted_document', args=[submission.id]),
-                    send_email_notification=False
                 )
             )
         )
@@ -244,8 +243,7 @@ def mark_reviewed_view(request, submission_id):
     return redirect('admin_staff_portal:review_submission', submission_id=submission.id)
 
 
-@role_required('ADMIN', 'STAFF')
-@staff_permission_required('return_for_revisions')
+@access_required('access_faculty_submissions', 'review_faculty_submissions', 'return_for_revisions')
 @require_http_methods(['POST'])
 def mark_needs_revision_view(request, submission_id):
     with transaction.atomic():
@@ -292,9 +290,9 @@ def mark_needs_revision_view(request, submission_id):
                 refresh_faculty_dashboard(submission.faculty),
                 refresh_faculty_submission_bin(submission.faculty),
                 refresh_faculty_my_submissions(submission.faculty),
-                create_notif(
+                notify_user(
                     user=submission.faculty,
-                    notification_type=NotificationPreference.NotificationType.SUBMISSION_NOTIFICATIONS,
+                    notification_type=NotificationPreference.NotificationType.SUBMISSION_NEEDS_REVISION,
                     title='Document Submission Needs Revision',
                     message=(
                         f'Your submission for {submission.requirement.requirement_title} '
@@ -310,13 +308,14 @@ def mark_needs_revision_view(request, submission_id):
     return redirect('admin_staff_portal:review_submission', submission_id=submission.id)
 
 
-@role_required('ADMIN')
+@access_required('access_faculty_submissions', 'approve_submissions')
 @require_http_methods(['POST'])
 def approve_selected_submissions_view(request, faculty_id):
     faculty_member = get_object_or_404(
         User,
         pk=faculty_id,
-        role=User.Role.FACULTY
+        role__code=Role.Code.FACULTY,
+        role__is_default=True
     )
 
     selected_ids = set()
@@ -401,10 +400,10 @@ def approve_selected_submissions_view(request, faculty_id):
                     approved_at=approval_time,
                 )
 
-                create_notif(
+                notify_user(
                     user=faculty_member,
                     notification_type=(
-                        NotificationPreference.NotificationType.SUBMISSION_NOTIFICATIONS
+                        NotificationPreference.NotificationType.SUBMISSION_APPROVED
                     ),
                     title='Selected Document Submissions Approved',
                     message=(

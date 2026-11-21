@@ -11,10 +11,12 @@
            class="tab-link active">
             {{ page_title }}
         </a>
-        <a href="{% url 'user_management:user_create' %}?role={{ current_role }}"
-           class="tab-link">
-            Add {{ page_title|cut:' Management' }}
-        </a>
+        {% if perms.accounts.add_users %}
+            <a href="{% url 'user_management:user_create' %}?role={{ current_role }}"
+               class="tab-link">
+                Add {{ page_title|cut:' Management' }}
+            </a>
+        {% endif %}
     </div>
 </div>
 
@@ -110,10 +112,12 @@
 
     </form>
 
-    <a href="{% url 'user_management:user_create' %}"
-       class="action-button">
-        Add User
-    </a>
+    {% if perms.accounts.add_users %}
+        <a href="{% url 'user_management:user_create' %}"
+           class="action-button">
+            Add User
+        </a>
+    {% endif %}
 
 </div>
 
@@ -156,7 +160,7 @@
                     <td>
                         {% if managed_user.role == 'FACULTY' %}
 
-                            {% for program in managed_user.assigned_programs.all %}
+                            {% for program in managed_user.faculty_profile.assigned_programs.all %}
                                 {{ program.short_name }}{% if not forloop.last %}, {% endif %}
                             {% empty %}
                                 -
@@ -215,7 +219,7 @@
                     <td>
 
                         {% if managed_user.role in manageable_roles %}
-
+                            {% if perms.accounts.edit_users or perms.accounts.toggle_user_status or perms.accounts.unlock_user_accounts %}
                             <div class="table-actions">
 
                                 <button
@@ -228,25 +232,22 @@
 
                                 <div class="action-menu" style="display: none;">
 
-                                    <a href="{% url 'user_management:user_edit' managed_user.pk %}"
-                                       class="action-menu-item">
-                                        Edit
-                                    </a>
+                                    {% if perms.accounts.edit_users %}
+                                        <a href="{% url 'user_management:user_edit' managed_user.pk %}"
+                                           class="action-menu-item">Edit</a>
+                                    {% endif %}
 
-                                    <form method="POST"
-                                          action="{% url 'user_management:user_toggle_acc_status' managed_user.pk %}">
-                                        {% csrf_token %}
+                                    {% if perms.accounts.toggle_user_status %}
+                                        <form method="POST"
+                                              action="{% url 'user_management:user_toggle_acc_status' managed_user.pk %}">
+                                            {% csrf_token %}
+                                            <button type="submit" class="action-menu-item">
+                                                {% if managed_user.is_active %}Deactivate{% else %}Activate{% endif %}
+                                            </button>
+                                        </form>
+                                    {% endif %}
 
-                                        <button type="submit" class="action-menu-item">
-                                            {% if managed_user.is_active %}
-                                                Deactivate
-                                            {% else %}
-                                                Activate
-                                            {% endif %}
-                                        </button>
-                                    </form>
-
-                                    {% if managed_user.is_locked_out and request.user.is_admin %}
+                                    {% if managed_user.is_locked_out and perms.accounts.unlock_user_accounts %}
 
                                         <form method="POST"
                                               action="{% url 'user_management:user_unlock' managed_user.pk %}">
@@ -263,11 +264,11 @@
                                 </div>
 
                             </div>
-
+                            {% else %}
+                                <span class="text-muted">-</span>
+                            {% endif %}
                         {% else %}
-
                             <span class="text-muted">-</span>
-
                         {% endif %}
 
                     </td>

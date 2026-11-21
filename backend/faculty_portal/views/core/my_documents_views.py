@@ -4,13 +4,14 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_http_methods
 
 from faculty_portal.helpers.my_documents import _render_repository
-from accounts.decorators import role_required
+from accounts.decorators import access_required
 from submissions.models import DocumentMetadata, DocumentSubmission
 from submissions.querysets import active_document_queryset
 
 TEMPLATE_DIR = 'faculty_portal/core/my_documents'
 
-@role_required('FACULTY')
+
+@access_required('access_my_documents')
 @require_http_methods(['GET'])
 def all_documents_view(request):
     submissions = active_document_queryset().filter(
@@ -26,7 +27,7 @@ def all_documents_view(request):
     )
 
 
-@role_required('FACULTY')
+@access_required('access_my_documents')
 @require_http_methods(['GET'])
 def pinned_documents_view(request):
     submissions = active_document_queryset().filter(
@@ -43,7 +44,7 @@ def pinned_documents_view(request):
     )
 
 
-@role_required('FACULTY')
+@access_required('access_my_documents', 'toggle_document_pin')
 @require_http_methods(['POST'])
 def toggle_pin_view(request, document_id):
     document = get_object_or_404(
@@ -59,7 +60,7 @@ def toggle_pin_view(request, document_id):
     return redirect(request.META.get('HTTP_REFERER', 'faculty_portal:all_documents'))
 
 
-@role_required('FACULTY')
+@access_required('access_my_documents')
 @require_http_methods(['GET'])
 def document_file_view(request, document_id, source='all'):
     document = get_object_or_404(
@@ -83,8 +84,4 @@ def document_file_view(request, document_id, source='all'):
         'breadcrumb_label': breadcrumb_label
     }
 
-    return render(
-        request,
-        f'{TEMPLATE_DIR}/document_file_view.html',
-        context
-    )
+    return render(request, f'{TEMPLATE_DIR}/document_file_view.html', context)

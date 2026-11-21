@@ -39,7 +39,7 @@
             </div>
             <strong>{{ request.user.get_full_name }}</strong>
             <span>{{ request.user.get_role_display }}</span>
-            <small>{% if request.user.faculty_type %}{{ request.user.get_faculty_type_display }}{% endif %}</small>
+            <small>{% if request.user.faculty_profile.faculty_type %}{{ request.user.get_faculty_type_display }}{% endif %}</small>
         </div>
 
         <div class="profile-details">
@@ -65,7 +65,7 @@
             </div>
             <div class="profile-detail">
                 <span><img src="{% static 'images/Faculty Type Profile.svg' %}" alt="">Faculty Type</span>
-                <strong>{% if request.user.faculty_type %}{{ request.user.get_faculty_type_display }}{% else %}Not applicable{% endif %}</strong>
+                <strong>{% if request.user.faculty_profile.faculty_type %}{{ request.user.get_faculty_type_display }}{% else %}Not applicable{% endif %}</strong>
             </div>
         </div>
     </div>

@@ -3,33 +3,28 @@ from django.core.exceptions import ValidationError
 from django.forms import BaseInlineFormSet, inlineformset_factory
 from django.contrib.auth import get_user_model
 
+from accounts.models import FacultyProfile
 from programs.models import Program, ProgramSection
 from submissions.models import ClassAssignment, Course, SubmissionPeriod
+from role_management.models import Role as PermissionRole
 
 
 User = get_user_model()
 
 
 class UserManagementForm(forms.ModelForm):
-    role = forms.ChoiceField(
-        choices=User.Role.choices
+    role = forms.ModelChoiceField(
+        queryset=PermissionRole.objects.none(),
+        label='Role',
+        empty_label='Select a role',
     )
 
-    faculty_type = forms.ChoiceField(
-        choices=User.FacultyType.choices,
-        required=False
-    )
+    faculty_type = forms.ChoiceField(choices=FacultyProfile.FacultyType.choices, required=False)
 
-    assigned_programs = forms.ModelMultipleChoiceField(
-        queryset=Program.objects.none(),
-        required=False
-    )
+    assigned_programs = forms.ModelMultipleChoiceField(queryset=Program.objects.none(), required=False)
 
     is_active = forms.TypedChoiceField(
-        choices=[
-            ('True', 'Active'),
-            ('False', 'Inactive'),
-        ],
+        choices=[('True', 'Active'), ('False', 'Inactive')],
         coerce=lambda value: value == 'True',
         required=True
     )
@@ -45,30 +40,28 @@ class UserManagementForm(forms.ModelForm):
             'role',
             'faculty_type',
             'assigned_programs',
-            'is_active',
+            'is_active'
         ]
 
     def __init__(self, *args, **kwargs):
         self.request_user = kwargs.pop('request_user', None)
-
         super().__init__(*args, **kwargs)
 
-        self.fields['assigned_programs'].queryset = (
-            Program.objects.order_by('program_name')
+        self.fields['role'].queryset = (
+            PermissionRole.objects
+            .select_related('group')
+            .order_by('group__name')
         )
 
-        if self.request_user and self.request_user.is_admin:
-            self.fields['role'].choices = [
-                choice for choice in User.Role.choices
-                if choice[0] in [User.Role.STAFF, User.Role.FACULTY]
-            ]
-        else:
-            self.fields['role'].choices = [
-                (User.Role.FACULTY, User.Role.FACULTY.label)
-            ]
+        self.fields['assigned_programs'].queryset = (Program.objects.order_by('program_name'))
 
-        if not self.instance.pk:
-            self.fields['role'].initial = User.Role.FACULTY
+        if self.instance.pk:
+            profile = getattr(self.instance, 'faculty_profile', None)
+
+            if profile:
+                self.fields['faculty_type'].initial = profile.faculty_type
+                self.fields['assigned_programs'].initial = (profile.assigned_programs.all())
+        else:
             self.fields['is_active'].initial = 'True'
 
     def clean_first_name(self):
@@ -83,9 +76,11 @@ class UserManagementForm(forms.ModelForm):
     def clean_employee_ID(self):
         employee_id = self.cleaned_data['employee_ID'].strip()
 
-        existing = User.objects.filter(
-            employee_ID__iexact=employee_id
-        ).exclude(pk=self.instance.pk)
+        existing = (
+            User.objects
+            .filter(employee_ID__iexact=employee_id)
+            .exclude(pk=self.instance.pk)
+        )
 
         if existing.exists():
             raise ValidationError('This employee ID is already registered.')
@@ -95,9 +90,11 @@ class UserManagementForm(forms.ModelForm):
     def clean_email(self):
         email = self.cleaned_data['email'].strip()
 
-        existing = User.objects.filter(
-            email__iexact=email
-        ).exclude(pk=self.instance.pk)
+        existing = (
+            User.objects
+            .filter(email__iexact=email)
+            .exclude(pk=self.instance.pk)
+        )
 
         if existing.exists():
             raise ValidationError('This email address is already registered.')
@@ -108,13 +105,17 @@ class UserManagementForm(forms.ModelForm):
         cleaned_data = super().clean()
 
         role = cleaned_data.get('role')
+        faculty_type = cleaned_data.get('faculty_type')
 
-        if role == User.Role.FACULTY:
-            if not cleaned_data.get('faculty_type'):
-                self.add_error(
-                    'faculty_type',
-                    'Select a faculty type.'
-                )
+        is_faculty_role = bool(
+            role
+            and role.is_default
+            and role.code == PermissionRole.Code.FACULTY
+        )
+
+        if is_faculty_role:
+            if not faculty_type:
+                self.add_error('faculty_type', 'Select a faculty type.')
         else:
             cleaned_data['faculty_type'] = ''
             cleaned_data['assigned_programs'] = Program.objects.none()
@@ -123,10 +124,7 @@ class UserManagementForm(forms.ModelForm):
 
 
 class ClassAssignmentForm(forms.ModelForm):
-    academic_year = forms.ChoiceField(
-        choices=[],
-        required=True
-    )
+    academic_year = forms.ChoiceField(choices=[], required=True)
 
     program_section = forms.ModelChoiceField(
         queryset=ProgramSection.objects.none(),
@@ -134,15 +132,9 @@ class ClassAssignmentForm(forms.ModelForm):
         label='Section'
     )
 
-    year_level = forms.IntegerField(
-        required=False,
-        widget=forms.HiddenInput()
-    )
+    year_level = forms.IntegerField(required=False, widget=forms.HiddenInput())
 
-    section = forms.CharField(
-        required=False,
-        widget=forms.HiddenInput()
-    )
+    section = forms.CharField(required=False, widget=forms.HiddenInput())
 
     class Meta:
         model = ClassAssignment
@@ -152,54 +144,35 @@ class ClassAssignmentForm(forms.ModelForm):
             'semester',
             'course',
             'year_level',
-            'section',
+            'section'
         ]
 
     def __init__(self, *args, **kwargs):
-        allowed_programs = kwargs.pop(
-            'allowed_programs',
-            Program.objects.none()
-        )
+        allowed_programs = kwargs.pop('allowed_programs', Program.objects.none())
 
         super().__init__(*args, **kwargs)
 
-        self.fields['program'].queryset = allowed_programs.order_by(
-            'program_name'
-        )
+        self.fields['program'].queryset = allowed_programs.order_by('program_name')
 
         self.fields['course'].queryset = Course.objects.none()
         self.fields['program_section'].queryset = ProgramSection.objects.none()
 
-        self.fields['academic_year'].choices = [
-            ('', 'Select an academic year')
-        ]
+        self.fields['academic_year'].choices = [('', 'Select an academic year')]
 
-        self.fields['semester'].choices = [
-            ('', 'Select a semester')
-        ] + list(SubmissionPeriod.Semester.choices)
+        self.fields['semester'].choices = [('', 'Select a semester')] + list(SubmissionPeriod.Semester.choices)
 
-        # Get the selected program from the submitted form or existing record.
         if self.is_bound:
             program_id = self.data.get(self.add_prefix('program'))
         else:
-            program_id = self.initial.get(
-                'program',
-                self.instance.program_id
-            )
+            program_id = self.initial.get('program', self.instance.program_id)
 
         program = allowed_programs.filter(pk=program_id).first()
 
         if not program:
             return
 
-        # Only show academic years where this program has sections.
         academic_years = sorted(
-            set(
-                program.sections.values_list(
-                    'academic_year',
-                    flat=True
-                )
-            ),
+            set(program.sections.values_list('academic_year', flat=True)),
             reverse=True
         )
 
@@ -210,18 +183,12 @@ class ClassAssignmentForm(forms.ModelForm):
             for year in academic_years
         ]
 
-        # Courses are currently linked to a program, not an academic year.
         self.fields['course'].queryset = program.courses.order_by('code')
 
         if self.is_bound:
-            academic_year = self.data.get(
-                self.add_prefix('academic_year')
-            )
+            academic_year = self.data.get(self.add_prefix('academic_year'))
         else:
-            academic_year = self.initial.get(
-                'academic_year',
-                self.instance.academic_year
-            )
+            academic_year = self.initial.get('academic_year', self.instance.academic_year)
 
         sections = program.sections.filter(
             academic_year=academic_year
@@ -229,7 +196,6 @@ class ClassAssignmentForm(forms.ModelForm):
 
         self.fields['program_section'].queryset = sections
 
-        # Restore the selected section when editing an existing assignment.
         if not self.is_bound and self.instance.pk:
             try:
                 section_number = int(self.instance.section)
@@ -263,7 +229,6 @@ class ClassAssignmentForm(forms.ModelForm):
                     'The selected section does not match the program and academic year.'
                 )
             else:
-                # Map ProgramSection values to the existing ClassAssignment fields.
                 cleaned_data['year_level'] = selected_section.year_level
                 cleaned_data['section'] = str(selected_section.section)
 
@@ -327,5 +292,5 @@ ClassAssignmentFormSet = inlineformset_factory(
     formset=BaseClassAssignmentFormSet,
     fk_name='faculty',
     extra=1,
-    can_delete=True,
+    can_delete=True
 )
