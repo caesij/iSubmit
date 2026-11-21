@@ -4,6 +4,7 @@ from datetime import timedelta
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 
+from role_management.models import Role
 from submissions.models import DocumentSubmission
 from submissions.querysets import active_document_queryset
 
@@ -11,7 +12,11 @@ User = get_user_model()
 
 
 def get_staff_dashboard_data():
-    faculty_count = User.objects.filter(role=User.Role.FACULTY, is_active=True).count()
+    faculty_count = User.objects.filter(
+        role__code=Role.Code.FACULTY,
+        role__is_default=True,
+        is_active=True,
+    ).count()
 
     submissions = active_document_queryset().select_related('faculty', 'requirement')
     
@@ -46,7 +51,8 @@ def get_staff_dashboard_data():
     documents_overview = (
         submissions
         .filter(
-            faculty__role=User.Role.FACULTY,
+            faculty__role__code=Role.Code.FACULTY,
+            faculty__role__is_default=True,
             faculty__is_active=True,
             status__in=[
                 DocumentSubmission.SubmissionStatus.PENDING_APPROVAL,

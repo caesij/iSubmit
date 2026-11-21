@@ -6,22 +6,19 @@ from django.db import transaction
 from django.db.models import Count
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
-from django.urls import reverse
 from django.views.decorators.http import require_http_methods
 
 
-from accounts.decorators import role_required
+from accounts.decorators import access_required
 from programs.models import Program, ProgramSection, ProgramCourse
 from submissions.models import ClassAssignment, Course
-from programs.forms import current_academic_year
-
 from programs.forms import (
     ProgramForm,
     ProgramSectionForm,
     ProgramCourseForm,
     CourseForm,
     current_academic_year,
-    academic_year_choices,
+    academic_year_choices
 )
 
 TEMPLATE_DIR = 'admin_staff_portal/core/program_mgmt'
@@ -29,7 +26,7 @@ PROGRAMS_PER_PAGE = 7
 COURSES_PER_PAGE = 15
 
 # Program Management
-@role_required('ADMIN', 'STAFF')
+@access_required('access_program_management')
 @require_http_methods(['GET'])
 def program_list(request):
 
@@ -48,7 +45,7 @@ def program_list(request):
     return render(request, f'{TEMPLATE_DIR}/program_list.html', context)
 
 
-@role_required('ADMIN', 'STAFF')
+@access_required('access_program_management', 'manage_programs')
 @require_http_methods(['POST'])
 def add_program(request):
 
@@ -60,10 +57,10 @@ def add_program(request):
     else:
         messages.error(request, form.errors.as_text())
 
-    return redirect('admin_staff_portal:program_list')
+    return redirect('programs:program_list')
 
 
-@role_required('ADMIN', 'STAFF')
+@access_required('access_program_management', 'manage_programs')
 @require_http_methods(['POST'])
 def update_program(request, program_id):
 
@@ -79,7 +76,7 @@ def update_program(request, program_id):
     return redirect('programs:program_list')
 
 
-@role_required('ADMIN', 'STAFF')
+@access_required('access_program_management', 'manage_programs')
 @require_http_methods(['POST'])
 def delete_program(request, program_id):
 
@@ -99,7 +96,7 @@ def delete_program(request, program_id):
 
 
 # Program Details
-@role_required('ADMIN', 'STAFF')
+@access_required('access_program_management')
 @require_http_methods(['GET'])
 def program_detail(request, program_id):
     program = get_object_or_404(Program.objects.prefetch_related('sections', 'program_courses__course'), pk=program_id)
@@ -137,7 +134,7 @@ def program_detail(request, program_id):
 
 
 # Program Section Management
-@role_required('ADMIN', 'STAFF')
+@access_required('access_program_management', 'manage_programs')
 @require_http_methods(['POST'])
 def add_program_section(request, program_id):
     program = get_object_or_404(Program, pk=program_id)
@@ -160,7 +157,7 @@ def add_program_section(request, program_id):
     return redirect(f'{url}?{urlencode({"academic_year": academic_year})}')
 
 
-@role_required('ADMIN', 'STAFF')
+@access_required('access_program_management', 'manage_programs')
 @require_http_methods(['POST'])
 def update_program_section(request, program_id, section_id):
     program = get_object_or_404(Program, pk=program_id)
@@ -176,7 +173,7 @@ def update_program_section(request, program_id, section_id):
     return redirect('programs:program_detail', program_id=program.pk)
 
 
-@role_required('ADMIN', 'STAFF')
+@access_required('access_program_management', 'manage_programs')
 @require_http_methods(['POST'])
 def delete_program_section(request, program_id, section_id):
     program = get_object_or_404(Program, pk=program_id)
@@ -199,7 +196,7 @@ def delete_program_section(request, program_id, section_id):
 
 
 # Program Course Management
-@role_required('ADMIN', 'STAFF')
+@access_required('access_program_management', 'manage_programs')
 @require_http_methods(['POST'])
 def attach_program_course(request, program_id):
     program = get_object_or_404(Program, pk=program_id)
@@ -218,7 +215,7 @@ def attach_program_course(request, program_id):
     return redirect('programs:program_detail', program_id=program.pk)
 
 
-@role_required('ADMIN', 'STAFF')
+@access_required('access_program_management', 'manage_programs')
 @require_http_methods(['POST'])
 def remove_program_course(request, program_id, program_course_id):
     program = get_object_or_404(Program, pk=program_id)
@@ -236,7 +233,7 @@ def remove_program_course(request, program_id, program_course_id):
 
 
 # Course Catalogue
-@role_required('ADMIN', 'STAFF')
+@access_required('access_program_management')
 @require_http_methods(['GET'])
 def course_list(request):
 
@@ -256,7 +253,7 @@ def course_list(request):
     return render(request, f'{TEMPLATE_DIR}/course_list.html', context)
 
 
-@role_required('ADMIN', 'STAFF')
+@access_required('access_program_management', 'manage_programs')
 @require_http_methods(['POST'])
 def add_course(request):
     form = CourseForm(request.POST)
@@ -270,7 +267,7 @@ def add_course(request):
     return redirect('programs:course_list')
 
 
-@role_required('ADMIN', 'STAFF')
+@access_required('access_program_management', 'manage_programs')
 @require_http_methods(['POST'])
 def update_course(request, course_id):
     course = get_object_or_404(Course, pk=course_id)
@@ -294,7 +291,7 @@ def update_course(request, course_id):
     return redirect('programs:course_list')
 
 
-@role_required('ADMIN', 'STAFF')
+@access_required('access_program_management', 'manage_programs')
 @require_http_methods(['POST'])
 def delete_course(request, course_id):
     course = get_object_or_404(Course, pk=course_id)

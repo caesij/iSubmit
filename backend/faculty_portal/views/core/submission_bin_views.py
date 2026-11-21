@@ -1,9 +1,10 @@
 from django.contrib import messages
+from django.core.exceptions import PermissionDenied
 from django.db import transaction
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_http_methods
 
-from accounts.decorators import role_required
+from accounts.decorators import access_required
 from submissions.querysets import active_document_queryset
 
 from faculty_portal.helpers.submission_bin import (
@@ -27,7 +28,7 @@ from submissions.models import (
 TEMPLATE_DIR = 'faculty_portal/core/submission_bin'
 
 
-@role_required('FACULTY')
+@access_required('access_faculty_submission_bin')
 @require_http_methods(['GET'])
 def submission_bin_data_view(request):
     response = render(
@@ -41,10 +42,12 @@ def submission_bin_data_view(request):
     return response
 
 
-@role_required('FACULTY')
+@access_required('access_faculty_submission_bin')
 @require_http_methods(['GET', 'POST'])
 def submission_bins_view(request):
     if request.method == 'POST' and request.POST.get('action') == 'submit':
+        if not request.user.has_perm('accounts.submit_documents'):
+            raise PermissionDenied('You do not have permission to submit documents.')
         return process_submission(request)
 
     context = {'rows': load_upload_rows(request.user)}
@@ -52,7 +55,7 @@ def submission_bins_view(request):
     return render(request, f'{TEMPLATE_DIR}/upload_files.html', context)
 
 
-@role_required('FACULTY')
+@access_required('access_faculty_submission_bin', 'upload_documents')
 @require_http_methods(['POST'])
 def attach_document(request, slot_id):
     slot = get_object_or_404(
@@ -74,7 +77,7 @@ def attach_document(request, slot_id):
     )
 
 
-@role_required('FACULTY')
+@access_required('access_faculty_submission_bin', 'replace_documents')
 @require_http_methods(['POST'])
 def replace_document(request, document_id):
     draft = get_object_or_404(
@@ -91,7 +94,7 @@ def replace_document(request, document_id):
     )
 
 
-@role_required('FACULTY')
+@access_required('access_faculty_submission_bin', 'remove_documents')
 @require_http_methods(['POST'])
 def remove_document(request, document_id):
     draft = get_object_or_404(
@@ -121,7 +124,7 @@ def remove_document(request, document_id):
     return redirect(UPLOAD_PAGE)
 
 
-@role_required('FACULTY')
+@access_required('access_faculty_submission_bin', 'retry_document_extraction')
 @require_http_methods(['POST'])
 def retry_document_extraction(request, document_id):
     draft = get_object_or_404(
@@ -140,7 +143,7 @@ def retry_document_extraction(request, document_id):
     return redirect(UPLOAD_PAGE)
 
 
-@role_required('FACULTY')
+@access_required('access_faculty_submission_bin', 'resubmit_documents')
 @require_http_methods(['POST'])
 def resubmit_document(request, submission_id):
     submission = get_object_or_404(
@@ -163,7 +166,7 @@ def resubmit_document(request, submission_id):
     )
 
 
-@role_required('FACULTY')
+@access_required('access_faculty_submission_bin')
 @require_http_methods(['GET'])
 def submission_complete(request):
     submitted_ids = request.session.pop('recently_submitted_ids', [])
@@ -184,7 +187,7 @@ def submission_complete(request):
     return render(request, f'{TEMPLATE_DIR}/submission_complete.html', context)
 
 
-@role_required('FACULTY')
+@access_required('access_faculty_submission_bin')
 @require_http_methods(['GET'])
 def view_document(request, document_id):
     uploaded_document = get_object_or_404(

@@ -15,9 +15,6 @@
     <a href="{% url 'admin_staff_portal:preferences' %}" class="settings-tab">Preferences</a>
     <a href="{% url 'admin_staff_portal:notification_settings' %}" class="settings-tab">Notifications Settings</a>
     <a href="{% url 'admin_staff_portal:account_and_security' %}" class="settings-tab active">Account &amp; Security</a>
-    {% if request.user.is_admin %}
-        <a href="{% url 'admin_staff_portal:staff_permissions' %}" class="settings-tab">Staff Permissions</a>
-    {% endif %}
 </div>
 
 <div class="security-card security-container" data-login-activity>

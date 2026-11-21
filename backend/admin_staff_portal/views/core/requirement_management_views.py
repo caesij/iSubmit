@@ -10,7 +10,7 @@ from django.utils import timezone
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_http_methods
 
-from accounts.decorators import role_required, staff_permission_required
+from accounts.decorators import access_required
 from submissions.helpers import get_requirement_rows
 from submissions.models import Requirement, SubmissionPeriod
 from submissions.services import publish_updates, save_requirements
@@ -22,11 +22,11 @@ PERIODS_PER_PAGE = 10
 
 
 def manage_bins_only(view):
-    return role_required('ADMIN', 'STAFF')(staff_permission_required('manage_submission_bins')(view))
+    return access_required('access_submission_requirements', 'manage_submission_bins')(view)
 
 
 # List of all submission periods
-@role_required('ADMIN', 'STAFF')
+@access_required('access_submission_requirements')
 @require_http_methods(['GET'])
 def requirements_list(request):
     periods = SubmissionPeriod.objects.with_progress()
@@ -57,7 +57,7 @@ def requirements_list(request):
 
 
 # List of every requirement
-@role_required('ADMIN', 'STAFF')
+@access_required('access_submission_requirements')
 @require_http_methods(['GET'])
 def period_detail(request, period_id):
     period = get_object_or_404(SubmissionPeriod.objects.with_progress(), pk=period_id)

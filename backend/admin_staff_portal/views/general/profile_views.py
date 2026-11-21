@@ -2,10 +2,10 @@ from django.shortcuts import render, redirect
 from django.views.decorators.http import require_http_methods
 from django.contrib import messages
 
-from accounts.decorators import role_required
+from accounts.decorators import access_required
 from accounts.forms import AdminStaffProfileForm
 
-@role_required('ADMIN', 'STAFF')
+@access_required('access_profile')
 @require_http_methods(['GET', 'POST'])
 def profile_view(request):
     if request.method == 'POST':
@@ -20,8 +20,4 @@ def profile_view(request):
 
     context = {'form': form}
     
-    return render(
-        request,
-        'admin_staff_portal/general/profile.html',
-        context
-    )
+    return render(request, 'admin_staff_portal/general/profile.html', context)

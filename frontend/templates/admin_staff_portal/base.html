@@ -43,46 +43,67 @@
                 <ul class="nav-list">
 
                     <!-- Dashboard -->
-                    <li class="nav-item">
-                        <a
-                            class="nav-link {% if current_url == 'admin_dashboard' or current_url == 'staff_dashboard' %}active{% endif %}"
-                            href="{% if request.user.is_admin %}{% url 'admin_staff_portal:admin_dashboard' %}{% else %}{% url 'admin_staff_portal:staff_dashboard' %}{% endif %}"
-                        >
-                            <span class="icon">
-                                <img src="{% static 'images/dashboard.svg' %}" alt="Dashboard icon">
-                            </span>
-                            <span>Dashboard</span>
-                        </a>
-                    </li>
+                    {% if perms.accounts.access_admin_dashboard or perms.accounts.access_staff_dashboard %}
+                        <li class="nav-item">
+                            <a
+                                class="nav-link {% if current_url == 'admin_dashboard' or current_url == 'staff_dashboard' %}active{% endif %}"
+                                href="{% if request.user.role == 'ADMIN' and perms.accounts.access_admin_dashboard %}{% url 'admin_staff_portal:admin_dashboard' %}{% elif request.user.role == 'STAFF' and perms.accounts.access_staff_dashboard %}{% url 'admin_staff_portal:staff_dashboard' %}{% elif perms.accounts.access_admin_dashboard %}{% url 'admin_staff_portal:admin_dashboard' %}{% else %}{% url 'admin_staff_portal:staff_dashboard' %}{% endif %}"
+                            >
+                                <span class="icon">
+                                    <img src="{% static 'images/dashboard.svg' %}" alt="Dashboard icon">
+                                </span>
+                                <span>Dashboard</span>
+                            </a>
+                        </li>
+                    {% endif %}
 
                     <!-- Documents -->
-                    <li class="nav-item">
-                        <a
-                            class="nav-link {% if current_url == 'document_repo' or current_url == 'document_archive' or current_url == 'document_file_view' %}active{% endif %}"
-                            href="{% url 'admin_staff_portal:document_repo' %}"
-                        >
-                            <span class="icon">
-                                <img src="{% static 'images/documents.svg' %}" alt="Documents icon">
-                            </span>
-                            <span>Documents</span>
-                        </a>
-                    </li>
+                    {% if perms.accounts.access_document_repository or perms.accounts.access_document_archive %}
+                        <li class="nav-item">
+                            <a
+                                class="nav-link {% if current_url == 'document_repo' or current_url == 'document_archive' or current_url == 'document_file_view' %}active{% endif %}"
+                                href="{% if perms.accounts.access_document_repository %}{% url 'admin_staff_portal:document_repo' %}{% else %}{% url 'admin_staff_portal:document_archive' %}{% endif %}"
+                            >
+                                <span class="icon">
+                                    <img src="{% static 'images/documents.svg' %}" alt="Documents icon">
+                                </span>
+                                <span>Documents</span>
+                            </a>
+                        </li>
+                    {% endif %}
 
                     <!-- Submissions -->
-                    <li class="nav-item">
-                        <a
-                            class="nav-link {% if current_url == 'requirements_list' or current_url == 'period_detail' or current_url == 'create_period' or current_url == 'edit_period' or current_url == 'toggle_period_status' or current_url == 'toggle_requirement_status' or current_url == 'faculty_submissions_list' or current_url == 'faculty_submission_bins_view' or current_url == 'review_submission' or current_url == 'mark_under_review' or current_url == 'mark_needs_revision' or current_url == 'mark_reviewed' or current_url == 'approve_selected_submissions' %}active{% endif %}"
-                            href="{% url 'admin_staff_portal:requirements_list' %}"
-                        >
-                            <span class="icon">
-                                <img src="{% static 'images/submissions.svg' %}" alt="Submissions icon">
-                            </span>
-                            <span>Submissions</span>
-                        </a>
-                    </li>
+                    {% if perms.accounts.access_submission_requirements or perms.accounts.access_faculty_submissions %}
+                        <li class="nav-item">
+                            <a
+                                class="nav-link {% if current_url == 'requirements_list' or current_url == 'period_detail' or current_url == 'create_period' or current_url == 'edit_period' or current_url == 'toggle_period_status' or current_url == 'toggle_requirement_status' or current_url == 'faculty_submissions_list' or current_url == 'faculty_submission_bins_view' or current_url == 'review_submission' or current_url == 'mark_under_review' or current_url == 'mark_needs_revision' or current_url == 'mark_reviewed' or current_url == 'approve_selected_submissions' %}active{% endif %}"
+                                href="{% if perms.accounts.access_submission_requirements %}{% url 'admin_staff_portal:requirements_list' %}{% else %}{% url 'admin_staff_portal:faculty_submissions_list' %}{% endif %}"
+                            >
+                                <span class="icon">
+                                    <img src="{% static 'images/submissions.svg' %}" alt="Submissions icon">
+                                </span>
+                                <span>Submissions</span>
+                            </a>
+                        </li>
+                    {% endif %}
+
+                    <!-- Role Management (system superuser only) -->
+                    {% if request.user.is_superuser %}
+                        <li class="nav-item">
+                            <a
+                                href="{% url 'role_management:role_management' %}"
+                                class="nav-link {% if current_url == 'role_management' %}active{% endif %}"
+                            >
+                                <span class="icon">
+                                    <img src="{% static 'images/settings.svg' %}" alt="Role Management icon">
+                                </span>
+                                <span>Role Management</span>
+                            </a>
+                        </li>
+                    {% endif %}
 
                     <!-- User Management -->
-                    {% if request.user.is_admin or request.user.is_staff_role %}
+                    {% if perms.accounts.access_user_management %}
                         <li class="nav-item">
                             <a
                                 href="{% url 'user_management:user_list' %}"
@@ -101,17 +122,19 @@
                     {% endif %}
 
                     <!-- Program Management -->
-                    <li class="nav-item">
-                        <a
-                            class="nav-link {% if current_url == 'program_list' or current_url == 'program_detail' or current_url == 'add_program_section' or current_url == 'update_program_section' or current_url == 'delete_program_section' or current_url == 'attach_program_course' or current_url == 'remove_program_course' or current_url == 'course_list' or current_url == 'add_course' or current_url == 'update_course' or current_url == 'delete_course' %}active{% endif %}"
-                            href="{% url 'programs:program_list' %}"
-                        >
-                            <span class="icon">
-                                <img src="{% static 'images/Program Management.svg' %}" alt="Program Management icon">
-                            </span>
-                            <span>Program Management</span>
-                        </a>
-                    </li>
+                    {% if perms.accounts.access_program_management %}
+                        <li class="nav-item">
+                            <a
+                                class="nav-link {% if current_url == 'program_list' or current_url == 'program_detail' or current_url == 'add_program_section' or current_url == 'update_program_section' or current_url == 'delete_program_section' or current_url == 'attach_program_course' or current_url == 'remove_program_course' or current_url == 'course_list' or current_url == 'add_course' or current_url == 'update_course' or current_url == 'delete_course' %}active{% endif %}"
+                                href="{% url 'programs:program_list' %}"
+                            >
+                                <span class="icon">
+                                    <img src="{% static 'images/Program Management.svg' %}" alt="Program Management icon">
+                                </span>
+                                <span>Program Management</span>
+                            </a>
+                        </li>
+                    {% endif %}
 
                 </ul>
 
@@ -135,31 +158,34 @@
                     </li>
 
                     <!-- Settings -->
-                    <li class="nav-item">
-                        <a
-                            class="nav-link {% if current_url == 'preferences' or current_url == 'notification_settings' or current_url == 'account_and_security' or current_url == 'staff_permissions' %}active{% endif %}"
-                            href="{% url 'admin_staff_portal:preferences' %}"
-                        >
-                            <span class="icon">
-                                <img src="{% static 'images/settings.svg' %}" alt="Settings icon">
-                            </span>
-                            <span>Settings</span>
-                        </a>
-                    </li>
+                    {% if perms.accounts.access_preferences or perms.accounts.access_notification_settings or perms.accounts.access_account_security %}
+                        <li class="nav-item">
+                            <a
+                                class="nav-link {% if current_url == 'preferences' or current_url == 'notification_settings' or current_url == 'account_and_security' %}active{% endif %}"
+                                href="{% if perms.accounts.access_preferences %}{% url 'admin_staff_portal:preferences' %}{% elif perms.accounts.access_notification_settings %}{% url 'admin_staff_portal:notification_settings' %}{% else %}{% url 'admin_staff_portal:account_and_security' %}{% endif %}"
+                            >
+                                <span class="icon">
+                                    <img src="{% static 'images/settings.svg' %}" alt="Settings icon">
+                                </span>
+                                <span>Settings</span>
+                            </a>
+                        </li>
+                    {% endif %}
 
                     <!-- Profile -->
-                    <li class="nav-item">
-                        <a
-                            class="nav-link {% if current_url == 'profile' %}active{% endif %}"
-                            href="{% url 'admin_staff_portal:profile' %}"
-                        >
-                            <span class="icon">
-                                <img src="{% static 'images/profile.svg' %}" alt="Profile icon">
-                            </span>
-                            <span>Profile</span>
-                        </a>
-                    </li>
-
+                    {% if perms.accounts.access_profile %}
+                        <li class="nav-item">
+                            <a
+                                class="nav-link {% if current_url == 'profile' %}active{% endif %}"
+                                href="{% url 'admin_staff_portal:profile' %}"
+                            >
+                                <span class="icon">
+                                    <img src="{% static 'images/profile.svg' %}" alt="Profile icon">
+                                </span>
+                                <span>Profile</span>
+                            </a>
+                        </li>
+                    {% endif %}
                     <!-- Logout -->
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'accounts:logout' %}">
@@ -206,7 +232,11 @@
                             <span class="page-icon">
                                 <img src="{% static 'images/documents.svg' %}" alt="Documents icon">
                             </span>
-                        {% elif current_url == 'preferences' or current_url == 'notification_settings' or current_url == 'account_and_security' or current_url == 'staff_permissions' %}
+                        {% elif current_url == 'role_management' %}
+                            <span class="page-icon">
+                                <img src="{% static 'images/usermanagement.svg' %}" alt="Role Management icon">
+                            </span>
+                        {% elif current_url == 'preferences' or current_url == 'notification_settings' or current_url == 'account_and_security' %}
                             <span class="page-icon">
                                 <img src="{% static 'images/settings.svg' %}" alt="Settings icon">
                             </span>

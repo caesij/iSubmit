@@ -4,7 +4,7 @@ from django.contrib import messages
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.forms import PasswordChangeForm
 
-from accounts.decorators import role_required
+from accounts.decorators import access_required
 from accounts.utils import get_or_create_preferences
 
 from accounts.forms import PreferencesForm
@@ -13,7 +13,7 @@ from accounts.security import get_login_activity
 
 TEMPLATE_DIR = 'faculty_portal/general/settings_module'
 
-@role_required('FACULTY')
+@access_required('access_preferences')
 @require_http_methods(['GET', 'POST'])
 def preferences_view(request):
     if request.method == 'POST':
@@ -35,7 +35,7 @@ def preferences_view(request):
         context
     )
 
-@role_required('FACULTY')
+@access_required('access_notification_settings')
 @require_http_methods(['GET', 'POST'])
 def notification_settings_view(request):
     preferences = get_or_create_preferences(request.user)
@@ -55,7 +55,7 @@ def notification_settings_view(request):
         context
     )
 
-@role_required('FACULTY')
+@access_required('access_notification_settings')
 @require_http_methods(['GET', 'POST'])
 def notification_channel_view(request):
     preferences = get_or_create_preferences(request.user)
@@ -76,7 +76,7 @@ def notification_channel_view(request):
         context
     )
 
-@role_required('FACULTY')
+@access_required('access_account_security')
 @require_http_methods(['GET', 'POST'])
 def account_and_security_view(request):
     if request.method == 'POST':
@@ -99,8 +99,4 @@ def account_and_security_view(request):
         )
     }
 
-    return render(
-        request,
-        f'{TEMPLATE_DIR}/account_security.html',
-        context
-    )
+    return render(request, f'{TEMPLATE_DIR}/account_security.html', context)

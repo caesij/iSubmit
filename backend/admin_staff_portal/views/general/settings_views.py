@@ -4,24 +4,16 @@ from django.contrib import messages
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.forms import PasswordChangeForm
 
-from accounts.decorators import role_required
+from accounts.decorators import access_required
 from accounts.utils import get_or_create_preferences
 from accounts.forms import PreferencesForm
-from accounts.models import StaffPermission
 from notifications.models import NotificationPreference
 from accounts.security import get_login_activity
 
 TEMPLATE_DIR = 'admin_staff_portal/general/settings_module'
 
-PERMISSION_FIELDS = [
-    ('review_faculty_submissions', 'Review Faculty Submissions', 'Review submitted documents from faculty.'),
-    ('return_for_revisions', 'Return for Revisions', 'Return submissions to faculty for revisions.'),
-    ('manage_submission_bins', 'Manage Submission Bins', 'Create, edit, and delete submission bins.'),
-    ('view_approved_documents', 'View Approved Documents', 'View documents that have been approved.'),
-    ('add_faculty_users', 'Add Faculty Users', 'Add new faculty users to the system.'),
-]
 
-@role_required('ADMIN', 'STAFF')
+@access_required('access_preferences')
 @require_http_methods(['GET', 'POST'])
 def preferences_view(request):
     if request.method == 'POST':
@@ -37,13 +29,10 @@ def preferences_view(request):
 
     context = {'form': form}
     
-    return render(
-        request,
-        f'{TEMPLATE_DIR}/preferences.html',
-        context
-    )
+    return render(request, f'{TEMPLATE_DIR}/preferences.html', context)
 
-@role_required('ADMIN', 'STAFF')
+
+@access_required('access_notification_settings')
 @require_http_methods(['GET', 'POST'])
 def notification_settings_view(request):
     preferences = get_or_create_preferences(request.user)
@@ -60,13 +49,10 @@ def notification_settings_view(request):
 
     context = {'preferences': preferences}
     
-    return render(
-        request,
-        f'{TEMPLATE_DIR}/notification_settings.html',
-        context
-    )
+    return render(request, f'{TEMPLATE_DIR}/notification_settings.html', context)
 
-@role_required('ADMIN', 'STAFF')
+
+@access_required('access_account_security')
 @require_http_methods(['GET', 'POST'])
 def account_and_security_view(request):
     if request.method == 'POST':
@@ -89,31 +75,5 @@ def account_and_security_view(request):
         ),
     }
 
-    return render(
-        request,
-        f'{TEMPLATE_DIR}/account_security.html',
-        context
-    )
+    return render(request, f'{TEMPLATE_DIR}/account_security.html', context)
     
-@role_required('ADMIN')
-@require_http_methods(['GET', 'POST'])
-def staff_permissions_view(request):
-    permissions = StaffPermission.get_solo()
-
-    if request.method == 'POST':
-        for field, _label, _desc in PERMISSION_FIELDS:
-            setattr(permissions, field, field in request.POST)
-        permissions.save()
-        messages.success(request, 'Staff permissions updated.')
-        return redirect('admin_staff_portal:staff_permissions')
-
-    context = {
-        'permissions': permissions,
-        'permission_fields': PERMISSION_FIELDS,
-    }
-    
-    return render(
-        request,
-        f'{TEMPLATE_DIR}/staff_permissions.html',
-        context
-    )

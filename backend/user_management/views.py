@@ -1,8 +1,6 @@
 import secrets
 import string
 
-from axes.utils import reset as axes_reset
-
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import get_user_model
@@ -13,43 +11,74 @@ from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_GET, require_http_methods
+from django.core.exceptions import PermissionDenied
 
-from accounts.decorators import role_required
+
+from axes.utils import reset as axes_reset
+from accounts.decorators import access_required
+from accounts.models import FacultyProfile
+from role_management.models import Role
 from core.search_utils import all_terms_query
 from programs.models import Program
 from submissions.models import ClassAssignment
-
-from user_management.forms import (
-    UserManagementForm,
-    ClassAssignmentFormSet,
-)
+from user_management.forms import UserManagementForm, ClassAssignmentFormSet
 
 
 User = get_user_model()
 
 TEMPLATE_DIR = 'admin_staff_portal/core/user_mgmt'
 
+def is_faculty_role(role):
+    return bool(
+        role
+        and role.is_default
+        and role.code == Role.Code.FACULTY
+    )
 
-@role_required('ADMIN', 'STAFF')
+
+def get_manageable_users(user):
+    users = User.objects.filter(is_superuser=False)
+
+    if user.is_superuser or user.has_perm('accounts.manage_all_users'):
+        return users
+
+    if user.has_perm('accounts.manage_faculty_users'):
+        return users.filter(role__is_default=True, role__code=Role.Code.FACULTY)
+
+    return users.none()
+
+
+@access_required('access_user_management')
 @require_http_methods(['GET'])
 def user_list_view(request):
-    if request.user.is_admin:
-        visible_roles = User.Role.values
-        manageable_roles = [User.Role.STAFF, User.Role.FACULTY]
-    else:
-        visible_roles = [User.Role.FACULTY]
-        manageable_roles = [User.Role.FACULTY]
+    users = (
+        get_manageable_users(request.user)
+        .select_related('role', 'role__group', 'faculty_profile')
+        .prefetch_related('faculty_profile__assigned_programs')
+    )
 
-    selected_role = request.GET.get('role', 'ALL').strip().upper()
+    visible_role_ids = users.order_by().values_list(
+        'role_id',
+        flat=True
+    ).distinct()
+
+    visible_roles = Role.objects.filter(
+        pk__in=visible_role_ids
+    ).select_related('group').order_by('group__name')
+
+    selected_role = request.GET.get('role', 'ALL').strip()
     search_query = request.GET.get('q', '').strip()
     faculty_type = request.GET.get('faculty_type', '').strip()
     status = request.GET.get('status', '').strip().lower()
     lockout = request.GET.get('lockout', '').strip().lower()
 
-    if selected_role != 'ALL' and selected_role not in visible_roles:
+    if (
+        selected_role != 'ALL'
+        and not visible_roles.filter(pk=selected_role).exists()
+    ):
         selected_role = 'ALL'
 
-    if faculty_type not in User.FacultyType.values:
+    if faculty_type not in FacultyProfile.FacultyType.values:
         faculty_type = ''
 
     if status not in ('active', 'inactive'):
@@ -58,10 +87,8 @@ def user_list_view(request):
     if lockout not in ('locked', 'unlocked'):
         lockout = ''
 
-    users = User.objects.filter(role__in=visible_roles).prefetch_related('assigned_programs')
-
     if selected_role != 'ALL':
-        users = users.filter(role=selected_role)
+        users = users.filter(role_id=selected_role)
 
     if search_query:
         users = users.filter(
@@ -74,8 +101,12 @@ def user_list_view(request):
             )
         )
 
-    if faculty_type and selected_role in ('ALL', User.Role.FACULTY):
-        users = users.filter(role=User.Role.FACULTY, faculty_type=faculty_type)
+    faculty_role = Role.objects.filter(is_default=True, code=Role.Code.FACULTY).first()
+
+    faculty_role_selected = (faculty_role and selected_role == str(faculty_role.pk))
+
+    if faculty_type and (selected_role == 'ALL' or faculty_role_selected):
+        users = users.filter(faculty_profile__faculty_type=faculty_type)
 
     if status == 'active':
         users = users.filter(is_active=True)
@@ -95,15 +126,14 @@ def user_list_view(request):
     pagination_params.pop('page', None)
     pagination_params['role'] = selected_role
 
-    if selected_role not in ('ALL', User.Role.FACULTY):
+    if selected_role != 'ALL' and not faculty_role_selected:
         pagination_params.pop('faculty_type', None)
 
     role_choices = [
         ('ALL', 'All Roles')
     ] + [
-        (value, label)
-        for value, label in User.Role.choices
-        if value in visible_roles
+        (str(role.pk), role.group.name)
+        for role in visible_roles
     ]
 
     context = {
@@ -115,10 +145,9 @@ def user_list_view(request):
         'page_title': 'User Management',
         'selected_role': selected_role,
         'role_choices': role_choices,
-        'manageable_roles': manageable_roles,
 
-        'show_faculty_type': selected_role in ('ALL', User.Role.FACULTY),
-        'faculty_type_choices': User.FacultyType.choices,
+        'show_faculty_type': (selected_role == 'ALL' or faculty_role_selected),
+        'faculty_type_choices': FacultyProfile.FacultyType.choices,
 
         'search_query': search_query,
         'faculty_type_param': faculty_type,
@@ -129,16 +158,18 @@ def user_list_view(request):
     return render(request, f'{TEMPLATE_DIR}/user_list.html', context)
 
 
-@role_required('ADMIN', 'STAFF')
+@access_required('access_user_management')
 @require_http_methods(['GET', 'POST'])
 def user_form_view(request, pk=None):
-    if request.user.is_admin:
-        manageable_roles = [User.Role.STAFF, User.Role.FACULTY]
-    else:
-        manageable_roles = [User.Role.FACULTY]
-
     if pk:
-        target_user = get_object_or_404(User, pk=pk, role__in=manageable_roles)
+        if not request.user.has_perm('accounts.edit_users'):
+            raise PermissionDenied
+    else:
+        if not request.user.has_perm('accounts.add_users'):
+            raise PermissionDenied
+    
+    if pk:
+        target_user = get_object_or_404(get_manageable_users(request.user), pk=pk)
     else:
         target_user = User()
 
@@ -148,52 +179,65 @@ def user_form_view(request, pk=None):
             instance=target_user,
             request_user=request.user
         )
-        
+
         form_valid = form.is_valid()
+
     else:
         initial = {}
 
         if not pk:
-            selected_role = request.GET.get('role', User.Role.FACULTY).strip().upper()
+            faculty_role = Role.objects.filter(is_default=True, code=Role.Code.FACULTY).first()
 
-            if selected_role not in manageable_roles:
-                selected_role = User.Role.FACULTY
-
-            initial['role'] = selected_role
+            if faculty_role:
+                initial['role'] = faculty_role
 
         form = UserManagementForm(
             instance=target_user,
             request_user=request.user,
             initial=initial
         )
-        
+
         form_valid = False
 
-    # Determine the role currently selected in the form
-    selected_role = form['role'].value()
-    show_faculty_fields = selected_role == User.Role.FACULTY
+    selected_role_value = form['role'].value()
 
-    # Determine which programs are available to the assignment formset
+    selected_role = None
+
+    if selected_role_value:
+        selected_role = form.fields['role'].queryset.filter(pk=selected_role_value).first()
+
+    show_faculty_fields = is_faculty_role(selected_role)
+
+    # Determine which programs can be used by the assignment formset
     if request.method == 'POST':
+
         if form_valid and show_faculty_fields:
-            allowed_programs = form.cleaned_data.get(
-                'assigned_programs',
-                Program.objects.none()
-            )
+            allowed_programs = form.cleaned_data.get('assigned_programs', Program.objects.none())
+
         elif show_faculty_fields:
-            allowed_programs = Program.objects.filter(
-                pk__in=request.POST.getlist('assigned_programs')
-            )
+            assigned_program_field = form.fields.get('assigned_programs')
+
+            if assigned_program_field:
+                allowed_programs = assigned_program_field.queryset.filter(
+                    pk__in=request.POST.getlist('assigned_programs')
+                )
+            else:
+                allowed_programs = Program.objects.none()
+
         else:
             allowed_programs = Program.objects.none()
 
     elif target_user.pk and show_faculty_fields:
-        allowed_programs = target_user.assigned_programs.all()
+        faculty_profile = getattr(target_user, 'faculty_profile', None)
+
+        if faculty_profile:
+            allowed_programs = faculty_profile.assigned_programs.all()
+        else:
+            allowed_programs = Program.objects.none()
 
     else:
         allowed_programs = Program.objects.none()
 
-    # Only load existing assignments that belong to the selected programs
     if target_user.pk and show_faculty_fields:
         assignment_queryset = (
             ClassAssignment.objects.filter(
@@ -214,13 +258,11 @@ def user_form_view(request, pk=None):
         assignment_queryset = ClassAssignment.objects.none()
 
     assignment_formset = ClassAssignmentFormSet(
-        request.POST if request.method == 'POST' and show_faculty_fields else None,
+        request.POST if (request.method == 'POST' and show_faculty_fields) else None,
         instance=target_user,
         queryset=assignment_queryset,
         prefix='assignments',
-        form_kwargs={
-            'allowed_programs': allowed_programs
-        }
+        form_kwargs={'allowed_programs': allowed_programs}
     )
 
     assignment_formset_valid = True
@@ -229,54 +271,66 @@ def user_form_view(request, pk=None):
         assignment_formset_valid = assignment_formset.is_valid()
 
     if form_valid and assignment_formset_valid:
-
         is_new = target_user.pk is None
+
         user = form.save(commit=False)
+        selected_role = form.cleaned_data['role']
+
+        user.role = selected_role
 
         password = None
 
         if is_new:
-            alphabet = string.ascii_letters + string.digits + '!@#$%^&*'
-
-            password = ''.join(
-                secrets.choice(alphabet)
-                for _ in range(12)
+            alphabet = (
+                string.ascii_letters
+                + string.digits
+                + '!@#$%^&*'
             )
 
+            password = ''.join(secrets.choice(alphabet) for _ in range(12))
             user.set_password(password)
 
         with transaction.atomic():
+
             user.save()
-            form.save_m2m()
 
-            if user.role == User.Role.FACULTY:
+            if is_faculty_role(selected_role):
+                faculty_profile, _ = FacultyProfile.objects.get_or_create(user=user)
 
-                # Remove assignments belonging to programs no longer assigned
-                # to this faculty member.
-                assigned_program_ids = list(
-                    user.assigned_programs.values_list('pk', flat=True)
-                )
+                faculty_profile.faculty_type = form.cleaned_data['faculty_type']
 
-                user.class_assignments.exclude(
-                    program_id__in=assigned_program_ids
-                ).delete()
+                faculty_profile.save()
+
+                faculty_profile.assigned_programs.set(form.cleaned_data['assigned_programs'])
+
+                assigned_program_ids = (faculty_profile.assigned_programs.values_list('pk', flat=True))
+
+                user.class_assignments.exclude(program_id__in=assigned_program_ids).delete()
 
                 assignment_formset.instance = user
                 assignment_formset.save()
-
             else:
-                # Non-faculty accounts must not retain teaching assignments
+                FacultyProfile.objects.filter(user=user).delete()
+
                 user.class_assignments.all().delete()
 
         if is_new:
-            subject = 'Welcome to iSubmit - Your Account Credentials'
+            subject = 'Your iSubmit Account Has Been Created'
 
             message = (
-                f'Hello {user.get_full_name()},\n\n'
-                'An account has been created for you on the iSubmit portal.\n\n'
-                f'Email: {user.email}\n'
-                f'Password: {password}\n\n'
-                'Please keep your credentials secure.'
+                f'Greetings {user.get_full_name()}!\n\n'
+                'Your account for the iSubmit portal has been successfully created.\n\n'
+                'You may use the following credentials to access your account:\n\n'
+                f'Email Address: {user.email}\n'
+                f'Temporary Password: {password}\n\n'
+                'For your account security, we recommend changing your password '
+                'after your first sign-in. Please keep your login credentials '
+                'confidential and do not share them with others.\n\n'
+                'Should you encounter any difficulties accessing your account, '
+                'please contact the system administrator for assistance.\n\n'
+                'Thank you.\n\n'
+                'Best regards,\n'
+                'iSubmit Administration'
             )
 
             try:
@@ -290,15 +344,13 @@ def user_form_view(request, pk=None):
 
                 messages.success(
                     request,
-                    f'Account created for {user.email}. '
-                    'Welcome email sent successfully.'
+                    f'Account created for {user.email}. Welcome email sent successfully.'
                 )
 
             except Exception:
                 messages.warning(
                     request,
-                    f'Account created for {user.email}, but the '
-                    'welcome email could not be sent. '
+                    f'Account created for {user.email}, but the welcome email could not be sent. '
                     'Please share the credentials securely.'
                 )
 
@@ -309,7 +361,8 @@ def user_form_view(request, pk=None):
             )
 
         url = reverse('user_management:user_list')
-        return redirect(f'{url}?role={user.role}')
+
+        return redirect(f'{url}?role={user.role_id}')
 
     context = {
         'form': form,
@@ -323,7 +376,7 @@ def user_form_view(request, pk=None):
     return render(request, f'{TEMPLATE_DIR}/user_form.html', context)
 
 
-@role_required('ADMIN', 'STAFF')
+@access_required('access_user_management')
 @require_GET
 def assignment_options_view(request):
     program_id = request.GET.get('program')
@@ -339,12 +392,7 @@ def assignment_options_view(request):
     program = get_object_or_404(Program, pk=program_id)
 
     academic_years = sorted(
-        set(
-            program.sections.values_list(
-                'academic_year',
-                flat=True
-            )
-        ),
+        set(program.sections.values_list('academic_year',flat=True)),
         reverse=True
     )
 
@@ -359,17 +407,14 @@ def assignment_options_view(request):
                     f'Section {section.section}'
                 ),
             }
-            for section in program.sections.filter(
-                academic_year=academic_year
-            ).order_by('year_level', 'section')
+            for section in program.sections.filter(academic_year=academic_year).order_by('year_level', 'section')
         ]
 
     courses = [
         {
             'value': str(course.pk),
-            'label': f'{course.code} - {course.title}',
+            'label': f'{course.code} - {course.title}'
         }
-        
         for course in program.courses.order_by('code')
     ]
 
@@ -386,52 +431,43 @@ def assignment_options_view(request):
     })
 
 
-@role_required('ADMIN', 'STAFF')
+@access_required('toggle_user_status')
 @require_http_methods(['POST'])
 def user_toggle_status_view(request, pk):
-    if request.user.is_admin:
-        manageable_roles = [User.Role.STAFF, User.Role.FACULTY]
-    else:
-        manageable_roles = [User.Role.FACULTY]
-
-    target_user = get_object_or_404(User, pk=pk, role__in=manageable_roles)
+    target_user = get_object_or_404(get_manageable_users(request.user), pk=pk)
 
     url = reverse('user_management:user_list')
-    redirect_url = f'{url}?role={target_user.role}'
+    redirect_url = f'{url}?role={target_user.role_id}'
 
     if request.user.pk == target_user.pk:
         messages.error(request, 'You cannot deactivate your own account while signed in.')
-        
+
         return redirect(redirect_url)
 
     target_user.is_active = not target_user.is_active
     target_user.save(update_fields=['is_active'])
 
-    status_label = 'activated' if target_user.is_active else 'deactivated'
+    status_label = ('activated' if target_user.is_active else 'deactivated')
 
     messages.success(request, f'The account has been {status_label}.')
 
     return redirect(redirect_url)
 
 
-@role_required('ADMIN')
+@access_required('unlock_user_accounts')
 @require_http_methods(['POST'])
 def user_unlock_view(request, pk):
-
-    target_user = get_object_or_404(
-        User,
-        pk=pk,
-        role__in=[User.Role.STAFF, User.Role.FACULTY]
-    )
+    target_user = get_object_or_404(get_manageable_users(request.user), pk=pk)
 
     url = reverse('user_management:user_list')
-    redirect_url = f'{url}?role={target_user.role}'
+    redirect_url = f'{url}?role={target_user.role_id}'
 
     if not target_user.is_locked_out:
         messages.info(
             request,
             'This account is not locked out.'
         )
+
         return redirect(redirect_url)
 
     axes_reset(username=target_user.email)
@@ -439,13 +475,8 @@ def user_unlock_view(request, pk):
     target_user.is_locked_out = False
     target_user.locked_out_until = None
 
-    target_user.save(
-        update_fields=['is_locked_out', 'locked_out_until']
-    )
+    target_user.save(update_fields=['is_locked_out','locked_out_until'])
 
-    messages.success(
-        request,
-        'The account lockout has been cleared.'
-    )
+    messages.success(request, 'The account lockout has been cleared.')
 
     return redirect(redirect_url)

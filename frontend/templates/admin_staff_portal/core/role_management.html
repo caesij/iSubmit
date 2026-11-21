@@ -1,0 +1,650 @@
+
+{% extends 'admin_staff_portal/base.html' %}
+
+{% block css_modules %}settings role-management-page{% endblock %}
+
+{% block title %}Role Management - iSubmit{% endblock %}
+{% block heading %}Role Management{% endblock %}
+{% block subtitle %}
+Create roles, configure page access and operations, and choose which notification events each role can receive.
+{% endblock %}
+
+{% block content %}
+
+<style>
+    /* Role filters */
+    .role-filter-form .settings-actions {
+        display: grid;
+        grid-template-columns: minmax(150px, 1fr) minmax(200px, 2fr) auto auto;
+        align-items: end;
+        gap: 12px;
+    }
+
+    .role-filter-field {
+        display: flex;
+        flex-direction: column;
+        gap: 7px;
+        min-width: 0;
+    }
+
+    .role-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 20px;
+    }
+
+    .role-list .settings-tab {
+        text-decoration: none;
+    }
+
+    /* Permission page cards */
+    .permission-page-card {
+        border: 1px solid var(--border-color, #dedede);
+        border-radius: 10px;
+        margin-bottom: 14px;
+        overflow: hidden;
+    }
+
+    .permission-page-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+        padding: 17px 20px;
+        cursor: pointer;
+    }
+
+    .permission-page-info {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    .permission-page-info strong {
+        font-size: 15px;
+        font-weight: 600;
+    }
+
+    .permission-page-info small {
+        font-size: 13px;
+        opacity: 0.7;
+    }
+
+    .permission-page-header input {
+        flex-shrink: 0;
+    }
+
+    /* Operations */
+    .permission-operations {
+        margin: 0 20px 12px 36px;
+        padding-top: 10px;
+        border-top: 1px solid var(--border-color, #dedede);
+    }
+
+    .permission-operations-heading {
+        margin-bottom: 8px;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.07em;
+        text-transform: uppercase;
+        opacity: 0.65;
+    }
+
+    .permission-operations .permission-row {
+        padding: 11px 0;
+        border-bottom: 1px solid var(--border-color, #dedede);
+    }
+
+    .permission-operations .permission-row:last-child {
+        border-bottom: none;
+    }
+
+    .permission-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+    }
+
+    .permission-row > span {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .permission-row small {
+        font-size: 12px;
+        opacity: 0.7;
+    }
+
+    .permission-row input:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+    }
+
+    /* Empty state */
+    .role-empty-state {
+        text-align: center;
+        padding: 35px 20px;
+    }
+
+    /* Notification Settings */
+    .notification-settings-card {
+        margin-top: 20px;
+    }
+
+    .notification-settings-list {
+        margin-top: 18px;
+    }
+
+    .notification-setting-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+        padding: 16px 0;
+        border-bottom: 1px solid var(--border-color, #dedede);
+        cursor: pointer;
+    }
+
+    .notification-setting-row:last-child {
+        border-bottom: none;
+    }
+
+    .notification-setting-info {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    .notification-setting-info strong {
+        font-size: 14px;
+        font-weight: 600;
+    }
+
+    .notification-setting-info small {
+        font-size: 12px;
+        opacity: 0.7;
+    }
+
+    .notification-setting-row input {
+        flex-shrink: 0;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .role-filter-form .settings-actions {
+            grid-template-columns: 1fr;
+        }
+
+        .permission-page-header {
+            padding: 14px;
+        }
+
+        .permission-operations {
+            margin-left: 20px;
+            margin-right: 14px;
+        }
+
+        .notification-setting-row {
+            gap: 12px;
+        }
+    }
+</style>
+
+
+<div class="faculty-settings role-management-page">
+
+    <!-- Create Role -->
+    <form method="POST" class="settings-card role-create-form">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="create_role">
+
+        <h2>Create a Role</h2>
+
+        <p class="card-sub">
+            Create a custom role and configure the page access
+            and operations available to users assigned to it.
+        </p>
+
+        <div class="settings-actions">
+            <label for="new-role-name">Role name</label>
+
+            <input
+                id="new-role-name"
+                type="text"
+                name="role_name"
+                maxlength="150"
+                placeholder="e.g. Document Reviewer"
+                required
+            >
+
+            <button type="submit" class="btn-save">
+                Create Role
+            </button>
+        </div>
+    </form>
+
+
+    <!-- Role Selection and Filtering -->
+    <div class="settings-card role-selector-card">
+
+        <h2>Select a Role</h2>
+
+        <p class="card-sub">
+            Filter the available roles or search for a specific role
+            to manage its permissions and notification event settings.
+        </p>
+
+        <form method="GET" class="role-filter-form">
+
+            <div class="settings-actions">
+
+                <div class="role-filter-field">
+                    <label for="role-type">Role type</label>
+
+                    <select id="role-type" name="role_type">
+                        <option
+                            value="all"
+                            {% if role_type == 'all' %}selected{% endif %}
+                        >
+                            All Roles
+                        </option>
+
+                        <option
+                            value="default"
+                            {% if role_type == 'default' %}selected{% endif %}
+                        >
+                            Default Roles
+                        </option>
+
+                        <option
+                            value="custom"
+                            {% if role_type == 'custom' %}selected{% endif %}
+                        >
+                            Custom Roles
+                        </option>
+                    </select>
+                </div>
+
+                <div class="role-filter-field">
+                    <label for="role-search">Search role</label>
+
+                    <input
+                        id="role-search"
+                        type="search"
+                        name="q"
+                        value="{{ search_query }}"
+                        placeholder="Enter a role name"
+                    >
+                </div>
+
+                <button type="submit" class="btn-save">
+                    Apply Filters
+                </button>
+
+                <a href="{{ request.path }}" class="btn-cancel">
+                    Clear
+                </a>
+
+            </div>
+
+        </form>
+
+        <div class="settings-tabs role-list" aria-label="Available roles">
+
+            {% for role in roles %}
+
+                <a
+                    href="?role={{ role.id }}&role_type={{ role_type }}&q={{ search_query|urlencode }}"
+                    class="settings-tab{% if role.selected %} active{% endif %}"
+                >
+                    {{ role.label }}
+
+                    {% if role.is_default %}
+                        <small>(Default)</small>
+                    {% else %}
+                        <small>(Custom)</small>
+                    {% endif %}
+                </a>
+
+            {% empty %}
+
+                <p class="card-sub">
+                    No roles match the selected filters.
+                </p>
+
+            {% endfor %}
+
+        </div>
+
+    </div>
+
+
+    {% if selected_role %}
+
+        <!-- Custom Role Management -->
+        {% if not selected_role.is_default %}
+
+            <div class="settings-card role-details-card">
+
+                <div class="role-details-header">
+                    <div>
+                        <h2>{{ selected_role_name }}</h2>
+
+                        <p class="card-sub">
+                            Custom role
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Rename Role -->
+                <form method="POST" class="settings-actions">
+                    {% csrf_token %}
+
+                    <input
+                        type="hidden"
+                        name="action"
+                        value="rename_role"
+                    >
+
+                    <input
+                        type="hidden"
+                        name="role_id"
+                        value="{{ selected_role.pk }}"
+                    >
+
+                    <label for="edit-role-name">
+                        Rename Role
+                    </label>
+
+                    <input
+                        id="edit-role-name"
+                        type="text"
+                        name="role_name"
+                        value="{{ selected_role_name }}"
+                        maxlength="150"
+                        required
+                    >
+
+                    <button type="submit" class="btn-save">
+                        Rename Role
+                    </button>
+                </form>
+
+                <!-- Delete Role -->
+                {% if assigned_user_count %}
+
+                    <p class="card-sub">
+                        This role cannot be deleted because
+                        {{ assigned_user_count }} user{{ assigned_user_count|pluralize }}
+                        {% if assigned_user_count == 1 %}is{% else %}are{% endif %}
+                        currently assigned to it.
+
+                        Reassign these users through User Management before
+                        deleting this role.
+                    </p>
+
+                {% else %}
+
+                    <form
+                        method="POST"
+                        class="settings-actions"
+                        onsubmit="return confirm('Delete this role? This action cannot be undone.');"
+                    >
+                        {% csrf_token %}
+
+                        <input
+                            type="hidden"
+                            name="action"
+                            value="delete_role"
+                        >
+
+                        <input
+                            type="hidden"
+                            name="role_id"
+                            value="{{ selected_role.pk }}"
+                        >
+
+                        <button type="submit" class="btn-danger">
+                            Delete Role
+                        </button>
+                    </form>
+
+                {% endif %}
+
+            </div>
+
+        {% endif %}
+
+
+        <!-- Page and Operation Permissions -->
+        <form method="POST" class="settings-card permissions-card">
+
+            {% csrf_token %}
+
+            <input
+                type="hidden"
+                name="action"
+                value="save_permissions"
+            >
+
+            <input
+                type="hidden"
+                name="role_id"
+                value="{{ selected_role.pk }}"
+            >
+
+            <div class="permissions-header">
+
+                <h2>{{ selected_role_name }} Permissions</h2>
+
+                {% if selected_role.is_default %}
+
+                    <p class="card-sub">
+                        These pages and operations apply to users assigned
+                        to the {{ selected_role_name }} built-in role.
+                        Only applicable pages are displayed.
+                    </p>
+
+                {% else %}
+
+                    <p class="card-sub">
+                        Configure the pages and operations available to
+                        users assigned to this custom role.
+                    </p>
+
+                {% endif %}
+
+            </div>
+
+
+            {% for page in permission_pages %}
+
+                <section
+                    class="permission-page-card"
+                    data-permission-page
+                >
+
+                    <!-- Parent Page Permission -->
+                    <label class="permission-page-header">
+
+                        <span class="permission-page-info">
+
+                            <strong>{{ page.title }}</strong>
+
+                            <small>
+                                {{ page.description }}
+                            </small>
+
+                        </span>
+
+                        <input
+                            type="checkbox"
+                            name="pages"
+                            value="{{ page.access_codename }}"
+                            data-page-toggle
+                            {% if page.checked %}checked{% endif %}
+                        >
+
+                    </label>
+
+
+                    <!-- Child Operations -->
+                    {% if page.operations %}
+
+                        <div class="permission-operations">
+
+                            <div class="permission-operations-heading">
+                                Available Operations
+                            </div>
+
+                            {% for operation in page.operations %}
+
+                                <label class="permission-row">
+
+                                    <span>
+                                        <strong>
+                                            {{ operation.label }}
+                                        </strong>
+
+                                        <small>
+                                            {{ operation.description }}
+                                        </small>
+                                    </span>
+
+                                    <input
+                                        type="checkbox"
+                                        name="operations"
+                                        value="{{ operation.codename }}"
+                                        data-page-operation
+                                        {% if operation.checked %}checked{% endif %}
+                                        {% if not page.checked %}disabled{% endif %}
+                                    >
+
+                                </label>
+
+                            {% endfor %}
+
+                        </div>
+
+                    {% endif %}
+
+                </section>
+
+            {% empty %}
+
+                <p class="card-sub">
+                    No applicable pages are available for this role.
+                </p>
+
+            {% endfor %}
+
+
+            <div class="settings-actions">
+
+                <button type="submit" class="btn-save">
+                    Save Role Permissions
+                </button>
+
+            </div>
+
+        </form>
+
+
+        <!-- Role Notification Settings -->
+        <form method="POST" class="settings-card notification-settings-card">
+
+            {% csrf_token %}
+
+            <input
+                type="hidden"
+                name="action"
+                value="save_notifications"
+            >
+
+            <input
+                type="hidden"
+                name="role_id"
+                value="{{ selected_role.pk }}"
+            >
+
+            <div class="permissions-header">
+
+                <h2>{{ selected_role_name }} Notification Settings</h2>
+
+                <p class="card-sub">
+                    Choose which specific notification events users assigned
+                    to this role are eligible to receive.
+                    Individual users can still customize their own
+                    notification delivery preferences.
+                </p>
+
+            </div>
+
+            <div class="notification-settings-list">
+
+                {% for item in role_notification_types %}
+
+                    <label class="notification-setting-row">
+
+                        <span class="notification-setting-info">
+
+                            <strong>{{ item.label }}</strong>
+
+                            <small>
+                                {{ item.description }}
+                            </small>
+
+                        </span>
+
+                        <input
+                            type="checkbox"
+                            name="notification_types"
+                            value="{{ item.value }}"
+                            {% if item.checked %}checked{% endif %}
+                        >
+
+                    </label>
+
+                {% empty %}
+
+                    <p class="card-sub">
+                        No notification events are available for this role.
+                    </p>
+
+                {% endfor %}
+
+            </div>
+
+            <div class="settings-actions">
+
+                <button type="submit" class="btn-save">
+                    Save Notification Settings
+                </button>
+
+            </div>
+
+        </form>
+
+
+    {% else %}
+
+        <!-- Empty State -->
+        <div class="settings-card role-empty-state">
+
+            <h2>No Role Selected</h2>
+
+            <p class="card-sub">
+                Select a role above to view its available pages,
+                configure operations, and manage notification settings.
+            </p>
+
+        </div>
+
+    {% endif %}
+
+</div>
+
+{% endblock %}

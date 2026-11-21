@@ -8,7 +8,7 @@ from django.contrib.auth import get_user_model
 from django.utils import timezone
 from django.views.decorators.http import require_http_methods
 
-from accounts.decorators import role_required
+from accounts.decorators import access_required
 from submissions.models import DocumentMetadata, DocumentSubmission
 from admin_staff_portal.realtime import refresh_document_surfaces
 from faculty_portal.realtime import refresh_faculty_submission_bin
@@ -25,23 +25,23 @@ TEMPLATE_DIR = 'admin_staff_portal/core/documents'
 
 User = get_user_model()
 
-@role_required('ADMIN', 'STAFF')
+@access_required('access_document_repository')
 @require_http_methods(['GET'])
 def document_repo_view(request):
     return render_document_list(request, template_name=f'{TEMPLATE_DIR}/document_repo.html')
 
 
-@role_required('ADMIN')
+@access_required('access_document_archive')
 @require_http_methods(['GET'])
 def document_archive_view(request):
     return render_document_list(
         request,
         template_name=f'{TEMPLATE_DIR}/document_archive.html',
-        archived=True,
+        archived=True
     )
 
 
-@role_required('ADMIN')
+@access_required('access_document_repository', 'manage_document_archive')
 @require_http_methods(['POST'])
 def bulk_archive_document_view(request):
     document_ids = _selected_ids(request)
@@ -71,7 +71,7 @@ def bulk_archive_document_view(request):
     return _document_redirect(False)
 
 
-@role_required('ADMIN')
+@access_required('access_document_archive', 'manage_document_archive')
 @require_http_methods(['POST'])
 def bulk_restore_document_view(request):
     document_ids = _selected_ids(request)
@@ -100,7 +100,7 @@ def bulk_restore_document_view(request):
     return _document_redirect(True)
 
 
-@role_required('ADMIN')
+@access_required('access_document_archive', 'manage_document_archive')
 @require_http_methods(['POST'])
 def bulk_permanently_delete_document_view(request):
     document_ids = _selected_ids(request)
@@ -142,7 +142,7 @@ def bulk_permanently_delete_document_view(request):
     return _document_redirect(True)
 
 
-@role_required('ADMIN')
+@access_required('access_document_repository', 'manage_document_archive')
 @require_http_methods(['POST'])
 def archive_document_view(request, document_id):
     request.POST = request.POST.copy()
@@ -150,7 +150,7 @@ def archive_document_view(request, document_id):
     return bulk_archive_document_view(request)
 
 
-@role_required('ADMIN')
+@access_required('access_document_archive', 'manage_document_archive')
 @require_http_methods(['POST'])
 def restore_document_view(request, document_id):
     request.POST = request.POST.copy()
@@ -158,7 +158,7 @@ def restore_document_view(request, document_id):
     return bulk_restore_document_view(request)
 
 
-@role_required('ADMIN')
+@access_required('access_document_archive', 'manage_document_archive')
 @require_http_methods(['POST'])
 def permanently_delete_document_view(request, document_id):
     request.POST = request.POST.copy()
@@ -166,7 +166,7 @@ def permanently_delete_document_view(request, document_id):
     return bulk_permanently_delete_document_view(request)
 
 
-@role_required('ADMIN', 'STAFF')
+@access_required('access_document_repository')
 @require_http_methods(['GET'])
 def document_file_view(request, document_id):
     document = get_object_or_404(

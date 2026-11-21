@@ -12,7 +12,7 @@ from accounts.models import SecurityLoginRecord
 from core.realtime import send_to_session, send_to_user
 from core.date_formatting import format_display_date, format_display_time
 from notifications.models import NotificationPreference
-from notifications.services import create_notif
+from notifications.services import notify_user
 
 
 DEVICE_COOKIE_NAME = 'isubmit_trusted_devices'
@@ -146,9 +146,9 @@ def send_login_security_alert(user, login_info):
     if not login_info['should_alert']:
         return None
 
-    return create_notif(
+    return notify_user(
         user=user,
-        notification_type=(NotificationPreference.NotificationType.SECURITY_NOTIFICATIONS),
+        notification_type=(NotificationPreference.NotificationType.NEW_LOGIN),
         title="New login to your iSubmit account",
         message=(
             "A browser or device not seen on your account within the "

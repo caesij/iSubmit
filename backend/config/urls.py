@@ -21,6 +21,7 @@ urlpatterns = [
     path('admin-portal/', include('admin_staff_portal.urls')),
     path('admin-portal/users/', include('user_management.urls')),
     path('admin-portal/programs/', include('programs.urls')),
+    path('admin-portal/role_management/', include('role_management.urls')),
     path('faculty-portal/', include('faculty_portal.urls')),
     path('notifications/', include('notifications.urls')),
 ]

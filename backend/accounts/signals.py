@@ -6,7 +6,7 @@ from django.utils import timezone
 from axes.signals import user_locked_out
 
 from notifications.models import NotificationPreference
-from notifications.services import notify_roles
+from notifications.services import notify_role_subscribers
 
 
 User = get_user_model()
@@ -44,9 +44,8 @@ def handle_user_lockout(
     if locked_user.is_admin or locked_user.is_superuser:
         return
 
-    notify_roles(
-        roles=[User.Role.ADMIN],
-        notification_type=(NotificationPreference.NotificationType.SECURITY_NOTIFICATIONS),
+    notify_role_subscribers(
+        notification_type=NotificationPreference.NotificationType.ACCOUNT_LOCKED_OUT,
         title='Account Locked Out',
         message=(
             f'{locked_user.get_full_name() or locked_user.email} '

@@ -41,7 +41,6 @@ from admin_staff_portal.views.general.settings_views import (
     preferences_view,
     notification_settings_view,
     account_and_security_view,
-    staff_permissions_view,
 )
 
 from admin_staff_portal.views.general.profile_views import profile_view
@@ -81,7 +80,6 @@ __all__ = [
     'preferences_view',
     'notification_settings_view',
     'account_and_security_view',
-    'staff_permissions_view',
     
     'profile_view',
 ]

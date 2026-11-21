@@ -1,37 +1,46 @@
 from functools import wraps
+
+from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
-from accounts.models import StaffPermission
 
+from role_management.permissions import OPERATION_PARENT_PAGES
 
-def role_required(*roles):
+def access_required(*permission_codenames):
+    User = get_user_model()
+    app_label = User._meta.app_label
+
+    required_codes = list(dict.fromkeys(permission_codenames))
+
+    for codename in permission_codenames:
+        parent_page = OPERATION_PARENT_PAGES.get(codename)
+
+        if parent_page and parent_page not in required_codes:
+            required_codes.append(parent_page)
+
+    permission_names = tuple(f'{app_label}.{codename}' for codename in required_codes)
+
     def decorator(view_func):
         @wraps(view_func)
         @login_required
         def _wrapped(request, *args, **kwargs):
-            user_role = getattr(request.user, 'role', None)
-            
-            if user_role not in roles:
-                raise PermissionDenied('You do not have permission to access this page.')
-                
+            if not request.user.has_perms(permission_names):
+                raise PermissionDenied('You do not have permission to perform this action.')
+
             return view_func(request, *args, **kwargs)
 
         return _wrapped
 
     return decorator
 
-def staff_permission_required(permission_field):
-    def decorator(view_func):
-        @wraps(view_func)
-        def _wrapped(request, *args, **kwargs):
-            if request.user.is_admin:
-                return view_func(request, *args, **kwargs)
 
-            if request.user.is_staff_role:
-                permissions = StaffPermission.get_solo()
-                if not permissions.is_effectively_enabled(permission_field):
-                    raise PermissionDenied('This action has been disabled for staff accounts by an administrator.')
+def superuser_required(view_func):
+    @wraps(view_func)
+    @login_required
+    def _wrapped(request, *args, **kwargs):
+        if not request.user.is_superuser:
+            raise PermissionDenied('Only the system superuser can perform this action.')
 
-            return view_func(request, *args, **kwargs)
-        return _wrapped
-    return decorator
+        return view_func(request, *args, **kwargs)
+
+    return _wrapped
