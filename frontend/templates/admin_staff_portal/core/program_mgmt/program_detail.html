@@ -1,291 +1,63 @@
-
 {% extends 'admin_staff_portal/base.html' %}
-
+{% load static %}
 {% block css_modules %}program-management{% endblock %}
-
 {% block title %}{{ program.short_name }} - Program Management{% endblock %}
 {% block heading %}{{ program.short_name }}{% endblock %}
-
+{% block subtitle %}Manage program sections and curriculum courses.{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/pages/program_detail.css' %}">{% endblock %}
 {% block content %}
-
 <section class="program-detail-page">
-
-    <!-- PROGRAM HEADER -->
-
-    <div class="program-page-header">
-
-        <div>
-            <a href="{% url 'programs:program_list' %}">
-                Back to Programs
-            </a>
-
-            <h2>{{ program.program_name }}</h2>
-
-            <p>
-                {{ program.short_name }} |
-                {{ program.duration_years }} Years
-            </p>
-        </div>
-
-    </div>
-
-
+    <a class="detail-back-link" href="{% url 'programs:program_list' %}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 19-7-7 7-7M5 12h14"/></svg>Back to Programs</a>
+    <header class="detail-heading">
+        <div><h2>{{ program.program_name }}</h2><p>Organize sections and manage the courses included in this program.</p></div>
+        <div class="detail-meta"><span class="detail-badge">{{ program.short_name }}</span><span>{{ program.duration_years }} year{{ program.duration_years|pluralize }}</span></div>
+    </header>
     {% if messages %}
-        <div class="program-toast-stack" aria-live="polite">
-            {% for message in messages %}
-                <div class="program-toast program-toast-{{ message.tags|default:'info' }}"
-                     role="status">
-                    {{ message }}
-                </div>
-            {% endfor %}
-        </div>
+    <div class="detail-messages" aria-live="polite">{% for message in messages %}<div class="detail-message {{ message.tags }}" role="status">{{ message }}</div>{% endfor %}</div>
     {% endif %}
 
-
-    <!-- PROGRAM SECTIONS -->
-
-    <section class="program-detail-card">
-
-        <h3>Program Sections</h3>
-
-        <p>
-            Manage the numbered sections available for each academic year.
-        </p>
-
-
-        <!-- ACADEMIC YEAR FILTER -->
-
-        <form method="get" class="program-filter-form">
-
-            <label for="academic-year-filter">
-                Academic Year
-            </label>
-
-            <select
-                name="academic_year"
-                id="academic-year-filter"
-                onchange="this.form.submit()"
-            >
-
-                {% for year in academic_years %}
-
-                    <option value="{{ year }}"
-                        {% if year == selected_academic_year %}selected{% endif %}>
-                        A.Y. {{ year }}
-                    </option>
-
-                {% endfor %}
-
-            </select>
-
-        </form>
-
-
-        <!-- ADD SECTION -->
-
-        <form method="post"
-              action="{% url 'programs:add_program_section' program.id %}"
-              class="program-section-form">
-
+    <section class="detail-card" aria-labelledby="sections-heading">
+        <header class="detail-card-header">
+            <div><h3 id="sections-heading">Program Sections <span class="detail-count">{{ sections|length }}</span></h3><p>Manage the numbered sections available for each academic year.</p></div>
+            <form method="get" class="detail-filter">
+                <label for="academic-year-filter">Academic year</label>
+                <select name="academic_year" id="academic-year-filter" onchange="this.form.submit()">{% for year in academic_years %}<option value="{{ year }}" {% if year == selected_academic_year %}selected{% endif %}>A.Y. {{ year }}</option>{% endfor %}</select>
+                <noscript><button type="submit" class="detail-secondary">Apply</button></noscript>
+            </form>
+        </header>
+        <form method="post" action="{% url 'programs:add_program_section' program.id %}" class="detail-add-form detail-section-form">
             {% csrf_token %}
-
-            <div class="program-form-field">
-
-                {{ section_form.academic_year.label_tag }}
-                {{ section_form.academic_year }}
-                {{ section_form.academic_year.errors }}
-
-            </div>
-
-            <div class="program-form-field">
-
-                {{ section_form.year_level.label_tag }}
-                {{ section_form.year_level }}
-                {{ section_form.year_level.errors }}
-
-            </div>
-
-            <div class="program-form-field">
-
-                {{ section_form.section.label_tag }}
-                {{ section_form.section }}
-                {{ section_form.section.errors }}
-
-            </div>
-
-            <button type="submit">
-                Add Section
-            </button>
-
+            {{ section_form.non_field_errors }}
+            <div class="detail-field">{{ section_form.academic_year.label_tag }}{{ section_form.academic_year }}{{ section_form.academic_year.errors }}</div>
+            <div class="detail-field">{{ section_form.year_level.label_tag }}{{ section_form.year_level }}{{ section_form.year_level.errors }}</div>
+            <div class="detail-field">{{ section_form.section.label_tag }}{{ section_form.section }}{{ section_form.section.errors }}</div>
+            <button type="submit" class="detail-primary"><span aria-hidden="true">+</span> Add Section</button>
         </form>
-
-
-        <!-- SECTION TABLE -->
-
-        <table class="data-table">
-
-            <thead>
-                <tr>
-                    <th>Year Level</th>
-                    <th>Section</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-
-            <tbody>
-
-                {% for section in sections %}
-
-                    <tr>
-
-                        <td>Year {{ section.year_level }}</td>
-
-                        <td>
-                            {{ program.short_name }}
-                            {{ section.year_level }}-{{ section.section }}
-                        </td>
-
-                        <td>
-
-                            <form method="post"
-                                  action="{% url 'programs:delete_program_section' program.id section.id %}">
-
-                                {% csrf_token %}
-
-                                <button type="submit">
-                                    Delete
-                                </button>
-
-                            </form>
-
-                        </td>
-
-                    </tr>
-
-                {% empty %}
-
-                    <tr>
-                        <td colspan="3">
-                            No sections configured for A.Y. {{ selected_academic_year }}.
-                        </td>
-                    </tr>
-
-                {% endfor %}
-
-            </tbody>
-
-        </table>
-
+        <div class="detail-table-wrap" tabindex="0" role="region" aria-label="Program sections table">
+            <table class="detail-table"><thead><tr><th scope="col">Year Level</th><th scope="col">Section</th><th scope="col">Actions</th></tr></thead>
+                <tbody>{% for section in sections %}<tr>
+                    <td>Year {{ section.year_level }}</td><td><span class="detail-badge">{{ program.short_name }} {{ section.year_level }}-{{ section.section }}</span></td>
+                    <td><form method="post" action="{% url 'programs:delete_program_section' program.id section.id %}">{% csrf_token %}<button type="submit" class="detail-remove" aria-label="Delete section {{ program.short_name }} {{ section.year_level }}-{{ section.section }}">Delete</button></form></td>
+                </tr>{% empty %}<tr><td colspan="3" class="detail-empty"><strong>No sections added yet</strong><span>No sections configured for A.Y. {{ selected_academic_year }}. Add a section above to get started.</span></td></tr>{% endfor %}</tbody>
+            </table>
+        </div>
     </section>
 
-
-    <!-- PROGRAM COURSES -->
-
-    <section class="program-detail-card">
-
-        <h3>Program Courses</h3>
-
-        <p>
-            Manage the courses included in this program.
-        </p>
-
-
-        <!-- ADD COURSE -->
-
-        <form method="post"
-              action="{% url 'programs:attach_program_course' program.id %}">
-
-            {% csrf_token %}
-
-            {{ course_form.course.label_tag }}
-            {{ course_form.course }}
-            {{ course_form.course.errors }}
-
-            <button type="submit">
-                Add Course
-            </button>
-
+    <section class="detail-card" aria-labelledby="courses-heading">
+        <header class="detail-card-header"><div><h3 id="courses-heading">Program Courses <span class="detail-count">{{ program_courses|length }}</span></h3><p>Manage the courses included in this program.</p></div><a href="{% url 'programs:course_list' %}" class="detail-secondary">Manage Course Catalogue</a></header>
+        <form method="post" action="{% url 'programs:attach_program_course' program.id %}" class="detail-add-form detail-course-form">
+            {% csrf_token %}{{ course_form.non_field_errors }}
+            <div class="detail-field">{{ course_form.course.label_tag }}{{ course_form.course }}{{ course_form.course.errors }}</div>
+            <button type="submit" class="detail-primary"><span aria-hidden="true">+</span> Add Course</button>
         </form>
-
-
-        <!-- COURSE TABLE -->
-
-        <table class="data-table">
-
-            <thead>
-                <tr>
-                    <th>Course Code</th>
-                    <th>Course Title</th>
-                    <th>Course Type</th>
-                    <th>Laboratory</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-
-            <tbody>
-
-                {% for item in program_courses %}
-
-                    <tr>
-
-                        <td>{{ item.course.code }}</td>
-
-                        <td>{{ item.course.title }}</td>
-
-                        <td>
-                            {% if item.course.is_ojt %}
-                                OJT
-                            {% else %}
-                                Regular
-                            {% endif %}
-                        </td>
-
-                        <td>
-                            {% if item.course.has_lab %}
-                                Yes
-                            {% else %}
-                                No
-                            {% endif %}
-                        </td>
-
-                        <td>
-
-                            <form method="post"
-                                  action="{% url 'programs:remove_program_course' program.id item.id %}">
-
-                                {% csrf_token %}
-
-                                <button type="submit">
-                                    Remove
-                                </button>
-
-                            </form>
-
-                        </td>
-
-                    </tr>
-
-                {% empty %}
-
-                    <tr>
-                        <td colspan="5">
-                            No courses assigned yet.
-                        </td>
-                    </tr>
-
-                {% endfor %}
-
-            </tbody>
-
-        </table>
-
-
-        <a href="{% url 'programs:course_list' %}">
-            Manage Course Catalogue
-        </a>
-
+        <div class="detail-table-wrap" tabindex="0" role="region" aria-label="Program courses table">
+            <table class="detail-table"><thead><tr><th scope="col">Course Code</th><th scope="col">Course Title</th><th scope="col">Course Type</th><th scope="col">Laboratory</th><th scope="col">Actions</th></tr></thead>
+                <tbody>{% for item in program_courses %}<tr>
+                    <td><span class="detail-badge">{{ item.course.code }}</span></td><td>{{ item.course.title }}</td><td>{% if item.course.is_ojt %}OJT{% else %}Regular{% endif %}</td><td>{% if item.course.has_lab %}Yes{% else %}No{% endif %}</td>
+                    <td><form method="post" action="{% url 'programs:remove_program_course' program.id item.id %}">{% csrf_token %}<button type="submit" class="detail-remove" aria-label="Remove {{ item.course.code }} from this program">Remove</button></form></td>
+                </tr>{% empty %}<tr><td colspan="5" class="detail-empty"><strong>No courses assigned yet</strong><span>Select a course above to add it to this program. Create new courses in the course catalogue.</span></td></tr>{% endfor %}</tbody>
+            </table>
+        </div>
     </section>
-
 </section>
-
 {% endblock %}
