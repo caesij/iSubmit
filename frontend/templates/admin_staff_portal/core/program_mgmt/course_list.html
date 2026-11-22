@@ -1,79 +1,36 @@
-
 {% extends 'admin_staff_portal/base.html' %}
-
+{% load static %}
+{% block css_modules %}program-management{% endblock %}
 {% block title %}Course Catalogue - iSubmit{% endblock %}
 {% block heading %}Course Catalogue{% endblock %}
-
+{% block subtitle %}Manage reusable courses and their classifications across programs.{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/pages/course_catalogue.css' %}">{% endblock %}
 {% block content %}
-
 <section class="course-page">
-
-    <a href="{% url 'programs:program_list' %}">
-        Back to Programs
-    </a>
-
-    <h2>Course Catalogue</h2>
-    <p>Create and manage reusable courses and their classifications.</p>
-
-    <!-- ADD COURSE -->
-
-    <form method="post"
-          action="{% url 'programs:add_course' %}">
-
-        {% csrf_token %}
-
-        {{ course_form.as_p }}
-
-        <button type="submit">Add Course</button>
-
-    </form>
-
-    <!-- COURSE LIST -->
-
-    <table class="data-table">
-
-        <thead>
-            <tr>
-                <th>Course Code</th>
-                <th>Course Title</th>
-                <th>Classification</th>
-                <th>Programs</th>
-            </tr>
-        </thead>
-
-        <tbody>
-
-            {% for course in courses %}
-
-                <tr>
-                    <td>{{ course.code }}</td>
-                    <td>{{ course.title }}</td>
-
-                    <td>
-                        {% if course.is_ojt %}
-                            OJT
-                        {% elif course.has_lab %}
-                            Laboratory
-                        {% else %}
-                            Regular
-                        {% endif %}
-                    </td>
-
-                    <td>{{ course.program_count }}</td>
-                </tr>
-
-            {% empty %}
-
-                <tr>
-                    <td colspan="4">No courses available.</td>
-                </tr>
-
-            {% endfor %}
-
-        </tbody>
-
-    </table>
-
+    <a class="course-back" href="{% url 'programs:program_list' %}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 19-7-7 7-7M5 12h14"/></svg>Back to Programs</a>
+    <header class="course-heading"><div><h2>Course Catalogue</h2><p>Create and manage reusable courses and their classifications.</p></div><span class="course-total">{{ page_obj.paginator.count }} course{{ page_obj.paginator.count|pluralize }}</span></header>
+    {% if messages %}<div class="course-messages" aria-live="polite">{% for message in messages %}<div class="course-message {{ message.tags }}" role="status">{{ message }}</div>{% endfor %}</div>{% endif %}
+    <section class="course-create-card" aria-labelledby="add-course-heading">
+        <h3 id="add-course-heading">Add a course</h3><p>Enter the course details and choose the classifications that apply.</p>
+        <form method="post" action="{% url 'programs:add_course' %}" class="course-create-form">
+            {% csrf_token %}{{ course_form.non_field_errors }}
+            <div class="course-fields">
+                <div class="course-field">{{ course_form.code.label_tag }}{{ course_form.code }}{{ course_form.code.errors }}</div>
+                <div class="course-field">{{ course_form.title.label_tag }}{{ course_form.title }}{{ course_form.title.errors }}</div>
+            </div>
+            <fieldset class="course-classifications"><legend>Course classification</legend>
+                <label class="course-option" for="{{ course_form.is_ojt.id_for_label }}">{{ course_form.is_ojt }}<span><strong>OJT / Practicum course</strong><span>Uses OJT requirements instead of regular exam and teaching material requirements.</span></span></label>
+                <label class="course-option" for="{{ course_form.has_lab.id_for_label }}">{{ course_form.has_lab }}<span><strong>Has laboratory</strong><span>Requires a Laboratory Manual.</span></span></label>
+                {{ course_form.is_ojt.errors }}{{ course_form.has_lab.errors }}
+            </fieldset>
+            <div class="course-form-footer"><p>Leave both unchecked for a regular course.</p><button type="submit" class="course-add-button"><span aria-hidden="true">+</span> Add Course</button></div>
+        </form>
+    </section>
+    <div class="course-table-card" tabindex="0" role="region" aria-label="Course catalogue table">
+        <table class="course-table"><thead><tr><th scope="col">Course Code</th><th scope="col">Course Title</th><th scope="col">Classification</th><th scope="col">Programs</th></tr></thead>
+        <tbody>{% for course in courses %}<tr><td><span class="course-code">{{ course.code }}</span></td><td class="course-title">{{ course.title }}</td><td><div class="course-badges">{% if course.is_ojt %}<span class="course-badge course-ojt">OJT / Practicum</span>{% endif %}{% if course.has_lab %}<span class="course-badge">Laboratory</span>{% endif %}{% if not course.is_ojt and not course.has_lab %}<span class="course-badge course-regular">Regular</span>{% endif %}</div></td><td>{{ course.program_count }}</td></tr>
+        {% empty %}<tr><td colspan="4" class="course-empty"><strong>No courses added yet</strong><span>Add your first course using the form above. Courses can then be assigned to programs.</span></td></tr>{% endfor %}</tbody></table>
+    </div>
+    {% if page_obj.has_other_pages %}<nav class="course-pagination" aria-label="Course catalogue pages">{% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}">Previous</a>{% endif %}<span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>{% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}">Next</a>{% endif %}</nav>{% endif %}
 </section>
-
 {% endblock %}

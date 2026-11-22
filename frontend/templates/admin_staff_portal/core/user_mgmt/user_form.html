@@ -3,170 +3,56 @@
 
 {% block title %}{{ page_title }} - iSubmit{% endblock %}
 
+{% block subtitle %}Create and manage campus user accounts and access.{% endblock %}
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/layout/admin_staff_portal.css' %}">
-
-<style>
-    /* Teaching assignment list */
-    #assignment-forms {
-        display: flex;
-        flex-direction: column;
-        gap: 16px;
-        margin-top: 20px;
-        margin-bottom: 20px;
-    }
-
-    /* Individual assignment card */
-    .assignment-form {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 16px 20px;
-
-        padding: 20px;
-        border: 1px solid #d8dee8;
-        border-radius: 10px;
-        background-color: #ffffff;
-    }
-
-    /* Field groups */
-    .assignment-form .form-group {
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
-        margin: 0;
-    }
-
-    .assignment-form .form-group label {
-        font-size: 14px;
-        font-weight: 600;
-        color: #374151;
-    }
-
-    /* Dropdowns */
-    .assignment-form .form-group select {
-        width: 100%;
-        min-height: 40px;
-        padding: 8px 12px;
-
-        border: 1px solid #d1d5db;
-        border-radius: 6px;
-        background-color: #ffffff;
-
-        font-size: 14px;
-        box-sizing: border-box;
-    }
-
-    .assignment-form .form-group select:focus {
-        outline: none;
-        border-color: #2563eb;
-    }
-
-    /* Hide Django's technical DELETE checkbox.
-       JavaScript can still check it before submission. */
-    #assignment-forms input[name$="-DELETE"] {
-        display: none;
-    }
-
-    /* Remove Row button */
-    .remove-assignment {
-        grid-column: 1 / -1;
-        justify-self: end;
-
-        padding: 8px 14px;
-        border: 1px solid #dc2626;
-        border-radius: 6px;
-
-        background-color: #ffffff;
-        color: #dc2626;
-
-        font-size: 13px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: background-color 0.2s ease;
-    }
-
-    .remove-assignment:hover {
-        background-color: #fef2f2;
-    }
-
-    /* Add Teaching Assignment button */
-    #add-assignment {
-        padding: 10px 16px;
-        border: 1px solid #2563eb;
-        border-radius: 6px;
-
-        background-color: #2563eb;
-        color: #ffffff;
-
-        font-size: 14px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: background-color 0.2s ease;
-    }
-
-    #add-assignment:hover {
-        background-color: #1d4ed8;
-    }
-
-    /* Keep hidden rows hidden */
-    .assignment-form[hidden] {
-        display: none !important;
-    }
-
-    /* Responsive layout */
-    @media (max-width: 600px) {
-        .assignment-form {
-            grid-template-columns: 1fr;
-            padding: 14px;
-        }
-
-        .remove-assignment {
-            grid-column: 1;
-            justify-self: stretch;
-        }
-
-        #add-assignment {
-            width: 100%;
-        }
-    }
-</style>
-
+<link rel="stylesheet" href="{% static 'css/pages/user_form.css' %}">
 {% endblock %}
 
 {% block content %}
 
-<div class="panel-header">
+<div class="user-editor">
+<div class="panel-header user-editor-header">
     <div>
         <h2>{{ page_title }}</h2>
-        <p>Manage user account information.</p>
+        <p>{% if is_update %}Update profile details and account access.{% else %}Set up a campus account with the right role and access.{% endif %}</p>
     </div>
 
     <a href="{% url 'user_management:user_list' %}"
        class="btn btn-ghost">
-        Back to Users
+        {% include "admin_staff_portal/core/user_mgmt/_form_icon.html" with icon="users" %} Back to Users
     </a>
 </div>
 
-<div class="form-container">
+<div class="user-form-container">
 
     <form method="POST">
         {% csrf_token %}
 
         {{ form.non_field_errors }}
 
+        <section class="user-form-card">
+        <div class="user-section-heading"><span class="user-section-icon">{% include "admin_staff_portal/core/user_mgmt/_form_icon.html" with icon="shield" %}</span><div><h3>Role & access</h3><p>Choose the role for this account.</p></div></div>
+        <div class="user-field-grid">
         <div class="form-group">
             {{ form.role.label_tag }}
             {{ form.role }}
             {{ form.role.errors }}
         </div>
 
+        {% if form.permission_role %}
         <div class="form-group">
             {{ form.permission_role.label_tag }}
             {{ form.permission_role }}
             {{ form.permission_role.errors }}
         </div>
 
-        <h3>Personal Information</h3>
+        {% endif %}
+        </div>
+        </section>
+        <section class="user-form-card">
+        <div class="user-section-heading"><span class="user-section-icon">{% include "admin_staff_portal/core/user_mgmt/_form_icon.html" with icon="user" %}</span><div><h3>Personal information</h3><p>Enter the user's name and campus contact details.</p></div></div>
+        <div class="user-field-grid">
+
 
         <div class="form-group">
             {{ form.first_name.label_tag }}
@@ -198,11 +84,14 @@
             {{ form.email.errors }}
         </div>
 
-        <div id="faculty-fields"
+        </div>
+        </section>
+        <section class="user-form-card" id="faculty-fields"
              data-options-url="{% url 'user_management:assignment_options' %}"
              {% if not show_faculty_fields %}hidden{% endif %}>
 
-            <h3>Faculty Information</h3>
+            <div class="user-section-heading"><span class="user-section-icon">{% include "admin_staff_portal/core/user_mgmt/_form_icon.html" with icon="book" %}</span><div><h3>Faculty information</h3><p>Set the faculty type, programs, and teaching assignments.</p></div></div>
+            <div class="user-field-grid">
 
             <div class="form-group">
                 {{ form.faculty_type.label_tag }}
@@ -221,7 +110,8 @@
                 </small>
             </div>
 
-            <h3>Teaching Assignments</h3>
+            </div>
+            <h4 class="assignment-heading">Teaching assignments</h4>
 
             <p>
                 Add the courses and sections assigned to this faculty member.
@@ -278,7 +168,7 @@
                         {% endif %}
 
                         <button type="button" class="remove-assignment">
-                            Remove Row
+                            {% include "admin_staff_portal/core/user_mgmt/_form_icon.html" with icon="trash" %} Remove assignment
                         </button>
 
                     </div>
@@ -288,7 +178,7 @@
             </div>
 
             <button type="button" id="add-assignment">
-                Add Teaching Assignment
+                {% include "admin_staff_portal/core/user_mgmt/_form_icon.html" with icon="plus" %} Add teaching assignment
             </button>
 
             {% with empty_form=assignment_formset.empty_form %}
@@ -338,7 +228,7 @@
                         {% endif %}
 
                         <button type="button" class="remove-assignment">
-                            Remove Row
+                            {% include "admin_staff_portal/core/user_mgmt/_form_icon.html" with icon="trash" %} Remove assignment
                         </button>
 
                     </div>
@@ -347,18 +237,25 @@
 
             {% endwith %}
 
-        </div>
+        </section>
 
-        <h3>Account Settings</h3>
+        <section class="user-form-card">
+        <div class="user-section-heading"><span class="user-section-icon">{% include "admin_staff_portal/core/user_mgmt/_form_icon.html" with icon="settings" %}</span><div><h3>Account status</h3><p>Control whether this user can sign in.</p></div></div>
+        <div class="user-field-grid">
 
         <div class="form-group">
-            {{ form.is_active.label_tag }}
+            <label for="{{ form.is_active.id_for_label }}">Account status</label>
             {{ form.is_active }}
             {{ form.is_active.errors }}
         </div>
 
+        </div>
+        </section>
         <div class="form-actions">
+            <p>Review the details before {% if is_update %}saving your changes{% else %}creating the account{% endif %}.</p>
+            <a href="{% url 'user_management:user_list' %}" class="user-cancel">{% include "admin_staff_portal/core/user_mgmt/_form_icon.html" with icon="close" %} Cancel</a>
             <button type="submit" class="action-button">
+                {% include "admin_staff_portal/core/user_mgmt/_form_icon.html" with icon="save" %}
                 {% if is_update %}
                     Save Changes
                 {% else %}
@@ -369,6 +266,7 @@
 
     </form>
 
+</div>
 </div>
 
 <script>
@@ -580,7 +478,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function updateFacultyFields() {
 
-        const isFaculty = roleField.value === 'FACULTY';
+        const facultyRoleIds = [{% for role in form.fields.role.queryset %}{% if role.is_default and role.code == 'FACULTY' %}'{{ role.pk }}',{% endif %}{% endfor %}];
+        const isFaculty = facultyRoleIds.includes(roleField.value);
 
         facultyFields.hidden = !isFaculty;
 

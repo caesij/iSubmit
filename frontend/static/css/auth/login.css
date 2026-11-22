@@ -157,6 +157,10 @@ html, body {
   position: relative;
 }
 
+.password-row input {
+  padding-right: 54px;
+}
+
 .input-with-icon .input-icon {
   position: absolute;
   left: 14px;

@@ -1,5 +1,6 @@
 
 {% extends 'admin_staff_portal/base.html' %}
+{% load static %}
 
 {% block css_modules %}settings role-management-page{% endblock %}
 
@@ -9,189 +10,14 @@
 Create roles, configure page access and operations, and choose which notification events each role can receive.
 {% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/pages/role_management.css' %}">
+<script src="{% static 'js/role-management.js' %}" defer></script>
+{% endblock %}
+
 {% block content %}
 
-<style>
-    /* Role filters */
-    .role-filter-form .settings-actions {
-        display: grid;
-        grid-template-columns: minmax(150px, 1fr) minmax(200px, 2fr) auto auto;
-        align-items: end;
-        gap: 12px;
-    }
 
-    .role-filter-field {
-        display: flex;
-        flex-direction: column;
-        gap: 7px;
-        min-width: 0;
-    }
-
-    .role-list {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 10px;
-        margin-top: 20px;
-    }
-
-    .role-list .settings-tab {
-        text-decoration: none;
-    }
-
-    /* Permission page cards */
-    .permission-page-card {
-        border: 1px solid var(--border-color, #dedede);
-        border-radius: 10px;
-        margin-bottom: 14px;
-        overflow: hidden;
-    }
-
-    .permission-page-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 20px;
-        padding: 17px 20px;
-        cursor: pointer;
-    }
-
-    .permission-page-info {
-        display: flex;
-        flex-direction: column;
-        gap: 5px;
-    }
-
-    .permission-page-info strong {
-        font-size: 15px;
-        font-weight: 600;
-    }
-
-    .permission-page-info small {
-        font-size: 13px;
-        opacity: 0.7;
-    }
-
-    .permission-page-header input {
-        flex-shrink: 0;
-    }
-
-    /* Operations */
-    .permission-operations {
-        margin: 0 20px 12px 36px;
-        padding-top: 10px;
-        border-top: 1px solid var(--border-color, #dedede);
-    }
-
-    .permission-operations-heading {
-        margin-bottom: 8px;
-        font-size: 11px;
-        font-weight: 700;
-        letter-spacing: 0.07em;
-        text-transform: uppercase;
-        opacity: 0.65;
-    }
-
-    .permission-operations .permission-row {
-        padding: 11px 0;
-        border-bottom: 1px solid var(--border-color, #dedede);
-    }
-
-    .permission-operations .permission-row:last-child {
-        border-bottom: none;
-    }
-
-    .permission-row {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 16px;
-    }
-
-    .permission-row > span {
-        display: flex;
-        flex-direction: column;
-        gap: 4px;
-    }
-
-    .permission-row small {
-        font-size: 12px;
-        opacity: 0.7;
-    }
-
-    .permission-row input:disabled {
-        opacity: 0.4;
-        cursor: not-allowed;
-    }
-
-    /* Empty state */
-    .role-empty-state {
-        text-align: center;
-        padding: 35px 20px;
-    }
-
-    /* Notification Settings */
-    .notification-settings-card {
-        margin-top: 20px;
-    }
-
-    .notification-settings-list {
-        margin-top: 18px;
-    }
-
-    .notification-setting-row {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 20px;
-        padding: 16px 0;
-        border-bottom: 1px solid var(--border-color, #dedede);
-        cursor: pointer;
-    }
-
-    .notification-setting-row:last-child {
-        border-bottom: none;
-    }
-
-    .notification-setting-info {
-        display: flex;
-        flex-direction: column;
-        gap: 5px;
-    }
-
-    .notification-setting-info strong {
-        font-size: 14px;
-        font-weight: 600;
-    }
-
-    .notification-setting-info small {
-        font-size: 12px;
-        opacity: 0.7;
-    }
-
-    .notification-setting-row input {
-        flex-shrink: 0;
-    }
-
-    /* Responsive */
-    @media (max-width: 768px) {
-        .role-filter-form .settings-actions {
-            grid-template-columns: 1fr;
-        }
-
-        .permission-page-header {
-            padding: 14px;
-        }
-
-        .permission-operations {
-            margin-left: 20px;
-            margin-right: 14px;
-        }
-
-        .notification-setting-row {
-            gap: 12px;
-        }
-    }
-</style>
 
 
 <div class="faculty-settings role-management-page">
@@ -201,7 +27,7 @@ Create roles, configure page access and operations, and choose which notificatio
         {% csrf_token %}
         <input type="hidden" name="action" value="create_role">
 
-        <h2>Create a Role</h2>
+        <h2><span class="role-section-icon">{% include "admin_staff_portal/core/user_mgmt/_form_icon.html" with icon="plus" %}</span>Create a role</h2>
 
         <p class="card-sub">
             Create a custom role and configure the page access
@@ -209,7 +35,7 @@ Create roles, configure page access and operations, and choose which notificatio
         </p>
 
         <div class="settings-actions">
-            <label for="new-role-name">Role name</label>
+            <div class="role-name-field"><label for="new-role-name">Role name</label>
 
             <input
                 id="new-role-name"
@@ -220,8 +46,9 @@ Create roles, configure page access and operations, and choose which notificatio
                 required
             >
 
+            </div>
             <button type="submit" class="btn-save">
-                Create Role
+                {% include "admin_staff_portal/core/user_mgmt/_form_icon.html" with icon="plus" %} Create Role
             </button>
         </div>
     </form>
@@ -230,7 +57,7 @@ Create roles, configure page access and operations, and choose which notificatio
     <!-- Role Selection and Filtering -->
     <div class="settings-card role-selector-card">
 
-        <h2>Select a Role</h2>
+        <h2><span class="role-section-icon">{% include "admin_staff_portal/core/user_mgmt/_form_icon.html" with icon="users" %}</span>Select a role</h2>
 
         <p class="card-sub">
             Filter the available roles or search for a specific role
@@ -281,11 +108,11 @@ Create roles, configure page access and operations, and choose which notificatio
                 </div>
 
                 <button type="submit" class="btn-save">
-                    Apply Filters
+                    {% include "admin_staff_portal/core/user_mgmt/_form_icon.html" with icon="settings" %} Apply Filters
                 </button>
 
                 <a href="{{ request.path }}" class="btn-cancel">
-                    Clear
+                    {% include "admin_staff_portal/core/user_mgmt/_form_icon.html" with icon="close" %} Clear
                 </a>
 
             </div>
@@ -299,13 +126,14 @@ Create roles, configure page access and operations, and choose which notificatio
                 <a
                     href="?role={{ role.id }}&role_type={{ role_type }}&q={{ search_query|urlencode }}"
                     class="settings-tab{% if role.selected %} active{% endif %}"
+                    {% if role.selected %}aria-current="true"{% endif %}
                 >
-                    {{ role.label }}
+                    {% include "admin_staff_portal/core/user_mgmt/_form_icon.html" with icon="shield" %} <span>{{ role.label }}</span>
 
                     {% if role.is_default %}
-                        <small>(Default)</small>
+                        <small>Default</small>
                     {% else %}
-                        <small>(Custom)</small>
+                        <small>Custom</small>
                     {% endif %}
                 </a>
 
@@ -331,7 +159,7 @@ Create roles, configure page access and operations, and choose which notificatio
 
                 <div class="role-details-header">
                     <div>
-                        <h2>{{ selected_role_name }}</h2>
+                        <h2><span class="role-section-icon">{% include "admin_staff_portal/core/user_mgmt/_form_icon.html" with icon="shield" %}</span>{{ selected_role_name }}</h2>
 
                         <p class="card-sub">
                             Custom role
@@ -340,7 +168,7 @@ Create roles, configure page access and operations, and choose which notificatio
                 </div>
 
                 <!-- Rename Role -->
-                <form method="POST" class="settings-actions">
+                <form method="POST" class="settings-actions role-rename-form">
                     {% csrf_token %}
 
                     <input
@@ -355,7 +183,7 @@ Create roles, configure page access and operations, and choose which notificatio
                         value="{{ selected_role.pk }}"
                     >
 
-                    <label for="edit-role-name">
+                    <div class="role-name-field"><label for="edit-role-name">
                         Rename Role
                     </label>
 
@@ -368,8 +196,9 @@ Create roles, configure page access and operations, and choose which notificatio
                         required
                     >
 
+                    </div>
                     <button type="submit" class="btn-save">
-                        Rename Role
+                        {% include "admin_staff_portal/core/user_mgmt/_form_icon.html" with icon="save" %} Rename Role
                     </button>
                 </form>
 
@@ -408,7 +237,7 @@ Create roles, configure page access and operations, and choose which notificatio
                         >
 
                         <button type="submit" class="btn-danger">
-                            Delete Role
+                            {% include "admin_staff_portal/core/user_mgmt/_form_icon.html" with icon="trash" %} Delete Role
                         </button>
                     </form>
 
@@ -438,7 +267,7 @@ Create roles, configure page access and operations, and choose which notificatio
 
             <div class="permissions-header">
 
-                <h2>{{ selected_role_name }} Permissions</h2>
+                <h2><span class="role-section-icon">{% include "admin_staff_portal/core/user_mgmt/_form_icon.html" with icon="shield" %}</span>{{ selected_role_name }} permissions</h2>
 
                 {% if selected_role.is_default %}
 
@@ -545,7 +374,7 @@ Create roles, configure page access and operations, and choose which notificatio
             <div class="settings-actions">
 
                 <button type="submit" class="btn-save">
-                    Save Role Permissions
+                    {% include "admin_staff_portal/core/user_mgmt/_form_icon.html" with icon="save" %} Save Role Permissions
                 </button>
 
             </div>
@@ -572,7 +401,7 @@ Create roles, configure page access and operations, and choose which notificatio
 
             <div class="permissions-header">
 
-                <h2>{{ selected_role_name }} Notification Settings</h2>
+                <h2><span class="role-section-icon"><img src="{% static 'images/Icon - Notifications.svg' %}" alt=""></span>{{ selected_role_name }} notification settings</h2>
 
                 <p class="card-sub">
                     Choose which specific notification events users assigned
@@ -621,7 +450,7 @@ Create roles, configure page access and operations, and choose which notificatio
             <div class="settings-actions">
 
                 <button type="submit" class="btn-save">
-                    Save Notification Settings
+                    {% include "admin_staff_portal/core/user_mgmt/_form_icon.html" with icon="save" %} Save Notification Settings
                 </button>
 
             </div>
@@ -634,7 +463,7 @@ Create roles, configure page access and operations, and choose which notificatio
         <!-- Empty State -->
         <div class="settings-card role-empty-state">
 
-            <h2>No Role Selected</h2>
+            <span class="role-empty-icon">{% include "admin_staff_portal/core/user_mgmt/_form_icon.html" with icon="shield" %}</span><h2>No role selected</h2>
 
             <p class="card-sub">
                 Select a role above to view its available pages,
