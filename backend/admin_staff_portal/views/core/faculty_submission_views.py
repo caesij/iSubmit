@@ -18,11 +18,12 @@ from notifications.services import build_approval_email, notify_user
 from notifications.models import NotificationPreference
 from submissions.models import DocumentSubmission, DocumentRevision, active_q
 from role_management.models import Role
+from accounts.models import FacultyProfile
 
 from submissions.helpers import (
     COMPLIANCE_CHOICES,
     annotate_upload_progress,
-    get_target_faculty_queryset,
+    get_target_faculty_queryset
 )
 
 from submissions.forms import DocumentReviewForm
@@ -72,7 +73,7 @@ def faculty_submissions_list(request):
             Q(pk__in=matching_documents.values('faculty'))
         )
     if faculty_type:
-        faculty_members = faculty_members.filter(faculty_type=faculty_type)
+        faculty_members = faculty_members.filter(faculty_profile__faculty_type=faculty_type)
     if completion:
         faculty_members = faculty_members.filter(compliance_status=completion)
     if status:
@@ -84,7 +85,7 @@ def faculty_submissions_list(request):
         'submissions': page_obj,
         'page_obj': page_obj,
         'is_paginated': page_obj.has_other_pages(),
-        'faculty_type_choices': User._meta.get_field('faculty_type').choices,
+        'faculty_type_choices': FacultyProfile.FacultyType.choices,
         'completion_choices': COMPLIANCE_CHOICES,
         'status_choices': DocumentSubmission.SubmissionStatus.choices
     }
