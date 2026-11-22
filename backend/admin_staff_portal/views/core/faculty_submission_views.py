@@ -19,14 +19,15 @@ from notifications.models import NotificationPreference
 from submissions.models import DocumentSubmission, DocumentRevision, active_q
 from role_management.models import Role
 from accounts.models import FacultyProfile
+from admin_staff_portal.helpers.submissions import get_active_submissions
+from submissions.forms import DocumentReviewForm
+from django.db.models.functions import Coalesce
 
 from submissions.helpers import (
     COMPLIANCE_CHOICES,
     annotate_upload_progress,
     get_target_faculty_queryset
 )
-
-from submissions.forms import DocumentReviewForm
 
 from faculty_portal.realtime import (
     refresh_faculty_dashboard,
@@ -44,28 +45,44 @@ User = get_user_model()
 @access_required('access_faculty_submissions')
 @require_http_methods(['GET'])
 def faculty_submissions_list(request):
-    query = request.GET.get('q')
-    faculty_type = request.GET.get('faculty_type')
-    completion = request.GET.get('completion')
-    status = request.GET.get('status')
+    query = request.GET.get('q', '').strip()
+    faculty_type = request.GET.get('faculty_type', '').strip()
+    completion = request.GET.get('completion', '').strip()
+    status = request.GET.get('status', '').strip()
+    
+    if faculty_type not in FacultyProfile.FacultyType.values:
+        faculty_type = ''
 
-    active_submissions = DocumentSubmission.objects.filter(active_q('requirement__'))
+    if completion not in dict(COMPLIANCE_CHOICES):
+        completion = ''
+
+    if status not in DocumentSubmission.SubmissionStatus.values:
+        status = ''
+
+    active_submissions = get_active_submissions()
 
     latest_submission_date = (
         active_submissions
         .filter(faculty=OuterRef('pk'))
-        .order_by('-initially_submitted_at')
-        .values('initially_submitted_at')[:1]
+        .annotate(
+            latest_activity=Coalesce(
+                'resubmitted_at',
+                'initially_submitted_at'
+            )
+        )
+        .order_by('-latest_activity')
+        .values('latest_activity')[:1]
     )
 
     faculty_members = (
         annotate_upload_progress(get_target_faculty_queryset())
+        .select_related('faculty_profile')
         .annotate(latest_submitted_at=Subquery(latest_submission_date))
         .order_by('last_name', 'first_name')
     )
 
     if query:
-        matching_documents = DocumentSubmission.objects.filter(requirement__requirement_title__icontains=query)
+        matching_documents = get_active_submissions().filter(requirement__requirement_title__icontains=query)
         faculty_members = faculty_members.filter(
             Q(first_name__icontains=query) |
             Q(last_name__icontains=query) |
@@ -103,7 +120,7 @@ def faculty_submission_bins_view(request, faculty_id):
         role__is_default=True
     )
 
-    all_submissions = DocumentSubmission.objects.filter(active_q('requirement__'), faculty=faculty_member)
+    all_submissions = get_active_submissions().filter(faculty=faculty_member)
 
     submissions = all_submissions.select_related(*TITLE_RELATED, 'reviewed_by').order_by(
         '-requirement__period__deadline',
@@ -152,7 +169,7 @@ def faculty_submission_bins_view(request, faculty_id):
 @require_http_methods(['GET'])
 def review_submission(request, submission_id):
     submission = get_object_or_404(
-        DocumentSubmission.objects.select_related(*TITLE_RELATED, 'faculty', 'reviewed_by', 'approved_by'),
+        get_active_submissions().select_related(*TITLE_RELATED, 'faculty', 'reviewed_by', 'approved_by'),
         pk=submission_id
     )
     
@@ -169,7 +186,7 @@ def review_submission(request, submission_id):
 @require_http_methods(['POST'])
 def mark_under_review_view(request, submission_id):
     with transaction.atomic():
-        submission = get_object_or_404(DocumentSubmission.objects.select_for_update(), pk=submission_id)
+        submission = get_object_or_404(get_active_submissions().select_for_update(), pk=submission_id)
 
         if submission.status not in (
             DocumentSubmission.SubmissionStatus.SUBMITTED,
@@ -209,7 +226,7 @@ def mark_under_review_view(request, submission_id):
 @require_http_methods(['POST'])
 def mark_reviewed_view(request, submission_id):
     with transaction.atomic():
-        submission = get_object_or_404(DocumentSubmission.objects.select_for_update(), pk=submission_id)
+        submission = get_object_or_404(get_active_submissions().select_for_update(), pk=submission_id)
 
         if submission.status != DocumentSubmission.SubmissionStatus.UNDER_REVIEW:
             messages.info(request, 'This submission was already updated by someone else.')
@@ -248,7 +265,7 @@ def mark_reviewed_view(request, submission_id):
 @require_http_methods(['POST'])
 def mark_needs_revision_view(request, submission_id):
     with transaction.atomic():
-        submission = get_object_or_404(DocumentSubmission.objects.select_for_update(),pk=submission_id)
+        submission = get_object_or_404(get_active_submissions().select_for_update(),pk=submission_id)
 
         if submission.status != DocumentSubmission.SubmissionStatus.UNDER_REVIEW:
             messages.info(request, 'This submission was already updated by someone else.')
