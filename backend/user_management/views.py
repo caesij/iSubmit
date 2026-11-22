@@ -22,6 +22,7 @@ from core.search_utils import all_terms_query
 from programs.models import Program
 from submissions.models import ClassAssignment
 from user_management.forms import UserManagementForm, ClassAssignmentFormSet
+from role_management.services import assign_user_permission_role
 
 
 User = get_user_model()
@@ -158,34 +159,30 @@ def user_list_view(request):
     return render(request, f'{TEMPLATE_DIR}/user_list.html', context)
 
 
+
 @access_required('access_user_management')
 @require_http_methods(['GET', 'POST'])
 def user_form_view(request, pk=None):
-    if pk:
-        if not request.user.has_perm('accounts.edit_users'):
-            raise PermissionDenied
-    else:
+    is_new = pk is None
+
+    if is_new:
         if not request.user.has_perm('accounts.add_users'):
             raise PermissionDenied
-    
-    if pk:
-        target_user = get_object_or_404(get_manageable_users(request.user), pk=pk)
-    else:
+
         target_user = User()
+    else:
+        if not request.user.has_perm('accounts.edit_users'):
+            raise PermissionDenied
+
+        target_user = get_object_or_404(get_manageable_users(request.user), pk=pk)
 
     if request.method == 'POST':
-        form = UserManagementForm(
-            request.POST,
-            instance=target_user,
-            request_user=request.user
-        )
-
+        form = UserManagementForm(request.POST, instance=target_user, request_user=request.user)
         form_valid = form.is_valid()
-
     else:
         initial = {}
 
-        if not pk:
+        if is_new:
             faculty_role = Role.objects.filter(is_default=True, code=Role.Code.FACULTY).first()
 
             if faculty_role:
@@ -201,33 +198,28 @@ def user_form_view(request, pk=None):
 
     selected_role_value = form['role'].value()
 
-    selected_role = None
-
-    if selected_role_value:
-        selected_role = form.fields['role'].queryset.filter(pk=selected_role_value).first()
+    selected_role = (
+        form.fields['role'].queryset.filter(
+            pk=selected_role_value
+        ).first()
+        if selected_role_value
+        else None
+    )
 
     show_faculty_fields = is_faculty_role(selected_role)
 
-    # Determine which programs can be used by the assignment formset
+    # Determine programs available to teaching assignments
     if request.method == 'POST':
-
         if form_valid and show_faculty_fields:
             allowed_programs = form.cleaned_data.get('assigned_programs', Program.objects.none())
 
         elif show_faculty_fields:
-            assigned_program_field = form.fields.get('assigned_programs')
-
-            if assigned_program_field:
-                allowed_programs = assigned_program_field.queryset.filter(
-                    pk__in=request.POST.getlist('assigned_programs')
-                )
-            else:
-                allowed_programs = Program.objects.none()
+            allowed_programs = form.fields['assigned_programs'].queryset.filter(pk__in=request.POST.getlist('assigned_programs'))
 
         else:
             allowed_programs = Program.objects.none()
 
-    elif target_user.pk and show_faculty_fields:
+    elif not is_new and show_faculty_fields:
         faculty_profile = getattr(target_user, 'faculty_profile', None)
 
         if faculty_profile:
@@ -238,7 +230,7 @@ def user_form_view(request, pk=None):
     else:
         allowed_programs = Program.objects.none()
 
-    if target_user.pk and show_faculty_fields:
+    if not is_new and show_faculty_fields:
         assignment_queryset = (
             ClassAssignment.objects.filter(
                 faculty=target_user,
@@ -271,7 +263,6 @@ def user_form_view(request, pk=None):
         assignment_formset_valid = assignment_formset.is_valid()
 
     if form_valid and assignment_formset_valid:
-        is_new = target_user.pk is None
 
         user = form.save(commit=False)
         selected_role = form.cleaned_data['role']
@@ -288,17 +279,18 @@ def user_form_view(request, pk=None):
             )
 
             password = ''.join(secrets.choice(alphabet) for _ in range(12))
+
             user.set_password(password)
 
         with transaction.atomic():
-
             user.save()
+
+            assign_user_permission_role(user, selected_role)
 
             if is_faculty_role(selected_role):
                 faculty_profile, _ = FacultyProfile.objects.get_or_create(user=user)
 
                 faculty_profile.faculty_type = form.cleaned_data['faculty_type']
-
                 faculty_profile.save()
 
                 faculty_profile.assigned_programs.set(form.cleaned_data['assigned_programs'])
@@ -311,12 +303,10 @@ def user_form_view(request, pk=None):
                 assignment_formset.save()
             else:
                 FacultyProfile.objects.filter(user=user).delete()
-
                 user.class_assignments.all().delete()
 
         if is_new:
             subject = 'Your iSubmit Account Has Been Created'
-
             message = (
                 f'Greetings {user.get_full_name()}!\n\n'
                 'Your account for the iSubmit portal has been successfully created.\n\n'
@@ -334,7 +324,7 @@ def user_form_view(request, pk=None):
             )
 
             try:
-                send_mail(
+                sent_count = send_mail(
                     subject,
                     message,
                     settings.DEFAULT_FROM_EMAIL,
@@ -342,23 +332,27 @@ def user_form_view(request, pk=None):
                     fail_silently=False
                 )
 
-                messages.success(
-                    request,
-                    f'Account created for {user.email}. Welcome email sent successfully.'
-                )
+                if sent_count == 1:
+                    messages.success(
+                        request,
+                        f'Account created for {user.email}. Welcome email sent successfully.'
+                    )
+                else:
+                    messages.warning(
+                        request,
+                        f'Account created for {user.email}, but the email '
+                        'provider did not confirm delivery. Please check your email provider configuration.'
+                    )
 
             except Exception:
                 messages.warning(
                     request,
-                    f'Account created for {user.email}, but the welcome email could not be sent. '
-                    'Please share the credentials securely.'
+                    f'Account created for {user.email}, but the welcome '
+                    'email could not be sent. Please check your email provider configuration.'
                 )
 
         else:
-            messages.success(
-                request,
-                f'Account for {user.email} updated successfully.'
-            )
+            messages.success(request, f'Account for {user.email} updated successfully.')
 
         url = reverse('user_management:user_list')
 
@@ -367,10 +361,10 @@ def user_form_view(request, pk=None):
     context = {
         'form': form,
         'assignment_formset': assignment_formset,
-        'page_title': 'Edit User' if pk else 'Add User',
-        'is_update': bool(pk),
+        'page_title': 'Edit User' if not is_new else 'Add User',
+        'is_update': not is_new,
         'object': target_user,
-        'show_faculty_fields': show_faculty_fields,
+        'show_faculty_fields': show_faculty_fields
     }
 
     return render(request, f'{TEMPLATE_DIR}/user_form.html', context)

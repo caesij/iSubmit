@@ -4,9 +4,9 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.http import Http404
+from django.core.exceptions import PermissionDenied
 
 from accounts.forms import CustomLoginForm
-from accounts.utils import validate_portal_access
 from role_management.models import Role
 
 from accounts.security import (
@@ -28,80 +28,67 @@ User = get_user_model()
 
 
 def redirect_user_by_role(user):
-    preferred_dashboards = {
-        Role.Code.ADMIN: (
-            ('accounts.access_admin_dashboard', 'admin_staff_portal:admin_dashboard'),
-            ('accounts.access_staff_dashboard', 'admin_staff_portal:staff_dashboard'),
-            ('accounts.access_faculty_dashboard', 'faculty_portal:dashboard'),
-        ),
-        
-        Role.Code.STAFF: (
-            ('accounts.access_staff_dashboard', 'admin_staff_portal:staff_dashboard'),
-            ('accounts.access_admin_dashboard', 'admin_staff_portal:admin_dashboard'),
-            ('accounts.access_faculty_dashboard', 'faculty_portal:dashboard'),
-        ),
-        
-        Role.Code.FACULTY: (
-            ('accounts.access_faculty_dashboard', 'faculty_portal:dashboard'),
-            ('accounts.access_admin_dashboard', 'admin_staff_portal:admin_dashboard'),
-            ('accounts.access_staff_dashboard', 'admin_staff_portal:staff_dashboard'),
-        )
-    }
+    role = user.role
+    role_code = role.code if role else None
 
-    for permission, url_name in preferred_dashboards.get(user.role, ()):
-        if user.has_perm(permission):
-            return redirect(url_name)
+    if role and role.is_faculty_role:
+        preferred_dashboards = (('accounts.access_faculty_dashboard', 'faculty_portal:dashboard'))
 
-    shared_pages = (
-        ('accounts.access_user_management', 'user_management:user_list'),
-        ('accounts.access_program_management', 'programs:program_list'),
-        ('accounts.access_submission_requirements', 'admin_staff_portal:requirements_list'),
-        ('accounts.access_faculty_submissions', 'admin_staff_portal:faculty_submissions_list'),
-        ('accounts.access_document_repository', 'admin_staff_portal:document_repo'),
-        ('accounts.access_document_archive', 'admin_staff_portal:document_archive'),
-        ('accounts.access_faculty_submission_bin', 'faculty_portal:upload_files'),
-        ('accounts.access_my_submissions', 'faculty_portal:my_submissions'),
-        ('accounts.access_my_documents', 'faculty_portal:my_documents'),
-    )
+        fallback_pages = (
+            ('accounts.access_faculty_submission_bin', 'faculty_portal:upload_files'),
+            ('accounts.access_my_submissions', 'faculty_portal:my_submissions'),
+            ('accounts.access_my_documents', 'faculty_portal:my_documents'),
 
-    personal_pages = {
-        Role.Code.ADMIN: (
-            ('accounts.access_preferences', 'admin_staff_portal:preferences'),
-            ('accounts.access_notification_settings', 'admin_staff_portal:notification_settings'),
-            ('accounts.access_account_security', 'admin_staff_portal:account_and_security'),
-            ('accounts.access_profile', 'admin_staff_portal:profile'),
-        ),
-        
-        Role.Code.STAFF: (
-            ('accounts.access_preferences', 'admin_staff_portal:preferences'),
-            ('accounts.access_notification_settings', 'admin_staff_portal:notification_settings'),
-            ('accounts.access_account_security', 'admin_staff_portal:account_and_security'),
-            ('accounts.access_profile', 'admin_staff_portal:profile'),
-        ),
-        
-        Role.Code.FACULTY: (
             ('accounts.access_preferences', 'faculty_portal:preferences'),
             ('accounts.access_notification_settings', 'faculty_portal:notification_settings'),
             ('accounts.access_account_security', 'faculty_portal:account_and_security'),
-            ('accounts.access_profile', 'faculty_portal:profile'),
-        ),
-    }
+            ('accounts.access_profile', 'faculty_portal:profile')
+        )
 
-    fallback_pages = shared_pages + personal_pages.get(user.role, ())
+    else:
+        admin_dashboards = (
+            ('accounts.access_admin_dashboard', 'admin_staff_portal:admin_dashboard'),
+            ('accounts.access_staff_dashboard', 'admin_staff_portal:staff_dashboard')
+        )
+
+        staff_dashboards = (
+            ('accounts.access_staff_dashboard', 'admin_staff_portal:staff_dashboard'),
+            ('accounts.access_admin_dashboard', 'admin_staff_portal:admin_dashboard')
+        )
+
+        preferred_dashboards = {
+            Role.Code.ADMIN: admin_dashboards,
+            Role.Code.STAFF: staff_dashboards
+        }.get(role_code, admin_dashboards)
+
+        fallback_pages = (
+            ('accounts.access_user_management', 'user_management:user_list'),
+            ('accounts.access_program_management', 'programs:program_list'),
+            ('accounts.access_submission_requirements', 'admin_staff_portal:requirements_list'),
+            ('accounts.access_faculty_submissions', 'admin_staff_portal:faculty_submissions_list'),
+            ('accounts.access_document_repository', 'admin_staff_portal:document_repo'),
+            ('accounts.access_document_archive', 'admin_staff_portal:document_archive'),
+
+            ('accounts.access_preferences', 'admin_staff_portal:preferences'),
+            ('accounts.access_notification_settings', 'admin_staff_portal:notification_settings'),
+            ('accounts.access_account_security', 'admin_staff_portal:account_and_security'),
+            ('accounts.access_profile', 'admin_staff_portal:profile')
+        )
+
+    for permission, url_name in preferred_dashboards:
+        if user.has_perm(permission):
+            return redirect(url_name)
 
     for permission, url_name in fallback_pages:
         if user.has_perm(permission):
             return redirect(url_name)
 
-    from django.core.exceptions import PermissionDenied
     raise PermissionDenied('No page access has been configured for this account.')
 
 
 def login_view(request):
     if request.user.is_authenticated:
         return redirect_user_by_role(request.user)
-    
-    login_type = request.POST.get('login_type', 'ADMIN') if request.method == 'POST' else 'FACULTY'
 
     if request.method == 'POST':
         form = CustomLoginForm(request, data=request.POST)
@@ -109,16 +96,13 @@ def login_view(request):
         if form.is_valid():
             user = form.get_user()
 
-            is_allowed, error_msg = validate_portal_access(user, login_type)
-
-            if not is_allowed:
-                messages.error(request, error_msg)
-                return render(request, 'accounts/login.html', {'form': form, 'login_type': login_type})
-            
-            # Determining whether a security alert is needed
+            # Authenticate the user and establish the session
             login(request, user)
+
+            # Assess whether a security alert is needed
             security_info = assess_login_security(request, user)
 
+            # Redirect according to the assigned role and permissions
             response = redirect_user_by_role(user)
 
             if security_info is not None:
@@ -137,30 +121,33 @@ def login_view(request):
             return response
 
         else:
-            for error in form.non_field_errors():
-                messages.error(request, 'We could not sign you in. Please check your email and password.')
-            if not form.non_field_errors():
-                messages.error(request, 'Invalid email or password.')
+            if form.non_field_errors():
+                messages.error(
+                    request,
+                    'We could not sign you in. Please check your email and password.'
+                )
+            else:
+                messages.error(
+                    request,
+                    'Invalid email or password.'
+                )
 
             failed_attempts = getattr(request, 'axes_failures_since_start', None)
+
             if failed_attempts is not None:
-                attempts_remaining = max(
-                    settings.AXES_FAILURE_LIMIT - failed_attempts,
-                    0,
-                )
+                attempts_remaining = max(settings.AXES_FAILURE_LIMIT - failed_attempts,0)
+
                 if attempts_remaining:
                     messages.warning(
                         request,
                         f"You have {attempts_remaining} sign-in attempt"
-                        f"{'s' if attempts_remaining != 1 else ''} remaining.",
+                        f"{'s' if attempts_remaining != 1 else ''} remaining."
                     )
+
     else:
         form = CustomLoginForm()
         
-    context = {
-        'form': form,
-        'login_type': login_type
-    }
+    context = {'form': form}
 
     return render(request, 'accounts/login.html', context)
 

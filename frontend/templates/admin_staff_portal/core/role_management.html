@@ -30,8 +30,10 @@ Create roles, configure page access and operations, and choose which notificatio
         <h2><span class="role-section-icon">{% include "admin_staff_portal/core/user_mgmt/_form_icon.html" with icon="plus" %}</span>Create a role</h2>
 
         <p class="card-sub">
-            Create a custom role and configure the page access
-            and operations available to users assigned to it.
+            Create an admin-side custom role and configure its
+            administrative and shared page access and operations.
+            Faculty-only pages and document submission operations
+            are reserved for the built-in Faculty role.
         </p>
 
         <div class="settings-actions">
@@ -280,8 +282,9 @@ Create roles, configure page access and operations, and choose which notificatio
                 {% else %}
 
                     <p class="card-sub">
-                        Configure the pages and operations available to
-                        users assigned to this custom role.
+                        Configure the administrative and shared pages and operations
+                        available to users assigned to this custom role.
+                        Faculty-specific pages and submission operations are not available.
                     </p>
 
                 {% endif %}

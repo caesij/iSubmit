@@ -142,7 +142,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         return self.role.is_faculty_role
 
     @property
-    def is_regular_staff(self):
+    def is_staff_role(self):
         return self.role.is_staff_role
 
 

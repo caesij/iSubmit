@@ -4,6 +4,7 @@ from django.contrib.auth import get_user_model
 
 User = get_user_model()
 
+
 class CustomLoginForm(AuthenticationForm):
     username = forms.EmailField(
         label="Email",
@@ -14,8 +15,6 @@ class CustomLoginForm(AuthenticationForm):
         label="Password",
         widget=forms.PasswordInput(attrs={'placeholder': 'Enter your password'})
     )
-
-    login_type = forms.CharField(widget=forms.HiddenInput(), initial='ADMIN')
 
     def confirm_login_allowed(self, user):
         if user.is_locked_out:
@@ -70,8 +69,8 @@ class AdminStaffProfileForm(forms.ModelForm):
     def clean_profile_picture(self):
         photo = self.cleaned_data.get('profile_picture')
         if photo and hasattr(photo, 'size'):
-            if photo.size > 10 * 1024 * 1024:
-                raise forms.ValidationError('Please choose an image smaller than 10 MB.')
+            if photo.size > 2 * 1024 * 1024:
+                raise forms.ValidationError('Please choose an image smaller than 2 MB.')
         return photo
     
 class PreferencesForm(forms.ModelForm):

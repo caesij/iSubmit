@@ -11,7 +11,8 @@ from role_management.permissions import (
     DEFAULT_ROLE_PERMISSIONS,
     PERMISSION_DETAILS,
     PERMISSION_PAGES,
-    ROLE_GROUP_NAMES
+    ROLE_GROUP_NAMES,
+    ADMIN_SIDE_ROLE_CODES
 )
 
 User = get_user_model()
@@ -51,7 +52,11 @@ def get_permission_pages_for_role(role):
         return ()
 
     if not role.is_default:
-        return PERMISSION_PAGES
+        return tuple(
+            page
+            for page in PERMISSION_PAGES
+            if page['available_to'] & ADMIN_SIDE_ROLE_CODES
+        )
 
     role_key = get_role_key(role)
 

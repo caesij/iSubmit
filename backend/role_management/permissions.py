@@ -5,6 +5,9 @@ ROLE_GROUP_NAMES = {
 }
 
 
+ADMIN_SIDE_ROLE_CODES = frozenset({'ADMIN', 'STAFF'})
+
+
 ALL_ROLE_CODES = frozenset(ROLE_GROUP_NAMES)
 
 

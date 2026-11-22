@@ -166,7 +166,10 @@ class ClassAssignmentForm(forms.ModelForm):
         else:
             program_id = self.initial.get('program', self.instance.program_id)
 
-        program = allowed_programs.filter(pk=program_id).first()
+        program = None
+
+        if program_id and str(program_id).isdigit():
+            program = allowed_programs.filter(pk=int(program_id)).first()
 
         if not program:
             return
