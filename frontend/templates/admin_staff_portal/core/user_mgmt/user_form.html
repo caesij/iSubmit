@@ -51,9 +51,6 @@ Create and manage campus user accounts and access.
 
             <section class="user-form-card">
                 <div class="user-section-heading">
-                    <span class="user-section-icon">
-                        {% include "admin_staff_portal/core/user_mgmt/_form_icon.html" with icon="shield" %}
-                    </span>
                     <div>
                         <h3>Role &amp; access</h3>
                         <p>Choose an account role you are authorized to assign.</p>
@@ -71,9 +68,6 @@ Create and manage campus user accounts and access.
 
             <section class="user-form-card">
                 <div class="user-section-heading">
-                    <span class="user-section-icon">
-                        {% include "admin_staff_portal/core/user_mgmt/_form_icon.html" with icon="user" %}
-                    </span>
                     <div>
                         <h3>Personal information</h3>
                         <p>Enter the user's name and campus contact details.</p>
@@ -120,9 +114,6 @@ Create and manage campus user accounts and access.
                 {% if not show_faculty_fields %}hidden{% endif %}
             >
                 <div class="user-section-heading">
-                    <span class="user-section-icon">
-                        {% include "admin_staff_portal/core/user_mgmt/_form_icon.html" with icon="book" %}
-                    </span>
                     <div>
                         <h3>Faculty information</h3>
                         <p>Set the faculty type, programs, and teaching assignments.</p>

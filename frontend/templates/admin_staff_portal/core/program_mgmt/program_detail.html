@@ -13,7 +13,7 @@
         <div class="detail-meta"><span class="detail-badge">{{ program.short_name }}</span><span>{{ program.duration_years }} year{{ program.duration_years|pluralize }}</span></div>
     </header>
     {% if messages %}
-    <div class="detail-messages" aria-live="polite">{% for message in messages %}<div class="detail-message {{ message.tags }}" role="status">{{ message }}</div>{% endfor %}</div>
+    <div class="detail-messages" aria-live="polite">{% for message in messages %}{% if message|stringformat:"s" != "No approved documents match your filters." %}<div class="detail-message {{ message.tags }}" role="status">{{ message }}</div>{% endif %}{% endfor %}</div>
     {% endif %}
 
     <section class="detail-card" aria-labelledby="sections-heading">

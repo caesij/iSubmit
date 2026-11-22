@@ -15,18 +15,18 @@
     <div class="panel-header management-page-nav">
         <nav class="section-tabs" aria-label="Program management">
             <a href="{% url 'programs:program_list' %}" class="tab-link active" aria-current="page">Programs</a>
-            <a href="{% url 'programs:course_list' %}" class="tab-link">Courses</a>
+            <a href="{% url 'programs:course_list' %}" class="tab-link">Course Catalogue</a>
         </nav>
     </div>
 
     {% if messages %}
         <div class="program-toast-stack" aria-live="polite">
-            {% for message in messages %}
+            {% for message in messages %}{% if message|stringformat:"s" != "No approved documents match your filters." %}
                 <div class="program-toast program-toast-{{ message.tags|default:'info' }}" role="status">
                     <span class="program-toast-icon" aria-hidden="true">&#10003;</span>
                     <span>{{ message }}</span>
                 </div>
-            {% endfor %}
+            {% endif %}{% endfor %}
         </div>
     {% endif %}
 
@@ -50,7 +50,7 @@
         </div>
 
         <div class="program-form-field">
-            <label for="id_short_name">Abbreviation</label>
+            <label for="id_short_name">Abbreviation/Acronym</label>
             <input
                 id="id_short_name"
                 name="short_name"
@@ -85,7 +85,7 @@
             <thead>
                 <tr>
                     <th>Program</th>
-                    <th>Abbreviation</th>
+                    <th>Abbreviation/<wbr>Acronym</th>
                     <th>Duration</th>
                     <th>Sections</th>
                     <th>Courses</th>

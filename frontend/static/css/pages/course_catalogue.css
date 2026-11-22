@@ -55,3 +55,4 @@
     .course-page .course-table th { padding: 16px 12px; }
     .course-page .course-table:has(.course-empty) th { font-size: 13px; }
 }
+.course-count-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; }

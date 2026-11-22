@@ -49,7 +49,10 @@
 .program-list-page .program-add-card { gap: 16px; }
 .program-list-page .program-add-card input { min-height: 44px; border-color: #d1d1d1; border-radius: 5px; box-shadow: none; }
 .program-list-page .program-add-button { min-height: 44px; background: #b40000; border-radius: 5px; }
-.program-list-page .program-table thead th { background: #f3e7e7; padding: 20px 18px; font-size: 16px; font-weight: 600; }
+.program-list-page .program-table thead th { background: #f3e7e7; padding: 20px 18px; font-size: 16px; font-weight: 600; white-space: normal; overflow-wrap: anywhere; line-height: 1.4; }
+.program-list-page .program-table th:nth-child(1) { width: 31%; }
+.program-list-page .program-table th:nth-child(2) { width: 17%; }
+.program-list-page .program-table th:nth-child(6) { width: 26%; }
 .program-list-page .program-table tbody td { padding: 22px 18px; color: #333; }
 @media (max-width: 768px) {
     .role-management-page.faculty-settings .settings-card, .program-list-page .program-create-card { padding: 20px 16px; }
