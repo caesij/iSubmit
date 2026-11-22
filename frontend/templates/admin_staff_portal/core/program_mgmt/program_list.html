@@ -7,17 +7,16 @@
 {% block subtitle %}Manage academic programs, sections, and curriculum courses.{% endblock %}
 
 {% block extra_css %}
-
+<link rel="stylesheet" href="{% static 'css/pages/management_portal.css' %}">
 {% endblock %}
 
 {% block content %}
 <section class="program-page program-list-page">
-    <div class="program-page-header">
-        <div>
-            <h2>Programs</h2>
-            <p>Organize program details, sections, and course assignments.</p>
-        </div>
-        <a href="{% url 'programs:course_list' %}" class="program-courses-link">Manage Courses <span aria-hidden="true">&rarr;</span></a>
+    <div class="panel-header management-page-nav">
+        <nav class="section-tabs" aria-label="Program management">
+            <a href="{% url 'programs:program_list' %}" class="tab-link active" aria-current="page">Programs</a>
+            <a href="{% url 'programs:course_list' %}" class="tab-link">Courses</a>
+        </nav>
     </div>
 
     {% if messages %}

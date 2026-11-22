@@ -1,0 +1,31 @@
+{% extends 'accounts/auth_base.html' %}
+{% load static %}
+
+{% block title %}Signed in - iSubmit{% endblock %}
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/auth/login_success.css' %}">
+{% endblock %}
+
+{% block content %}
+<section class="login-success" aria-labelledby="success-title">
+    <div class="auth-emblem-wrap">
+        <img src="{% static 'images/logo.svg' %}" alt="iSubmit emblem" class="auth-emblem">
+    </div>
+    <div class="success-check" aria-hidden="true">
+        <svg viewBox="0 0 32 32" fill="none"><path d="m8 16 5.5 5.5L24 11" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
+    <p class="success-eyebrow">SIGNED IN SUCCESSFULLY</p>
+    <h2 id="success-title">Welcome back{% if user.first_name %}, {{ user.first_name }}{% endif %}.</h2>
+    <p class="auth-subtitle">You're all set. Your workspace is ready.</p>
+    <div class="success-account">
+        <span class="success-avatar" aria-hidden="true">{{ user.first_name|first|upper|default:'U' }}</span>
+        <div class="success-identity">
+            <strong>{{ user.get_full_name|default:user.email }}</strong>
+            <span>{{ user.email }}</span>
+        </div>
+        <span class="success-role">{{ role_name }}</span>
+    </div>
+    <a class="auth-button-link success-continue" id="success-continue" href="{{ destination_url }}">Continue to {% if is_dashboard %}dashboard{% else %}workspace{% endif %}</a>
+    <p class="success-note">Ready whenever you are. Select Continue to open your workspace.</p>
+</section>
+{% endblock %}

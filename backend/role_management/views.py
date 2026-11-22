@@ -220,6 +220,18 @@ def role_management_view(request):
                     permission_id__in=managed_permissions.values('pk'),
                 ).delete()
                 group.permissions.add(*selected_permissions)
+                if request.POST.get('include_user_management_access') == '1' and not selected_role.is_faculty_role:
+                    for target_role in get_user_management_target_roles(selected_role):
+                        RoleUserManagementRule.objects.update_or_create(
+                            manager_role=selected_role,
+                            target_role=target_role,
+                            defaults={
+                                'can_add': f'can_add_{target_role.pk}' in request.POST,
+                                'can_edit': f'can_edit_{target_role.pk}' in request.POST,
+                                'can_change_status': f'can_change_status_{target_role.pk}' in request.POST,
+                                'can_unlock': f'can_unlock_{target_role.pk}' in request.POST,
+                            },
+                        )
 
             messages.success(request, f'{group.name} permissions updated successfully.')
             

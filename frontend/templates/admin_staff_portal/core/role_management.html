@@ -5,15 +5,21 @@
 {% block title %}Role Management - iSubmit{% endblock %}
 {% block heading %}Role Management{% endblock %}
 {% block subtitle %}
-Create roles, configure page access and operations, and choose which notification events each role can receive.
+Manage campus roles, page access, and notification permissions.
 {% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/pages/role_management.css' %}">
+<link rel="stylesheet" href="{% static 'css/pages/management_portal.css' %}">
 <script src="{% static 'js/role-management.js' %}" defer></script>
 {% endblock %}
 
 {% block content %}
+<div class="panel-header management-page-nav">
+    <nav class="section-tabs" aria-label="Role management">
+        <a href="{% url 'role_management:role_management' %}" class="tab-link active" aria-current="page">Role Management</a>
+    </nav>
+</div>
 <div class="faculty-settings role-management-page">
 
     <form method="POST" class="settings-card role-create-form">
@@ -64,43 +70,33 @@ Create roles, configure page access and operations, and choose which notificatio
             its permissions and notification event settings.
         </p>
 
-        <form method="GET" class="role-filter-form">
-            <div class="settings-actions">
-                <div class="role-filter-field">
-                    <label for="role-type">Role type</label>
-                    <select id="role-type" name="role_type">
-                        <option value="all" {% if role_type == 'all' %}selected{% endif %}>All Roles</option>
-                        <option value="default" {% if role_type == 'default' %}selected{% endif %}>Default Roles</option>
-                        <option value="custom" {% if role_type == 'custom' %}selected{% endif %}>Custom Roles</option>
-                    </select>
+        {% if role_type != 'all' or search_query %}
+            <p class="card-sub">A previous filter is active. <a href="{{ request.path }}{% if selected_role %}?role={{ selected_role.pk }}{% endif %}">Show all roles</a></p>
+        {% endif %}
+
+        <details class="role-picker">
+            <summary>
+                <span class="role-picker-selection">
+                    <span class="role-picker-caption">Selected role</span>
+                    <strong>{{ selected_role_name|default:'Choose a role' }}</strong>
+                </span>
+                <span class="role-picker-total">{{ roles|length }} available</span>
+            </summary>
+            <div class="role-picker-panel">
+                <div class="role-picker-search">
+                    <label for="role-picker-search">Find in available roles</label>
+                    <input type="search" id="role-picker-search" placeholder="Type a role name..." autocomplete="off">
+                    <div class="role-picker-types" role="group" aria-label="Filter roles by type">
+                        <button type="button" data-role-filter="all" aria-pressed="true">All</button>
+                        <button type="button" data-role-filter="default" aria-pressed="false">Default</button>
+                        <button type="button" data-role-filter="custom" aria-pressed="false">Custom</button>
+                    </div>
                 </div>
-
-                <div class="role-filter-field">
-                    <label for="role-search">Search role</label>
-                    <input
-                        id="role-search"
-                        type="search"
-                        name="q"
-                        value="{{ search_query }}"
-                        placeholder="Enter a role name"
-                    >
-                </div>
-
-                <button type="submit" class="btn-save">
-                    {% include "admin_staff_portal/core/user_mgmt/_form_icon.html" with icon="settings" %}
-                    Apply Filters
-                </button>
-                <a href="{{ request.path }}" class="btn-cancel">
-                    {% include "admin_staff_portal/core/user_mgmt/_form_icon.html" with icon="close" %}
-                    Clear
-                </a>
-            </div>
-        </form>
-
         <div class="settings-tabs role-list" aria-label="Available roles">
             {% for role in roles %}
                 <a
-                    href="?role={{ role.id }}&amp;role_type={{ role_type }}&amp;q={{ search_query|urlencode }}"
+                    href="?role={{ role.id }}"
+                    data-role-type="{% if role.is_default %}default{% else %}custom{% endif %}"
                     class="settings-tab{% if role.selected %} active{% endif %}"
                     {% if role.selected %}aria-current="true"{% endif %}
                 >
@@ -116,6 +112,9 @@ Create roles, configure page access and operations, and choose which notificatio
                 <p class="card-sub">No roles match the selected filters.</p>
             {% endfor %}
         </div>
+                <p class="role-picker-no-results" hidden>No matching roles. Try another name.</p>
+            </div>
+        </details>
     </div>
 
     {% if selected_role %}
@@ -179,93 +178,6 @@ Create roles, configure page access and operations, and choose which notificatio
             </div>
         {% endif %}
 
-        {% if not selected_role.is_faculty_role %}
-            <form method="POST" class="settings-card permissions-card">
-                {% csrf_token %}
-                <input type="hidden" name="action" value="save_user_management_access">
-                <input type="hidden" name="role_id" value="{{ selected_role.pk }}">
-
-                <div class="permissions-header">
-                    <h2>
-                        <span class="role-section-icon">
-                            {% include "admin_staff_portal/core/user_mgmt/_form_icon.html" with icon="users" %}
-                        </span>
-                        User Management Access
-                    </h2>
-                    <p class="card-sub">
-                        Choose which account roles this role can manage and which
-                        account-management operations it can perform. The built-in
-                        Admin role can manage all account roles. Other roles cannot
-                        manage accounts assigned to the built-in Admin role.
-                    </p>
-                </div>
-
-                <div class="table-wrap">
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>Target Role</th>
-                                <th>Add</th>
-                                <th>Edit</th>
-                                <th>Activate / Deactivate</th>
-                                <th>Unlock</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for item in user_management_access_rows %}
-                                <tr>
-                                    <td><strong>{{ item.target_role.group.name }}</strong></td>
-                                    <td>
-                                        <input
-                                            type="checkbox"
-                                            name="can_add_{{ item.target_role.pk }}"
-                                            {% if item.can_add %}checked{% endif %}
-                                            aria-label="Allow adding {{ item.target_role.group.name }} accounts"
-                                        >
-                                    </td>
-                                    <td>
-                                        <input
-                                            type="checkbox"
-                                            name="can_edit_{{ item.target_role.pk }}"
-                                            {% if item.can_edit %}checked{% endif %}
-                                            aria-label="Allow editing {{ item.target_role.group.name }} accounts"
-                                        >
-                                    </td>
-                                    <td>
-                                        <input
-                                            type="checkbox"
-                                            name="can_change_status_{{ item.target_role.pk }}"
-                                            {% if item.can_change_status %}checked{% endif %}
-                                            aria-label="Allow changing status of {{ item.target_role.group.name }} accounts"
-                                        >
-                                    </td>
-                                    <td>
-                                        <input
-                                            type="checkbox"
-                                            name="can_unlock_{{ item.target_role.pk }}"
-                                            {% if item.can_unlock %}checked{% endif %}
-                                            aria-label="Allow unlocking {{ item.target_role.group.name }} accounts"
-                                        >
-                                    </td>
-                                </tr>
-                            {% empty %}
-                                <tr>
-                                    <td colspan="5">No target roles are available.</td>
-                                </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-
-                <div class="settings-actions">
-                    <button type="submit" class="btn-save">
-                        {% include "admin_staff_portal/core/user_mgmt/_form_icon.html" with icon="save" %}
-                        Save User Management Access
-                    </button>
-                </div>
-            </form>
-        {% endif %}
-
         <form method="POST" class="settings-card permissions-card">
             {% csrf_token %}
             <input type="hidden" name="action" value="save_permissions">
@@ -307,6 +219,10 @@ Create roles, configure page access and operations, and choose which notificatio
                             {% if page.checked %}checked{% endif %}
                         >
                     </label>
+
+                    {% if page.access_codename == 'access_user_management' and not selected_role.is_faculty_role %}
+                        {% include "admin_staff_portal/core/_user_management_access.html" %}
+                    {% endif %}
 
                     {% if page.operations %}
                         <div class="permission-operations">

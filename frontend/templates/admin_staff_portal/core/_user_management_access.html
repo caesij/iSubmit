@@ -1,0 +1,76 @@
+{% load static %}
+<div class="user-management-access-panel">
+    <input type="hidden" name="include_user_management_access" value="1">
+                <div class="permissions-header">
+                    <h2>
+                        <span class="role-section-icon">
+                            {% include "admin_staff_portal/core/user_mgmt/_form_icon.html" with icon="users" %}
+                        </span>
+                        User Management Access
+                    </h2>
+                    <p class="card-sub">
+                        Choose which account roles this role can manage and which
+                        account-management operations it can perform. The built-in
+                        Admin role can manage all account roles. Other roles cannot
+                        manage accounts assigned to the built-in Admin role.
+                    </p>
+                </div>
+
+                <div class="table-wrap">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Target Role</th>
+                                <th>Add</th>
+                                <th>Edit</th>
+                                <th>Activate / Deactivate</th>
+                                <th>Unlock</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in user_management_access_rows %}
+                                <tr>
+                                    <td><strong>{{ item.target_role.group.name }}</strong></td>
+                                    <td>
+                                        <input
+                                            type="checkbox"
+                                            name="can_add_{{ item.target_role.pk }}"
+                                            {% if item.can_add %}checked{% endif %}
+                                            aria-label="Allow adding {{ item.target_role.group.name }} accounts"
+                                        >
+                                    </td>
+                                    <td>
+                                        <input
+                                            type="checkbox"
+                                            name="can_edit_{{ item.target_role.pk }}"
+                                            {% if item.can_edit %}checked{% endif %}
+                                            aria-label="Allow editing {{ item.target_role.group.name }} accounts"
+                                        >
+                                    </td>
+                                    <td>
+                                        <input
+                                            type="checkbox"
+                                            name="can_change_status_{{ item.target_role.pk }}"
+                                            {% if item.can_change_status %}checked{% endif %}
+                                            aria-label="Allow changing status of {{ item.target_role.group.name }} accounts"
+                                        >
+                                    </td>
+                                    <td>
+                                        <input
+                                            type="checkbox"
+                                            name="can_unlock_{{ item.target_role.pk }}"
+                                            {% if item.can_unlock %}checked{% endif %}
+                                            aria-label="Allow unlocking {{ item.target_role.group.name }} accounts"
+                                        >
+                                    </td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="5">No target roles are available.</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+</div>

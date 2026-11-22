@@ -5,6 +5,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.http import Http404
 from django.core.exceptions import PermissionDenied
+from django.views.decorators.cache import never_cache
 
 from accounts.forms import CustomLoginForm
 from role_management.models import Role
@@ -32,7 +33,7 @@ def redirect_user_by_role(user):
     role_code = role.code if role else None
 
     if role and role.is_faculty_role:
-        preferred_dashboards = (('accounts.access_faculty_dashboard', 'faculty_portal:dashboard'))
+        preferred_dashboards = (('accounts.access_faculty_dashboard', 'faculty_portal:dashboard'),)
 
         fallback_pages = (
             ('accounts.access_faculty_submission_bin', 'faculty_portal:upload_files'),
@@ -102,8 +103,10 @@ def login_view(request):
             # Assess whether a security alert is needed
             security_info = assess_login_security(request, user)
 
-            # Redirect according to the assigned role and permissions
-            response = redirect_user_by_role(user)
+            # Resolve access before showing success; keep the existing permission rules.
+            redirect_user_by_role(user)
+            request.session['show_login_success'] = True
+            response = redirect('accounts:login_success')
 
             if security_info is not None:
                 response.set_cookie(
@@ -150,6 +153,21 @@ def login_view(request):
     context = {'form': form}
 
     return render(request, 'accounts/login.html', context)
+
+
+@never_cache
+@login_required
+def login_success_view(request):
+    destination = redirect_user_by_role(request.user)
+    if not request.session.pop('show_login_success', False):
+        return destination
+
+    role = request.user.role
+    return render(request, 'accounts/login_success.html', {
+        'destination_url': destination.url,
+        'role_name': role.get_code_display() if role.code else role.group.name,
+        'is_dashboard': 'dashboard' in destination.url,
+    })
 
 
 def logout_view(request):

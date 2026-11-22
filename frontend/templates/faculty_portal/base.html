@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}iSubmit - {{ request.user.get_role_display }} Portal{% endblock %}</title>
+    <title>{% block title %}iSubmit - {{ request.user.role.group.name }} Portal{% endblock %}</title>
 
     <link rel="stylesheet" href="{% static 'css/layout/faculty_portal.css' %}">
     <script src="{% static 'js/global-search.js' %}" defer></script>
@@ -12,6 +12,7 @@
     {% block extra_css %}{% endblock %}
 
 
+    <link rel="stylesheet" href="{% static 'css/layout/portal_header.css' %}">
 </head>
 
 <body>
@@ -165,7 +166,7 @@
                         {% endif %}
 
                         <h1 class="topbar-title">
-                            {% block heading %}{{ request.user.get_role_display }} Portal{% endblock %}
+                            {% block heading %}{{ request.user.role.group.name }} Portal{% endblock %}
                         </h1>
                     </div>
 
@@ -269,7 +270,7 @@
                             </div>
 
                             <span class="user-badge-meta">
-                                {{ request.user.get_role_display }}
+                                {{ request.user.role.group.name }}
                             </span>
                         </div>
                     </div>

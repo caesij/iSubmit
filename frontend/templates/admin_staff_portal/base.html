@@ -5,13 +5,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>{% block title %}iSubmit - {{ request.user.get_role_display }} Portal{% endblock %}</title>
+    <title>{% block title %}iSubmit - {{ request.user.role.group.name }} Portal{% endblock %}</title>
 
     <link rel="stylesheet" href="{% static 'css/layout/admin_staff_portal.css' %}">
     <script src="{% static 'js/global-search.js' %}" defer></script>
     <script src="{% static 'js/portal-responsive.js' %}" defer></script>
 
     {% block extra_css %}{% endblock %}
+    <link rel="stylesheet" href="{% static 'css/layout/portal_header.css' %}">
 </head>
 
 <body>
@@ -382,7 +383,7 @@
                             <div class="user-badge-name">
                                 {{ request.user.get_full_name|default:request.user.email }}
                             </div>
-                            <span class="user-badge-meta">{{ request.user.get_role_display }}</span>
+                            <span class="user-badge-meta">{{ request.user.role.group.name }}</span>
                         </div>
                     </div>
 
