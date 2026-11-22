@@ -3,292 +3,286 @@
 
 {% block title %}{{ page_title }} - iSubmit{% endblock %}
 
-{% block subtitle %}Create and manage campus user accounts and access.{% endblock %}
+{% block subtitle %}
+Create and manage campus user accounts and access.
+{% endblock %}
+
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/pages/user_form.css' %}">
 {% endblock %}
 
 {% block content %}
-
 <div class="user-editor">
-<div class="panel-header user-editor-header">
-    <div>
-        <h2>{{ page_title }}</h2>
-        <p>{% if is_update %}Update profile details and account access.{% else %}Set up a campus account with the right role and access.{% endif %}</p>
+    <div class="panel-header user-editor-header">
+        <div>
+            <h2>{{ page_title }}</h2>
+            <p>
+                {% if is_update %}
+                    Update profile details and account access.
+                {% else %}
+                    Set up a campus account with the right role and access.
+                {% endif %}
+            </p>
+        </div>
+
+        <a href="{% url 'user_management:user_list' %}" class="btn btn-ghost">
+            {% include "admin_staff_portal/core/user_mgmt/_form_icon.html" with icon="users" %}
+            Back to Users
+        </a>
     </div>
 
-    <a href="{% url 'user_management:user_list' %}"
-       class="btn btn-ghost">
-        {% include "admin_staff_portal/core/user_mgmt/_form_icon.html" with icon="users" %} Back to Users
-    </a>
-</div>
+    <div class="user-form-container">
+        <form method="POST">
+            {% csrf_token %}
+            {{ form.non_field_errors }}
 
-<div class="user-form-container">
+            <section class="user-form-card">
+                <div class="user-section-heading">
+                    <span class="user-section-icon">
+                        {% include "admin_staff_portal/core/user_mgmt/_form_icon.html" with icon="shield" %}
+                    </span>
+                    <div>
+                        <h3>Role &amp; access</h3>
+                        <p>Choose an account role you are authorized to assign.</p>
+                    </div>
+                </div>
 
-    <form method="POST">
-        {% csrf_token %}
+                <div class="user-field-grid">
+                    <div class="form-group">
+                        {{ form.role.label_tag }}
+                        {{ form.role }}
+                        {{ form.role.errors }}
+                    </div>
+                </div>
+            </section>
 
-        {{ form.non_field_errors }}
+            <section class="user-form-card">
+                <div class="user-section-heading">
+                    <span class="user-section-icon">
+                        {% include "admin_staff_portal/core/user_mgmt/_form_icon.html" with icon="user" %}
+                    </span>
+                    <div>
+                        <h3>Personal information</h3>
+                        <p>Enter the user's name and campus contact details.</p>
+                    </div>
+                </div>
 
-        <section class="user-form-card">
-        <div class="user-section-heading"><span class="user-section-icon">{% include "admin_staff_portal/core/user_mgmt/_form_icon.html" with icon="shield" %}</span><div><h3>Role & access</h3><p>Choose the role for this account.</p></div></div>
-        <div class="user-field-grid">
-        <div class="form-group">
-            {{ form.role.label_tag }}
-            {{ form.role }}
-            {{ form.role.errors }}
-        </div>
-
-        {% if form.permission_role %}
-        <div class="form-group">
-            {{ form.permission_role.label_tag }}
-            {{ form.permission_role }}
-            {{ form.permission_role.errors }}
-        </div>
-
-        {% endif %}
-        </div>
-        </section>
-        <section class="user-form-card">
-        <div class="user-section-heading"><span class="user-section-icon">{% include "admin_staff_portal/core/user_mgmt/_form_icon.html" with icon="user" %}</span><div><h3>Personal information</h3><p>Enter the user's name and campus contact details.</p></div></div>
-        <div class="user-field-grid">
-
-
-        <div class="form-group">
-            {{ form.first_name.label_tag }}
-            {{ form.first_name }}
-            {{ form.first_name.errors }}
-        </div>
-
-        <div class="form-group">
-            {{ form.middle_name.label_tag }}
-            {{ form.middle_name }}
-            {{ form.middle_name.errors }}
-        </div>
-
-        <div class="form-group">
-            {{ form.last_name.label_tag }}
-            {{ form.last_name }}
-            {{ form.last_name.errors }}
-        </div>
-
-        <div class="form-group">
-            {{ form.employee_ID.label_tag }}
-            {{ form.employee_ID }}
-            {{ form.employee_ID.errors }}
-        </div>
-
-        <div class="form-group">
-            {{ form.email.label_tag }}
-            {{ form.email }}
-            {{ form.email.errors }}
-        </div>
-
-        </div>
-        </section>
-        <section class="user-form-card" id="faculty-fields"
-             data-options-url="{% url 'user_management:assignment_options' %}"
-             {% if not show_faculty_fields %}hidden{% endif %}>
-
-            <div class="user-section-heading"><span class="user-section-icon">{% include "admin_staff_portal/core/user_mgmt/_form_icon.html" with icon="book" %}</span><div><h3>Faculty information</h3><p>Set the faculty type, programs, and teaching assignments.</p></div></div>
-            <div class="user-field-grid">
-
-            <div class="form-group">
-                {{ form.faculty_type.label_tag }}
-                {{ form.faculty_type }}
-                {{ form.faculty_type.errors }}
-            </div>
-
-            <div class="form-group">
-                {{ form.assigned_programs.label_tag }}
-                {{ form.assigned_programs }}
-                {{ form.assigned_programs.errors }}
-
-                <small>
-                    Select the programs assigned to this faculty member.
-                    Only these programs will be available in the teaching assignments below.
-                </small>
-            </div>
-
-            </div>
-            <h4 class="assignment-heading">Teaching assignments</h4>
-
-            <p>
-                Add the courses and sections assigned to this faculty member.
-                Each row represents one teaching assignment.
-            </p>
-
-            {{ assignment_formset.management_form }}
-            {{ assignment_formset.non_form_errors }}
-
-            <div id="assignment-forms">
-
-                {% for assignment_form in assignment_formset %}
-
-                    <div class="assignment-form">
-
-                        {{ assignment_form.id }}
-                        {{ assignment_form.year_level }}
-                        {{ assignment_form.section }}
-
-                        {{ assignment_form.non_field_errors }}
-
-                        <div class="form-group">
-                            {{ assignment_form.program.label_tag }}
-                            {{ assignment_form.program }}
-                            {{ assignment_form.program.errors }}
-                        </div>
-
-                        <div class="form-group">
-                            {{ assignment_form.academic_year.label_tag }}
-                            {{ assignment_form.academic_year }}
-                            {{ assignment_form.academic_year.errors }}
-                        </div>
-
-                        <div class="form-group">
-                            {{ assignment_form.semester.label_tag }}
-                            {{ assignment_form.semester }}
-                            {{ assignment_form.semester.errors }}
-                        </div>
-
-                        <div class="form-group">
-                            {{ assignment_form.program_section.label_tag }}
-                            {{ assignment_form.program_section }}
-                            {{ assignment_form.program_section.errors }}
-                        </div>
-
-                        <div class="form-group">
-                            {{ assignment_form.course.label_tag }}
-                            {{ assignment_form.course }}
-                            {{ assignment_form.course.errors }}
-                        </div>
-
-                        {% if assignment_formset.can_delete %}
-                            {{ assignment_form.DELETE }}
-                        {% endif %}
-
-                        <button type="button" class="remove-assignment">
-                            {% include "admin_staff_portal/core/user_mgmt/_form_icon.html" with icon="trash" %} Remove assignment
-                        </button>
-
+                <div class="user-field-grid">
+                    <div class="form-group">
+                        {{ form.first_name.label_tag }}
+                        {{ form.first_name }}
+                        {{ form.first_name.errors }}
                     </div>
 
-                {% endfor %}
-
-            </div>
-
-            <button type="button" id="add-assignment">
-                {% include "admin_staff_portal/core/user_mgmt/_form_icon.html" with icon="plus" %} Add teaching assignment
-            </button>
-
-            {% with empty_form=assignment_formset.empty_form %}
-
-                <template id="empty-assignment-form">
-
-                    <div class="assignment-form">
-
-                        {{ empty_form.id }}
-                        {{ empty_form.year_level }}
-                        {{ empty_form.section }}
-
-                        {{ empty_form.non_field_errors }}
-
-                        <div class="form-group">
-                            {{ empty_form.program.label_tag }}
-                            {{ empty_form.program }}
-                            {{ empty_form.program.errors }}
-                        </div>
-
-                        <div class="form-group">
-                            {{ empty_form.academic_year.label_tag }}
-                            {{ empty_form.academic_year }}
-                            {{ empty_form.academic_year.errors }}
-                        </div>
-
-                        <div class="form-group">
-                            {{ empty_form.semester.label_tag }}
-                            {{ empty_form.semester }}
-                            {{ empty_form.semester.errors }}
-                        </div>
-
-                        <div class="form-group">
-                            {{ empty_form.program_section.label_tag }}
-                            {{ empty_form.program_section }}
-                            {{ empty_form.program_section.errors }}
-                        </div>
-
-                        <div class="form-group">
-                            {{ empty_form.course.label_tag }}
-                            {{ empty_form.course }}
-                            {{ empty_form.course.errors }}
-                        </div>
-
-                        {% if assignment_formset.can_delete %}
-                            {{ assignment_form.DELETE }}
-                        {% endif %}
-
-                        <button type="button" class="remove-assignment">
-                            {% include "admin_staff_portal/core/user_mgmt/_form_icon.html" with icon="trash" %} Remove assignment
-                        </button>
-
+                    <div class="form-group">
+                        {{ form.middle_name.label_tag }}
+                        {{ form.middle_name }}
+                        {{ form.middle_name.errors }}
                     </div>
 
-                </template>
+                    <div class="form-group">
+                        {{ form.last_name.label_tag }}
+                        {{ form.last_name }}
+                        {{ form.last_name.errors }}
+                    </div>
 
-            {% endwith %}
+                    <div class="form-group">
+                        {{ form.employee_ID.label_tag }}
+                        {{ form.employee_ID }}
+                        {{ form.employee_ID.errors }}
+                    </div>
 
-        </section>
+                    <div class="form-group">
+                        {{ form.email.label_tag }}
+                        {{ form.email }}
+                        {{ form.email.errors }}
+                    </div>
+                </div>
+            </section>
 
-        <section class="user-form-card">
-        <div class="user-section-heading"><span class="user-section-icon">{% include "admin_staff_portal/core/user_mgmt/_form_icon.html" with icon="settings" %}</span><div><h3>Account status</h3><p>Control whether this user can sign in.</p></div></div>
-        <div class="user-field-grid">
+            <section
+                class="user-form-card"
+                id="faculty-fields"
+                data-options-url="{% url 'user_management:assignment_options' %}"
+                {% if not show_faculty_fields %}hidden{% endif %}
+            >
+                <div class="user-section-heading">
+                    <span class="user-section-icon">
+                        {% include "admin_staff_portal/core/user_mgmt/_form_icon.html" with icon="book" %}
+                    </span>
+                    <div>
+                        <h3>Faculty information</h3>
+                        <p>Set the faculty type, programs, and teaching assignments.</p>
+                    </div>
+                </div>
 
-        <div class="form-group">
-            <label for="{{ form.is_active.id_for_label }}">Account status</label>
-            {{ form.is_active }}
-            {{ form.is_active.errors }}
-        </div>
+                <div class="user-field-grid">
+                    <div class="form-group">
+                        {{ form.faculty_type.label_tag }}
+                        {{ form.faculty_type }}
+                        {{ form.faculty_type.errors }}
+                    </div>
 
-        </div>
-        </section>
-        <div class="form-actions">
-            <p>Review the details before {% if is_update %}saving your changes{% else %}creating the account{% endif %}.</p>
-            <a href="{% url 'user_management:user_list' %}" class="user-cancel">{% include "admin_staff_portal/core/user_mgmt/_form_icon.html" with icon="close" %} Cancel</a>
-            <button type="submit" class="action-button">
-                {% include "admin_staff_portal/core/user_mgmt/_form_icon.html" with icon="save" %}
-                {% if is_update %}
-                    Save Changes
-                {% else %}
-                    Create Account
-                {% endif %}
-            </button>
-        </div>
+                    <div class="form-group">
+                        {{ form.assigned_programs.label_tag }}
+                        {{ form.assigned_programs }}
+                        {{ form.assigned_programs.errors }}
+                        <small>
+                            Select the programs assigned to this faculty member.
+                            Only these programs will be available in the teaching assignments below.
+                        </small>
+                    </div>
+                </div>
 
-    </form>
+                <h4 class="assignment-heading">Teaching assignments</h4>
+                <p>
+                    Add the courses and sections assigned to this faculty member.
+                    Each row represents one teaching assignment.
+                </p>
 
-</div>
+                {{ assignment_formset.management_form }}
+                {{ assignment_formset.non_form_errors }}
+
+                <div id="assignment-forms">
+                    {% for assignment_form in assignment_formset %}
+                        <div class="assignment-form">
+                            {{ assignment_form.id }}
+                            {{ assignment_form.year_level }}
+                            {{ assignment_form.section }}
+                            {{ assignment_form.non_field_errors }}
+
+                            <div class="form-group">
+                                {{ assignment_form.program.label_tag }}
+                                {{ assignment_form.program }}
+                                {{ assignment_form.program.errors }}
+                            </div>
+
+                            <div class="form-group">
+                                {{ assignment_form.academic_year.label_tag }}
+                                {{ assignment_form.academic_year }}
+                                {{ assignment_form.academic_year.errors }}
+                            </div>
+
+                            <div class="form-group">
+                                {{ assignment_form.semester.label_tag }}
+                                {{ assignment_form.semester }}
+                                {{ assignment_form.semester.errors }}
+                            </div>
+
+                            <div class="form-group">
+                                {{ assignment_form.program_section.label_tag }}
+                                {{ assignment_form.program_section }}
+                                {{ assignment_form.program_section.errors }}
+                            </div>
+
+                            <div class="form-group">
+                                {{ assignment_form.course.label_tag }}
+                                {{ assignment_form.course }}
+                                {{ assignment_form.course.errors }}
+                            </div>
+
+                            {% if assignment_formset.can_delete %}
+                                {{ assignment_form.DELETE }}
+                            {% endif %}
+
+                            <button type="button" class="remove-assignment">
+                                {% include "admin_staff_portal/core/user_mgmt/_form_icon.html" with icon="trash" %}
+                                Remove assignment
+                            </button>
+                        </div>
+                    {% endfor %}
+                </div>
+
+                <button type="button" id="add-assignment">
+                    {% include "admin_staff_portal/core/user_mgmt/_form_icon.html" with icon="plus" %}
+                    Add teaching assignment
+                </button>
+
+                {% with empty_form=assignment_formset.empty_form %}
+                    <template id="empty-assignment-form">
+                        <div class="assignment-form">
+                            {{ empty_form.id }}
+                            {{ empty_form.year_level }}
+                            {{ empty_form.section }}
+                            {{ empty_form.non_field_errors }}
+
+                            <div class="form-group">
+                                {{ empty_form.program.label_tag }}
+                                {{ empty_form.program }}
+                                {{ empty_form.program.errors }}
+                            </div>
+
+                            <div class="form-group">
+                                {{ empty_form.academic_year.label_tag }}
+                                {{ empty_form.academic_year }}
+                                {{ empty_form.academic_year.errors }}
+                            </div>
+
+                            <div class="form-group">
+                                {{ empty_form.semester.label_tag }}
+                                {{ empty_form.semester }}
+                                {{ empty_form.semester.errors }}
+                            </div>
+
+                            <div class="form-group">
+                                {{ empty_form.program_section.label_tag }}
+                                {{ empty_form.program_section }}
+                                {{ empty_form.program_section.errors }}
+                            </div>
+
+                            <div class="form-group">
+                                {{ empty_form.course.label_tag }}
+                                {{ empty_form.course }}
+                                {{ empty_form.course.errors }}
+                            </div>
+
+                            {% if assignment_formset.can_delete %}
+                                {{ empty_form.DELETE }}
+                            {% endif %}
+
+                            <button type="button" class="remove-assignment">
+                                {% include "admin_staff_portal/core/user_mgmt/_form_icon.html" with icon="trash" %}
+                                Remove assignment
+                            </button>
+                        </div>
+                    </template>
+                {% endwith %}
+            </section>
+
+            <div class="form-actions">
+                <p>
+                    Review the details before
+                    {% if is_update %}saving your changes{% else %}creating the account{% endif %}.
+                    New accounts are created as active. Account activation and deactivation
+                    are controlled separately through User Management Access.
+                </p>
+                <a href="{% url 'user_management:user_list' %}" class="user-cancel">
+                    {% include "admin_staff_portal/core/user_mgmt/_form_icon.html" with icon="close" %}
+                    Cancel
+                </a>
+                <button type="submit" class="action-button">
+                    {% include "admin_staff_portal/core/user_mgmt/_form_icon.html" with icon="save" %}
+                    {% if is_update %}Save Changes{% else %}Create Account{% endif %}
+                </button>
+            </div>
+        </form>
+    </div>
 </div>
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-
     const roleField = document.getElementById('id_role');
     const facultyFields = document.getElementById('faculty-fields');
-
     const assignedPrograms = document.getElementById('id_assigned_programs');
     const assignmentForms = document.getElementById('assignment-forms');
     const addAssignmentButton = document.getElementById('add-assignment');
-
     const emptyTemplate = document.getElementById('empty-assignment-form');
     const totalForms = document.getElementById('id_assignments-TOTAL_FORMS');
 
     const optionsUrl = facultyFields.dataset.optionsUrl;
 
-
     function populateSelect(select, options, placeholder, selectedValue = '') {
-
         select.innerHTML = '';
-
         select.add(new Option(placeholder, ''));
 
         options.forEach(function (item) {
@@ -302,9 +296,7 @@ document.addEventListener('DOMContentLoaded', function () {
         select.value = selectedOptionExists ? String(selectedValue) : '';
     }
 
-
     function getRowFields(row) {
-
         return {
             program: row.querySelector('select[name$="-program"]'),
             academicYear: row.querySelector('select[name$="-academic_year"]'),
@@ -314,33 +306,15 @@ document.addEventListener('DOMContentLoaded', function () {
         };
     }
 
-
     function clearDependentFields(row) {
-
         const fields = getRowFields(row);
 
-        populateSelect(
-            fields.academicYear,
-            [],
-            'Select an academic year'
-        );
-
-        populateSelect(
-            fields.section,
-            [],
-            'Select a section'
-        );
-
-        populateSelect(
-            fields.course,
-            [],
-            'Select a course'
-        );
+        populateSelect(fields.academicYear, [], 'Select an academic year');
+        populateSelect(fields.section, [], 'Select a section');
+        populateSelect(fields.course, [], 'Select a course');
     }
 
-
     async function loadAssignmentOptions(row) {
-
         const fields = getRowFields(row);
 
         if (!fields.program.value) {
@@ -358,13 +332,12 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 
         try {
-
             const response = await fetch(
                 `${optionsUrl}?${params.toString()}`,
                 {
                     headers: {
-                        'X-Requested-With': 'XMLHttpRequest'
-                    }
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
                 }
             );
 
@@ -382,7 +355,6 @@ document.addEventListener('DOMContentLoaded', function () {
             );
 
             const validYear = fields.academicYear.value;
-
             populateSelect(
                 fields.section,
                 validYear ? data.sections : [],
@@ -396,17 +368,13 @@ document.addEventListener('DOMContentLoaded', function () {
                 'Select a course',
                 selectedCourse
             );
-
         } catch (error) {
             console.error(error);
         }
     }
 
-
     function refreshProgramOptions(row) {
-
         const fields = getRowFields(row);
-
         const previousProgram = fields.program.value;
 
         const selectedPrograms = Array.from(
@@ -432,55 +400,45 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-
     function bindAssignmentRow(row) {
-
         const fields = getRowFields(row);
 
         fields.program.addEventListener('change', function () {
-
             clearDependentFields(row);
-
             loadAssignmentOptions(row);
         });
 
         fields.academicYear.addEventListener('change', function () {
-
-            const selectedCourse = fields.course.value;
-
             populateSelect(
                 fields.section,
                 [],
                 'Select a section'
             );
-
             loadAssignmentOptions(row);
         });
 
         const removeButton = row.querySelector('.remove-assignment');
-
         removeButton.addEventListener('click', function () {
-
-            const deleteCheckbox = row.querySelector(
-                'input[name$="-DELETE"]'
-            );
-
+            const deleteCheckbox = row.querySelector('input[name$="-DELETE"]');
             if (deleteCheckbox) {
                 deleteCheckbox.checked = true;
             }
-
             row.hidden = true;
         });
 
         refreshProgramOptions(row);
     }
 
-
     function updateFacultyFields() {
+        const facultyRoleIds = [
+            {% for role in form.fields.role.queryset %}
+                {% if role.is_default and role.code == 'FACULTY' %}
+                    '{{ role.pk }}',
+                {% endif %}
+            {% endfor %}
+        ];
 
-        const facultyRoleIds = [{% for role in form.fields.role.queryset %}{% if role.is_default and role.code == 'FACULTY' %}'{{ role.pk }}',{% endif %}{% endfor %}];
         const isFaculty = facultyRoleIds.includes(roleField.value);
-
         facultyFields.hidden = !isFaculty;
 
         if (isFaculty) {
@@ -490,20 +448,14 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-
     assignedPrograms.addEventListener('change', function () {
-
         assignmentForms.querySelectorAll('.assignment-form').forEach(
             refreshProgramOptions
         );
-
     });
 
-
     addAssignmentButton.addEventListener('click', function () {
-
         const formIndex = parseInt(totalForms.value, 10);
-
         const formHTML = emptyTemplate.innerHTML.replace(
             /__prefix__/g,
             formIndex
@@ -511,27 +463,19 @@ document.addEventListener('DOMContentLoaded', function () {
 
         const wrapper = document.createElement('div');
         wrapper.innerHTML = formHTML.trim();
-
         const newRow = wrapper.firstElementChild;
 
         assignmentForms.appendChild(newRow);
-
         totalForms.value = formIndex + 1;
-
         bindAssignmentRow(newRow);
-
     });
-
 
     assignmentForms.querySelectorAll('.assignment-form').forEach(
         bindAssignmentRow
     );
 
     roleField.addEventListener('change', updateFacultyFields);
-
     updateFacultyFields();
-
 });
 </script>
-
 {% endblock %}

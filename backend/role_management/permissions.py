@@ -4,12 +4,8 @@ ROLE_GROUP_NAMES = {
     'FACULTY': 'Faculty',
 }
 
-
 ADMIN_SIDE_ROLE_CODES = frozenset({'ADMIN', 'STAFF'})
-
-
 ALL_ROLE_CODES = frozenset(ROLE_GROUP_NAMES)
-
 
 COMMON_DEFAULT_PERMISSION_CODES = (
     'access_preferences',
@@ -17,7 +13,6 @@ COMMON_DEFAULT_PERMISSION_CODES = (
     'access_account_security',
     'access_profile',
 )
-
 
 PERMISSION_PAGES = (
     {
@@ -47,41 +42,10 @@ PERMISSION_PAGES = (
     {
         'key': 'user_management',
         'title': 'User Management',
-        'description': 'Manage user accounts and their account status.',
+        'description': 'Access the user account management module.',
         'access_codename': 'access_user_management',
         'available_to': frozenset({'ADMIN', 'STAFF'}),
-        'operations': (
-            {
-                'codename': 'add_users',
-                'label': 'Add Users',
-                'description': 'Create manageable user accounts.',
-            },
-            {
-                'codename': 'edit_users',
-                'label': 'Edit Users',
-                'description': 'Edit manageable user accounts.',
-            },
-            {
-                'codename': 'manage_all_users',
-                'label': 'Manage All Users',
-                'description': 'View and manage accounts across all assigned Roles.',
-            },
-            {
-                'codename': 'manage_faculty_users',
-                'label': 'Manage Faculty Users',
-                'description': 'View and manage accounts assigned the built-in Faculty Role.',
-            },
-            {
-                'codename': 'toggle_user_status',
-                'label': 'Activate or Deactivate Users',
-                'description': 'Change the active status of manageable accounts.',
-            },
-            {
-                'codename': 'unlock_user_accounts',
-                'label': 'Unlock User Accounts',
-                'description': 'Release locked user accounts.',
-            },
-        ),
+        'operations': (),
     },
     {
         'key': 'program_management',
@@ -253,9 +217,9 @@ PERMISSION_PAGES = (
     },
 )
 
-
-PAGE_PERMISSION_CODES = tuple(page['access_codename'] for page in PERMISSION_PAGES)
-
+PAGE_PERMISSION_CODES = tuple(
+    page['access_codename'] for page in PERMISSION_PAGES
+)
 
 OPERATION_PARENT_PAGES = {
     operation['codename']: page['access_codename']
@@ -263,56 +227,54 @@ OPERATION_PARENT_PAGES = {
     for operation in page['operations']
 }
 
-
 OPERATION_PERMISSION_CODES = tuple(OPERATION_PARENT_PAGES)
 
+ALL_PERMISSION_CODES = tuple(
+    dict.fromkeys(PAGE_PERMISSION_CODES + OPERATION_PERMISSION_CODES)
+)
 
-ALL_PERMISSION_CODES = tuple(dict.fromkeys(PAGE_PERMISSION_CODES + OPERATION_PERMISSION_CODES))
-
-
-PERMISSION_DETAILS = {page['access_codename']: (page['title'], page['description']) for page in PERMISSION_PAGES}
-
-
+PERMISSION_DETAILS = {
+    page['access_codename']: (page['title'], page['description'])
+    for page in PERMISSION_PAGES
+}
 PERMISSION_DETAILS.update({
     operation['codename']: (operation['label'], operation['description'])
     for page in PERMISSION_PAGES
     for operation in page['operations']
 })
 
+ADMIN_DEFAULT_PERMISSION_CODES = tuple(
+    codename
+    for page in PERMISSION_PAGES
+    if 'ADMIN' in page['available_to']
+    for codename in (
+        page['access_codename'],
+        *(operation['codename'] for operation in page['operations']),
+    )
+)
 
 DEFAULT_ROLE_PERMISSIONS = {
-    'ADMIN': ALL_PERMISSION_CODES,
-
+    'ADMIN': ADMIN_DEFAULT_PERMISSION_CODES,
+    
     'STAFF': (
         'access_staff_dashboard',
-
         'access_user_management',
-        'add_users',
-        'edit_users',
-        'toggle_user_status',
-        'manage_faculty_users',
-
         'access_program_management',
         'manage_programs',
-
         'access_submission_requirements',
         'manage_submission_bins',
-
         'access_faculty_submissions',
         'review_faculty_submissions',
         'return_for_revisions',
-
         'access_document_repository',
-
         'access_preferences',
         'access_notification_settings',
         'access_account_security',
-        'access_profile'
+        'access_profile',
     ),
     
     'FACULTY': (
         'access_faculty_dashboard',
-
         'access_faculty_submission_bin',
         'upload_documents',
         'submit_documents',
@@ -320,19 +282,15 @@ DEFAULT_ROLE_PERMISSIONS = {
         'remove_documents',
         'retry_document_extraction',
         'resubmit_documents',
-
         'access_my_submissions',
-
         'access_my_documents',
         'toggle_document_pin',
-
         'access_preferences',
         'access_notification_settings',
         'access_account_security',
-        'access_profile'
+        'access_profile',
     ),
 }
-
 
 PERMISSION_SECTIONS = (
     (

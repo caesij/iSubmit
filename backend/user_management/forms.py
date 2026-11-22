@@ -7,6 +7,7 @@ from accounts.models import FacultyProfile
 from programs.models import Program, ProgramSection
 from submissions.models import ClassAssignment, Course, SubmissionPeriod
 from role_management.models import Role as PermissionRole
+from user_management.services import can_manage_target_role, get_roles_with_permission
 
 
 User = get_user_model()
@@ -16,18 +17,12 @@ class UserManagementForm(forms.ModelForm):
     role = forms.ModelChoiceField(
         queryset=PermissionRole.objects.none(),
         label='Role',
-        empty_label='Select a role',
+        empty_label='Select a role'
     )
 
     faculty_type = forms.ChoiceField(choices=FacultyProfile.FacultyType.choices, required=False)
 
     assigned_programs = forms.ModelMultipleChoiceField(queryset=Program.objects.none(), required=False)
-
-    is_active = forms.TypedChoiceField(
-        choices=[('True', 'Active'), ('False', 'Inactive')],
-        coerce=lambda value: value == 'True',
-        required=True
-    )
 
     class Meta:
         model = User
@@ -39,16 +34,29 @@ class UserManagementForm(forms.ModelForm):
             'email',
             'role',
             'faculty_type',
-            'assigned_programs',
-            'is_active'
+            'assigned_programs'
         ]
 
     def __init__(self, *args, **kwargs):
         self.request_user = kwargs.pop('request_user', None)
         super().__init__(*args, **kwargs)
 
+        assignable_roles = get_roles_with_permission(self.request_user, action='add')
+
+        if self.instance.pk and self.instance.role_id:
+            current_role = self.instance.role
+            if can_manage_target_role(
+                self.request_user,
+                current_role,
+                'edit',
+            ):
+                assignable_roles = (
+                    assignable_roles
+                    | PermissionRole.objects.filter(pk=current_role.pk)
+                )
+
         self.fields['role'].queryset = (
-            PermissionRole.objects
+            assignable_roles
             .select_related('group')
             .order_by('group__name')
         )
@@ -57,12 +65,9 @@ class UserManagementForm(forms.ModelForm):
 
         if self.instance.pk:
             profile = getattr(self.instance, 'faculty_profile', None)
-
             if profile:
                 self.fields['faculty_type'].initial = profile.faculty_type
                 self.fields['assigned_programs'].initial = (profile.assigned_programs.all())
-        else:
-            self.fields['is_active'].initial = 'True'
 
     def clean_first_name(self):
         return self.cleaned_data['first_name'].strip().upper()
@@ -75,7 +80,6 @@ class UserManagementForm(forms.ModelForm):
 
     def clean_employee_ID(self):
         employee_id = self.cleaned_data['employee_ID'].strip()
-
         existing = (
             User.objects
             .filter(employee_ID__iexact=employee_id)
@@ -89,7 +93,6 @@ class UserManagementForm(forms.ModelForm):
 
     def clean_email(self):
         email = self.cleaned_data['email'].strip()
-
         existing = (
             User.objects
             .filter(email__iexact=email)
@@ -103,15 +106,19 @@ class UserManagementForm(forms.ModelForm):
 
     def clean(self):
         cleaned_data = super().clean()
-
         role = cleaned_data.get('role')
         faculty_type = cleaned_data.get('faculty_type')
 
-        is_faculty_role = bool(
-            role
-            and role.is_default
-            and role.code == PermissionRole.Code.FACULTY
-        )
+        if role:
+            if self.instance.pk:
+                role_changed = role.pk != self.instance.role_id
+            else:
+                role_changed = True
+
+            if role_changed and not can_manage_target_role(self.request_user, role, 'add'):
+                self.add_error('role', 'You are not allowed to assign this role to the account.')
+
+        is_faculty_role = bool(role and role.is_default and role.code == PermissionRole.Code.FACULTY)
 
         if is_faculty_role:
             if not faculty_type:
@@ -133,7 +140,6 @@ class ClassAssignmentForm(forms.ModelForm):
     )
 
     year_level = forms.IntegerField(required=False, widget=forms.HiddenInput())
-
     section = forms.CharField(required=False, widget=forms.HiddenInput())
 
     class Meta:
@@ -149,16 +155,14 @@ class ClassAssignmentForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         allowed_programs = kwargs.pop('allowed_programs', Program.objects.none())
-
         super().__init__(*args, **kwargs)
 
         self.fields['program'].queryset = allowed_programs.order_by('program_name')
-
         self.fields['course'].queryset = Course.objects.none()
         self.fields['program_section'].queryset = ProgramSection.objects.none()
 
         self.fields['academic_year'].choices = [('', 'Select an academic year')]
-
+        
         self.fields['semester'].choices = [('', 'Select a semester')] + list(SubmissionPeriod.Semester.choices)
 
         if self.is_bound:
@@ -167,7 +171,6 @@ class ClassAssignmentForm(forms.ModelForm):
             program_id = self.initial.get('program', self.instance.program_id)
 
         program = None
-
         if program_id and str(program_id).isdigit():
             program = allowed_programs.filter(pk=int(program_id)).first()
 
@@ -189,7 +192,7 @@ class ClassAssignmentForm(forms.ModelForm):
         self.fields['course'].queryset = program.courses.order_by('code')
 
         if self.is_bound:
-            academic_year = self.data.get(self.add_prefix('academic_year'))
+            academic_year = self.data.get(self.add_prefix('academic_year'), '')
         else:
             academic_year = self.initial.get('academic_year', self.instance.academic_year)
 
@@ -202,7 +205,6 @@ class ClassAssignmentForm(forms.ModelForm):
         if not self.is_bound and self.instance.pk:
             try:
                 section_number = int(self.instance.section)
-
                 selected_section = sections.filter(
                     year_level=self.instance.year_level,
                     section=section_number
@@ -210,7 +212,6 @@ class ClassAssignmentForm(forms.ModelForm):
 
                 if selected_section:
                     self.initial['program_section'] = selected_section.pk
-
             except (TypeError, ValueError):
                 pass
 
@@ -221,6 +222,13 @@ class ClassAssignmentForm(forms.ModelForm):
         academic_year = cleaned_data.get('academic_year')
         course = cleaned_data.get('course')
         selected_section = cleaned_data.get('program_section')
+
+        if program and course:
+            if not program.courses.filter(pk=course.pk).exists():
+                self.add_error(
+                    'course',
+                    'The selected course does not belong to this program.'
+                )
 
         if program and academic_year and selected_section and course:
             if (
@@ -234,7 +242,6 @@ class ClassAssignmentForm(forms.ModelForm):
             else:
                 cleaned_data['year_level'] = selected_section.year_level
                 cleaned_data['section'] = str(selected_section.section)
-
                 self.instance.year_level = selected_section.year_level
                 self.instance.section = str(selected_section.section)
 
@@ -252,7 +259,6 @@ class BaseClassAssignmentFormSet(BaseInlineFormSet):
 
         for form in self.forms:
             data = form.cleaned_data
-
             if not data or data.get('DELETE'):
                 continue
 
@@ -262,13 +268,13 @@ class BaseClassAssignmentFormSet(BaseInlineFormSet):
             course = data.get('course')
             selected_section = data.get('program_section')
 
-            if not all([
+            if not all((
                 program,
                 academic_year,
                 semester,
                 course,
                 selected_section,
-            ]):
+            )):
                 continue
 
             assignment_key = (
@@ -281,9 +287,7 @@ class BaseClassAssignmentFormSet(BaseInlineFormSet):
             )
 
             if assignment_key in existing_assignments:
-                raise ValidationError(
-                    'The same teaching assignment has been added more than once.'
-                )
+                raise ValidationError('The same teaching assignment has been added more than once.')
 
             existing_assignments.add(assignment_key)
 
