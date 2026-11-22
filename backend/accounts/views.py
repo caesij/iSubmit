@@ -43,18 +43,18 @@ def redirect_user_by_role(user):
             ('accounts.access_preferences', 'faculty_portal:preferences'),
             ('accounts.access_notification_settings', 'faculty_portal:notification_settings'),
             ('accounts.access_account_security', 'faculty_portal:account_and_security'),
-            ('accounts.access_profile', 'faculty_portal:profile')
+            ('accounts.access_profile', 'faculty_portal:profile'),
         )
 
     else:
         admin_dashboards = (
             ('accounts.access_admin_dashboard', 'admin_staff_portal:admin_dashboard'),
-            ('accounts.access_staff_dashboard', 'admin_staff_portal:staff_dashboard')
+            ('accounts.access_staff_dashboard', 'admin_staff_portal:staff_dashboard'),
         )
 
         staff_dashboards = (
             ('accounts.access_staff_dashboard', 'admin_staff_portal:staff_dashboard'),
-            ('accounts.access_admin_dashboard', 'admin_staff_portal:admin_dashboard')
+            ('accounts.access_admin_dashboard', 'admin_staff_portal:admin_dashboard'),
         )
 
         preferred_dashboards = {
@@ -73,7 +73,7 @@ def redirect_user_by_role(user):
             ('accounts.access_preferences', 'admin_staff_portal:preferences'),
             ('accounts.access_notification_settings', 'admin_staff_portal:notification_settings'),
             ('accounts.access_account_security', 'admin_staff_portal:account_and_security'),
-            ('accounts.access_profile', 'admin_staff_portal:profile')
+            ('accounts.access_profile', 'admin_staff_portal:profile'),
         )
 
     for permission, url_name in preferred_dashboards:

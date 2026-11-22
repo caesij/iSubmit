@@ -93,7 +93,13 @@
                             </div>
                         </td>
                         <td>
-                            <span class="faculty-type-badge">{{ row.get_faculty_type_display }}</span>
+                            {% if row.faculty_profile %}
+                                <span class="faculty-type-badge">
+                                    {{ row.faculty_profile.get_faculty_type_display }}
+                                </span>
+                            {% else %}
+                                <span class="text-sub">—</span>
+                            {% endif %}
                         </td>
                         <td>
                             {{ row.submitted_count }} of {{ row.total_count }} Documents
