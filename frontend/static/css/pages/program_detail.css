@@ -1,4 +1,3 @@
-html:has(.program-detail-page) :is(.main-area, .content-shell) { background: #fff; }
 .program-detail-page { display: grid; gap: 24px; min-width: 0; color: #252525; }
 .program-detail-page * { box-sizing: border-box; }
 .program-detail-page .detail-back-link { display: inline-flex; align-items: center; justify-content: center; gap: 8px; justify-self: start; min-height: 40px; padding: 9px 18px; border: 1px solid #ad0800; border-radius: 5px; background: #ad0800; color: #fff; font-size: 14px; font-weight: 600; text-decoration: none; }

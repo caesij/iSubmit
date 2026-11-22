@@ -7,6 +7,7 @@ app_name = 'accounts'
 urlpatterns = [
     # Authentication URLs
     path('login/', views.login_view, name='login'),
+    path('login/success/', views.login_success_view, name='login_success'),
     path('logout/', views.logout_view, name='logout'),
     path('security/sessions/<int:record_id>/revoke/', views.revoke_session_view, name='revoke_session'),
     path('security/sessions/revoke-others/', views.revoke_other_sessions_view, name='revoke_other_sessions'),

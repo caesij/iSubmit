@@ -3,6 +3,9 @@
 .user-editor *, .user-editor *::before, .user-editor *::after { box-sizing: border-box; }
 .user-editor .user-editor-header { display: flex; align-items: center; justify-content: space-between; gap: 20px; margin-bottom: 24px; padding: 0; border: 0; }
 .user-editor h2 { margin: 0 0 6px; font-size: 24px; }
+.user-editor .user-back-button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 9px 20px; border: 1px solid #b40000; border-radius: 4px; background: #b40000; color: #fff; font: inherit; font-size: 14px; font-weight: 600; line-height: 18px; text-decoration: none; white-space: nowrap; }
+.user-editor .user-back-button:hover { background: #920000; border-color: #920000; }
+.user-editor .user-back-button svg { width: 16px; height: 16px; flex-shrink: 0; }
 .user-editor p { margin: 0; color: #667085; font-size: 14px; line-height: 1.6; }
 .user-editor .user-form-card { background: #fff; border: 1px solid #e4e7ec; border-radius: 12px; padding: 26px 28px; margin-bottom: 20px; box-shadow: 0 2px 4px #10182804; }
 .user-editor .user-section-heading { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
@@ -42,6 +45,25 @@
  .user-editor .form-actions :is(a, button) { flex: 1; }
  .user-editor input:not([type="hidden"]), .user-editor select { font-size: 16px; }
 }
+
+.program-multiselect { position: relative; min-width: 0; }
+.user-editor .program-multiselect-toggle { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; min-height: 46px; padding: 11px 14px; border: 1px solid #d1d1d1; border-radius: 5px; background: #fff; color: #242424; font: inherit; font-size: 14px; text-align: left; cursor: pointer; overflow-wrap: anywhere; }
+.program-multiselect-toggle::after { content: ''; flex: 0 0 7px; height: 7px; border-right: 1.5px solid #777; border-bottom: 1.5px solid #777; transform: rotate(45deg); margin: -4px 3px 0 0; }
+.program-multiselect-toggle[aria-expanded="true"] { border-color: #a60700; box-shadow: 0 0 0 3px #a607000c; }
+.program-selected-badges { display: flex; flex-wrap: wrap; gap: 6px; min-width: 0; }
+.program-selected-badge { display: inline-flex; padding: 3px 10px; border: 1px solid #e8cccc; border-radius: 5px; background: #fbf0f0; color: #870e0e; font-size: 13px; font-weight: 600; letter-spacing: .02em; }
+.program-options-header { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 10px 14px; margin-bottom: 6px; border-bottom: 1px solid #eee6e6; font-size: 14px; }
+.program-options-header strong { font-weight: 600; color: #343434; }
+.program-options-header > span { color: #8a0d0d; background: #fbf0f0; padding: 3px 9px; border-radius: 20px; font-size: 12px; white-space: nowrap; }
+.program-option-copy { display: flex; flex-direction: column; gap: 4px; min-width: 0; overflow-wrap: anywhere; }
+.program-option-copy strong { font-size: 14px; font-weight: 600; letter-spacing: .02em; }
+.program-option-copy > span { color: #626262; font-size: 13px; line-height: 1.5; }
+.program-multiselect-options { position: absolute; top: calc(100% + 6px); left: 0; right: 0; z-index: 20; max-height: 260px; overflow-y: auto; padding: 6px; background: #fff; border: 1px solid #e5d7d7; border-radius: 8px; box-shadow: 0 6px 20px #4500001a; }
+.user-editor .program-multiselect-options label { display: flex; align-items: flex-start; gap: 12px; padding: 12px; margin: 4px 0; border: 1px solid transparent; border-radius: 6px; cursor: pointer; }
+.program-multiselect-options label:hover, .program-multiselect-options label:focus-within { background: #f7eaea; }
+.program-multiselect-options label:has(:checked) { background: #fcf4f4; border-color: #ecd8d8; color: #8a0d0d; }
+.user-editor .program-multiselect-options input[type="checkbox"] { flex: 0 0 18px; width: 18px; height: 18px; margin: 2px 0 0; accent-color: #a60700; }
+@media (max-width: 650px) { .user-editor .program-multiselect-toggle { font-size: 16px; } }
 
 /* Native, keyboard-accessible dropdown menus using the portal palette. */
 @supports (appearance: base-select) {

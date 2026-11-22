@@ -8021,9 +8021,6 @@ html:where([data-css~="submissions"]),
 
 /* admin_staff_portal/core/submissions/submission_bin/requirements_list.html */
 /* Submission-bin list only; other submission screens retain their styles. */
-html:has(.submission-bin-page) .main-area,
-html:has(.submission-bin-page) .content-shell,
-html:has(.submission-bin-page) body { background: #fff; }
 .submission-bin-page .tab-nav { margin-bottom: 24px; }
 .submission-bin-page .filter-card {
     padding: 16px; margin-bottom: 24px; border: 1px solid #e5e5e5;
@@ -8076,8 +8073,6 @@ html:has(.submission-bin-page) body { background: #fff; }
     .submission-bin-page .btn-clear, .submission-bin-page .btn-add-bin { flex: 1; padding: 0 12px; }
 }
 /* Submission period details */
-html:has(.period-detail-page) .main-area,
-html:has(.period-detail-page) .content-shell { background: #fff; }
 .period-detail-page .tab-nav { margin-bottom: 16px; }
 .period-detail-page .bulk-back-link { margin-bottom: 18px; }
 .period-detail-page .bulk-breadcrumb { margin: 0 0 18px; font-size: 13px; color: #666; }
@@ -8155,8 +8150,6 @@ html:has(.period-detail-page) .content-shell { background: #fff; }
     .period-detail-page .period-requirements-card { max-height: 65vh; }
 }
 /* Submission period editor: create and edit share the same form. */
-html:has(.requirement-editor) .main-area,
-html:has(.requirement-editor) .content-shell { background: #fff; }
 .requirement-editor { color: #252525; }
 .requirement-editor .tab-nav { margin-bottom: 18px; }
 .requirement-editor .bulk-breadcrumb { margin: 18px 0; color: #707070; font-size: 13px; }
@@ -8324,8 +8317,6 @@ body:has(.requirement-dialog[open]) { overflow: hidden; }
     .requirement-dialog .modal-switches { align-items: flex-start; flex-direction: column; }
 }
 /* Program overview: consistent portal surfaces, readable rows, grouped actions. */
-html:has(.program-list-page) .main-area,
-html:has(.program-list-page) .content-shell { background: #fff; }
 .program-list-page .program-page-header { align-items: center; gap: 20px; margin-bottom: 24px; }
 .program-list-page .program-page-header h2 { margin: 0 0 6px; font-size: 24px; }
 .program-list-page .program-page-header p { font-size: 14px; }

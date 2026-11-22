@@ -1,0 +1,22 @@
+/* Shared header geometry across both portals and short/scrolling pages. */
+html[data-portal] { scrollbar-gutter: stable; }
+html[data-portal] .topbar { box-sizing: border-box; align-items: center; }
+html[data-portal] .topbar > div:first-of-type { min-width: 0; }
+html[data-portal] .user-badge-avatar { flex-shrink: 0; }
+html[data-portal] .user-badge > div:last-child { min-width: 0; }
+html[data-portal] .user-badge-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; line-height: 1.4; }
+html[data-portal] .user-badge-meta { display: block; margin-top: 2px; color: #666; font-size: 12px; font-weight: 400; line-height: 1.4; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (min-width: 1025px) {
+    html[data-portal] .topbar { display: grid; grid-template-columns: minmax(0, 1fr) clamp(460px, 45vw, 760px); height: 106px; min-height: 106px; padding: 18px 22px 16px 26px; gap: 24px; }
+    html[data-portal] .topbar-title-wrap { margin-bottom: 4px; }
+    html[data-portal] .topbar-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    html[data-portal] .topbar-subtitle { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; line-height: 20px; }
+    html[data-portal] .topbar-controls { display: grid; grid-template-columns: minmax(0, 1fr) 40px 180px; align-items: center; gap: 18px; width: 100%; margin: 0; }
+    html[data-portal] .topbar-controls .global-search { width: 100%; min-width: 0; max-width: none; }
+    html[data-portal] .topbar-controls .user-badge { width: 180px; min-width: 0; }
+}
+@media (max-width: 1024px) {
+    html[data-portal] .topbar > div:first-of-type { min-height: 68px; display: flex; flex-direction: column; justify-content: center; }
+    html[data-portal] .topbar-title { line-height: 1.3; }
+    html[data-portal] .topbar-controls .user-badge { width: 180px; }
+}

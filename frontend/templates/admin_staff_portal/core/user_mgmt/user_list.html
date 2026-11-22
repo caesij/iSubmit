@@ -3,13 +3,18 @@
 
 {% block css_modules %}user-list-page{% endblock %}
 {% block title %}{{ page_title }} - iSubmit{% endblock %}
+{% block subtitle %}Manage campus user accounts, roles, and access.{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/pages/user_management.css' %}">
+{% endblock %}
 
 {% block content %}
+<div class="user-management-page">
 <div class="panel-header">
     <div class="section-tabs">
         <a
             href="{% url 'user_management:user_list' %}?role={{ current_role }}"
-            class="tab-link active"
+            class="tab-link active" aria-current="page"
         >
             {{ page_title }}
         </a>
@@ -24,6 +29,15 @@
     </div>
 </div>
 
+{% if can_add_users %}
+<div class="user-list-actions">
+    <a href="{% url 'user_management:user_create' %}" class="action-button user-add-button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 5v14M5 12h14" stroke-linecap="round"/></svg>
+        Add User
+    </a>
+</div>
+{% endif %}
+
 <div class="table-toolbar">
     <form
         method="GET"
@@ -31,7 +45,9 @@
         class="filters"
     >
         <div class="search-field">
+            <label for="user-search" class="status-label">Search users</label>
             <input
+                id="user-search"
                 type="text"
                 name="q"
                 value="{{ search_query }}"
@@ -97,11 +113,6 @@
         </a>
     </form>
 
-    {% if can_add_users %}
-        <a href="{% url 'user_management:user_create' %}" class="action-button">
-            Add User
-        </a>
-    {% endif %}
 </div>
 
 <div class="table-wrap">
@@ -280,6 +291,7 @@
         </div>
     </div>
 {% endif %}
+</div>
 
 <script>
     function toggleActionMenu(event) {
