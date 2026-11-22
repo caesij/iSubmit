@@ -1,10 +1,10 @@
 {% extends 'admin_staff_portal/base.html' %}
 {% load static %}
-{% block css_modules %}program-management{% endblock %}
+{% block css_modules %}program-management program-detail-styles{% endblock %}
 {% block title %}{{ program.short_name }} - Program Management{% endblock %}
 {% block heading %}{{ program.short_name }}{% endblock %}
 {% block subtitle %}Manage program sections and curriculum courses.{% endblock %}
-{% block extra_css %}<link rel="stylesheet" href="{% static 'css/pages/program_detail.css' %}">{% endblock %}
+{% block extra_css %}{% endblock %}
 {% block content %}
 <section class="program-detail-page">
     <a class="detail-back-link" href="{% url 'programs:program_list' %}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 19-7-7 7-7M5 12h14"/></svg>Back to Programs</a>

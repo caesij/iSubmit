@@ -1,7 +1,7 @@
 {% extends 'admin_staff_portal/base.html' %}
 {% load static %}
 
-{% block css_modules %}settings role-management-page{% endblock %}
+{% block css_modules %}settings role-management-page role-editor-styles management-tools-styles{% endblock %}
 {% block title %}Role Management - iSubmit{% endblock %}
 {% block heading %}Role Management{% endblock %}
 {% block subtitle %}
@@ -9,8 +9,6 @@ Manage campus roles, page access, and notification permissions.
 {% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/pages/role_management.css' %}">
-<link rel="stylesheet" href="{% static 'css/pages/management_portal.css' %}">
 <script src="{% static 'js/role-management.js' %}" defer></script>
 {% endblock %}
 

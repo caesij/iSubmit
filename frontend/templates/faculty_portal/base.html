@@ -1,6 +1,6 @@
 {% load static %}
 <!DOCTYPE html>
-<html lang="en" data-portal="faculty" data-css="{% block css_modules %}{% endblock %}">
+<html lang="en" data-portal="faculty" data-css="{% block css_modules %}{% endblock %} shared-header-styles">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,9 +10,6 @@
     <script src="{% static 'js/global-search.js' %}" defer></script>
     <script src="{% static 'js/portal-responsive.js' %}" defer></script>
     {% block extra_css %}{% endblock %}
-
-
-    <link rel="stylesheet" href="{% static 'css/layout/portal_header.css' %}">
 </head>
 
 <body>

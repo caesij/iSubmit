@@ -8526,3 +8526,642 @@ body:has(.requirement-dialog[open]) { overflow: hidden; }
   :where([data-portal="admin-staff"]) .content-shell .document-tabs { flex-wrap: wrap; gap: 10px; }
   :where([data-portal="admin-staff"]) .content-shell .documents-overview-link { margin-top: 0; min-height: 44px; }
 }
+
+
+/* Consolidated module: css/pages/role_management.css; enabled by role-editor-styles. */
+
+    /* Role filters */
+    :where([data-css~="role-editor-styles"]) .role-filter-form .settings-actions {
+        display: grid;
+        grid-template-columns: minmax(150px, 1fr) minmax(200px, 2fr) auto auto;
+        align-items: end;
+        gap: 12px;
+    }
+
+    :where([data-css~="role-editor-styles"]) .role-filter-field {
+        display: flex;
+        flex-direction: column;
+        gap: 7px;
+        min-width: 0;
+    }
+
+    :where([data-css~="role-editor-styles"]) .role-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 20px;
+    }
+
+    :where([data-css~="role-editor-styles"]) .role-list .settings-tab {
+        text-decoration: none;
+    }
+
+    /* Permission page cards */
+    :where([data-css~="role-editor-styles"]) .permission-page-card {
+        border: 1px solid var(--border-color, #dedede);
+        border-radius: 10px;
+        margin-bottom: 14px;
+        overflow: hidden;
+    }
+
+    :where([data-css~="role-editor-styles"]) .permission-page-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+        padding: 17px 20px;
+        cursor: pointer;
+    }
+
+    :where([data-css~="role-editor-styles"]) .permission-page-info {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    :where([data-css~="role-editor-styles"]) .permission-page-info strong {
+        font-size: 15px;
+        font-weight: 600;
+    }
+
+    :where([data-css~="role-editor-styles"]) .permission-page-info small {
+        font-size: 13px;
+        opacity: 0.7;
+    }
+
+    :where([data-css~="role-editor-styles"]) .permission-page-header input {
+        flex-shrink: 0;
+    }
+
+    /* Operations */
+    :where([data-css~="role-editor-styles"]) .permission-operations {
+        margin: 0 20px 12px 36px;
+        padding-top: 10px;
+        border-top: 1px solid var(--border-color, #dedede);
+    }
+
+    :where([data-css~="role-editor-styles"]) .permission-operations-heading {
+        margin-bottom: 8px;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.07em;
+        text-transform: uppercase;
+        opacity: 0.65;
+    }
+
+    :where([data-css~="role-editor-styles"]) .permission-operations .permission-row {
+        padding: 11px 0;
+        border-bottom: 1px solid var(--border-color, #dedede);
+    }
+
+    :where([data-css~="role-editor-styles"]) .permission-operations .permission-row:last-child {
+        border-bottom: none;
+    }
+
+    :where([data-css~="role-editor-styles"]) .permission-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+    }
+
+    :where([data-css~="role-editor-styles"]) .permission-row > span {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    :where([data-css~="role-editor-styles"]) .permission-row small {
+        font-size: 12px;
+        opacity: 0.7;
+    }
+
+    :where([data-css~="role-editor-styles"]) .permission-row input:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+    }
+
+    /* Empty state */
+    :where([data-css~="role-editor-styles"]) .role-empty-state {
+        text-align: center;
+        padding: 35px 20px;
+    }
+
+    /* Notification Settings */
+    :where([data-css~="role-editor-styles"]) .notification-settings-card {
+        margin-top: 20px;
+    }
+
+    :where([data-css~="role-editor-styles"]) .notification-settings-list {
+        margin-top: 18px;
+    }
+
+    :where([data-css~="role-editor-styles"]) .notification-setting-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+        padding: 16px 0;
+        border-bottom: 1px solid var(--border-color, #dedede);
+        cursor: pointer;
+    }
+
+    :where([data-css~="role-editor-styles"]) .notification-setting-row:last-child {
+        border-bottom: none;
+    }
+
+    :where([data-css~="role-editor-styles"]) .notification-setting-info {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    :where([data-css~="role-editor-styles"]) .notification-setting-info strong {
+        font-size: 14px;
+        font-weight: 600;
+    }
+
+    :where([data-css~="role-editor-styles"]) .notification-setting-info small {
+        font-size: 12px;
+        opacity: 0.7;
+    }
+
+    :where([data-css~="role-editor-styles"]) .notification-setting-row input {
+        flex-shrink: 0;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        :where([data-css~="role-editor-styles"]) .role-filter-form .settings-actions {
+            grid-template-columns: 1fr;
+        }
+
+        :where([data-css~="role-editor-styles"]) .permission-page-header {
+            padding: 14px;
+        }
+
+        :where([data-css~="role-editor-styles"]) .permission-operations {
+            margin-left: 20px;
+            margin-right: 14px;
+        }
+
+        :where([data-css~="role-editor-styles"]) .notification-setting-row {
+            gap: 12px;
+        }
+    }
+
+
+/* Portal role editor: consistent account fields and action hierarchy. */
+:where([data-css~="role-editor-styles"]) .role-management-page { max-width: 1200px; margin: 0 auto; color: #222; }
+:where([data-css~="role-editor-styles"]) .role-management-page *,
+:where([data-css~="role-editor-styles"]) .role-management-page *::before,
+:where([data-css~="role-editor-styles"]) .role-management-page *::after { box-sizing: border-box; }
+:where([data-css~="role-editor-styles"]) .role-management-page.faculty-settings .settings-card { padding: 26px 28px; margin: 0 0 20px; border: 1px solid #e4e7ec; border-radius: 12px; background: #fff; box-shadow: 0 2px 4px #10182804; }
+:where([data-css~="role-editor-styles"]) .role-management-page .settings-card h2 { display: flex; align-items: center; gap: 12px; font-size: 18px; line-height: 1.5; margin: 0 0 10px; }
+:where([data-css~="role-editor-styles"]) .role-management-page .role-section-icon { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; background: #fff1f0; color: #a60700; border-radius: 10px; flex-shrink: 0; }
+:where([data-css~="role-editor-styles"]) .role-management-page .user-form-icon,
+:where([data-css~="role-editor-styles"]) .role-management-page .role-section-icon img { width: 19px; height: 19px; flex-shrink: 0; }
+:where([data-css~="role-editor-styles"]) .role-management-page.faculty-settings .card-sub { color: #667085; font-size: 14px; line-height: 1.7; margin: 0 0 22px; }
+:where([data-css~="role-editor-styles"]) .role-management-page .settings-actions { display: flex; align-items: flex-end; justify-content: flex-start; flex-wrap: wrap; gap: 12px; margin-top: 20px; }
+:where([data-css~="role-editor-styles"]) .role-management-page .role-create-form .settings-actions,
+:where([data-css~="role-editor-styles"]) .role-management-page .role-rename-form { max-width: 760px; }
+:where([data-css~="role-editor-styles"]) .role-management-page .role-name-field { flex: 1; min-width: min(100%, 220px); display: flex; flex-direction: column; gap: 7px; }
+:where([data-css~="role-editor-styles"]) .role-management-page label { font-size: 14px; font-weight: 500; color: #344054; }
+:where([data-css~="role-editor-styles"]) .role-management-page input:not([type="hidden"]):not([type="checkbox"]),
+:where([data-css~="role-editor-styles"]) .role-management-page select { min-width: 0; width: 100%; min-height: 46px; border: 1px solid #d0d5dd; border-radius: 7px; padding: 11px 14px; background-color: #fff; color: #242424; font: inherit; font-size: 14px; box-shadow: 0 1px 2px #10182805; }
+:where([data-css~="role-editor-styles"]) .role-management-page select { appearance: none; padding-right: 38px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%23667085' stroke-width='1.7' viewBox='0 0 24 24'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 13px center; }
+:where([data-css~="role-editor-styles"]) .role-management-page :is(input, select):focus-visible { border-color: #a60700; outline: 3px solid #a6070015; outline-offset: 1px; }
+:where([data-css~="role-editor-styles"]) .role-management-page :is(button, a):focus-visible { outline: 3px solid #a6070060; outline-offset: 3px; }
+:where([data-css~="role-editor-styles"]) .role-management-page :is(.btn-save, .btn-cancel, .btn-danger) { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 46px; padding: 10px 16px; border: 1px solid #d0d5dd; border-radius: 7px; background: #fff; color: #344054; font: inherit; font-size: 14px; font-weight: 600; text-decoration: none; cursor: pointer; }
+:where([data-css~="role-editor-styles"]) .role-management-page .btn-save { background: #ad0800; border-color: #ad0800; color: #fff; }
+:where([data-css~="role-editor-styles"]) .role-management-page .btn-save:hover { background: #850600; }
+:where([data-css~="role-editor-styles"]) .role-management-page .btn-danger { color: #b42318; border-color: #ecd1d0; }
+:where([data-css~="role-editor-styles"]) .role-management-page :is(.btn-cancel, .btn-danger):hover { background: #fff1f0; }
+:where([data-css~="role-editor-styles"]) .role-management-page .role-filter-form .settings-actions { display: grid; grid-template-columns: minmax(150px, 1fr) minmax(200px, 2fr) auto auto; }
+:where([data-css~="role-editor-styles"]) .role-management-page.faculty-settings .settings-tabs.role-list { display: flex; flex-wrap: wrap; gap: 12px; padding: 20px 0 0; margin: 20px 0 0; border: 0; border-top: 1px solid #eaecf0; }
+:where([data-css~="role-editor-styles"]) .role-management-page.faculty-settings .role-list .settings-tab { display: inline-flex; align-items: center; gap: 9px; min-height: 48px; padding: 12px 16px; border: 1px solid #e4e7ec; border-radius: 8px; background: #fff; color: #344054; font-size: 14px; font-weight: 500; }
+:where([data-css~="role-editor-styles"]) .role-management-page.faculty-settings .role-list .settings-tab:hover { border-color: #dba4a2; background: #fff9f9; }
+:where([data-css~="role-editor-styles"]) .role-management-page.faculty-settings .role-list .settings-tab.active { background: #fff1f0; border-color: #a60700; color: #a60700; font-weight: 600; }
+:where([data-css~="role-editor-styles"]) .role-management-page .role-list small { border-radius: 4px; padding: 2px 6px; background: #f2f4f7; color: #667085; font-size: 12px; }
+:where([data-css~="role-editor-styles"]) .role-management-page .role-empty-state { display: flex; flex-direction: column; align-items: center; padding: 44px 24px !important; }
+:where([data-css~="role-editor-styles"]) .role-management-page .role-empty-icon { display: grid; place-items: center; width: 58px; height: 58px; border-radius: 50%; background: #f9eeee; color: #a60700; margin-bottom: 16px; }
+:where([data-css~="role-editor-styles"]) .role-management-page .role-empty-icon svg { width: 28px; height: 28px; }
+:where([data-css~="role-editor-styles"]) .role-management-page .role-empty-state .card-sub { max-width: 620px; margin-bottom: 0; }
+:where([data-css~="role-editor-styles"]) .role-management-page .permission-page-card { border-color: #e4e7ec; background: #fff; }
+:where([data-css~="role-editor-styles"]) .role-management-page .permission-page-header { background: #fafbfc; }
+:where([data-css~="role-editor-styles"]) .role-management-page .permission-page-header:hover { background: #fff8f8; }
+:where([data-css~="role-editor-styles"]) .role-management-page .permissions-header { margin-bottom: 24px; }
+:where([data-css~="role-editor-styles"]) .role-management-page .permission-operations { margin: 0 20px 12px; padding-top: 16px; }
+:where([data-css~="role-editor-styles"]) .role-management-page .permission-operations-heading { font-size: 12px; color: #667085; opacity: 1; }
+:where([data-css~="role-editor-styles"]) .role-management-page :is(.permission-page-info small, .permission-row small, .notification-setting-info small) { font-size: 13px; color: #667085; opacity: 1; line-height: 1.6; }
+:where([data-css~="role-editor-styles"]) .role-management-page .permission-row strong { font-size: 14px; font-weight: 500; }
+:where([data-css~="role-editor-styles"]) .role-management-page input[type="checkbox"] { width: 19px; height: 19px; accent-color: #a60700; cursor: pointer; flex-shrink: 0; }
+:where([data-css~="role-editor-styles"]) .role-management-page .notification-setting-row { border-color: #eaecf0; }
+:where([data-css~="role-editor-styles"]) .role-management-page .role-details-card .role-rename-form { margin-bottom: 22px; }
+@media (max-width: 768px) {
+ :where([data-css~="role-editor-styles"]) .role-management-page.faculty-settings .settings-card { padding: 20px 16px; }
+ :where([data-css~="role-editor-styles"]) .role-management-page .role-filter-form .settings-actions { grid-template-columns: 1fr 1fr; }
+ :where([data-css~="role-editor-styles"]) .role-management-page .role-filter-field { grid-column: 1 / -1; }
+ :where([data-css~="role-editor-styles"]) .role-management-page input:not([type="hidden"]):not([type="checkbox"]),
+:where([data-css~="role-editor-styles"]) .role-management-page select { font-size: 16px; }
+ :where([data-css~="role-editor-styles"]) .role-management-page .role-create-form .settings-actions,
+:where([data-css~="role-editor-styles"]) .role-management-page .role-rename-form { flex-direction: column; align-items: stretch; }
+ :where([data-css~="role-editor-styles"]) .role-management-page .role-name-field { min-width: 0; width: 100%; }
+ :where([data-css~="role-editor-styles"]) .role-management-page.faculty-settings .role-list .settings-tab { flex-wrap: wrap; max-width: 100%; overflow-wrap: anywhere; }
+ :where([data-css~="role-editor-styles"]) .role-management-page .settings-card h2 { font-size: 17px; overflow-wrap: anywhere; }
+}
+
+/* Native, keyboard-accessible dropdown menus using the portal palette. */
+@supports (appearance: base-select) {
+    :where([data-css~="role-editor-styles"]) .role-management-page select,
+:where([data-css~="role-editor-styles"]) .role-management-page select::picker(select) { appearance: base-select; }
+    :where([data-css~="role-editor-styles"]) .role-management-page select { display: inline-flex; align-items: center; justify-content: space-between; gap: 12px; cursor: pointer; background-image: none; }
+    :where([data-css~="role-editor-styles"]) .role-management-page select::picker-icon { color: #777; transition: rotate 150ms ease; }
+    :where([data-css~="role-editor-styles"]) .role-management-page select:open { border-color: #a60700; box-shadow: 0 0 0 3px #a6070012; }
+    :where([data-css~="role-editor-styles"]) .role-management-page select:open::picker-icon { rotate: 180deg; color: #a60700; }
+    :where([data-css~="role-editor-styles"]) .role-management-page select::picker(select) {
+        margin-top: 6px; padding: 6px; border: 1px solid #e5d7d7; border-radius: 8px;
+        background: #fff; box-shadow: 0 6px 20px #4500001a;
+        max-height: 280px; overflow-y: auto;
+    }
+    :where([data-css~="role-editor-styles"]) .role-management-page select option {
+        display: flex; align-items: center; gap: 10px; padding: 10px 12px;
+        border-radius: 5px; background: #fff; color: #444; font: inherit;
+        font-size: 14px; cursor: pointer;
+    }
+    :where([data-css~="role-editor-styles"]) .role-management-page select option:hover,
+:where([data-css~="role-editor-styles"]) .role-management-page select option:focus { background: #f7eaea; color: #a60700; outline: none; }
+    :where([data-css~="role-editor-styles"]) .role-management-page select option:checked { background: #f3dede; color: #a60700; font-weight: 600; }
+    :where([data-css~="role-editor-styles"]) .role-management-page select option::checkmark { color: #a60700; }
+    :where([data-css~="role-editor-styles"]) .role-management-page select:disabled { cursor: not-allowed; }
+    @media (prefers-reduced-motion: reduce) {
+        :where([data-css~="role-editor-styles"]) .role-management-page select::picker-icon { transition: none; }
+    }
+}
+
+
+/* Consolidated module: css/pages/user_form.css; enabled by user-editor-styles. */
+/* Scoped account editor: shared by Add User and Edit User. */
+:where([data-css~="user-editor-styles"]) .user-editor { max-width: 1120px; margin: 0 auto; color: #222; }
+:where([data-css~="user-editor-styles"]) .user-editor *,
+:where([data-css~="user-editor-styles"]) .user-editor *::before,
+:where([data-css~="user-editor-styles"]) .user-editor *::after { box-sizing: border-box; }
+:where([data-css~="user-editor-styles"]) .user-editor .user-editor-header { display: flex; align-items: center; justify-content: space-between; gap: 20px; margin-bottom: 24px; padding: 0; border: 0; }
+:where([data-css~="user-editor-styles"]) .user-editor h2 { margin: 0 0 6px; font-size: 24px; }
+:where([data-css~="user-editor-styles"]) .user-editor .user-back-button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 9px 20px; border: 1px solid #b40000; border-radius: 4px; background: #b40000; color: #fff; font: inherit; font-size: 14px; font-weight: 600; line-height: 18px; text-decoration: none; white-space: nowrap; }
+:where([data-css~="user-editor-styles"]) .user-editor .user-back-button:hover { background: #920000; border-color: #920000; }
+:where([data-css~="user-editor-styles"]) .user-editor .user-back-button svg { width: 16px; height: 16px; flex-shrink: 0; }
+:where([data-css~="user-editor-styles"]) .user-editor p { margin: 0; color: #667085; font-size: 14px; line-height: 1.6; }
+:where([data-css~="user-editor-styles"]) .user-editor .user-form-card { background: #fff; border: 1px solid #e4e7ec; border-radius: 12px; padding: 26px 28px; margin-bottom: 20px; box-shadow: 0 2px 4px #10182804; }
+:where([data-css~="user-editor-styles"]) .user-editor .user-section-heading { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
+:where([data-css~="user-editor-styles"]) .user-editor h3 { margin: 0 0 3px; font-size: 17px; font-weight: 600; }
+:where([data-css~="user-editor-styles"]) .user-editor .user-form-icon { width: 19px; height: 19px; flex-shrink: 0; }
+:where([data-css~="user-editor-styles"]) .user-editor .user-field-grid,
+:where([data-css~="user-editor-styles"]) .user-editor .assignment-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px 24px; }
+:where([data-css~="user-editor-styles"]) .user-editor .form-group { min-width: 0; display: flex; flex-direction: column; gap: 7px; margin: 0; }
+:where([data-css~="user-editor-styles"]) .user-editor label { font-size: 14px; font-weight: 500; color: #344054; }
+:where([data-css~="user-editor-styles"]) .user-editor input:not([type="hidden"]):not([type="checkbox"]),
+:where([data-css~="user-editor-styles"]) .user-editor select { width: 100%; min-width: 0; min-height: 46px; padding: 11px 14px; border: 1px solid #d0d5dd; border-radius: 7px; background-color: #fff; color: #242424; font: inherit; font-size: 14px; box-shadow: 0 1px 2px #10182805; }
+:where([data-css~="user-editor-styles"]) .user-editor select:not([multiple]) { appearance: none; padding-right: 38px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%23667085' stroke-width='1.7' viewBox='0 0 24 24'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 13px center; }
+:where([data-css~="user-editor-styles"]) .user-editor select[multiple] { min-height: 140px; }
+:where([data-css~="user-editor-styles"]) .user-editor small { color: #667085; font-size: 13px; line-height: 1.6; }
+:where([data-css~="user-editor-styles"]) .user-editor :is(input, select):focus-visible { border-color: #a60700; outline: 3px solid #a6070015; outline-offset: 1px; }
+:where([data-css~="user-editor-styles"]) .user-editor :is(button, a):focus-visible { outline: 3px solid #a6070060; outline-offset: 3px; }
+:where([data-css~="user-editor-styles"]) .user-editor :where(.btn, .user-cancel, .action-button, #add-assignment, .remove-assignment) { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 10px 16px; border: 1px solid #d0d5dd; border-radius: 7px; background: #fff; color: #344054; font: inherit; font-size: 14px; font-weight: 600; text-decoration: none; cursor: pointer; white-space: normal; }
+:where([data-css~="user-editor-styles"]) .user-editor :is(.btn, .user-cancel):hover { background: #f9fafb; }
+:where([data-css~="user-editor-styles"]) .user-editor .form-actions .action-button { margin: 0; background: #ad0800; color: white; border-color: #ad0800; }
+:where([data-css~="user-editor-styles"]) .user-editor .action-button:hover { background: #850600; }
+:where([data-css~="user-editor-styles"]) .user-editor .form-actions { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 12px; padding: 4px 0 24px; }
+:where([data-css~="user-editor-styles"]) .user-editor .form-actions p { margin-right: auto; font-size: 13px; }
+:where([data-css~="user-editor-styles"]) .user-editor .assignment-heading { margin: 24px 0 6px; padding-top: 24px; border-top: 1px solid #eaecf0; font-size: 15px; }
+:where([data-css~="user-editor-styles"]) .user-editor #assignment-forms { display: flex; flex-direction: column; gap: 16px; margin: 20px 0; }
+:where([data-css~="user-editor-styles"]) .user-editor .assignment-form { padding: 20px; border: 1px solid #e4e7ec; border-radius: 8px; background: #fafbfc; }
+:where([data-css~="user-editor-styles"]) .user-editor .remove-assignment { grid-column: 1 / -1; justify-self: end; color: #a60700; border-color: #ecd1d0; }
+:where([data-css~="user-editor-styles"]) .user-editor #add-assignment { color: #a60700; border-color: #ecd1d0; }
+:where([data-css~="user-editor-styles"]) .user-editor :is(#add-assignment, .remove-assignment):hover { background: #fff1f0; }
+:where([data-css~="user-editor-styles"]) .user-editor .errorlist { color: #b42318; padding-left: 20px; font-size: 14px; margin: 4px 0; }
+:where([data-css~="user-editor-styles"]) .user-editor input[aria-invalid="true"],
+:where([data-css~="user-editor-styles"]) .user-editor select[aria-invalid="true"] { border-color: #d92d20; }
+:where([data-css~="user-editor-styles"]) .user-editor #assignment-forms input[name$="-DELETE"],
+:where([data-css~="user-editor-styles"]) .user-editor [hidden] { display: none !important; }
+@media (max-width: 650px) {
+ :where([data-css~="user-editor-styles"]) .user-editor .user-editor-header { align-items: flex-start; flex-direction: column; }
+ :where([data-css~="user-editor-styles"]) .user-editor .user-form-card { padding: 20px 16px; }
+ :where([data-css~="user-editor-styles"]) .user-editor .user-field-grid,
+:where([data-css~="user-editor-styles"]) .user-editor .assignment-form { grid-template-columns: minmax(0, 1fr); }
+ :where([data-css~="user-editor-styles"]) .user-editor .assignment-form { padding: 16px; }
+ :where([data-css~="user-editor-styles"]) .user-editor .form-actions p { width: 100%; }
+ :where([data-css~="user-editor-styles"]) .user-editor .form-actions :is(a, button) { flex: 1; }
+ :where([data-css~="user-editor-styles"]) .user-editor input:not([type="hidden"]),
+:where([data-css~="user-editor-styles"]) .user-editor select { font-size: 16px; }
+}
+
+:where([data-css~="user-editor-styles"]) .program-multiselect { position: relative; min-width: 0; }
+:where([data-css~="user-editor-styles"]) .user-editor .program-multiselect-toggle { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; min-height: 46px; padding: 11px 14px; border: 1px solid #d1d1d1; border-radius: 5px; background: #fff; color: #242424; font: inherit; font-size: 14px; text-align: left; cursor: pointer; overflow-wrap: anywhere; }
+:where([data-css~="user-editor-styles"]) .program-multiselect-toggle::after { content: ""; flex: 0 0 7px; height: 7px; border-right: 1.5px solid #777; border-bottom: 1.5px solid #777; transform: rotate(45deg); margin: -4px 3px 0 0; }
+:where([data-css~="user-editor-styles"]) .program-multiselect-toggle[aria-expanded="true"] { border-color: #a60700; box-shadow: 0 0 0 3px #a607000c; }
+:where([data-css~="user-editor-styles"]) .program-selected-badges { display: flex; flex-wrap: wrap; gap: 6px; min-width: 0; }
+:where([data-css~="user-editor-styles"]) .program-selected-badge { display: inline-flex; padding: 3px 10px; border: 1px solid #e8cccc; border-radius: 5px; background: #fbf0f0; color: #870e0e; font-size: 13px; font-weight: 600; letter-spacing: .02em; }
+:where([data-css~="user-editor-styles"]) .program-options-header { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 10px 14px; margin-bottom: 6px; border-bottom: 1px solid #eee6e6; font-size: 14px; }
+:where([data-css~="user-editor-styles"]) .program-options-header strong { font-weight: 600; color: #343434; }
+:where([data-css~="user-editor-styles"]) .program-options-header > span { color: #8a0d0d; background: #fbf0f0; padding: 3px 9px; border-radius: 20px; font-size: 12px; white-space: nowrap; }
+:where([data-css~="user-editor-styles"]) .program-option-copy { display: flex; flex-direction: column; gap: 4px; min-width: 0; overflow-wrap: anywhere; }
+:where([data-css~="user-editor-styles"]) .program-option-copy strong { font-size: 14px; font-weight: 600; letter-spacing: .02em; }
+:where([data-css~="user-editor-styles"]) .program-option-copy > span { color: #626262; font-size: 13px; line-height: 1.5; }
+:where([data-css~="user-editor-styles"]) .program-multiselect-options { position: absolute; top: calc(100% + 6px); left: 0; right: 0; z-index: 20; max-height: 260px; overflow-y: auto; padding: 6px; background: #fff; border: 1px solid #e5d7d7; border-radius: 8px; box-shadow: 0 6px 20px #4500001a; }
+:where([data-css~="user-editor-styles"]) .user-editor .program-multiselect-options label { display: flex; align-items: flex-start; gap: 12px; padding: 12px; margin: 4px 0; border: 1px solid transparent; border-radius: 6px; cursor: pointer; }
+:where([data-css~="user-editor-styles"]) .program-multiselect-options label:hover,
+:where([data-css~="user-editor-styles"]) .program-multiselect-options label:focus-within { background: #f7eaea; }
+:where([data-css~="user-editor-styles"]) .program-multiselect-options label:has(:checked) { background: #fcf4f4; border-color: #ecd8d8; color: #8a0d0d; }
+:where([data-css~="user-editor-styles"]) .user-editor .program-multiselect-options input[type="checkbox"] { flex: 0 0 18px; width: 18px; height: 18px; margin: 2px 0 0; accent-color: #a60700; }
+@media (max-width: 650px) { :where([data-css~="user-editor-styles"]) .user-editor .program-multiselect-toggle { font-size: 16px; } }
+
+/* Native, keyboard-accessible dropdown menus using the portal palette. */
+@supports (appearance: base-select) {
+    :where([data-css~="user-editor-styles"]) .user-editor select:not([multiple]),
+:where([data-css~="user-editor-styles"]) .user-editor select:not([multiple])::picker(select) { appearance: base-select; }
+    :where([data-css~="user-editor-styles"]) .user-editor select:not([multiple]) { display: inline-flex; align-items: center; justify-content: space-between; gap: 12px; cursor: pointer; background-image: none; }
+    :where([data-css~="user-editor-styles"]) .user-editor select:not([multiple])::picker-icon { color: #777; transition: rotate 150ms ease; }
+    :where([data-css~="user-editor-styles"]) .user-editor select:not([multiple]):open { border-color: #a60700; box-shadow: 0 0 0 3px #a6070012; }
+    :where([data-css~="user-editor-styles"]) .user-editor select:not([multiple]):open::picker-icon { rotate: 180deg; color: #a60700; }
+    :where([data-css~="user-editor-styles"]) .user-editor select:not([multiple])::picker(select) {
+        margin-top: 6px; padding: 6px; border: 1px solid #e5d7d7; border-radius: 8px;
+        background: #fff; box-shadow: 0 6px 20px #4500001a;
+        max-height: 280px; overflow-y: auto;
+    }
+    :where([data-css~="user-editor-styles"]) .user-editor select:not([multiple]) option {
+        display: flex; align-items: center; gap: 10px; padding: 10px 12px;
+        border-radius: 5px; background: #fff; color: #444; font: inherit;
+        font-size: 14px; cursor: pointer;
+    }
+    :where([data-css~="user-editor-styles"]) .user-editor select:not([multiple]) option:hover,
+:where([data-css~="user-editor-styles"]) .user-editor select:not([multiple]) option:focus { background: #f7eaea; color: #a60700; outline: none; }
+    :where([data-css~="user-editor-styles"]) .user-editor select:not([multiple]) option:checked { background: #f3dede; color: #a60700; font-weight: 600; }
+    :where([data-css~="user-editor-styles"]) .user-editor select:not([multiple]) option::checkmark { color: #a60700; }
+    :where([data-css~="user-editor-styles"]) .user-editor select:not([multiple]):disabled { cursor: not-allowed; }
+    @media (prefers-reduced-motion: reduce) {
+        :where([data-css~="user-editor-styles"]) .user-editor select:not([multiple])::picker-icon { transition: none; }
+    }
+}
+
+
+/* Consolidated module: css/pages/user_management.css; enabled by user-directory-styles. */
+/* Shared spacing for the directory and account editor. */
+:where([data-css~="user-directory-styles"]) .user-management-page *,
+:where([data-css~="user-directory-styles"]) .user-management-nav * { box-sizing: border-box; }
+:where([data-css~="user-directory-styles"]) .user-management-page .panel-header,
+:where([data-css~="user-directory-styles"]) .user-management-nav { margin: 0 0 18px; padding: 0; }
+:where([data-css~="user-directory-styles"]) .user-list-actions { display: flex; justify-content: flex-end; margin-bottom: 16px; }
+:where([data-css~="user-directory-styles"]) .user-management-page .user-add-button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 10px 18px; white-space: nowrap; }
+:where([data-css~="user-directory-styles"]) .user-add-button svg { width: 18px; height: 18px; flex-shrink: 0; }
+:where([data-css~="user-directory-styles"]) .user-management-page .table-toolbar { display: block; margin-bottom: 20px; }
+:where([data-css~="user-directory-styles"]) .user-management-page .table-toolbar .filters { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 16px; width: 100%; padding: 18px; margin: 0; }
+:where([data-css~="user-directory-styles"]) .user-management-page .filters .search-field { display: block; flex: 2 1 260px; width: auto; max-width: none; min-width: 200px; }
+:where([data-css~="user-directory-styles"]) .user-management-page .filters .status-filter { display: flex; flex-direction: column; align-items: stretch; gap: 6px; flex: 1 1 175px; min-width: 175px; }
+:where([data-css~="user-directory-styles"]) .user-management-page .filters .status-label { display: block; margin: 0 0 6px; text-align: left; font-size: 14px; line-height: 20px; }
+:where([data-css~="user-directory-styles"]) .user-management-page .status-filter .status-label { margin: 0; }
+:where([data-css~="user-directory-styles"]) .user-management-page .filters :is(input, select) { box-sizing: border-box; width: 100%; min-width: 0; height: 44px; font: inherit; font-size: 14px; }
+:where([data-css~="user-directory-styles"]) .user-management-page .filters select { max-width: none; padding-left: 12px; padding-right: 32px; }
+:where([data-css~="user-directory-styles"]) .user-management-page .filters .search-field input { padding-left: 12px; }
+:where([data-css~="user-directory-styles"]) .user-management-page .filters :is(.action-button, .clear-button) { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto; width: auto; min-width: 0; height: 44px; min-height: 44px; margin: 0; padding: 10px 16px; white-space: nowrap; font-size: 14px; }
+:where([data-css~="user-directory-styles"]) .user-management-page .table-wrap { max-width: 100%; overflow-x: auto; border-radius: 10px 10px 0 0; }
+:where([data-css~="user-directory-styles"]) .user-management-page .data-table { width: 100%; min-width: 1280px; table-layout: fixed; }
+:where([data-css~="user-directory-styles"]) .user-management-page .data-table :is(th, td) { padding: 18px 16px; vertical-align: middle; overflow-wrap: anywhere; white-space: normal; }
+:where([data-css~="user-directory-styles"]) .user-management-page .data-table :is(th, td):nth-child(1) { width: 14%; }
+:where([data-css~="user-directory-styles"]) .user-management-page .data-table :is(th, td):nth-child(2) { width: 10%; }
+:where([data-css~="user-directory-styles"]) .user-management-page .data-table :is(th, td):nth-child(3) { width: 12%; }
+:where([data-css~="user-directory-styles"]) .user-management-page .data-table :is(th, td):nth-child(4) { width: 10%; }
+:where([data-css~="user-directory-styles"]) .user-management-page .data-table :is(th, td):nth-child(5) { width: 20%; }
+:where([data-css~="user-directory-styles"]) .user-management-page .data-table :is(th, td):nth-child(6) { width: 10%; }
+:where([data-css~="user-directory-styles"]) .user-management-page .data-table :is(th, td):nth-child(7) { width: 10%; }
+:where([data-css~="user-directory-styles"]) .user-management-page .data-table :is(th, td):nth-child(8) { width: 10%; }
+:where([data-css~="user-directory-styles"]) .user-management-page .data-table :is(th, td):nth-child(9) { width: 4%; text-align: center; padding-left: 8px; padding-right: 8px; }
+:where([data-css~="user-directory-styles"]) .user-management-page .data-table th:last-child { font-size: 13px; }
+:where([data-css~="user-directory-styles"]) .user-management-page .data-table .account-status { white-space: nowrap; }
+:where([data-css~="user-directory-styles"]) .user-management-nav + .user-editor { max-width: none; margin: 0; }
+:where([data-css~="user-directory-styles"]) .user-management-nav + .user-editor .user-form-card { border-color: #d8d8d8; border-radius: 10px; box-shadow: none; padding: 24px; }
+:where([data-css~="user-directory-styles"]) .user-management-nav + .user-editor .user-editor-header { margin-bottom: 20px; }
+:where([data-css~="user-directory-styles"]) .user-management-nav + .user-editor :is(input:not([type="hidden"]):not([type="checkbox"]), select) { border-color: #d1d1d1; border-radius: 5px; }
+@media (max-width: 650px) {
+    :where([data-css~="user-directory-styles"]) .user-management-page .filters .search-field,
+:where([data-css~="user-directory-styles"]) .user-management-page .filters .status-filter { flex: 1 1 100%; min-width: 0; }
+    :where([data-css~="user-directory-styles"]) .user-management-page .table-toolbar .filters { padding: 16px; gap: 14px; }
+    :where([data-css~="user-directory-styles"]) .user-management-page .filters :is(input, select) { font-size: 16px; }
+    :where([data-css~="user-directory-styles"]) .user-management-nav + .user-editor .user-form-card { padding: 20px 16px; }
+}
+
+
+/* Consolidated module: css/pages/program_detail.css; enabled by program-detail-styles. */
+:where([data-css~="program-detail-styles"]) .program-detail-page { display: grid; gap: 24px; min-width: 0; color: #252525; }
+:where([data-css~="program-detail-styles"]) .program-detail-page * { box-sizing: border-box; }
+:where([data-css~="program-detail-styles"]) .program-detail-page .detail-back-link { display: inline-flex; align-items: center; justify-content: center; gap: 8px; justify-self: start; min-height: 40px; padding: 9px 18px; border: 1px solid #ad0800; border-radius: 5px; background: #ad0800; color: #fff; font-size: 14px; font-weight: 600; text-decoration: none; }
+:where([data-css~="program-detail-styles"]) .program-detail-page .detail-back-link:hover { background: #8b0700; border-color: #8b0700; }
+:where([data-css~="program-detail-styles"]) .program-detail-page .detail-heading { display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+:where([data-css~="program-detail-styles"]) .program-detail-page h2 { margin: 0 0 6px; font-size: 24px; line-height: 1.4; overflow-wrap: anywhere; }
+:where([data-css~="program-detail-styles"]) .program-detail-page p { margin: 0; color: #72727b; font-size: 14px; line-height: 1.6; }
+:where([data-css~="program-detail-styles"]) .program-detail-page .detail-meta { display: flex; align-items: center; gap: 14px; flex-shrink: 0; color: #65656c; font-size: 14px; }
+:where([data-css~="program-detail-styles"]) .program-detail-page .detail-badge { display: inline-block; padding: 5px 10px; border-radius: 4px; background: #f5f1f1; color: #674343; font-size: 14px; font-weight: 500; }
+:where([data-css~="program-detail-styles"]) .program-detail-page .detail-card { min-width: 0; background: #fff; border: 1px solid #e3dede; border-radius: 9px; box-shadow: 0 1px 4px #00000008; overflow: hidden; }
+:where([data-css~="program-detail-styles"]) .program-detail-page .detail-card-header { display: flex; justify-content: space-between; align-items: center; gap: 24px; padding: 22px 22px 0; }
+:where([data-css~="program-detail-styles"]) .program-detail-page h3 { display: flex; align-items: center; gap: 10px; margin: 0 0 5px; font-size: 18px; }
+:where([data-css~="program-detail-styles"]) .program-detail-page .detail-count { display: inline-flex; justify-content: center; align-items: center; min-width: 26px; height: 26px; padding: 0 7px; background: #f7eaea; color: #a60700; border-radius: 20px; font-size: 14px; font-weight: 500; }
+:where([data-css~="program-detail-styles"]) .program-detail-page .detail-filter { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+:where([data-css~="program-detail-styles"]) .program-detail-page label { display: block; font-size: 14px; font-weight: 500; }
+:where([data-css~="program-detail-styles"]) .program-detail-page .detail-add-form { display: grid; gap: 18px; align-items: end; padding: 22px; margin: 0; }
+:where([data-css~="program-detail-styles"]) .program-detail-page .detail-section-form { grid-template-columns: minmax(180px,1.3fr) repeat(2,minmax(120px,1fr)) auto; }
+:where([data-css~="program-detail-styles"]) .program-detail-page .detail-course-form { grid-template-columns: minmax(0,1fr) auto; }
+:where([data-css~="program-detail-styles"]) .program-detail-page .detail-field { display: grid; gap: 7px; min-width: 0; }
+:where([data-css~="program-detail-styles"]) .program-detail-page :is(input, select) { width: 100%; min-width: 0; height: 44px; padding: 10px 12px; border: 1px solid #d9d9df; border-radius: 6px; color: #333; background-color: #fff; font: inherit; font-size: 14px; }
+:where([data-css~="program-detail-styles"]) .program-detail-page select { appearance: none; padding-right: 34px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%2365656c' stroke-width='1.5'%3E%3Cpath d='m4 6 4 4 4-4'/%3E%3C/svg%3E"); background-position: right 12px center; background-repeat: no-repeat; }
+:where([data-css~="program-detail-styles"]) .program-detail-page .detail-filter select { width: auto; }
+:where([data-css~="program-detail-styles"]) .program-detail-page :is(button, .detail-secondary) { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 10px 18px; border-radius: 5px; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; text-decoration: none; }
+:where([data-css~="program-detail-styles"]) .program-detail-page .detail-primary { border: 1px solid #ad0800; background: #ad0800; color: #fff; white-space: nowrap; }
+:where([data-css~="program-detail-styles"]) .program-detail-page .detail-primary:hover { background: #8b0700; }
+:where([data-css~="program-detail-styles"]) .program-detail-page .detail-secondary { border: 1px solid #dccbcb; background: #fff; color: #a60700; }
+:where([data-css~="program-detail-styles"]) .program-detail-page .detail-secondary:hover { background: #fcf4f4; }
+:where([data-css~="program-detail-styles"]) .program-detail-page .detail-table-wrap { width: 100%; overflow-x: auto; }
+:where([data-css~="program-detail-styles"]) .program-detail-page .detail-table { width: 100%; border-collapse: collapse; font-size: 14px; text-align: left; }
+:where([data-css~="program-detail-styles"]) .program-detail-page .detail-table th { background: #f1dada; color: #282222; font-weight: 600; }
+:where([data-css~="program-detail-styles"]) .program-detail-page .detail-table :is(th, td) { padding: 16px 22px; border-top: 1px solid #e3dede; vertical-align: middle; }
+:where([data-css~="program-detail-styles"]) .program-detail-page .detail-table th:last-child { width: 120px; }
+:where([data-css~="program-detail-styles"]) .program-detail-page .detail-table form { margin: 0; }
+:where([data-css~="program-detail-styles"]) .program-detail-page .detail-remove { min-height: 36px; padding: 6px 12px; color: #a60700; border: 1px solid #e7cccc; background: #fff; font-weight: 500; }
+:where([data-css~="program-detail-styles"]) .program-detail-page .detail-remove:hover { background: #fcf0f0; }
+:where([data-css~="program-detail-styles"]) .program-detail-page .detail-empty { text-align: center; }
+:where([data-css~="program-detail-styles"]) .program-detail-page .detail-empty strong { display: block; margin: 14px 0 5px; font-weight: 500; }
+:where([data-css~="program-detail-styles"]) .program-detail-page .detail-empty span { display: block; margin-bottom: 14px; color: #72727b; line-height: 1.7; }
+:where([data-css~="program-detail-styles"]) .program-detail-page :is(a, button, input, select, [tabindex]):focus-visible { outline: 2px solid #a60700; outline-offset: 3px; }
+:where([data-css~="program-detail-styles"]) .program-detail-page .detail-message { padding: 12px 16px; border: 1px solid #ddd; border-left: 3px solid #a60700; border-radius: 5px; font-size: 14px; }
+:where([data-css~="program-detail-styles"]) .program-detail-page .detail-message.success { border-left-color: #287244; }
+:where([data-css~="program-detail-styles"]) .program-detail-page .errorlist { margin: 0; padding-left: 18px; color: #a60700; font-size: 14px; }
+@media (max-width: 1100px) {
+    :where([data-css~="program-detail-styles"]) .program-detail-page .detail-card-header { flex-wrap: wrap; }
+    :where([data-css~="program-detail-styles"]) .program-detail-page .detail-section-form { grid-template-columns: repeat(2,minmax(0,1fr)); }
+}
+@media (max-width: 600px) {
+    :where([data-css~="program-detail-styles"]) .program-detail-page { gap: 20px; }
+    :where([data-css~="program-detail-styles"]) .program-detail-page .detail-heading { flex-direction: column; align-items: flex-start; gap: 12px; }
+    :where([data-css~="program-detail-styles"]) .program-detail-page h2 { font-size: 21px; }
+    :where([data-css~="program-detail-styles"]) .program-detail-page .detail-card-header { padding: 18px 16px 0; gap: 16px; }
+    :where([data-css~="program-detail-styles"]) .program-detail-page .detail-filter { flex-wrap: wrap; width: 100%; }
+    :where([data-css~="program-detail-styles"]) .program-detail-page .detail-filter select { flex: 1; }
+    :where([data-css~="program-detail-styles"]) .program-detail-page .detail-add-form { grid-template-columns: minmax(0,1fr); padding: 18px 16px; }
+    :where([data-css~="program-detail-styles"]) .program-detail-page .detail-table :is(th, td) { padding: 14px 16px; }
+    :where([data-css~="program-detail-styles"]) .program-detail-page .detail-table th { white-space: nowrap; }
+}
+
+
+/* Consolidated module: css/pages/course_catalogue.css; enabled by course-catalogue-styles. */
+:where([data-css~="course-catalogue-styles"]) .course-page { display: grid; gap: 24px; min-width: 0; color: #252525; }
+:where([data-css~="course-catalogue-styles"]) .course-page * { box-sizing: border-box; }
+:where([data-css~="course-catalogue-styles"]) .course-page .course-back { display: inline-flex; align-items: center; justify-content: center; gap: 8px; justify-self: start; min-height: 40px; padding: 9px 18px; border: 1px solid #ad0800; border-radius: 5px; background: #ad0800; color: #fff; font-size: 14px; font-weight: 600; text-decoration: none; }
+:where([data-css~="course-catalogue-styles"]) .course-page .course-back:hover { background: #8b0700; border-color: #8b0700; }
+:where([data-css~="course-catalogue-styles"]) .course-page .course-heading { display: flex; justify-content: space-between; align-items: center; gap: 20px; }
+:where([data-css~="course-catalogue-styles"]) .course-page h2 { margin: 0 0 6px; font-size: 24px; line-height: 1.4; }
+:where([data-css~="course-catalogue-styles"]) .course-page p { margin: 0; color: #72727b; font-size: 14px; line-height: 1.6; }
+:where([data-css~="course-catalogue-styles"]) .course-page .course-total { padding: 6px 12px; border: 1px solid #e7dada; border-radius: 5px; color: #674343; background: #fcf7f7; font-size: 14px; white-space: nowrap; }
+:where([data-css~="course-catalogue-styles"]) .course-page .course-create-card { padding: 22px; border: 1px solid #e3dede; border-radius: 9px; background: #fff; box-shadow: 0 1px 4px #00000008; }
+:where([data-css~="course-catalogue-styles"]) .course-page h3 { margin: 0 0 5px; font-size: 18px; }
+:where([data-css~="course-catalogue-styles"]) .course-page .course-create-form { margin-top: 20px; }
+:where([data-css~="course-catalogue-styles"]) .course-page .course-fields { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,2.5fr); gap: 18px; }
+:where([data-css~="course-catalogue-styles"]) .course-page .course-field { display: grid; gap: 7px; min-width: 0; }
+:where([data-css~="course-catalogue-styles"]) .course-page .course-field label,
+:where([data-css~="course-catalogue-styles"]) .course-page legend { font-size: 14px; font-weight: 500; }
+:where([data-css~="course-catalogue-styles"]) .course-page .course-field input { width: 100%; min-width: 0; height: 44px; padding: 10px 12px; border: 1px solid #d9d9df; border-radius: 6px; font: inherit; font-size: 14px; }
+:where([data-css~="course-catalogue-styles"]) .course-page .course-classifications { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 18px; margin: 22px 0 0; padding: 0; border: 0; min-width: 0; }
+:where([data-css~="course-catalogue-styles"]) .course-page legend { margin-bottom: 10px; padding: 0; }
+:where([data-css~="course-catalogue-styles"]) .course-page .course-option { display: flex; align-items: flex-start; gap: 12px; padding: 16px; border: 1px solid #e3dede; border-radius: 6px; cursor: pointer; }
+:where([data-css~="course-catalogue-styles"]) .course-page .course-option:hover { background: #fcf8f8; }
+:where([data-css~="course-catalogue-styles"]) .course-page .course-option:has(input:checked) { border-color: #ae514c; background: #fcf3f3; }
+:where([data-css~="course-catalogue-styles"]) .course-page .course-option input { flex: 0 0 18px; width: 18px; height: 18px; margin: 3px 0 0; accent-color: #ad0800; cursor: pointer; }
+:where([data-css~="course-catalogue-styles"]) .course-page .course-option strong { display: block; font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+:where([data-css~="course-catalogue-styles"]) .course-page .course-option span span { display: block; font-size: 14px; line-height: 1.6; color: #72727b; }
+:where([data-css~="course-catalogue-styles"]) .course-page .course-form-footer { display: flex; justify-content: space-between; align-items: center; gap: 18px; margin-top: 20px; }
+:where([data-css~="course-catalogue-styles"]) .course-page .course-add-button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 10px 18px; border: 1px solid #ad0800; border-radius: 5px; background: #ad0800; color: #fff; font: inherit; font-size: 14px; font-weight: 600; white-space: nowrap; cursor: pointer; }
+:where([data-css~="course-catalogue-styles"]) .course-page .course-add-button:hover { background: #8b0700; }
+:where([data-css~="course-catalogue-styles"]) .course-page .course-table-card { min-width: 0; overflow-x: auto; border: 1px solid #d8d8d8; border-radius: 9px; }
+:where([data-css~="course-catalogue-styles"]) .course-page .course-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; }
+:where([data-css~="course-catalogue-styles"]) .course-page .course-table th { padding: 22px 18px; background: #f1dada; color: #282222; font-weight: 600; }
+:where([data-css~="course-catalogue-styles"]) .course-page .course-table td { padding: 20px 18px; border-top: 1px solid #dedada; vertical-align: middle; }
+:where([data-css~="course-catalogue-styles"]) .course-page .course-table th:nth-child(2) { width: 42%; }
+:where([data-css~="course-catalogue-styles"]) .course-page .course-table th:last-child { width: 12%; }
+:where([data-css~="course-catalogue-styles"]) .course-page .course-title { font-weight: 500; overflow-wrap: anywhere; }
+:where([data-css~="course-catalogue-styles"]) .course-page .course-code { font-weight: 600; }
+:where([data-css~="course-catalogue-styles"]) .course-page .course-badges { display: flex; flex-wrap: wrap; gap: 6px; }
+:where([data-css~="course-catalogue-styles"]) .course-page .course-badge { display: inline-block; padding: 5px 9px; border-radius: 4px; background: #f2edf8; color: #645079; font-size: 14px; white-space: nowrap; }
+:where([data-css~="course-catalogue-styles"]) .course-page .course-ojt { background: #faeeee; color: #923f3a; }
+:where([data-css~="course-catalogue-styles"]) .course-page .course-regular { background: #f3f3f4; color: #616168; }
+:where([data-css~="course-catalogue-styles"]) .course-page .course-empty { text-align: center; }
+:where([data-css~="course-catalogue-styles"]) .course-page .course-empty strong { display: block; margin: 16px 0 6px; font-weight: 500; }
+:where([data-css~="course-catalogue-styles"]) .course-page .course-empty span { display: block; margin-bottom: 16px; color: #72727b; line-height: 1.7; }
+:where([data-css~="course-catalogue-styles"]) .course-page .course-message { padding: 12px 16px; border: 1px solid #ddd; border-left: 3px solid #a60700; border-radius: 5px; font-size: 14px; white-space: pre-line; }
+:where([data-css~="course-catalogue-styles"]) .course-page .course-message.success { border-left-color: #287244; }
+:where([data-css~="course-catalogue-styles"]) .course-page .errorlist { color: #a60700; font-size: 14px; }
+:where([data-css~="course-catalogue-styles"]) .course-page .course-pagination { display: flex; justify-content: flex-end; align-items: center; flex-wrap: wrap; gap: 14px; font-size: 14px; }
+:where([data-css~="course-catalogue-styles"]) .course-page .course-pagination a { padding: 8px 12px; border: 1px solid #dccbcb; border-radius: 5px; color: #a60700; text-decoration: none; }
+:where([data-css~="course-catalogue-styles"]) .course-page :is(a, button, input, [tabindex]):focus-visible { outline: 2px solid #a60700; outline-offset: 3px; }
+@media (max-width: 700px) {
+    :where([data-css~="course-catalogue-styles"]) .course-page .course-heading { align-items: flex-start; flex-wrap: wrap; gap: 12px; }
+    :where([data-css~="course-catalogue-styles"]) .course-page .course-create-card { padding: 18px 16px; }
+    :where([data-css~="course-catalogue-styles"]) .course-page .course-fields,
+:where([data-css~="course-catalogue-styles"]) .course-page .course-classifications { grid-template-columns: minmax(0,1fr); }
+    :where([data-css~="course-catalogue-styles"]) .course-page .course-form-footer { flex-direction: column; align-items: stretch; }
+    :where([data-css~="course-catalogue-styles"]) .course-page .course-table { min-width: 580px; }
+    :where([data-css~="course-catalogue-styles"]) .course-page .course-table:has(.course-empty) { min-width: 0; }
+    :where([data-css~="course-catalogue-styles"]) .course-page .course-table th { padding: 16px 12px; }
+    :where([data-css~="course-catalogue-styles"]) .course-page .course-table:has(.course-empty) th { font-size: 13px; }
+}
+:where([data-css~="course-catalogue-styles"]) .course-count-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+
+
+/* Consolidated module: css/pages/management_portal.css; enabled by management-tools-styles. */
+/* Keep management tools aligned with the portal directory pages. */
+:where([data-css~="management-tools-styles"]) .role-picker { position: relative; margin-top: 20px; max-width: 640px; }
+:where([data-css~="management-tools-styles"]) .role-picker summary { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border: 1px solid #d1d1d1; border-radius: 6px; background: #fff; cursor: pointer; list-style: none; }
+:where([data-css~="management-tools-styles"]) .role-picker summary::-webkit-details-marker { display: none; }
+:where([data-css~="management-tools-styles"]) .role-picker summary::after { content: ""; width: 7px; height: 7px; border-right: 1.5px solid #777; border-bottom: 1.5px solid #777; transform: rotate(45deg); margin: -4px 3px 0 0; flex-shrink: 0; }
+:where([data-css~="management-tools-styles"]) .role-picker[open] summary { border-color: #a60700; }
+:where([data-css~="management-tools-styles"]) .role-picker-selection { display: flex; flex-direction: column; gap: 3px; flex: 1; min-width: 0; overflow-wrap: anywhere; }
+:where([data-css~="management-tools-styles"]) .role-picker-selection strong { font-size: 14px; font-weight: 600; }
+:where([data-css~="management-tools-styles"]) .role-picker-caption,
+:where([data-css~="management-tools-styles"]) .role-picker-total { font-size: 12px; color: #666; }
+:where([data-css~="management-tools-styles"]) .role-picker-total { white-space: nowrap; }
+:where([data-css~="management-tools-styles"]) .role-picker-panel { position: absolute; top: calc(100% + 6px); left: 0; right: 0; z-index: 30; background: #fff; border: 1px solid #e5d7d7; border-radius: 8px; box-shadow: 0 6px 20px #4500001a; overflow: hidden; }
+:where([data-css~="management-tools-styles"]) .role-picker-search { padding: 14px; border-bottom: 1px solid #eee; }
+:where([data-css~="management-tools-styles"]) .role-picker-search label { display: block; margin-bottom: 7px; }
+:where([data-css~="management-tools-styles"]) .role-picker-types { display: flex; gap: 6px; margin-top: 12px; }
+:where([data-css~="management-tools-styles"]) .role-picker-types button { min-height: 36px; padding: 6px 14px; background: #fff; border: 1px solid #ddd; border-radius: 5px; color: #555; font: inherit; font-size: 14px; cursor: pointer; }
+:where([data-css~="management-tools-styles"]) .role-picker-types button[aria-pressed="true"] { background: #f7eaea; color: #a60700; border-color: #dba4a2; font-weight: 600; }
+:where([data-css~="management-tools-styles"]) .role-picker-types button:hover { background: #fcf4f4; }
+:where([data-css~="management-tools-styles"]) .role-management-page.faculty-settings .role-picker .role-list { display: flex; flex-direction: column; flex-wrap: nowrap; gap: 4px; max-height: 260px; overflow-y: auto; overscroll-behavior: contain; padding: 8px; margin: 0; border: 0; }
+:where([data-css~="management-tools-styles"]) .role-management-page.faculty-settings .role-picker .settings-tab { width: 100%; border: 0; padding: 10px 12px; min-height: 44px; }
+:where([data-css~="management-tools-styles"]) .role-picker .settings-tab > span { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+:where([data-css~="management-tools-styles"]) .role-picker [hidden] { display: none !important; }
+:where([data-css~="management-tools-styles"]) .role-picker-no-results { padding: 16px; color: #666; font-size: 14px; margin: 0; }
+:where([data-css~="management-tools-styles"]) .role-picker summary:focus-visible { outline: 2px solid #a60700; outline-offset: 3px; }
+:where([data-css~="management-tools-styles"]) .user-management-access-panel { padding: 20px; border-top: 1px solid #e7dddd; }
+:where([data-css~="management-tools-styles"]) .role-management-page .user-management-access-panel .permissions-header { margin-bottom: 18px; }
+:where([data-css~="management-tools-styles"]) .role-management-page .user-management-access-panel .table-wrap { overflow-x: auto; }
+:where([data-css~="management-tools-styles"]) .user-management-access-panel .data-table { min-width: 680px; }
+:where([data-css~="management-tools-styles"]) .management-page-nav.panel-header { margin: 0 0 24px; padding: 0; }
+:where([data-css~="management-tools-styles"]) .role-management-page.faculty-settings { width: 100%; max-width: none; margin: 0; }
+:where([data-css~="management-tools-styles"]) .role-management-page.faculty-settings .settings-card { padding: 22px; border: 1px solid #d8d8d8; border-radius: 9px; box-shadow: none; margin-bottom: 24px; }
+:where([data-css~="management-tools-styles"]) .role-management-page .settings-card h2 { font-size: 18px; margin-bottom: 6px; }
+:where([data-css~="management-tools-styles"]) .role-management-page .settings-card h2 .role-section-icon { display: none; }
+:where([data-css~="management-tools-styles"]) .role-management-page.faculty-settings .card-sub { margin-bottom: 16px; color: #626262; line-height: 1.6; }
+:where([data-css~="management-tools-styles"]) .role-management-page .role-create-form .settings-actions { max-width: none; margin-top: 16px; }
+:where([data-css~="management-tools-styles"]) .role-management-page .role-create-form .role-name-field { flex: 0 1 640px; }
+:where([data-css~="management-tools-styles"]) .role-management-page :is(.btn-save, .btn-cancel, .btn-danger) { min-height: 44px; border-radius: 5px; }
+:where([data-css~="management-tools-styles"]) .role-management-page .btn-save { background: #b40000; border-color: #b40000; }
+:where([data-css~="management-tools-styles"]) .role-management-page input:not([type="hidden"]):not([type="checkbox"]),
+:where([data-css~="management-tools-styles"]) .role-management-page select { min-height: 44px; border-color: #d1d1d1; border-radius: 5px; box-shadow: none; }
+:where([data-css~="management-tools-styles"]) .role-management-page .role-filter-form .settings-actions { grid-template-columns: minmax(170px, 240px) minmax(200px, 1fr) auto auto; margin-top: 16px; gap: 16px; }
+:where([data-css~="management-tools-styles"]) .role-management-page.faculty-settings .settings-tabs.role-list { margin-top: 20px; padding-top: 20px; gap: 12px; }
+:where([data-css~="management-tools-styles"]) .role-management-page.faculty-settings .role-list .settings-tab { border-color: #d8d8d8; border-radius: 5px; min-height: 44px; padding: 10px 14px; color: #333; }
+:where([data-css~="management-tools-styles"]) .role-management-page.faculty-settings .role-list .settings-tab.active { background: #f7eaea; color: #a60700; border-color: #a60700; }
+:where([data-css~="management-tools-styles"]) .role-management-page .role-list small { background: #f3eeee; color: #666; }
+:where([data-css~="management-tools-styles"]) .role-management-page .role-empty-state { padding: 32px 24px !important; }
+:where([data-css~="management-tools-styles"]) .role-management-page .permission-page-card { border-color: #d8d8d8; border-radius: 7px; }
+:where([data-css~="management-tools-styles"]) .role-management-page .permission-page-header { background: #fcf8f8; }
+:where([data-css~="management-tools-styles"]) .program-list-page .program-create-card { padding: 22px; border-color: #d8d8d8; border-radius: 9px; box-shadow: none; margin-bottom: 24px; }
+:where([data-css~="management-tools-styles"]) .program-list-page .program-create-heading h3 { font-size: 18px; }
+:where([data-css~="management-tools-styles"]) .program-list-page .program-add-card { gap: 16px; }
+:where([data-css~="management-tools-styles"]) .program-list-page .program-add-card input { min-height: 44px; border-color: #d1d1d1; border-radius: 5px; box-shadow: none; }
+:where([data-css~="management-tools-styles"]) .program-list-page .program-add-button { min-height: 44px; background: #b40000; border-radius: 5px; }
+:where([data-css~="management-tools-styles"]) .program-list-page .program-table thead th { background: #f3e7e7; padding: 20px 18px; font-size: 16px; font-weight: 600; white-space: normal; overflow-wrap: anywhere; line-height: 1.4; }
+:where([data-css~="management-tools-styles"]) .program-list-page .program-table th:nth-child(1) { width: 31%; }
+:where([data-css~="management-tools-styles"]) .program-list-page .program-table th:nth-child(2) { width: 17%; }
+:where([data-css~="management-tools-styles"]) .program-list-page .program-table th:nth-child(6) { width: 26%; }
+:where([data-css~="management-tools-styles"]) .program-list-page .program-table tbody td { padding: 22px 18px; color: #333; }
+@media (max-width: 768px) {
+    :where([data-css~="management-tools-styles"]) .role-management-page.faculty-settings .settings-card,
+:where([data-css~="management-tools-styles"]) .program-list-page .program-create-card { padding: 20px 16px; }
+    :where([data-css~="management-tools-styles"]) .role-management-page .role-filter-form .settings-actions { grid-template-columns: 1fr 1fr; }
+    :where([data-css~="management-tools-styles"]) .role-management-page .role-create-form .role-name-field { flex: auto; width: 100%; }
+    :where([data-css~="management-tools-styles"]) .role-management-page .role-filter-field { grid-column: 1 / -1; }
+}
+
+
+/* Consolidated module: css/layout/portal_header.css; enabled by shared-header-styles. */
+/* Shared header geometry across both portals and short/scrolling pages. */
+html:where([data-css~="shared-header-styles"])[data-portal] { scrollbar-gutter: stable; }
+html:where([data-css~="shared-header-styles"])[data-portal] .topbar { box-sizing: border-box; align-items: center; }
+html:where([data-css~="shared-header-styles"])[data-portal] .topbar > div:first-of-type { min-width: 0; }
+html:where([data-css~="shared-header-styles"])[data-portal] .user-badge-avatar { flex-shrink: 0; }
+html:where([data-css~="shared-header-styles"])[data-portal] .user-badge > div:last-child { min-width: 0; }
+html:where([data-css~="shared-header-styles"])[data-portal] .user-badge-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; line-height: 1.4; }
+html:where([data-css~="shared-header-styles"])[data-portal] .user-badge-meta { display: block; margin-top: 2px; color: #666; font-size: 12px; font-weight: 400; line-height: 1.4; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (min-width: 1025px) {
+    html:where([data-css~="shared-header-styles"])[data-portal] .topbar { display: grid; grid-template-columns: minmax(0, 1fr) clamp(460px, 45vw, 760px); height: 106px; min-height: 106px; padding: 18px 22px 16px 26px; gap: 24px; }
+    html:where([data-css~="shared-header-styles"])[data-portal] .topbar-title-wrap { margin-bottom: 4px; }
+    html:where([data-css~="shared-header-styles"])[data-portal] .topbar-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    html:where([data-css~="shared-header-styles"])[data-portal] .topbar-subtitle { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; line-height: 20px; }
+    html:where([data-css~="shared-header-styles"])[data-portal] .topbar-controls { display: grid; grid-template-columns: minmax(0, 1fr) 40px 180px; align-items: center; gap: 18px; width: 100%; margin: 0; }
+    html:where([data-css~="shared-header-styles"])[data-portal] .topbar-controls .global-search { width: 100%; min-width: 0; max-width: none; }
+    html:where([data-css~="shared-header-styles"])[data-portal] .topbar-controls .user-badge { width: 180px; min-width: 0; }
+}
+@media (max-width: 1024px) {
+    html:where([data-css~="shared-header-styles"])[data-portal] .topbar > div:first-of-type { min-height: 68px; display: flex; flex-direction: column; justify-content: center; }
+    html:where([data-css~="shared-header-styles"])[data-portal] .topbar-title { line-height: 1.3; }
+    html:where([data-css~="shared-header-styles"])[data-portal] .topbar-controls .user-badge { width: 180px; }
+}

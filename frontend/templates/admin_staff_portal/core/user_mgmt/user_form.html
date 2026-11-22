@@ -1,4 +1,5 @@
 {% extends 'admin_staff_portal/base.html' %}
+{% block css_modules %}user-editor-styles user-directory-styles{% endblock %}
 {% load static %}
 
 {% block title %}{{ page_title }} - iSubmit{% endblock %}
@@ -9,8 +10,6 @@ Create and manage campus user accounts and access.
 {% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/pages/user_form.css' %}">
-<link rel="stylesheet" href="{% static 'css/pages/user_management.css' %}">
 <script src="{% static 'js/program-multiselect.js' %}" defer></script>
 {% endblock %}
 
