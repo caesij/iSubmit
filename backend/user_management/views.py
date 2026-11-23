@@ -21,8 +21,15 @@ from core.search_utils import all_terms_query
 from programs.models import Program
 from role_management.models import Role, RoleUserManagementRule
 from role_management.services import assign_user_permission_role
-from submissions.models import ClassAssignment
+from submissions.models import ClassAssignment, SubmissionPeriod
 from user_management.forms import UserManagementForm, ClassAssignmentFormSet
+from submissions.slots import sync_upload_slots
+
+from faculty_portal.realtime import (
+    refresh_faculty_dashboard,
+    refresh_faculty_submission_bin,
+    refresh_all_faculty_submission_bins
+)
 
 from user_management.services import (
     can_manage_target_role,
@@ -49,6 +56,12 @@ def _get_selected_role_from_form(form):
         return form.fields['role'].queryset.filter(pk=role_value).first()
     except (TypeError, ValueError):
         return None
+
+
+def _refresh_faculty_assignment_updates(faculty):
+    refresh_faculty_submission_bin(faculty)
+    refresh_faculty_dashboard(faculty)
+    refresh_all_faculty_submission_bins()
 
 
 @access_required('access_user_management')
@@ -182,6 +195,8 @@ def user_form_view(request, pk=None):
             get_manageable_users(request.user, action='edit'),
             pk=pk,
         )
+    
+    previously_faculty = (not is_new and is_faculty_role(target_user.role))
 
     if request.method == 'POST':
         form = UserManagementForm(request.POST, instance=target_user, request_user=request.user)
@@ -265,18 +280,30 @@ def user_form_view(request, pk=None):
 
             if is_faculty_role(selected_role):
                 faculty_profile, _ = FacultyProfile.objects.get_or_create(user=user)
+
                 faculty_profile.faculty_type = form.cleaned_data['faculty_type']
                 faculty_profile.save(update_fields=['faculty_type'])
+
                 faculty_profile.assigned_programs.set(form.cleaned_data['assigned_programs'])
 
-                assigned_program_ids = faculty_profile.assigned_programs.values_list('pk', flat=True)
+                assigned_program_ids = (faculty_profile.assigned_programs.values_list('pk', flat=True))
+
                 user.class_assignments.exclude(program_id__in=assigned_program_ids).delete()
 
                 assignment_formset.instance = user
                 assignment_formset.save()
+
             else:
                 FacultyProfile.objects.filter(user=user).delete()
                 user.class_assignments.all().delete()
+
+            if previously_faculty or is_faculty_role(selected_role):
+                active_periods = SubmissionPeriod.objects.filter(status=SubmissionPeriod.ReqStatus.ACTIVE)
+
+                for period in active_periods:
+                    sync_upload_slots(period)
+
+                transaction.on_commit(lambda faculty=user: (_refresh_faculty_assignment_updates(faculty)))
 
         if is_new:
             subject = 'Your iSubmit Account Has Been Created'
@@ -418,8 +445,21 @@ def user_toggle_status_view(request, pk):
         messages.error(request, 'You cannot deactivate your own account while signed in.')
         return redirect(redirect_url)
 
-    target_user.is_active = not target_user.is_active
-    target_user.save(update_fields=['is_active'])
+    with transaction.atomic():
+        target_user.is_active = not target_user.is_active
+        target_user.save(update_fields=['is_active'])
+
+        if is_faculty_role(target_user.role):
+            active_periods = SubmissionPeriod.objects.filter(
+                status=SubmissionPeriod.ReqStatus.ACTIVE
+            )
+
+            for period in active_periods:
+                sync_upload_slots(period)
+
+            transaction.on_commit(
+                lambda faculty=target_user: _refresh_faculty_assignment_updates(faculty)
+            )
 
     status_label = 'activated' if target_user.is_active else 'deactivated'
     messages.success(request, f'The account has been {status_label}.')

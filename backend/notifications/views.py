@@ -11,25 +11,19 @@ from accounts.decorators import access_required
 from notifications.forms import SystemNotificationForm
 from notifications.helpers import get_role_based_notifications
 from notifications.models import Notification, NotificationPreference
-from notifications.services import (
-    notify_role_subscribers,
-)
+from notifications.services import notify_role_subscribers
 
 ADMIN_TEMPLATE_DIR = 'admin_staff_portal/notifications'
 FACULTY_TEMPLATE_DIR = 'faculty_portal/notifications'
 NotificationType = NotificationPreference.NotificationType
 
 
-@access_required('create_system_notifications')
+@access_required('access_system_notifications', 'create_system_notifications',)
 @require_http_methods(['GET', 'POST'])
 def create_system_notification_view(request):
-    if not request.user.is_superuser:
-        raise PermissionDenied(
-            'Only administrator superusers can create system notifications.'
-        )
-
     if request.method == 'POST':
         form = SystemNotificationForm(request.POST)
+
         if form.is_valid():
             recipient_count = notify_role_subscribers(
                 notification_type=NotificationType.SYSTEM_ANNOUNCEMENT,
@@ -42,15 +36,15 @@ def create_system_notification_view(request):
                 f'Created system notifications for {recipient_count} '
                 f'account{"s" if recipient_count != 1 else ""}.',
             )
+
             return redirect('notifications:notification_list')
+
     else:
         form = SystemNotificationForm()
 
-    return render(
-        request,
-        f'{ADMIN_TEMPLATE_DIR}/create_notification.html',
-        {'form': form},
-    )
+    context = {'form': form}
+    
+    return render(request, f'{ADMIN_TEMPLATE_DIR}/create_notification.html', context)
 
 
 @login_required

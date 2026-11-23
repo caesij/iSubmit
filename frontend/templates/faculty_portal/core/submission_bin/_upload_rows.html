@@ -43,7 +43,14 @@
         <td class="font-bold">
             {{ forloop.counter }}.
             {{ row.requirement.requirement_title }}
+
+            <div class="text-sub">
+                {{ row.requirement.period.get_semester_display }}
+                · AY {{ row.requirement.period.academic_year }}
+            </div>
+
             {% if not row.requirement.is_required %}<span class="status-badge status-no-file">Optional</span>{% endif %}
+
             {% if row.requirement.validation_instructions %}
                 <details class="validation-details">
                     <summary>Required validation fields</summary>

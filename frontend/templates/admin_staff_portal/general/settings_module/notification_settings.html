@@ -23,13 +23,7 @@
         {% for preference in preferences %}
             <div class="notification-row">
                 <div>
-                    <strong>
-                        {% if preference.notification_type == 'SUBMISSION_NOTIFICATIONS' %}
-                            Submission Notification
-                        {% else %}
-                            Security Notification
-                        {% endif %}
-                    </strong>
+                    <strong>{{ preference.get_notification_type_display }}</strong>
                     <p>{{ preference.description }}</p>
                 </div>
                 <label class="switch">
@@ -58,11 +52,7 @@
         {% for preference in preferences %}
             <div class="channel-row">
                 <strong>
-                    {% if preference.notification_type == 'SUBMISSION_NOTIFICATIONS' %}
-                        Submission Notification
-                    {% else %}
-                        Security Notification
-                    {% endif %}
+                    {{ preference.get_notification_type_display }}
                 </strong>
                 <label class="channel-switch">
                     <input type="checkbox" name="email_{{ preference.notification_type }}" {% if preference.email_enabled %}checked{% endif %}>

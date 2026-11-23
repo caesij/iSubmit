@@ -76,7 +76,6 @@ def get_allowed_notification_types(user):
 
 
 def ensure_default_role_notification_settings():
-    """Create missing built-in role settings without overwriting admin choices."""
     from role_management.models import Role
 
     roles = Role.objects.filter(

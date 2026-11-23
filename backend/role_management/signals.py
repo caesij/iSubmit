@@ -7,6 +7,7 @@ from django.dispatch import receiver
 
 from role_management.permissions import ROLE_GROUP_NAMES
 from role_management.services import ensure_default_roles
+from notifications.services import ensure_default_role_notification_settings
 
 User = get_user_model()
 
@@ -14,6 +15,7 @@ User = get_user_model()
 @receiver(post_migrate, sender=apps.get_app_config('role_management'))
 def create_default_role_groups(sender, **kwargs):
     ensure_default_roles()
+    ensure_default_role_notification_settings()
 
 
 @receiver(post_save, sender=User)

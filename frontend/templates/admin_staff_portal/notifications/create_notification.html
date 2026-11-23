@@ -1,21 +1,22 @@
 {% extends 'admin_staff_portal/base.html' %}
 {% block css_modules %}create-notification-page{% endblock %}
 
-{% block title %}Create Notification - iSubmit{% endblock %}
-{% block heading %}Create Notification{% endblock %}
-{% block subtitle %}Send a system notification to faculty members.{% endblock %}
+{% block title %}Create System Notification - iSubmit{% endblock %}
+{% block heading %}Create System Notification{% endblock %}
+{% block subtitle %}Compose and send system-wide announcements.{% endblock %}
 
 {% block content %}
 
 
 <div class="notification-form-page">
     <section class="notification-form-card">
-        <h2>Faculty System Notification</h2>
-        <p class="notification-form-description">
-            This notification is classified as a system notification and will
-            be sent to active faculty accounts according to their notification
-            preferences.
-        </p>
+    <h2>System Announcement</h2>
+
+    <p class="notification-form-description">
+        This announcement will be sent to active users assigned to roles
+        that are enabled to receive system announcements. Delivery will
+        follow each recipient's individual notification preferences.
+    </p>
 
         <form method="post">
             {% csrf_token %}
@@ -42,7 +43,7 @@
 
             <div class="notification-form-actions">
                 <a href="{% url 'notifications:notification_list' %}">Cancel</a>
-                <button type="submit">Send Notification</button>
+                <button type="submit">Send Announcement</button>
             </div>
         </form>
     </section>

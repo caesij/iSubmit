@@ -41,7 +41,6 @@ def redirect_user_by_role(user):
             ('accounts.access_my_documents', 'faculty_portal:my_documents'),
 
             ('accounts.access_preferences', 'faculty_portal:preferences'),
-            ('accounts.access_notification_settings', 'faculty_portal:notification_settings'),
             ('accounts.access_account_security', 'faculty_portal:account_and_security'),
             ('accounts.access_profile', 'faculty_portal:profile'),
         )
@@ -71,7 +70,6 @@ def redirect_user_by_role(user):
             ('accounts.access_document_archive', 'admin_staff_portal:document_archive'),
 
             ('accounts.access_preferences', 'admin_staff_portal:preferences'),
-            ('accounts.access_notification_settings', 'admin_staff_portal:notification_settings'),
             ('accounts.access_account_security', 'admin_staff_portal:account_and_security'),
             ('accounts.access_profile', 'admin_staff_portal:profile'),
         )

@@ -45,7 +45,7 @@ INSTALLED_APPS = [
     'role_management.apps.RoleManagementConfig',
     'user_management',
     'programs',
-    'submissions',
+    'submissions.apps.SubmissionsConfig',
     'notifications.apps.NotificationsConfig',
     'admin_staff_portal',
     'faculty_portal',

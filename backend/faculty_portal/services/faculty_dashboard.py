@@ -45,20 +45,42 @@ def get_dashboard_data(user):
 
 
 def get_upcoming_deadlines(owed, user):
-    rows = list(
+    now = timezone.now()
+
+    rows = (
         owed
-        .filter(requirement__period__deadline__gte=timezone.now())
-        .filter(Q(submission__isnull=True) | Q(submission__status=Status.NEEDS_REVISION))
-        .values('requirement__period')
-        .annotate(left=Count('pk'))
-        .order_by('requirement__period__deadline')[:5]
+        .filter(
+            Q(submission__isnull=True) |
+            Q(submission__status=Status.NEEDS_REVISION)
+        )
+        .values(
+            'requirement_id',
+            'requirement__requirement_title',
+            'requirement__period__deadline',
+        )
+        .annotate(left=Count('id', distinct=True))
+        .order_by(
+            'requirement__period__deadline',
+            'requirement__requirement_title',
+            'requirement_id',
+        )
     )
-    periods = SubmissionPeriod.objects.in_bulk(row['requirement__period'] for row in rows)
 
     return [
         {
-            'title': f"{periods[row['requirement__period']]} ({row['left']} left)",
-            'deadline': format_display_date(periods[row['requirement__period']].deadline, user),
+            'requirement_title': row['requirement__requirement_title'],
+            'left': row['left'],
+            'deadline': (
+                format_display_date(
+                    row['requirement__period__deadline'], user
+                )
+                if row['requirement__period__deadline']
+                else 'No deadline'
+            ),
+            'is_overdue': bool(
+                row['requirement__period__deadline']
+                and row['requirement__period__deadline'] < now
+            ),
         }
         for row in rows
     ]
