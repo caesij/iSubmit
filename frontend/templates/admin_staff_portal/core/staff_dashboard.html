@@ -1,3 +1,4 @@
+
 {% extends 'admin_staff_portal/base.html' %}
 {% block css_modules %}staff-dashboard-page{% endblock %}
 
@@ -12,7 +13,29 @@ Overview of system activities and updates
 {% endblock %}
 
 {% block extra_css %}
+<style>
+    .dashboard-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
 
+    .department-chart-wrapper {
+        position: relative;
+        width: 100%;
+        height: 180px;
+    }
+
+    @media (max-width: 900px) {
+        .dashboard-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+
+    @media (max-width: 600px) {
+        .dashboard-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
 {% endblock %}
 
 {% block content %}
@@ -23,9 +46,7 @@ Overview of system activities and updates
     <div class="welcome-card">
         <div class="welcome-label">Welcome,</div>
 
-        <h2>
-            {{ request.user.get_full_name }}
-        </h2>
+        <h2>{{ request.user.get_full_name }}</h2>
 
         <p>Staff</p>
     </div>
@@ -167,6 +188,7 @@ Overview of system activities and updates
                             </small>
                         </div>
                     </div>
+
                 </div>
 
             </div>
@@ -208,18 +230,20 @@ Overview of system activities and updates
 
         </div>
 
-        <!-- Compliance by Department -->
+        <!-- Compliance by department -->
         <div class="dashboard-card department-card">
-
             <div class="card-header">
                 <h2>Compliance by Department</h2>
             </div>
 
-            <div class="department-placeholder"></div>
+            <div class="department-chart-wrapper">
+                <canvas id="compliance-by-department-chart"></canvas>
 
+                <p id="department-chart-empty" hidden>
+                    No program compliance data available.
+                </p>
+            </div>
         </div>
-
-    </div>
 
     <!-- Documents Overview -->
     <div class="dashboard-card pending-card">
@@ -249,7 +273,7 @@ Overview of system activities and updates
 
             <table>
                 <thead>
-                    <tr data-status="{{ submission.status }}">
+                    <tr>
                         <th>Faculty Member</th>
                         <th>Faculty Type</th>
                         <th>Bin Title</th>
@@ -262,7 +286,7 @@ Overview of system activities and updates
 
                     {% for submission in documents_overview %}
 
-                        <tr>
+                        <tr data-status="{{ submission.status }}">
                             <td>
                                 {{ submission.faculty.get_full_name }}
                             </td>
@@ -299,7 +323,9 @@ Overview of system activities and updates
                     {% empty %}
 
                         <tr>
-                            <td colspan="5" class="empty-row">No documents found.</td>
+                            <td colspan="5" class="empty-row">
+                                No documents found.
+                            </td>
                         </tr>
 
                     {% endfor %}
@@ -312,269 +338,280 @@ Overview of system activities and updates
 
 </div>
 
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
 
+<!-- Department compliance chart -->
+<script src="{% static 'admin_staff_portal/js/department-compliance-chart.js' %}"></script>
 
 <script>
-async function refreshStaffDashboard() {
-    try {
-        const response = await fetch(
-            "{% url 'admin_staff_portal:staff_dashboard_data' %}",
-            {
-                method: "GET",
-                credentials: "same-origin",
-                headers: {
-                    "X-Requested-With": "XMLHttpRequest"
+    let selectedDocumentsStatus = "";
+
+    async function refreshStaffDashboard() {
+        try {
+            const response = await fetch(
+                "{% url 'admin_staff_portal:staff_dashboard_data' %}",
+                {
+                    method: "GET",
+                    credentials: "same-origin",
+                    headers: {
+                        "X-Requested-With": "XMLHttpRequest"
+                    }
                 }
+            );
+
+            if (!response.ok) {
+                return;
             }
+
+            const data = await response.json();
+
+            updateStats(data);
+            updateReviewProgress(data);
+            updateSubmissionTrends(data);
+            updateDocumentsOverview(data);
+            updateDepartmentComplianceChart(data);
+
+        } catch (error) {
+            console.error(
+                "Staff dashboard update failed:",
+                error
+            );
+        }
+    }
+
+    function updateStats(data) {
+        const stats = {
+            "stat-faculty": data.faculty_count,
+            "stat-completed-reviews": data.completed_reviews_count,
+            "stat-submitted": data.submitted_count,
+            "stat-under-review": data.under_review_count,
+            "stat-returned": data.returned_count
+        };
+
+        Object.entries(stats).forEach(([id, value]) => {
+            const element = document.getElementById(id);
+
+            if (element) {
+                element.textContent = value;
+            }
+        });
+    }
+
+    function updateReviewProgress(data) {
+        const value = document.getElementById("compliance-value");
+
+        const circle = document.querySelector(".compliance-circle");
+
+        const reviewedDetails = document.getElementById("reviewed-details");
+
+        const pendingDetails = document.getElementById("pending-details");
+
+        const reviewedPercentage = Math.max(
+            0,
+            Math.min(
+                100,
+                Number(data.review_progress) || 0
+            )
         );
 
-        if (!response.ok) {
+        const pendingPercentage = Math.max(
+            0,
+            Math.min(
+                100,
+                Number(data.pending_review_progress) || 0
+            )
+        );
+
+        const completedCount =
+            Number(data.completed_reviews_count) || 0;
+
+        const pendingCount =
+            Number(data.pending_review_count) || 0;
+
+        if (value) {
+            value.textContent = `${reviewedPercentage}%`;
+        }
+
+        if (circle) {
+            circle.style.setProperty(
+                "--reviewed",
+                `${reviewedPercentage}%`
+            );
+
+            circle.style.setProperty(
+                "--pending",
+                `${pendingPercentage}%`
+            );
+        }
+
+        if (reviewedDetails) {
+            reviewedDetails.textContent =
+                `${reviewedPercentage}% (${completedCount})`;
+        }
+
+        if (pendingDetails) {
+            pendingDetails.textContent =
+                `${pendingPercentage}% (${pendingCount})`;
+        }
+    }
+
+    function updateDocumentsOverview(data) {
+        const body = document.getElementById("documents-overview-body");
+
+        if (!body) {
             return;
         }
 
-        const data = await response.json();
+        body.innerHTML = "";
 
-        updateStats(data);
-        updateReviewProgress(data);
-        updateSubmissionTrends(data);
-        updateDocumentsOverview(data);
+        if (
+            !data.documents_overview ||
+            data.documents_overview.length === 0
+        ) {
+            body.innerHTML = `
+                <tr>
+                    <td colspan="5" class="empty-row">
+                        No documents found.
+                    </td>
+                </tr>
+            `;
 
-    } catch (error) {
-        console.error(
-            "Staff dashboard update failed:",
-            error
-        );
-    }
-}
-
-function updateStats(data) {
-    const stats = {
-        "stat-faculty": data.faculty_count,
-        "stat-completed-reviews": data.completed_reviews_count,
-        "stat-submitted": data.submitted_count,
-        "stat-under-review": data.under_review_count,
-        "stat-returned": data.returned_count
-    };
-
-    Object.entries(stats).forEach(([id, value]) => {
-        const element = document.getElementById(id);
-
-        if (element) {
-            element.textContent = value;
+            return;
         }
-    });
-}
 
-function updateReviewProgress(data) {
-    const value =
-        document.getElementById("compliance-value");
+        data.documents_overview.forEach(submission => {
+            const row = document.createElement("tr");
 
-    const circle =
-        document.querySelector(".compliance-circle");
+            row.dataset.status = submission.status;
 
-    const reviewedDetails =
-        document.getElementById("reviewed-details");
+            row.innerHTML = `
+                <td>${submission.faculty}</td>
+                <td>
+                    <span class="faculty-type-badge">
+                        ${submission.faculty_type}
+                    </span>
+                </td>
+                <td>${submission.bin_title}</td>
+                <td>${submission.latest_submission_date}</td>
+                <td>
+                    <a href="${submission.faculty_bins_url}" class="view-bins-link">
+                        View Bins
+                        <img src="{% static 'images/Arrow Right.svg' %}" alt="">
+                    </a>
+                </td>
+            `;
 
-    const pendingDetails =
-        document.getElementById("pending-details");
+            body.appendChild(row);
+        });
 
-    const reviewedPercentage = Math.max(
-        0,
-        Math.min(
-            100,
-            Number(data.review_progress) || 0
-        )
-    );
-
-    const pendingPercentage = Math.max(
-        0,
-        Math.min(
-            100,
-            Number(data.pending_review_progress) || 0
-        )
-    );
-
-    const completedCount =
-        Number(data.completed_reviews_count) || 0;
-
-    const pendingCount =
-        Number(data.pending_review_count) || 0;
-
-    if (value) {
-        value.textContent =
-            `${reviewedPercentage}%`;
+        applyDocumentsOverviewFilter();
     }
 
-    if (circle) {
-        circle.style.setProperty(
-            "--reviewed",
-            `${reviewedPercentage}%`
+    function applyDocumentsOverviewFilter() {
+        document.querySelectorAll(
+            "#documents-overview-body tr[data-status]"
+        ).forEach(row => {
+            const matchesStatus =
+                !selectedDocumentsStatus ||
+                row.dataset.status === selectedDocumentsStatus ||
+                (
+                    selectedDocumentsStatus === "SUBMITTED" &&
+                    row.dataset.status === "RESUBMITTED"
+                );
+
+            row.style.display = matchesStatus ? "" : "none";
+        });
+    }
+
+    function updateSubmissionTrends(data) {
+        const svg = document.getElementById("trend-line");
+
+        if (!svg || !data.submission_trends) {
+            return;
+        }
+
+        svg.innerHTML = "";
+
+        const values = data.submission_trends.map(
+            item => Number(item.count) || 0
         );
 
-        circle.style.setProperty(
-            "--pending",
-            `${pendingPercentage}%`
+        if (!values.length) {
+            return;
+        }
+
+        const width = 500;
+        const height = 200;
+        const padding = 20;
+
+        const max = Math.max(...values, 1);
+
+        const step = values.length > 1
+            ? (width - padding * 2) / (values.length - 1)
+            : 0;
+
+        const points = values.map((value, index) => {
+            const x = padding + index * step;
+
+            const y =
+                height -
+                padding -
+                (value / max) *
+                (height - padding * 2);
+
+            return `${x},${y}`;
+        }).join(" ");
+
+        const polyline = document.createElementNS(
+            "http://www.w3.org/2000/svg",
+            "polyline"
         );
-    }
 
-    if (reviewedDetails) {
-        reviewedDetails.textContent =
-            `${reviewedPercentage}% (${completedCount})`;
-    }
+        polyline.setAttribute("points", points);
 
-    if (pendingDetails) {
-        pendingDetails.textContent =
-            `${pendingPercentage}% (${pendingCount})`;
-    }
-}
+        svg.appendChild(polyline);
 
-function updateDocumentsOverview(data) {
-    const body = document.getElementById("documents-overview-body");
+        values.forEach((value, index) => {
+            const x = padding + index * step;
 
-    if (!body) {
-        return;
-    }
+            const y =
+                height -
+                padding -
+                (value / max) *
+                (height - padding * 2);
 
-    body.innerHTML = "";
-
-    if (
-        !data.documents_overview ||
-        data.documents_overview.length === 0
-    ) {
-        body.innerHTML = `
-            <tr>
-                <td colspan="5" class="empty-row">No documents found.</td>
-            </tr>
-        `;
-
-        return;
-    }
-
-    data.documents_overview.forEach(submission => {
-        const row = document.createElement("tr");
-        row.dataset.status = submission.status;
-
-        row.innerHTML = `
-            <td>${submission.faculty}</td>
-            <td><span class="faculty-type-badge">${submission.faculty_type}</span></td>
-            <td>${submission.bin_title}</td>
-            <td>${submission.latest_submission_date}</td>
-            <td>
-                <a href="${submission.faculty_bins_url}" class="view-bins-link">
-                    View Bins
-                    <img src="{% static 'images/Arrow Right.svg' %}" alt="">
-                </a>
-            </td>
-        `;
-
-        body.appendChild(row);
-    });
-
-    applyDocumentsOverviewFilter();
-}
-
-let selectedDocumentsStatus = "";
-
-function applyDocumentsOverviewFilter() {
-    document.querySelectorAll("#documents-overview-body tr[data-status]").forEach(row => {
-        const matchesStatus =
-            !selectedDocumentsStatus ||
-            row.dataset.status === selectedDocumentsStatus ||
-            (
-                selectedDocumentsStatus === "SUBMITTED" &&
-                row.dataset.status === "RESUBMITTED"
+            const circle = document.createElementNS(
+                "http://www.w3.org/2000/svg",
+                "circle"
             );
 
-        row.style.display = matchesStatus ? "" : "none";
-    });
-}
+            circle.setAttribute("cx", x);
+            circle.setAttribute("cy", y);
+            circle.setAttribute("r", 4);
 
-function updateSubmissionTrends(data) {
-    const svg = document.getElementById("trend-line");
-
-    if (!svg || !data.submission_trends) {
-        return;
-    }
-
-    svg.innerHTML = "";
-
-    const values = data.submission_trends.map(
-        item => Number(item.count) || 0
-    );
-
-    if (!values.length) {
-        return;
-    }
-
-    const width = 500;
-    const height = 200;
-    const padding = 20;
-
-    const max = Math.max(...values, 1);
-
-    const step = values.length > 1
-        ? (width - padding * 2) / (values.length - 1)
-        : 0;
-
-    const points = values.map((value, index) => {
-        const x = padding + index * step;
-
-        const y =
-            height -
-            padding -
-            (value / max) *
-            (height - padding * 2);
-
-        return `${x},${y}`;
-    }).join(" ");
-
-    const polyline = document.createElementNS(
-        "http://www.w3.org/2000/svg",
-        "polyline"
-    );
-
-    polyline.setAttribute(
-        "points",
-        points
-    );
-
-    svg.appendChild(polyline);
-
-    values.forEach((value, index) => {
-        const x = padding + index * step;
-
-        const y =
-            height -
-            padding -
-            (value / max) *
-            (height - padding * 2);
-
-        const circle = document.createElementNS(
-            "http://www.w3.org/2000/svg",
-            "circle"
-        );
-
-        circle.setAttribute("cx", x);
-        circle.setAttribute("cy", y);
-        circle.setAttribute("r", 4);
-
-        svg.appendChild(circle);
-    });
-}
-
-document.addEventListener("staff-dashboard-update", refreshStaffDashboard);
-
-document.querySelectorAll(".document-tab").forEach(tab => {
-    tab.addEventListener("click", function () {
-        selectedDocumentsStatus = this.dataset.status;
-        document.querySelectorAll(".document-tab").forEach(item => {
-            item.classList.toggle("active", item === this);
+            svg.appendChild(circle);
         });
-        applyDocumentsOverviewFilter();
-    });
-});
+    }
 
-refreshStaffDashboard();
+    document.addEventListener(
+        "staff-dashboard-update",
+        refreshStaffDashboard
+    );
+
+    document.querySelectorAll(".document-tab").forEach(tab => {
+        tab.addEventListener("click", function () {
+            selectedDocumentsStatus = this.dataset.status;
+
+            document.querySelectorAll(".document-tab").forEach(item => {
+                item.classList.toggle("active", item === this);
+            });
+
+            applyDocumentsOverviewFilter();
+        });
+    });
+
+    refreshStaffDashboard();
 </script>
 
 {% endblock %}

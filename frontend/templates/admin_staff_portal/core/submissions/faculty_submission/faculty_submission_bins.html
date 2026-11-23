@@ -59,18 +59,34 @@
             </form>
         </div>
 
-        {% if request.user.role == 'ADMIN' %}
-        <div class="approve-all-wrap">
-            <form id="approval-form" method="post" action="{% url 'admin_staff_portal:approve_selected_submissions' faculty_member.id %}">
-                {% csrf_token %}
-                <button id="approve-selected-button" type="submit" class="btn-approve-all" disabled>
-                    Approve{% if pending_approval_count %} ({{ pending_approval_count }}){% endif %}
-                </button>
-            </form>
-            <p class="approve-help">Only reviewed documents marked "Pending Approval" can be approved. Start review and mark other documents as reviewed first.</p>
-        </div>
+        {% if can_approve_submissions %}
+            <div class="approve-all-wrap">
+                <form
+                    id="approval-form"
+                    method="post"
+                    action="{% url 'admin_staff_portal:approve_selected_submissions' faculty_member.id %}"
+                >
+                    {% csrf_token %}
+
+                    <button
+                        id="approve-selected-button"
+                        type="submit"
+                        class="btn-approve-all"
+                        disabled
+                    >
+                        Approve{% if pending_approval_count %} ({{ pending_approval_count }}){% endif %}
+                    </button>
+                </form>
+
+                <p class="approve-help">
+                    Only reviewed documents marked "Pending Approval" can be approved.
+                    Select the documents you want to approve.
+                </p>
+            </div>
         {% else %}
-        <p class="approve-help" role="status">Only administrators can approve documents. You can review submissions and mark them as pending approval.</p>
+            <p class="approve-help" role="status">
+                You do not have permission to approve documents.
+            </p>
         {% endif %}
     </div>
 

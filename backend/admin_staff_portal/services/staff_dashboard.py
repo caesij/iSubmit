@@ -7,6 +7,8 @@ from django.utils import timezone
 from role_management.models import Role
 from submissions.models import DocumentSubmission
 from submissions.querysets import active_document_queryset
+from submissions.helpers import get_target_faculty_queryset
+from admin_staff_portal.services.department_compliance import get_compliance_by_department
 
 User = get_user_model()
 
@@ -18,7 +20,11 @@ def get_staff_dashboard_data():
         is_active=True,
     ).count()
 
-    submissions = active_document_queryset().select_related('faculty', 'requirement')
+    submissions = active_document_queryset().select_related(
+        'faculty',
+        'faculty__faculty_profile',
+        'requirement',
+    )
     
     pending_review_statuses = [
         DocumentSubmission.SubmissionStatus.SUBMITTED,
@@ -58,10 +64,9 @@ def get_staff_dashboard_data():
                 DocumentSubmission.SubmissionStatus.PENDING_APPROVAL,
                 DocumentSubmission.SubmissionStatus.SUBMITTED,
                 DocumentSubmission.SubmissionStatus.RESUBMITTED,
-                DocumentSubmission.SubmissionStatus.NEEDS_REVISION
+                DocumentSubmission.SubmissionStatus.NEEDS_REVISION,
             ]
         )
-        .select_related('faculty', 'requirement')
         .order_by('-initially_submitted_at')[:5]
     )
 
@@ -79,7 +84,9 @@ def get_staff_dashboard_data():
         'pending_review_progress': pending_review_progress,
         
         'documents_overview': documents_overview,
-        'submission_trends': trends
+        'submission_trends': trends,
+        
+        'compliance_by_department': get_compliance_by_department(get_target_faculty_queryset()),
     }
 
 

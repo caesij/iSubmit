@@ -114,15 +114,18 @@ def faculty_submissions_list(request):
 @require_http_methods(['GET'])
 def faculty_submission_bins_view(request, faculty_id):
     faculty_member = get_object_or_404(
-        User, 
-        pk=faculty_id, 
+        User,
+        pk=faculty_id,
         role__code=Role.Code.FACULTY,
         role__is_default=True
     )
 
     all_submissions = get_active_submissions().filter(faculty=faculty_member)
 
-    submissions = all_submissions.select_related(*TITLE_RELATED, 'reviewed_by').order_by(
+    submissions = all_submissions.select_related(
+    *TITLE_RELATED,
+        'reviewed_by'
+    ).order_by(
         '-requirement__period__deadline',
         'requirement__order',
         'slot__course__code',
@@ -132,23 +135,18 @@ def faculty_submission_bins_view(request, faculty_id):
 
     submission_status = request.GET.get('status')
 
-    if submission_status:
+    if submission_status in DocumentSubmission.SubmissionStatus.values:
         submissions = submissions.filter(status=submission_status)
 
     page_obj = Paginator(submissions, 7).get_page(request.GET.get('page'))
 
     status = DocumentSubmission.SubmissionStatus
-    counts = all_submissions.aggregate(
-        pending_approval=Count('id', filter=Q(status=status.PENDING_APPROVAL)),
-        not_ready=Count('id', filter=~Q(status__in=[status.PENDING_APPROVAL, status.APPROVED]))
-    )
-    
-    not_ready_count = counts['not_ready']
-    pending_approval_count = counts['pending_approval']
-    can_approve_all = (
-        request.user.has_perm('accounts.approve_submissions')
-        and not_ready_count == 0
-        and pending_approval_count > 0
+
+    pending_approval_count = all_submissions.filter(status=status.PENDING_APPROVAL).count()
+
+    can_approve_submissions = (
+        request.user.is_superuser
+        or request.user.has_perm('accounts.approve_submissions')
     )
 
     context = {
@@ -156,12 +154,11 @@ def faculty_submission_bins_view(request, faculty_id):
         'submissions': page_obj,
         'page_obj': page_obj,
         'is_paginated': page_obj.has_other_pages(),
-        'status_choices': DocumentSubmission.SubmissionStatus.choices,
-        'can_approve_all': can_approve_all,
+        'status_choices': status.choices,
+        'can_approve_submissions': can_approve_submissions,
         'pending_approval_count': pending_approval_count,
-        'not_ready_count': not_ready_count
     }
-    
+
     return render(request, f'{TEMPLATE_DIR}/faculty_submission_bins.html', context)
     
     
@@ -173,10 +170,21 @@ def review_submission(request, submission_id):
         pk=submission_id
     )
     
+    is_superuser = request.user.is_superuser
+
     context = {
         'submission': submission,
-        'can_review_submissions': request.user.has_perm('accounts.review_faculty_submissions'),
-        'can_return_for_revisions': request.user.has_perm('accounts.return_for_revisions'),
+        'can_review_submissions': (
+            is_superuser
+            or request.user.has_perm('accounts.review_faculty_submissions')
+        ),
+        'can_return_for_revisions': (
+            is_superuser
+            or (
+                request.user.has_perm('accounts.review_faculty_submissions')
+                and request.user.has_perm('accounts.return_for_revisions')
+            )
+        ),
     }
     
     return render(request, f'{TEMPLATE_DIR}/review_submission.html', context)
@@ -197,7 +205,16 @@ def mark_under_review_view(request, submission_id):
             return redirect('admin_staff_portal:review_submission', submission_id=submission.id)
 
         submission.status = DocumentSubmission.SubmissionStatus.UNDER_REVIEW
-        submission.save(update_fields=['status'])
+        submission.reviewed_by = None
+        submission.reviewed_at = None
+        submission.review_remarks = ''
+
+        submission.save(update_fields=[
+            'status',
+            'reviewed_by',
+            'reviewed_at',
+            'review_remarks',
+        ])
 
         transaction.on_commit(
             lambda: (
@@ -206,6 +223,7 @@ def mark_under_review_view(request, submission_id):
                 refresh_submission_pages({'submission_id': str(submission.id)}),
                 refresh_faculty_dashboard(submission.faculty),
                 refresh_faculty_my_submissions(submission.faculty),
+                refresh_faculty_submission_bin(submission.faculty),
                 notify_user(
                     user=submission.faculty,
                     notification_type=NotificationPreference.NotificationType.SUBMISSION_UNDER_REVIEW,
@@ -225,6 +243,8 @@ def mark_under_review_view(request, submission_id):
 @access_required('access_faculty_submissions', 'review_faculty_submissions')
 @require_http_methods(['POST'])
 def mark_reviewed_view(request, submission_id):
+    remarks = request.POST.get('remarks', '').strip()
+    
     with transaction.atomic():
         submission = get_object_or_404(get_active_submissions().select_for_update(), pk=submission_id)
 
@@ -236,7 +256,8 @@ def mark_reviewed_view(request, submission_id):
         submission.status = DocumentSubmission.SubmissionStatus.PENDING_APPROVAL
         submission.reviewed_by = request.user
         submission.reviewed_at = timezone.now()
-        submission.save(update_fields=['status', 'reviewed_by', 'reviewed_at'])
+        submission.review_remarks = remarks
+        submission.save(update_fields=['status', 'reviewed_by', 'reviewed_at', 'review_remarks',])
 
         transaction.on_commit(
             lambda: (
@@ -245,6 +266,7 @@ def mark_reviewed_view(request, submission_id):
                 refresh_submission_pages({'submission_id': str(submission.id)}),
                 refresh_faculty_dashboard(submission.faculty),
                 refresh_faculty_my_submissions(submission.faculty),
+                refresh_faculty_submission_bin(submission.faculty),
                 notify_user(
                     user=submission.faculty,
                     notification_type=NotificationPreference.NotificationType.SUBMISSION_REVIEWED,

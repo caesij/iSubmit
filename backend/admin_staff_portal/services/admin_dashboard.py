@@ -6,6 +6,7 @@ from django.utils import timezone
 
 from submissions.helpers import get_target_faculty_queryset
 from submissions.models import DocumentSubmission, Requirement, UploadSlot
+from admin_staff_portal.services.department_compliance import get_compliance_by_department
 
 Status = DocumentSubmission.SubmissionStatus
 
@@ -41,7 +42,13 @@ def get_admin_dashboard_data():
                 Status.PENDING_APPROVAL,
             ]
         )
-        .select_related('faculty', 'requirement', 'slot__course', 'slot__program')
+        .select_related(
+            'faculty',
+            'faculty__faculty_profile',
+            'requirement',
+            'slot__course',
+            'slot__program',
+        )
         .order_by('-initially_submitted_at')[:5]
     )
 
@@ -61,7 +68,9 @@ def get_admin_dashboard_data():
         'not_submitted_percentage': percentage(not_submitted_count, faculty_count),
 
         'documents_overview': documents_overview,
-        'submission_trends': get_submission_trends(submissions)
+        'submission_trends': get_submission_trends(submissions),
+        
+        'compliance_by_department': get_compliance_by_department(faculty),
     }
 
 

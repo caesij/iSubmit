@@ -53,8 +53,7 @@
       <div class="rs-card">
         <h2>Document Details</h2>
         <div class="rs-detail-row"><div><span class="label">File Name</span><span class="value">{{ submission.document_file.name|cut:"submissions/" }}</span></div></div>
-        <div class="rs-detail-row"><div><span class="label">Academic Year</span><span class="value">{{ submission.requirement.get_semester_display }}, {{ submission.requirement.academic_year }}</span></div></div>
-        <div class="rs-detail-row"><div><span class="label">Category</span><span class="value">{{ submission.requirement.category }}</span></div></div>
+        <div class="rs-detail-row"><div><span class="label">Academic Year</span><span class="value">{{ submission.requirement.period.get_semester_display }}, {{ submission.requirement.period.academic_year }}</span></div></div>
         <div class="rs-detail-row"><div><span class="label">Deadline</span><span class="value">                {{ submission.requirement.deadline|display_date:request.user }}, {{ submission.requirement.deadline|display_time:request.user }}</span></div></div>
       </div>
 
@@ -97,6 +96,12 @@
             <div class="when">                        {{ submission.approved_at|display_date:request.user }} {{ submission.approved_at|display_time:request.user }}</div>
           </div>
         {% endif %}
+        {% if submission.review_remarks %}
+            <div class="rs-review-item">
+                <div class="who">Review Remarks</div>
+                <div class="when">{{ submission.review_remarks|linebreaksbr }}</div>
+            </div>
+        {% endif %}
         {% if not submission.reviewed_by and not submission.approved_by %}
           <div class="rs-review-empty">No review activity yet.</div>
         {% endif %}
@@ -114,23 +119,37 @@
         {% endif %}
 
         {% if submission.status == 'UNDER_REVIEW' %}
-          <form method="post" action="{% url 'admin_staff_portal:mark_reviewed' submission.id %}">
-            {% csrf_token %}
-            <button type="submit" class="rs-btn rs-btn-secondary">Mark as Reviewed</button>
-          </form>
+            <form method="post" action="{% url 'admin_staff_portal:mark_reviewed' submission.id %}">
+                {% csrf_token %}
+
+                <textarea
+                    name="remarks"
+                    rows="4"
+                    placeholder="Add review remarks (optional)..."
+                ></textarea>
+
+                <button type="submit" class="rs-btn rs-btn-secondary">
+                    Mark as Reviewed
+                </button>
+            </form>
         {% endif %}
 
-        {% if submission.status == 'UNDER_REVIEW' or submission.status == 'PENDING_APPROVAL' %}
-          {% if can_return_for_revisions %}
-            <details class="rs-revision">
-              <summary class="rs-btn rs-btn-danger">Return for Revision</summary>
-              <form method="post" action="{% url 'admin_staff_portal:mark_needs_revision' submission.id %}">
-                {% csrf_token %}
-                <textarea name="remarks" rows="4" required placeholder="Explain what needs to be revised..."></textarea>
-                <button type="submit" class="rs-btn rs-btn-danger">Send Back to Faculty</button>
-              </form>
-            </details>
-          {% endif %}
+        {% if submission.status == 'UNDER_REVIEW' %}
+            {% if can_return_for_revisions %}
+                <details class="rs-revision">
+                    <summary class="rs-btn rs-btn-danger">Return for Revision</summary>
+
+                    <form method="post" action="{% url 'admin_staff_portal:mark_needs_revision' submission.id %}">
+                        {% csrf_token %}
+                        <textarea name="remarks" rows="4" required
+                            placeholder="Explain what needs to be revised..."></textarea>
+
+                        <button type="submit" class="rs-btn rs-btn-danger">
+                            Send Back to Faculty
+                        </button>
+                    </form>
+                </details>
+            {% endif %}
         {% endif %}
 
         {% if submission.status == 'PENDING_APPROVAL' %}

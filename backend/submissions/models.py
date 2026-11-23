@@ -486,6 +486,7 @@ class DocumentSubmission(models.Model):
 
     initially_submitted_at = models.DateTimeField(auto_now_add=True)
     reviewed_at = models.DateTimeField(null=True, blank=True)
+    review_remarks = models.TextField(blank=True)
     revisioned_at = models.DateTimeField(null=True, blank=True)
     resubmitted_at = models.DateTimeField(null=True, blank=True)
     approved_at = models.DateTimeField(null=True, blank=True)

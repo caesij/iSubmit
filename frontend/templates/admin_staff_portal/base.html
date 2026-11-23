@@ -447,7 +447,12 @@
                     return;
                 }
 
-                if (document.activeElement && document.activeElement.closest("form")) {
+                const activeElement = document.activeElement;
+
+                if (
+                    activeElement &&
+                    activeElement.closest("[data-live-panel] form")
+                ) {
                     clearTimeout(refreshTimer);
                     refreshTimer = setTimeout(refreshCurrentPage, 3000);
                     return;

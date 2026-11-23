@@ -1,3 +1,4 @@
+
 {% extends 'admin_staff_portal/base.html' %}
 {% block css_modules %}admin-dashboard{% endblock %}
 {% load static core_extras %}
@@ -7,7 +8,29 @@
 {% block subtitle %}Overview of system activities and updates{% endblock %}
 
 {% block extra_css %}
+<style>
+    .dashboard-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
 
+    .department-chart-wrapper {
+        position: relative;
+        width: 100%;
+        height: 180px;
+    }
+
+    @media (max-width: 900px) {
+        .dashboard-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+
+    @media (max-width: 600px) {
+        .dashboard-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
 {% endblock %}
 
 {% block content %}
@@ -19,7 +42,6 @@
         <h2>{{ request.user.get_full_name }}</h2>
         <p>Administrator</p>
     </div>
-
 
     <!-- Stat cards -->
     <div class="stats-grid">
@@ -61,7 +83,6 @@
                 <span class="stat-number" id="stat-pending-approval">{{ pending_approval_count }}</span>
                 <span class="stat-label">Pending Approval</span>
             </div>
-
         </div>
 
         <div class="stat-card requirements-card">
@@ -75,7 +96,6 @@
         </div>
     </div>
 
-
     <!-- Dashboard grid -->
     <div class="dashboard-grid">
 
@@ -87,7 +107,7 @@
 
             <div class="compliance-content">
                 <div class="compliance-circle">
-                    <span id="compliance-value">{{ fully_compliant_percentage  }}%</span>
+                    <span id="compliance-value">{{ fully_compliant_percentage }}%</span>
                 </div>
 
                 <div class="compliance-legend">
@@ -154,11 +174,16 @@
                 <h2>Compliance by Department</h2>
             </div>
 
-            <div class="department-placeholder"></div>
+            <div class="department-chart-wrapper">
+                <canvas id="compliance-by-department-chart"></canvas>
+
+                <p id="department-chart-empty" hidden>
+                    No program compliance data available.
+                </p>
+            </div>
         </div>
 
     </div>
-
 
     <!-- Documents Overview -->
     <div class="dashboard-card pending-card">
@@ -174,13 +199,13 @@
                 </div>
             </div>
 
-                <a
-                    href="{% url 'admin_staff_portal:faculty_submissions_list' %}"
-                    class="documents-overview-link"
-                >
-                    View All
-                    <img src="{% static 'images/Arrow Right.svg' %}" alt="">
-                </a>
+            <a
+                href="{% url 'admin_staff_portal:faculty_submissions_list' %}"
+                class="documents-overview-link"
+            >
+                View All
+                <img src="{% static 'images/Arrow Right.svg' %}" alt="">
+            </a>
         </div>
 
         <div class="table-container">
@@ -197,14 +222,17 @@
 
                 <tbody id="documents-overview-body">
                     {% for submission in documents_overview %}
-                        <tr>
+                        <tr data-status="{{ submission.status }}">
                             <td>{{ submission.faculty.get_full_name }}</td>
+
                             <td>
                                 <span class="faculty-type-badge">
                                     {{ submission.faculty.get_faculty_type_display }}
                                 </span>
                             </td>
+
                             <td>{{ submission.requirement.requirement_title }}</td>
+
                             <td>
                                 {% if submission.status == 'RESUBMITTED' and submission.resubmitted_at %}
                                     {{ submission.resubmitted_at|display_date:request.user }}
@@ -212,6 +240,7 @@
                                     {{ submission.initially_submitted_at|display_date:request.user }}
                                 {% endif %}
                             </td>
+
                             <td>
                                 <a
                                     href="{% url 'admin_staff_portal:faculty_submission_bins_view' submission.faculty.id %}"
@@ -234,6 +263,11 @@
 
 </div>
 
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+
+<!-- Department compliance chart -->
+<script src="{% static 'admin_staff_portal/js/department-compliance-chart.js' %}"></script>
 
 <script>
     let selectedDocumentsStatus = "";
@@ -245,7 +279,9 @@
                 {
                     method: "GET",
                     credentials: "same-origin",
-                    headers: { "X-Requested-With": "XMLHttpRequest" }
+                    headers: {
+                        "X-Requested-With": "XMLHttpRequest"
+                    }
                 }
             );
 
@@ -257,11 +293,12 @@
             updateCompliance(data);
             updateDocumentsOverview(data);
             updateSubmissionTrends(data);
+            updateDepartmentComplianceChart(data);
+
         } catch (error) {
             console.error("Admin dashboard update failed:", error);
         }
     }
-
 
     function updateStats(data) {
         const stats = {
@@ -274,16 +311,17 @@
 
         Object.entries(stats).forEach(([id, value]) => {
             const element = document.getElementById(id);
+
             if (element) {
                 element.textContent = value;
             }
         });
     }
 
-
     function updateCompliance(data) {
         const value = document.getElementById("compliance-value");
         const circle = document.querySelector(".compliance-circle");
+
         const fullyCompliantDetails = document.getElementById("fully-compliant-details");
         const inProgressDetails = document.getElementById("in-progress-details");
         const notSubmittedDetails = document.getElementById("not-submitted-details");
@@ -301,7 +339,9 @@
         const inProgressCount = Number(data.in_progress_count) || 0;
         const notSubmittedCount = Number(data.not_submitted_count) || 0;
 
-        if (value) value.textContent = `${fullyCompliantPercentage}%`;
+        if (value) {
+            value.textContent = `${fullyCompliantPercentage}%`;
+        }
 
         if (circle) {
             const firstEnd = fullyCompliantPercentage;
@@ -317,25 +357,25 @@
         }
 
         if (fullyCompliantDetails) {
-            fullyCompliantDetails.textContent = `${fullyCompliantPercentage}% (${fullyCompliantCount})`;
+            fullyCompliantDetails.textContent =
+                `${fullyCompliantPercentage}% (${fullyCompliantCount})`;
         }
 
         if (inProgressDetails) {
-            inProgressDetails.textContent = `${inProgressPercentage}% (${inProgressCount})`;
+            inProgressDetails.textContent =
+                `${inProgressPercentage}% (${inProgressCount})`;
         }
 
         if (notSubmittedDetails) {
-            notSubmittedDetails.textContent = `${notSubmittedPercentage}% (${notSubmittedCount})`;
+            notSubmittedDetails.textContent =
+                `${notSubmittedPercentage}% (${notSubmittedCount})`;
         }
     }
-
 
     function updateDocumentsOverview(data) {
         const body = document.getElementById("documents-overview-body");
 
-        if (!body) {
-            return;
-        }
+        if (!body) return;
 
         body.innerHTML = "";
 
@@ -361,7 +401,11 @@
 
             row.innerHTML = `
                 <td>${submission.faculty}</td>
-                <td><span class="faculty-type-badge">${submission.faculty_type}</span></td>
+                <td>
+                    <span class="faculty-type-badge">
+                        ${submission.faculty_type}
+                    </span>
+                </td>
                 <td>${submission.bin_title}</td>
                 <td>${submission.latest_submission_date}</td>
                 <td>
@@ -378,7 +422,6 @@
         applyDocumentsOverviewFilter();
     }
 
-
     function updateSubmissionTrends(data) {
         const svg = document.getElementById("trend-line");
 
@@ -386,7 +429,9 @@
 
         svg.innerHTML = "";
 
-        const values = data.submission_trends.map(item => Number(item.count) || 0);
+        const values = data.submission_trends.map(
+            item => Number(item.count) || 0
+        );
 
         if (!values.length) return;
 
@@ -395,7 +440,10 @@
         const padding = 20;
 
         const max = Math.max(...values, 1);
-        const step = values.length > 1 ? (width - padding * 2) / (values.length - 1) : 0;
+
+        const step = values.length > 1
+            ? (width - padding * 2) / (values.length - 1)
+            : 0;
 
         const points = values.map((value, index) => {
             const x = padding + index * step;
@@ -404,7 +452,10 @@
             return `${x},${y}`;
         }).join(" ");
 
-        const polyline = document.createElementNS("http://www.w3.org/2000/svg", "polyline");
+        const polyline = document.createElementNS(
+            "http://www.w3.org/2000/svg",
+            "polyline"
+        );
 
         polyline.setAttribute("points", points);
         svg.appendChild(polyline);
@@ -413,7 +464,10 @@
             const x = padding + index * step;
             const y = height - padding - (value / max) * (height - padding * 2);
 
-            const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+            const circle = document.createElementNS(
+                "http://www.w3.org/2000/svg",
+                "circle"
+            );
 
             circle.setAttribute("cx", x);
             circle.setAttribute("cy", y);
@@ -445,14 +499,11 @@
 
     document.querySelectorAll(".document-tab").forEach(tab => {
         tab.addEventListener("click", function () {
-            selectedDocumentsStatus =
-                this.dataset.status;
+            selectedDocumentsStatus = this.dataset.status;
 
-            document
-                .querySelectorAll(".document-tab")
-                .forEach(item => {
-                    item.classList.remove("active");
-                });
+            document.querySelectorAll(".document-tab").forEach(item => {
+                item.classList.remove("active");
+            });
 
             this.classList.add("active");
 
@@ -460,7 +511,10 @@
         });
     });
 
-    document.addEventListener("admin-dashboard-update", refreshAdminDashboard);
+    document.addEventListener(
+        "admin-dashboard-update",
+        refreshAdminDashboard
+    );
 
     refreshAdminDashboard();
 </script>

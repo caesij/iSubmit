@@ -1,70 +1,86 @@
+import logging
+
+from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 
-class RealtimeConsumer(AsyncJsonWebsocketConsumer):
-    async def connect(self):
-        user = self.scope['user']
 
-        if user.is_anonymous:
+logger = logging.getLogger(__name__)
+
+REALTIME_GROUP_PERMISSIONS = {
+    'faculty_submission_bins': 'accounts.access_faculty_submission_bin',
+    'admin_dashboard': 'accounts.access_admin_dashboard',
+    'staff_dashboard': 'accounts.access_staff_dashboard',
+    'admin_staff_submissions': 'accounts.access_faculty_submissions',
+}
+
+
+@database_sync_to_async
+def get_realtime_groups(user):
+    if user.is_superuser:
+        return tuple(REALTIME_GROUP_PERMISSIONS.keys())
+
+    return tuple(
+        group_name
+        for group_name, permission in REALTIME_GROUP_PERMISSIONS.items()
+        if user.has_perm(permission)
+    )
+
+
+# WebSocket consumer
+class RealtimeConsumer(AsyncJsonWebsocketConsumer):
+
+    async def connect(self):
+        self.joined_groups = []
+
+        user = self.scope.get('user')
+
+        # Only authenticated and active users can establish a connection
+        if not user or not user.is_authenticated or not user.is_active:
             await self.close()
             return
 
-        self.group_name = f'user_{user.pk}'
-        await self.channel_layer.group_add(self.group_name, self.channel_name)
-        self.session_group_name = None
+        # User-specific group
+        await self.join_group(f'user_{user.pk}')
+
+        # Session-specific group
         session = self.scope.get('session')
         session_key = session.session_key if session else None
+
         if session_key:
-            self.session_group_name = f'session_{session_key}'
-            await self.channel_layer.group_add(
-                self.session_group_name,
-                self.channel_name,
-            )
+            await self.join_group(f'session_{session_key}')
 
-        self.is_faculty_user = user.is_faculty
-        self.is_staff_user = user.is_staff_role
-        self.is_admin_user = user.is_admin
+        # Permission-based groups
+        authorized_groups = await get_realtime_groups(user)
 
-        if self.is_faculty_user:
-            await self.channel_layer.group_add('faculty_submission_bins', self.channel_name)
-
-        if self.is_admin_user:
-            await self.channel_layer.group_add('admin_dashboard', self.channel_name)
-
-        if self.is_staff_user:
-            await self.channel_layer.group_add('staff_dashboard',self.channel_name)
-
-        if self.is_admin_user or self.is_staff_user:
-            await self.channel_layer.group_add(
-                'admin_staff_submissions',
-                self.channel_name,
-            )
+        for group_name in authorized_groups:
+            await self.join_group(group_name)
 
         await self.accept()
 
     async def disconnect(self, close_code):
-        if hasattr(self, 'group_name'):
-            await self.channel_layer.group_discard(self.group_name, self.channel_name)
-        if self.session_group_name:
-            await self.channel_layer.group_discard(
-                self.session_group_name,
-                self.channel_name,
-            )
+        for group_name in getattr(self, 'joined_groups', []):
+            try:
+                await self.channel_layer.group_discard(
+                    group_name,
+                    self.channel_name,
+                )
+            except Exception:
+                logger.exception(
+                    'Could not remove WebSocket connection from group %s.',
+                    group_name,
+                )
 
-        if getattr(self, 'is_faculty_user', False):
-            await self.channel_layer.group_discard('faculty_submission_bins', self.channel_name)
+        self.joined_groups = []
 
-        if getattr(self, 'is_staff_user', False):
-            await self.channel_layer.group_discard('staff_dashboard', self.channel_name)
+    async def join_group(self, group_name):
+        await self.channel_layer.group_add(
+            group_name,
+            self.channel_name,
+        )
 
-        if getattr(self, 'is_admin_user', False):
-            await self.channel_layer.group_discard('admin_dashboard', self.channel_name)
+        self.joined_groups.append(group_name)
 
-        if getattr(self, 'is_admin_user', False) or getattr(self, 'is_staff_user', False):
-            await self.channel_layer.group_discard(
-                'admin_staff_submissions',
-                self.channel_name,
-            )
-
+    # Event handling
     async def realtime_event(self, event):
         await self.send_json({
             'event': event['event'],

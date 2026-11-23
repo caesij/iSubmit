@@ -21,7 +21,7 @@ def admin_dashboard_data_view(request):
         documents_overview.append({
             'faculty_id': submission.faculty.id,
             'faculty': submission.faculty.get_full_name(),
-            'faculty_type': submission.faculty.get_faculty_type_display(),
+            'faculty_type': submission.faculty.faculty_profile.get_faculty_type_display(),
             'bin_title': submission.requirement.requirement_title,
             'latest_submission_date': format_display_date(
                 latest_submission_date,
@@ -50,7 +50,9 @@ def admin_dashboard_data_view(request):
         'not_submitted_percentage': data['not_submitted_percentage'],
 
         'submission_trends': data['submission_trends'],
-        'documents_overview': documents_overview
+        'documents_overview': documents_overview,
+        
+        'compliance_by_department': data['compliance_by_department'],
     })
 
 
@@ -75,7 +77,7 @@ def staff_dashboard_data_view(request):
         documents_overview.append({
             'faculty_id': submission.faculty.id,
             'faculty': submission.faculty.get_full_name(),
-            'faculty_type': submission.faculty.get_faculty_type_display(),
+            'faculty_type': submission.faculty.faculty_profile.get_faculty_type_display(),
             'bin_title': submission.requirement.requirement_title,
             'latest_submission_date': format_display_date(
                 latest_submission_date,
@@ -100,7 +102,9 @@ def staff_dashboard_data_view(request):
         'pending_review_progress': data['pending_review_progress'],
         
         'submission_trends': data['submission_trends'],
-        'documents_overview': documents_overview
+        'documents_overview': documents_overview,
+        
+        'compliance_by_department': data['compliance_by_department'],
     })
 
 
