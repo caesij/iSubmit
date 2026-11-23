@@ -1,9 +1,9 @@
 {% extends 'accounts/auth_base.html' %}
+{% block css_modules %}auth-success-styles{% endblock %}
 {% load static %}
 
 {% block title %}Signed in - iSubmit{% endblock %}
 {% block extra_head %}
-<link rel="stylesheet" href="{% static 'css/auth/login_success.css' %}">
 {% endblock %}
 
 {% block content %}

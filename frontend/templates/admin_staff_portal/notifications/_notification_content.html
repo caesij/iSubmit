@@ -1,11 +1,11 @@
 
 
 <div class="notifications-page">
-    {% for message in messages %}
+    {% for message in messages %}{% if message|stringformat:"s" != "No approved documents match your filters." %}
         <div class="notification-message">
             {{ message }}
         </div>
-    {% endfor %}
+    {% endif %}{% endfor %}
 
     <div class="notification-filters">
         <form method="get" class="notification-filter-form">

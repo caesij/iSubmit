@@ -12,6 +12,7 @@ from django.db import transaction
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.template.loader import render_to_string
 from django.views.decorators.http import require_GET, require_http_methods
 
 from accounts.decorators import access_required
@@ -296,12 +297,21 @@ def user_form_view(request, pk=None):
             )
 
             try:
+                login_url = request.build_absolute_uri(reverse('accounts:login'))
+                html_message = render_to_string('accounts/emails/account_created.html', {
+                    'full_name': user.get_full_name(),
+                    'email': user.email,
+                    'temporary_password': password,
+                    'role_name': selected_role.group.name,
+                    'login_url': login_url,
+                })
                 sent_count = send_mail(
                     subject,
-                    message,
+                    message + f'\n\nSign in to iSubmit: {login_url}',
                     settings.DEFAULT_FROM_EMAIL,
                     [user.email],
                     fail_silently=False,
+                    html_message=html_message,
                 )
 
                 if sent_count == 1:

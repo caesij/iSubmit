@@ -1,5 +1,0 @@
-/* Preserve the existing desktop lockout page while allowing long account names on phones. */
-@media (max-width: 900px) {
-  main { overflow-wrap: anywhere; }
-  a { display: inline-flex; align-items: center; min-height: 44px; }
-}

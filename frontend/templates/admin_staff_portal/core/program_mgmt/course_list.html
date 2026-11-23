@@ -1,20 +1,23 @@
 {% extends 'admin_staff_portal/base.html' %}
 {% load static %}
-{% block css_modules %}program-management{% endblock %}
+{% block css_modules %}program-management course-catalogue-styles management-tools-styles{% endblock %}
 {% block title %}Course Catalogue - iSubmit{% endblock %}
 {% block heading %}Course Catalogue{% endblock %}
 {% block subtitle %}Manage reusable courses and their classifications across programs.{% endblock %}
-{% block extra_css %}<link rel="stylesheet" href="{% static 'css/pages/course_catalogue.css' %}"><link rel="stylesheet" href="{% static 'css/pages/management_portal.css' %}">{% endblock %}
+{% block extra_css %}{% endblock %}
 {% block content %}
 <section class="course-page">
     <div class="panel-header management-page-nav">
         <nav class="section-tabs" aria-label="Program management">
             <a href="{% url 'programs:program_list' %}" class="tab-link">Programs</a>
-            <a href="{% url 'programs:course_list' %}" class="tab-link active" aria-current="page">Courses</a>
+            <a href="{% url 'programs:course_list' %}" class="tab-link active" aria-current="page">Course Catalogue</a>
         </nav>
     </div>
-    <header class="course-heading"><div><h2>Course Catalogue</h2><p>Create and manage reusable courses and their classifications.</p></div><span class="course-total">{{ page_obj.paginator.count }} course{{ page_obj.paginator.count|pluralize }}</span></header>
-    {% if messages %}<div class="course-messages" aria-live="polite">{% for message in messages %}<div class="course-message {{ message.tags }}" role="status">{{ message }}</div>{% endfor %}</div>{% endif %}
+    <div class="course-count-row">
+        <a class="course-back" href="{% url 'programs:program_list' %}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 19-7-7 7-7M5 12h14"/></svg>Back</a>
+        <span class="course-total">{{ page_obj.paginator.count }} course{{ page_obj.paginator.count|pluralize }}</span>
+    </div>
+    {% if messages %}<div class="course-messages" aria-live="polite">{% for message in messages %}{% if message|stringformat:"s" != "No approved documents match your filters." %}<div class="course-message {{ message.tags }}" role="status">{{ message }}</div>{% endif %}{% endfor %}</div>{% endif %}
     <section class="course-create-card" aria-labelledby="add-course-heading">
         <h3 id="add-course-heading">Add a course</h3><p>Enter the course details and choose the classifications that apply.</p>
         <form method="post" action="{% url 'programs:add_course' %}" class="course-create-form">

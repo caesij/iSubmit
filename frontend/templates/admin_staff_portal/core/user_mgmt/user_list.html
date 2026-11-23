@@ -1,11 +1,10 @@
 {% extends 'admin_staff_portal/base.html' %}
 {% load static core_extras %}
 
-{% block css_modules %}user-list-page{% endblock %}
+{% block css_modules %}user-list-page user-directory-styles{% endblock %}
 {% block title %}{{ page_title }} - iSubmit{% endblock %}
 {% block subtitle %}Manage campus user accounts, roles, and access.{% endblock %}
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/pages/user_management.css' %}">
 {% endblock %}
 
 {% block content %}
