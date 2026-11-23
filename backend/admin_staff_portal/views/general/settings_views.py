@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect
 from django.views.decorators.http import require_http_methods
 from django.contrib import messages
 from django.contrib.auth import update_session_auth_hash
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import PasswordChangeForm
 
 from accounts.decorators import access_required
@@ -32,7 +33,7 @@ def preferences_view(request):
     return render(request, f'{TEMPLATE_DIR}/preferences.html', context)
 
 
-@access_required('access_notification_settings')
+@login_required
 @require_http_methods(['GET', 'POST'])
 def notification_settings_view(request):
     preferences = get_or_create_preferences(request.user)

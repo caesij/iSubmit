@@ -158,11 +158,11 @@
                     </li>
 
                     <!-- Settings -->
-                    {% if perms.accounts.access_preferences or perms.accounts.access_notification_settings or perms.accounts.access_account_security %}
+                    {% if perms.accounts.access_preferences or perms.accounts.access_account_security %}
                         <li class="nav-item">
                             <a
                                 class="nav-link {% if current_url == 'preferences' or current_url == 'notification_settings' or current_url == 'account_and_security' %}active{% endif %}"
-                                href="{% if perms.accounts.access_preferences %}{% url 'admin_staff_portal:preferences' %}{% elif perms.accounts.access_notification_settings %}{% url 'admin_staff_portal:notification_settings' %}{% else %}{% url 'admin_staff_portal:account_and_security' %}{% endif %}"
+                                href="{% if perms.accounts.access_preferences %}{% url 'admin_staff_portal:preferences' %}{% else %}{% url 'admin_staff_portal:account_and_security' %}{% endif %}"
                             >
                                 <span class="icon">
                                     <img src="{% static 'images/settings.svg' %}" alt="Settings icon">

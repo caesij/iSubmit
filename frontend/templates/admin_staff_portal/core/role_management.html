@@ -282,15 +282,21 @@ Manage campus roles, page access, and notification permissions.
                             <strong>{{ item.label }}</strong>
                             <small>{{ item.description }}</small>
                         </span>
-                        <input
-                            type="checkbox"
-                            name="notification_types"
-                            value="{{ item.value }}"
-                            {% if item.checked %}checked{% endif %}
-                        >
+
+                        <span class="notification-setting-toggle">
+                            <input
+                                type="checkbox"
+                                name="notification_types"
+                                value="{{ item.value }}"
+                                {% if item.checked %}checked{% endif %}
+                            >
+                            <span class="notification-setting-slider"></span>
+                        </span>
                     </label>
                 {% empty %}
-                    <p class="card-sub">No notification events are available for this role.</p>
+                    <p class="card-sub">
+                        No notification events are available for this role.
+                    </p>
                 {% endfor %}
             </div>
 

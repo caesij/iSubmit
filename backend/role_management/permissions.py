@@ -9,7 +9,6 @@ ALL_ROLE_CODES = frozenset(ROLE_GROUP_NAMES)
 
 COMMON_DEFAULT_PERMISSION_CODES = (
     'access_preferences',
-    'access_notification_settings',
     'access_account_security',
     'access_profile',
 )
@@ -184,18 +183,24 @@ PERMISSION_PAGES = (
         ),
     },
     {
+        'key': 'system_notifications',
+        'title': 'System Notifications',
+        'description': 'Create and send system-wide announcements.',
+        'access_codename': 'access_system_notifications',
+        'available_to': frozenset({'ADMIN', 'STAFF'}),
+        'operations': (
+            {
+                'codename': 'create_system_notifications',
+                'label': 'Create System Notifications',
+                'description': 'Compose and send system-wide announcements.',
+            },
+        ),
+    },
+    {
         'key': 'preferences',
         'title': 'Preferences',
         'description': 'View and update personal preferences.',
         'access_codename': 'access_preferences',
-        'available_to': ALL_ROLE_CODES,
-        'operations': (),
-    },
-    {
-        'key': 'notification_settings',
-        'title': 'Notification Settings',
-        'description': 'View and update notification preferences.',
-        'access_codename': 'access_notification_settings',
         'available_to': ALL_ROLE_CODES,
         'operations': (),
     },
@@ -268,9 +273,10 @@ DEFAULT_ROLE_PERMISSIONS = {
         'return_for_revisions',
         'access_document_repository',
         'access_preferences',
-        'access_notification_settings',
         'access_account_security',
         'access_profile',
+        'access_system_notifications',
+        'create_system_notifications',
     ),
     
     'FACULTY': (
@@ -286,7 +292,6 @@ DEFAULT_ROLE_PERMISSIONS = {
         'access_my_documents',
         'toggle_document_pin',
         'access_preferences',
-        'access_notification_settings',
         'access_account_security',
         'access_profile',
     ),

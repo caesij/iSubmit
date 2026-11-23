@@ -3,6 +3,7 @@ from django.views.decorators.http import require_http_methods
 from django.contrib import messages
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.forms import PasswordChangeForm
+from django.contrib.auth.decorators import login_required
 
 from accounts.decorators import access_required
 from accounts.utils import get_or_create_preferences
@@ -35,7 +36,7 @@ def preferences_view(request):
         context
     )
 
-@access_required('access_notification_settings')
+@login_required
 @require_http_methods(['GET', 'POST'])
 def notification_settings_view(request):
     preferences = get_or_create_preferences(request.user)
@@ -55,7 +56,7 @@ def notification_settings_view(request):
         context
     )
 
-@access_required('access_notification_settings')
+@login_required
 @require_http_methods(['GET', 'POST'])
 def notification_channel_view(request):
     preferences = get_or_create_preferences(request.user)

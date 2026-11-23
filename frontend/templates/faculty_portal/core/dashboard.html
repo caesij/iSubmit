@@ -226,7 +226,7 @@
                         alt=""
                         class="deadline-icon"
                     >
-                    <div class="deadline-title">{{ req.requirement_title }}</div>
+                    <div class="deadline-title">{{ req.requirement_title }} ({{ req.left }})</div>
                     <div class="deadline-date">{{ req.deadline }}</div>
                 </div>
             {% empty %}
@@ -378,7 +378,7 @@
                 "seg-submitted": data.submitted_pct,
                 "seg-under-review": data.under_review_pct,
                 "seg-pending-approval": data.pending_approval_pct,
-                "seg_returned": data.returned_pct
+                "seg-returned": data.returned_pct
             };
 
             Object.entries(segments).forEach(function ([id, percentage]) {
@@ -426,7 +426,7 @@
 
                         const title = document.createElement("div");
                         title.className = "deadline-title";
-                        title.textContent = req.requirement_title;
+                        title.textContent = `${req.requirement_title} (${req.left})`;
 
                         const date = document.createElement("div");
                         date.className = "deadline-date";
@@ -473,7 +473,5 @@
     document.addEventListener("dashboard-update", () => {
         refreshFacultyDashboard(false);
     });
-
-    refreshFacultyDashboard(false);
 </script>
 {% endblock %}

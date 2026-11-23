@@ -6,13 +6,16 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_http_methods
 
 from accounts.decorators import superuser_required
+from notifications.services import get_notification_types_for_role
+from role_management.models import Role, RoleUserManagementRule
+from role_management.permissions import ALL_PERMISSION_CODES, ROLE_GROUP_NAMES
+
 from notifications.models import (
     NotificationPreference,
     RoleNotificationSetting,
     NOTIFICATION_TYPE_DESCRIPTIONS,
 )
-from role_management.models import Role, RoleUserManagementRule
-from role_management.permissions import ALL_PERMISSION_CODES, ROLE_GROUP_NAMES
+
 from role_management.services import (
     build_permission_pages,
     build_user_management_access_rows,
@@ -76,7 +79,7 @@ def role_management_view(request):
 
         if action == 'create_role':
             name, error = _validate_role_name(request.POST.get('role_name', ''))
-            
+
             if error:
                 messages.error(request, error)
                 return redirect(request.path)
@@ -84,14 +87,28 @@ def role_management_view(request):
             with transaction.atomic():
                 group = Group.objects.create(name=name)
                 role = Role.objects.create(group=group, is_default=False)
-                
+
                 initialize_custom_role_permissions(group)
+
+                RoleNotificationSetting.objects.bulk_create(
+                    [
+                        RoleNotificationSetting(
+                            role=role,
+                            notification_type=notification_type,
+                            enabled=False,
+                        )
+                        for notification_type, _ in get_notification_types_for_role(role)
+                    ],
+                    ignore_conflicts=True,
+                )
+
                 ensure_default_user_management_rules()
 
             messages.success(request, f'The {name} role was created.')
             return redirect(_role_url(request, role))
 
         selected_role = _get_selected_role(role_id)
+        
         if selected_role is None:
             messages.error(request, 'Please select a role first.')
             return redirect(request.path)
@@ -124,12 +141,15 @@ def role_management_view(request):
             return redirect(_role_url(request, selected_role))
 
         if action == 'save_notifications':
-            requested_types = set(request.POST.getlist('notification_types'))
-            valid_types = {value for value, _ in NotificationPreference.NotificationType.choices}
+            allowed_types = {
+                value
+                for value, _ in get_notification_types_for_role(selected_role)
+            }
 
-            if not requested_types.issubset(valid_types):
+            requested_types = set(request.POST.getlist('notification_types'))
+
+            if not requested_types.issubset(allowed_types):
                 messages.error(request, 'Invalid notification categories were submitted.')
-                
                 return redirect(_role_url(request, selected_role))
 
             with transaction.atomic():
@@ -137,10 +157,18 @@ def role_management_view(request):
                     RoleNotificationSetting.objects.update_or_create(
                         role=selected_role,
                         notification_type=notification_type,
-                        defaults={'enabled': notification_type in requested_types}
+                        defaults={
+                            'enabled': (
+                                notification_type in requested_types
+                                and notification_type in allowed_types
+                            )
+                        }
                     )
 
-            messages.success(request, f'{group.name} notification settings updated successfully.')
+            messages.success(
+                request,
+                f'{group.name} notification settings updated successfully.'
+            )
             
             return redirect(_role_url(request, selected_role))
 
@@ -300,6 +328,12 @@ def role_management_view(request):
             ).values_list('notification_type', flat=True)
         )
 
+    notification_choices = (
+        get_notification_types_for_role(selected_role)
+        if selected_role
+        else []
+    )
+
     role_notification_types = [
         {
             'value': value,
@@ -307,7 +341,7 @@ def role_management_view(request):
             'description': NOTIFICATION_TYPE_DESCRIPTIONS.get(value, ''),
             'checked': value in enabled_notification_types,
         }
-        for value, label in NotificationPreference.NotificationType.choices
+        for value, label in notification_choices
     ]
 
     context = {

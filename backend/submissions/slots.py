@@ -12,6 +12,7 @@ UNIT_PARTS = {
     Unit.PER_SECTION: lambda a: (a.course_id, a.program_id, a.year_level, a.section),
     Unit.PER_YEAR_LEVEL: lambda a: (a.course_id, a.program_id, a.year_level, ''),
 }
+
 NO_CLASS = (None, None, None, '')
 
 
@@ -62,7 +63,6 @@ def sync_upload_slots(period):
     UploadSlot.objects.filter(pk__in=stale_ids, draft__isnull=True, submission__isnull=True).delete()
     
 def sync_course_periods(course_id):
-
     terms = (
         ClassAssignment.objects
         .filter(course_id=course_id)
