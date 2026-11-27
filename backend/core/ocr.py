@@ -84,7 +84,7 @@ def extract_lines_and_page_count_from_pdf(pdf_path):
         try:
             for page_number, page in enumerate(document, start=1):
                 pixmap = page.get_pixmap(
-                    dpi=500,
+                    dpi=300,
                     colorspace=pymupdf.csRGB,
                     alpha=False,
                 )

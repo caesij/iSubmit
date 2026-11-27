@@ -68,24 +68,71 @@
             <h2>Validation</h2>
             <div class="fdv-detail-row"><span class="dot"></span><div><span class="label">Processing</span><span class="value">{{ metadata.get_validation_status_display }}</span></div></div>
             {% for name, field in metadata.validation_result.fields.items %}
-              <div class="fdv-validation-row">
-                <div>
-                  <span class="fdv-validation-field">{{ name|title }}</span>
-                  <span class="fdv-validation-result {% if field.found %}is-found{% else %}is-missing{% endif %}">
-                    {% if field.found %}Found{% else %}Not found{% endif %}
-                  </span>
-                </div>
-                {% if field.candidates %}
-                  {% for candidate in field.candidates %}
-                    {% if forloop.first %}
-                      <span class="fdv-validation-confidence">Confidence {{ candidate.confidence|floatformat:2 }}</span>
-                    {% endif %}
-                  {% endfor %}
-                {% else %}
-                  <span class="fdv-validation-confidence">Confidence —</span>
-                {% endif %}
-              </div>
-            {% endfor %}
+              {% with state=field.state %}
+                  <div class="fdv-validation-row">
+                      <div>
+                          <span class="fdv-validation-field">
+                              {{ name|title }}
+                          </span>
+
+                          <span class="fdv-validation-result
+                              {% if state == 'found' %}
+                                  is-found
+                              {% elif state == 'uncertain' %}
+                                  is-uncertain
+                              {% elif state == 'ambiguous' %}
+                                  is-ambiguous
+                              {% elif field.required %}
+                                  is-missing
+                              {% else %}
+                                  is-optional
+                              {% endif %}">
+
+                              {% if state == 'found' %}
+                                  Found
+                              {% elif state == 'uncertain' %}
+                                  Needs Review
+                              {% elif state == 'ambiguous' %}
+                                  Ambiguous
+                              {% elif field.required %}
+                                  Missing
+                              {% else %}
+                                  Not provided (optional)
+                              {% endif %}
+                          </span>
+
+                          {% if field.best %}
+                              <span class="fdv-validation-value">
+                                  {{ field.best.text }}
+                              </span>
+                          {% endif %}
+                      </div>
+
+                      {% if field.best %}
+                          <span class="fdv-validation-confidence">
+                              Confidence {{ field.confidence|floatformat:2 }}
+                          </span>
+                      {% else %}
+                          <span class="fdv-validation-confidence">
+                              Confidence —
+                          </span>
+                      {% endif %}
+                  </div>
+
+                  {% if state == 'ambiguous' and field.candidates|length > 1 %}
+                      <div class="fdv-validation-candidates">
+                          <span>Possible values:</span>
+
+                          {% for candidate in field.candidates %}
+                              <span>
+                                  {{ candidate.text }}
+                                  ({{ candidate.confidence|floatformat:2 }})
+                              </span>
+                          {% endfor %}
+                      </div>
+                  {% endif %}
+              {% endwith %}
+          {% endfor %}
             {% if metadata.validation_error %}
               <div class="fdv-validation-message">{{ metadata.validation_error }}</div>
             {% endif %}

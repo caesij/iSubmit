@@ -94,10 +94,10 @@ class RequirementRowForm(forms.Form):
     validation_enabled = forms.BooleanField(required=False, label='Enable NLP validation')
     validation_instructions = forms.CharField(
         required=False,
-        label='Required validation fields',
+        label='Validation instructions',
         widget=forms.Textarea(attrs={
             'rows': 5,
-            'placeholder': 'Examples only — enter your own fields:\nCourse code: required\nCourse title: required\nSection: required\nAcademic year: required',
+            'placeholder': 'Examples only — enter your own fields:\nCourse code: required\nCourse title: required\nSection: optional\nAcademic year: required',
         }),
     )
 
@@ -129,7 +129,7 @@ class RequirementRowForm(forms.Form):
         fields, errors = parse_validation_instructions(instructions)
         if errors:
             self.add_error('validation_instructions', errors)
-        elif cleaned.get('validation_enabled') and not fields:
+        elif cleaned.get('validation_enabled') and not any(field['mode'] == 'required' for field in fields):
             self.add_error(
                 'validation_instructions',
                 'Add at least one required field when NLP validation is enabled.'
